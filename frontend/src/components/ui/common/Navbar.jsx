@@ -2,7 +2,7 @@
 import React from 'react'
 
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, ArrowRight } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, ArrowRight, Heart , ChevronDown} from "lucide-react";
 
 const Navbar = () => {
     return (
@@ -16,20 +16,20 @@ const Navbar = () => {
                     </div>
                 </div>
                 <div className=" w-full ">
-                    <div className="flex min-h-20 items-center gap-4 py-2">
+                    <div className="flex min-h-20 items-center gap-4  px-10">
                         <div className="flex items-center shrink-0 h-20">
-                            <img src="/KAVASlogo.png" alt="KAVAS Logo"  className="h-10 w-auto object-contain" />
+                            <img src="/KAVASlogo.png" alt="KAVAS Logo"  className="h-15 w-auto object-contain" />
                         </div>
 
-                        <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-gray-50 shrink-0  hover:bg-gray-100">
-                            <MapPin size={16} className="text-gray-600" />
-                            <div className="flex flex-col leading-tight">
-                                <span className="text-[11px] text-gray-600">Deliver to</span>
-                                <span className="text-xs font-medium text-gray-900">Mumbai</span>
+                        <div className="flex items-center gap-2 border rounded-md px-5 py-2 h-10 bg-gray-50 shrink-0  hover:bg-gray-100">
+                            <MapPin size={20} className="text-gray-600" />
+                            <div className="flex flex-col-1 leading-tight">
+                                <span className=" text-gray-600">Deliver to</span>
+                                <ChevronDown />
                             </div>
                         </div>
 
-                        <div className="flex flex-1 items-center max-w-3xl shadow-lg">
+                        <div className="flex flex-1 items-center max-w-2xl rounded shadow-lg">
                             <input
                                 placeholder="Search products, suppliers, brands......."
                                 className="h-10 w-full rounded-r-none rounded-l-md border border-gray-300 bg-white px-3 text-sm outline-none "
@@ -48,6 +48,10 @@ const Navbar = () => {
                             </Button>
 
                             <Button variant="outline" className="h-10">Sign in</Button>
+                            <Button variant="outline" size="icon" className="h-10 w-10">
+                                <Heart color="#9e1a1a" />
+                            </Button>
+
                             <Button variant="outline" className="h-10 gap-2">
                                 <span className="relative">
                                     <ShoppingCart className="h-4 w-4" />
