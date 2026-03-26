@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
-
+import Link from "next/link";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
@@ -20,11 +20,11 @@ const Navbar = () => {
                     </div>
                 </div>
                 <div className=" w-full ">
-                    <div className="flex min-h-20 items-center gap-4  px-10">
+                    <div className="flex min-h-20 items-center gap-4 px-10">
                         <div className="flex items-center shrink-0 h-20"><img src="/KAVASlogo.png" alt="KAVAS Logo" className="h-15 w-auto object-contain" /></div>
                         <div className="flex items-center gap-2 border rounded-md px-5 py-2 h-10 bg-gray-50 shrink-0  hover:bg-gray-100">
                             <MapPin size={20} className="text-gray-600" />
-                            <div className="flex flex-col leading-tight"> <span className=" text-gray-600">Deliver to</span> <ChevronDown />
+                            <div className="flex flex-col-1 leading-tight"> <span className=" text-gray-600">Deliver to</span> <ChevronDown />
                             </div>
                         </div>
                         <div className="flex flex-1 items-center max-w-2xl rounded shadow-lg">
@@ -38,10 +38,12 @@ const Navbar = () => {
                             <Button variant="outline" className="h-10" onClick={() => {setMode("login"); setOpen(true);}}>Sign in</Button>
                             <Button variant="outline" size="icon" className="h-10 w-10"> <Heart color="#9e1a1a" /> </Button>
                             <Button variant="outline" className="h-10 gap-2">
-                                <span className="relative">
-                                    <ShoppingCart className="h-4 w-4" /> <span className="absolute -top-5 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
-                                </span>
-                                Cart
+                                <Link href="/cart" className="flex gap-2">
+                                 <span className="relative">
+                                      <ShoppingCart className="h-4 w-4" /> <span className="absolute -top-5 -right-13 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">0</span>
+                                 </span>
+                                    Cart
+                                </Link>
                             </Button>
                         </div>
                     </div>
