@@ -15,16 +15,10 @@ const Navbar = () => {
                         <span>    Help Centre — 24/7 support available    </span>
                     </div>
                 </div>
-
-                <div className="mx-auto w-full max-w-7xl ">
+                <div className=" w-full ">
                     <div className="flex min-h-20 items-center gap-4 py-2">
-
                         <div className="flex items-center shrink-0 h-20">
-                            <img
-                                src="/KAVAS Logo new.png"
-                                alt="KAVAS Logo"
-                                className="h-16 w-auto object-contain"
-                            />
+                            <img src="/KAVASlogo.png" alt="KAVAS Logo"  className="h-10 w-auto object-contain" />
                         </div>
 
                         <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-gray-50 shrink-0  hover:bg-gray-100">

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password_hash, role } = req.body;
+    const { full_name, email, password_hash, role } = req.body;
 
     const allowedRoles = ["buyer", "vendor"];
 
@@ -15,10 +15,10 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password_hash, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role)
+      `INSERT INTO users (full_name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role`,
-      [name, email, hashed, userRole]
+       RETURNING id, full_name, email, role`,
+      [full_name, email, hashed, userRole]
     );
 
     res.json(result.rows[0]);
