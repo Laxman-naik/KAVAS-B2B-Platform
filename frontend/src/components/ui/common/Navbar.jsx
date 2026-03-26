@@ -23,7 +23,7 @@ const Navbar = () => {
                             <img
                                 src="/KAVAS Logo new.png"
                                 alt="KAVAS Logo"
-                                className="h-16 w-auto object-contain"
+                                className="h-[54px] w-auto object-contain"
                             />
                         </div>
 
