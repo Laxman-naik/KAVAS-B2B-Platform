@@ -35,16 +35,16 @@ const Navbar = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-1 items-center max-w-3xl">
+                        <div className="flex flex-1 items-center max-w-3xl shadow-lg">
                             <input
-                                placeholder="Search products, suppliers, brands..."
-                                className="h-10 w-full rounded-r-none rounded-l-md border border-gray-300 bg-white px-3 text-sm outline-none  shadow-2xl"
+                                placeholder="Search products, suppliers, brands......."
+                                className="h-10 w-full rounded-r-none rounded-l-md border border-gray-300 bg-white px-3 text-sm outline-none "
 
                             />
-                            <Button className="h-10 rounded-l-none bg-orange-500 hover:bg-orange-600 scale-3d">
-                                <Search size={18} className="mr-0" />
+                            <div className="h-10 w-32 flex justify-center items-center rounded-l-none rounded-r-md bg-orange-500 hover:bg-orange-600 ">
+                                <Search size={18} className="mr-2" />
                                 Search
-                            </Button>
+                            </div>
 
                         </div>
 
@@ -54,11 +54,6 @@ const Navbar = () => {
                             </Button>
 
                             <Button variant="outline" className="h-10">Sign in</Button>
-
-                            <Button className="h-10 bg-orange-500 hover:bg-orange-600">
-                                Join free <ArrowRight></ArrowRight>
-                            </Button>
-
                             <Button variant="outline" className="h-10 gap-2">
                                 <span className="relative">
                                     <ShoppingCart className="h-4 w-4" />
