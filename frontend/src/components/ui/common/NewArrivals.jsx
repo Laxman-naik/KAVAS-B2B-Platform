@@ -85,45 +85,31 @@ const products = [
 
 export default function NewArrivals() {
   return (
-    <div className="p-6 bg-gray-100 min-h-screen px-15">
-      
-      {/* Header */}
+    <div className="p-6 bg-gray-50 min-h-screen px-35">
       <div className="flex justify-between items-center mb-5">
-        
         <div className="flex items-center gap-2">
           <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">
             NEW
           </span>
-
-          <h2 className="text-xl font-semibold">
-            New Arrivals
-          </h2>
+          <h2 className="text-xl font-semibold">New Arrivals</h2>
         </div>
-
         <span className="text-orange-500 text-sm cursor-pointer hover:underline">
           View all →
         </span>
       </div>
-
-      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-        
         {products.map((item) => (
-          <div  key={item.id} className="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col">
-            
-            {/* Image */}
+          <div
+            key={item.id}
+            className="bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col"
+          >
             <div className="relative h-55 overflow-hidden">
-              
               <img
                 src={item.image}
                 alt=""
                 className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
               />
-
-              {/* Overlay */}
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition"></div>
-
-              {/* NEW Badge */}
               <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                 New
               </span>
@@ -133,10 +119,7 @@ export default function NewArrivals() {
                 View
               </button> */}
             </div>
-
-            {/* Content */}
             <div className="p-3 flex flex-col justify-between flex-1">
-              
               <div>
                 <h3 className="text-sm font-medium text-gray-800 line-clamp-2">
                   {item.title}
@@ -145,18 +128,13 @@ export default function NewArrivals() {
                 <p className="text-orange-600 font-semibold mt-1">
                   {item.price}
                 </p>
-
-                <p className="text-xs text-gray-500">
-                  {item.min}
-                </p>
+                <p className="text-xs text-gray-500">{item.min}</p>
               </div>
-
               <div className="flex items-center mt-2 text-xs text-gray-600">
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                 {item.company}
               </div>
             </div>
-
           </div>
         ))}
       </div>
