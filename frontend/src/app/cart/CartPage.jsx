@@ -7,9 +7,7 @@ const CartPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 px-24 py-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         <div className="lg:col-span-2">
-          
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5" />
             <h2 className="text-lg font-semibold">
@@ -19,7 +17,6 @@ const CartPage = () => {
 
           <div className="bg-white border rounded-xl p-10 flex flex-col items-center justify-center text-center min-h-75">
             <ShoppingCart className="h-12 w-12 text-gray-600 mb-4" />
-
             <h3 className="text-base font-semibold mb-2">
               Your cart is empty
             </h3>
@@ -93,12 +90,14 @@ const CartPage = () => {
             <span>₹0</span>
           </div>
 
+          <Link href="/checkout" className="inline-block w-full">
           <button
             type="button"
             className="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-md text-sm font-medium cursor-pointer"
           >
             Proceed to Checkout →
           </button>
+          </Link>
 
           <Link href="/products" className="inline-block w-full">
             <button

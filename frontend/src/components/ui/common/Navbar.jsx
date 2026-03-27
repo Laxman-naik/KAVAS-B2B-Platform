@@ -5,29 +5,36 @@ import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lu
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { logout as logoutAction } from "@/store/slices/authSlice";
+import { logoutUser } from "@/services/authService";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
 
     // ✅ NEW STATES
-    const [user, setUser] = useState(null);
     const [dropdown, setDropdown] = useState(false);
 
-    // ✅ simulate login (connect later with backend)
-    const handleLogin = () => {
-        setUser({ email: "user@gmail.com" });
-        setOpen(false);
-    };
+    const dispatch = useDispatch();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
 
-    const handleLogout = () => {
-        setUser(null);
-        setDropdown(false);
+    const [initialEmail, setInitialEmail] = useState("");
+
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+        } catch (e) {
+            // ignore
+        } finally {
+            dispatch(logoutAction());
+            setDropdown(false);
+        }
     };
 
     return (
         <>
-            <div className="w-full shadow-sm border-b bg-white">
+            <div className="w-full shadow-sm border-b bg-white sticky top-0 z-50">
                 <div className="bg-black text-white text-xs py-2 overflow-hidden hidden sm:block">
                     <div className="whitespace-nowrap animate-marquee flex gap-10 px-4">
                         <span>Pro Membership — 14 days free trial, no credit card needed</span>
@@ -77,12 +84,13 @@ const Navbar = () => {
                             </Button>
 
                             {/* ✅ AUTH */}
-                            {!user ? (
+                            {!isAuthenticated ? (
                                 <Button
                                     variant="outline"
                                     className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
                                     onClick={() => {
                                         setMode("login");
+                                        setInitialEmail("");
                                         setOpen(true);
                                     }}
                                 >
@@ -92,39 +100,41 @@ const Navbar = () => {
                                 <div className="relative">
                                     <Button
                                         variant="outline"
-                                        size="icon"
-                                        className="h-9 w-9 sm:h-10 sm:w-10"
+                                        className="h-9 sm:h-10 px-3 text-xs sm:text-sm"
                                         onClick={() => setDropdown(!dropdown)}
                                     >
-                                        <User />
+                                        <User className="h-4 w-4 mr-2" />
+                                        {(user?.full_name || user?.name || "User").split(" ")[0]} {/* ✅ first name */}
                                     </Button>
 
                                     {/* Dropdown */}
                                     {dropdown && (
-                                        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-lg shadow-lg z-50">
-                                            <div className="px-4 py-2 text-xs text-gray-500 border-b">
-                                                {user.email}
+                                        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+                                            <div className="px-4 py-3 text-xs text-gray-500 border-b">
+                                                {user?.email}
                                             </div>
 
-                                            <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100">
-                                                Profile
-                                            </Link>
-                                            <Link href="/orders" className="block px-4 py-2 hover:bg-gray-100">
-                                                Orders
-                                            </Link>
-                                            <Link href="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
-                                                Favourites
-                                            </Link>
-                                            <Link href="/help" className="block px-4 py-2 hover:bg-gray-100">
-                                                Help
-                                            </Link>
+                                            <div className="flex flex-col">
+                                                <Link href="/profile" className="px-4 py-2 text-sm hover:bg-gray-100 border-b">
+                                                    Profile
+                                                </Link>
+                                                <Link href="/orders" className="px-4 py-2 text-sm hover:bg-gray-100 border-b">
+                                                    Orders
+                                                </Link>
+                                                <Link href="/wishlist" className="px-4 py-2 text-sm hover:bg-gray-100 border-b">
+                                                    Favourites
+                                                </Link>
+                                                <Link href="/help" className="px-4 py-2 text-sm hover:bg-gray-100 border-b">
+                                                    Help
+                                                </Link>
 
-                                            <button
-                                                onClick={handleLogout}
-                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500"
-                                            >
-                                                Logout
-                                            </button>
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+                                                >
+                                                    Logout
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -155,9 +165,21 @@ const Navbar = () => {
 
             {/* Auth Modals */}
             {mode === "login" ? (
-                <Login open={open} setOpen={setOpen} setMode={setMode} onLogin={handleLogin} />
+                <Login 
+                    open={open} 
+                    setOpen={setOpen} 
+                    setMode={setMode} 
+                    initialEmail={initialEmail}
+                />
             ) : (
-                <Register open={open} setOpen={setOpen} setMode={setMode} />
+                <Register 
+                    open={open} 
+                    setOpen={setOpen} 
+                    setMode={setMode} 
+                    onRegistered={({ email }) => {
+                        setInitialEmail(email || "");
+                    }} 
+                />
             )}
         </>
     )

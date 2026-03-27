@@ -3,16 +3,23 @@ const cors = require("cors");
 const pool = require("./config/db");
 require("dotenv").config();
 
+const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const roleMiddleware = require("./middleware/roleMiddleware");
 
 const app = express();
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
+app.use(cookieParser());
+
+app.use("/", authRoutes);
 
 pool.query("SELECT NOW()")
   .then(res => console.log("DB Connected:", res.rows))
