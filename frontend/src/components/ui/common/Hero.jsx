@@ -130,9 +130,7 @@ const Hero = () => {
                                         <li
                                             key={i}
                                             onMouseEnter={() => setActiveCategory(cat)}
-                                            className="flex items-center justify-between px-3 py-2 border-b hover:bg-orange-50 cursor-pointer transition-all duration-300 ease-in-out
-  hover:scale-[1.01]"
-                                        >
+                                            className="flex items-center justify-between px-3 py-2 border-b hover:bg-orange-50 cursor-pointer transition-all duration-300 ease-in-out hover:scale-[1.01]">
                                             <div className="flex items-center gap-3">
                                                 <Icon className="w-5 h-5" />
                                                 <span className="text-sm">{cat.name}</span>
@@ -198,8 +196,7 @@ const Hero = () => {
                     </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-6">
-                    <Card className="bg-yellow-100 rounded-xl relative overflow-hidden transition-all duration-300 ease-in-out
-  hover:scale-[1.01] hover:shadow-xl">
+                    <Card className="bg-yellow-100 rounded-xl relative overflow-hidden transition-all duration-300 ease-in-out hover:scale-[1.01] hover:shadow-xl">
                         <div className="absolute top-2 right-2 bg-yellow-200 text-orange-600 text-xs px-3 py-0.5 rounded-full shadow">
                             FREE
                         </div>
@@ -212,8 +209,7 @@ const Hero = () => {
                             </Button>
                         </CardContent>
                     </Card>
-                    <Card className="bg-red-400 text-white rounded-xl relative overflow-hidden transition-all duration-300 ease-in-out
-  hover:scale-[1.01] hover:shadow-xl">
+                    <Card className="bg-red-400 text-white rounded-xl relative overflow-hidden transition-all duration-300 ease-in-out hover:scale-[1.01] hover:shadow-xl">
 
                         <div className="absolute top-2 right-2 bg-white/30 text-white text-xs px-3 py-0.5 rounded-full shadow">
                             JOIN NOW
