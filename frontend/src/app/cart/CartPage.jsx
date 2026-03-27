@@ -17,7 +17,7 @@ const CartPage = () => {
             </h2>
           </div>
 
-          <div className="bg-white border rounded-xl p-10 flex flex-col items-center justify-center text-center min-h-[300px]">
+          <div className="bg-white border rounded-xl p-10 flex flex-col items-center justify-center text-center min-h-75">
             <ShoppingCart className="h-12 w-12 text-gray-600 mb-4" />
 
             <h3 className="text-base font-semibold mb-2">

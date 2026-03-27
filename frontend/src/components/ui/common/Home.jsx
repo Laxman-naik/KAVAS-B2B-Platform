@@ -4,6 +4,7 @@ import TrendingProducts from './TrendingProducts'
 import NewArrivals from './NewArrivals'
 import FeaturedSuppliers from './FeaturedSuppliers'
 import FlashDeals from './FlashDeals'
+
 const Home = () => {
     
 
@@ -14,6 +15,7 @@ const Home = () => {
     <NewArrivals />
     <FeaturedSuppliers />
     <FlashDeals />
+    
     </>
   )
 }

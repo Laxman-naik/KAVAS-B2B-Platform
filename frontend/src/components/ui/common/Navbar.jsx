@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react'
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
@@ -9,6 +9,21 @@ import Link from "next/link";
 const Navbar = () => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
+
+    // ✅ NEW STATES
+    const [user, setUser] = useState(null);
+    const [dropdown, setDropdown] = useState(false);
+
+    // ✅ simulate login (connect later with backend)
+    const handleLogin = () => {
+        setUser({ email: "user@gmail.com" });
+        setOpen(false);
+    };
+
+    const handleLogout = () => {
+        setUser(null);
+        setDropdown(false);
+    };
 
     return (
         <>
@@ -20,10 +35,11 @@ const Navbar = () => {
                         <span>Help Centre — 24/7 support available</span>
                     </div>
                 </div>
+
                 <div className="w-full">
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
 
-                        {/* 🧾 Logo */}
+                        {/* Logo */}
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
                             <img
                                 src="/KAVASlogo.png"
@@ -31,12 +47,16 @@ const Navbar = () => {
                                 className="h-10 sm:h-12 md:h-14 w-auto object-contain"
                             />
                         </div>
+
+                        {/* Location */}
                         <div className="hidden sm:flex items-center gap-2 border rounded-md px-3 py-1.5 h-10 bg-gray-50 hover:bg-gray-100 shrink-0">
                             <MapPin size={18} className="text-gray-600" />
                             <div className="flex items-center gap-1 text-sm text-gray-600">
                                 Deliver to <ChevronDown size={16} />
                             </div>
                         </div>
+
+                        {/* Search */}
                         <div className="w-full order-3 lg:order-0 flex-1 flex items-center max-w-full lg:max-w-2xl rounded shadow-lg">
                             <input
                                 placeholder="Search products, suppliers, brands......."
@@ -47,27 +67,75 @@ const Navbar = () => {
                                 <span className="hidden sm:inline">Search</span>
                             </div>
                         </div>
+
+                        {/* Right Section */}
                         <div className="flex items-center gap-2 ml-auto shrink-0">
 
-                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                            {/* ❌ Hide on mobile */}
+                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex">
                                 <Moon className="h-4 w-4" />
                             </Button>
 
-                            <Button
-                                variant="outline"
-                                className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
-                                onClick={() => {
-                                    setMode("login");
-                                    setOpen(true);
-                                }}
-                            >
-                                Sign in
-                            </Button>
+                            {/* ✅ AUTH */}
+                            {!user ? (
+                                <Button
+                                    variant="outline"
+                                    className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    onClick={() => {
+                                        setMode("login");
+                                        setOpen(true);
+                                    }}
+                                >
+                                    Sign in
+                                </Button>
+                            ) : (
+                                <div className="relative">
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-9 w-9 sm:h-10 sm:w-10"
+                                        onClick={() => setDropdown(!dropdown)}
+                                    >
+                                        <User />
+                                    </Button>
 
-                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                                    {/* Dropdown */}
+                                    {dropdown && (
+                                        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-lg shadow-lg z-50">
+                                            <div className="px-4 py-2 text-xs text-gray-500 border-b">
+                                                {user.email}
+                                            </div>
+
+                                            <Link href="/profile" className="block px-4 py-2 hover:bg-gray-100">
+                                                Profile
+                                            </Link>
+                                            <Link href="/orders" className="block px-4 py-2 hover:bg-gray-100">
+                                                Orders
+                                            </Link>
+                                            <Link href="/wishlist" className="block px-4 py-2 hover:bg-gray-100">
+                                                Favourites
+                                            </Link>
+                                            <Link href="/help" className="block px-4 py-2 hover:bg-gray-100">
+                                                Help
+                                            </Link>
+
+                                            <button
+                                                onClick={handleLogout}
+                                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ❌ Hide on mobile */}
+                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex">
                                 <Heart color="#9e1a1a" />
                             </Button>
 
+                            {/* Cart */}
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                     <span className="relative">
@@ -84,8 +152,10 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Auth Modals */}
             {mode === "login" ? (
-                <Login open={open} setOpen={setOpen} setMode={setMode} />
+                <Login open={open} setOpen={setOpen} setMode={setMode} onLogin={handleLogin} />
             ) : (
                 <Register open={open} setOpen={setOpen} setMode={setMode} />
             )}
@@ -93,4 +163,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar
+export default Navbar;
