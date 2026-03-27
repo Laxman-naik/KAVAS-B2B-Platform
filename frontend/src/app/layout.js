@@ -1,5 +1,7 @@
 import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/ui/common/Navbar";
+import Footer from "@/components/ui/common/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,7 +23,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={` ${roboto.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Navbar />
+        {children}
+        <Footer/>
+        </body>
     </html>
   );
 }
