@@ -12,8 +12,6 @@ import { logoutUser } from "@/services/authService";
 const Navbar = () => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
-
-    // ✅ NEW STATES
     const [dropdown, setDropdown] = useState(false);
 
     const dispatch = useDispatch();
@@ -25,13 +23,11 @@ const Navbar = () => {
         try {
             await logoutUser();
         } catch (e) {
-            // ignore
         } finally {
             dispatch(logoutAction());
             setDropdown(false);
         }
     };
-
     return (
         <>
             <div className="w-full shadow-sm border-b bg-white sticky top-0 z-50">
@@ -54,16 +50,12 @@ const Navbar = () => {
                                 className="h-10 sm:h-12 md:h-14 w-auto object-contain"
                             />
                         </div>
-
-                        {/* Location */}
                         <div className="hidden sm:flex items-center gap-2 border rounded-md px-3 py-1.5 h-10 bg-gray-50 hover:bg-gray-100 shrink-0">
                             <MapPin size={18} className="text-gray-600" />
                             <div className="flex items-center gap-1 text-sm text-gray-600">
                                 Deliver to <ChevronDown size={16} />
                             </div>
                         </div>
-
-                        {/* Search */}
                         <div className="w-full order-3 lg:order-0 flex-1 flex items-center max-w-full lg:max-w-2xl rounded shadow-lg">
                             <input
                                 placeholder="Search products, suppliers, brands......."
@@ -74,16 +66,10 @@ const Navbar = () => {
                                 <span className="hidden sm:inline">Search</span>
                             </div>
                         </div>
-
-                        {/* Right Section */}
                         <div className="flex items-center gap-2 ml-auto shrink-0">
-
-                            {/* ❌ Hide on mobile */}
                             <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex">
                                 <Moon className="h-4 w-4" />
                             </Button>
-
-                            {/* ✅ AUTH */}
                             {!isAuthenticated ? (
                                 <Button
                                     variant="outline"
@@ -106,8 +92,6 @@ const Navbar = () => {
                                         <User className="h-4 w-4 mr-2" />
                                         {(user?.full_name || user?.name || "User").split(" ")[0]} {/* ✅ first name */}
                                     </Button>
-
-                                    {/* Dropdown */}
                                     {dropdown && (
                                         <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
                                             <div className="px-4 py-3 text-xs text-gray-500 border-b">
@@ -139,13 +123,9 @@ const Navbar = () => {
                                     )}
                                 </div>
                             )}
-
-                            {/* ❌ Hide on mobile */}
                             <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex">
                                 <Heart color="#9e1a1a" />
                             </Button>
-
-                            {/* Cart */}
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                     <span className="relative">
@@ -162,8 +142,6 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Auth Modals */}
             {mode === "login" ? (
                 <Login 
                     open={open} 
