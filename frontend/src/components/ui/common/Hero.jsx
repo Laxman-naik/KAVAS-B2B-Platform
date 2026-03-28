@@ -118,7 +118,7 @@ const Hero = () => {
                         onMouseEnter={() => setShowMenu(true)}
                         onMouseLeave={() => setShowMenu(false)}
                     >
-                        <aside className="w-full lg:w-60 bg-white rounded-2xl shadow-md border overflow-hidden">
+                        <aside className="w-full lg:w-60 bg-white dark:bg-gray-800 rounded-2xl shadow-md border dark:border-gray-700 overflow-hidden">
                             <div className="flex items-center gap-2 px-3 py-3 bg-orange-500 text-white font-semibold">
                                 <Menu className="w-5 h-5" />
                                 All Categories
@@ -130,7 +130,7 @@ const Hero = () => {
                                         <li
                                             key={i}
                                             onMouseEnter={() => setActiveCategory(cat)}
-                                            className="flex items-center justify-between px-3 py-2 border-b hover:bg-orange-50 cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+                                            className="flex items-center justify-between px-3 py-2 border-b dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-gray-700 cursor-pointer transition-all duration-300 hover:scale-[1.01]"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <Icon className="w-5 h-5" />
@@ -143,7 +143,7 @@ const Hero = () => {
                             </ul>
                         </aside>
                         <div
-                            className={`hidden lg:flex absolute left-60 top-0 bg-white shadow-lg rounded-2xl rounded-l-none border transition-all duration-300 z-50
+                            className={`hidden lg:flex absolute left-60 top-0 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-lg rounded-2xl rounded-l-none border transition-all duration-300 z-50
           ${showMenu ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5 pointer-events-none"}`}
                         >
                             <div className="w-64 border-r p-4">
