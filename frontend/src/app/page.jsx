@@ -5,7 +5,8 @@ import Home from "@/components/ui/common/Home";
 import FeaturedSuppliers from "@/components/ui/common/FeaturedSuppliers";
 import FlashDeals from "@/components/ui/common/FlashDeals";
 
-export default function Page() {
+
+const page = () => {
   return (
     <>
     <Home />
@@ -16,3 +17,7 @@ export default function Page() {
     </>
   );
 }
+
+export default page
+
+

@@ -1,10 +1,13 @@
 "use client";
 import React, { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { logout as logoutAction } from "@/store/slices/authSlice";
+import { logoutUser } from "@/services/authService";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
@@ -32,7 +35,22 @@ const Navbar = () => {
             localStorage.setItem("theme", "light");
         }
     };
+    const [dropdown, setDropdown] = useState(false);
 
+    const dispatch = useDispatch();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+    const [initialEmail, setInitialEmail] = useState("");
+
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+        } catch (e) {
+        } finally {
+            dispatch(logoutAction());
+            setDropdown(false);
+        }
+    };
     return (
         <>
             <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
@@ -46,7 +64,7 @@ const Navbar = () => {
                 <div className="w-full">
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
-                            <Link href="/" onClick={() => {router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" });}}>
+                            <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                                 <img src="/KAVASlogo.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
@@ -65,8 +83,28 @@ const Navbar = () => {
                         </div>
                         <div className="flex items-center gap-2 ml-auto shrink-0">
                             <Button onClick={toggleDarkMode} variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">{darkMode ? "☀️" : "🌙"}</Button>
-                            <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setOpen(true); }} >Sign in</Button>
-                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10"><Heart color="#9e1a1a" /></Button>
+                            {!isAuthenticated ? (
+                                <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setInitialEmail(""); setOpen(true); }}> Sign in </Button>
+                            ) : (
+                                <div className="relative">
+                                    <Button variant="outline" className="h-9 sm:h-10 px-3 text-xs sm:text-sm" onClick={() => setDropdown(!dropdown)}>
+                                        <User className="h-4 w-4 mr-2" /> {(user?.full_name || user?.name || "User").split(" ")[0]}
+                                    </Button>
+                                    {dropdown && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+                                            <div className="px-4 py-3 text-xs text-gray-500 border-b"> {user?.email}</div>
+                                            <div className="flex flex-col">
+                                                <Link href="/profile" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Profile </Link>
+                                                <Link href="/orders" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Orders </Link>
+                                                <Link href="/wishlist" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Favourites </Link>
+                                                <Link href="/help" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Help </Link>
+                                                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"> Logout </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex"><Heart color="#9e1a1a" /></Button>
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                     <span className="relative">
@@ -85,4 +123,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar
+export default Navbar;

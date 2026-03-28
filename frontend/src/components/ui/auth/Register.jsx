@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUserThunk } from "../../../store/slices/authSlice";
 
-const Register = ({ open, setOpen, setMode }) => {
+const Register = ({ open, setOpen, setMode, onRegistered }) => {
   const [show, setShow] = useState(false);
   const { loading, error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
