@@ -1,10 +1,13 @@
 "use client";
 import React, { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { logout as logoutAction } from "@/store/slices/authSlice";
+import { logoutUser } from "@/services/authService";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
@@ -33,6 +36,20 @@ const Navbar = () => {
         }
     };
 
+    const dispatch = useDispatch();
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+    const [initialEmail, setInitialEmail] = useState("");
+
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+        } catch (e) {
+        } finally {
+            dispatch(logoutAction());
+            setDropdown(false);
+        }
+    };
     return (
         <>
             <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
@@ -43,6 +60,7 @@ const Navbar = () => {
                         <span>Help Centre — 24/7 support available</span>
                     </div>
                 </div>
+
                 <div className="w-full">
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
@@ -85,4 +103,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar
+export default Navbar;

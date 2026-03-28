@@ -1,10 +1,9 @@
 "use client";
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-
+import Link from "next/link";
 const suppliers = [
   {
     id: 1,
@@ -137,9 +136,9 @@ const FeaturedSuppliers = () => {
         <h2 className="text-xl md:text-2xl font-semibold">
           Featured Suppliers
         </h2>
-        <button className="text-sm text-orange-500 hover:underline">
+        <Link href="/suppliers/verified" className="text-sm text-orange-500 hover:underline">
           View all →
-        </button>
+        </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {suppliers.map((supplier) => (

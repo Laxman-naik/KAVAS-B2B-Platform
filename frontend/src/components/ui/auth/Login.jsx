@@ -5,10 +5,16 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUserThunk } from "@/store/slices/authSlice";
 
-const Login = ({ open, setOpen, setMode }) => {
+const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const dispatch = useDispatch();
   const [form, setForm] = useState({ email: "", password: "", });
   const { loading, error } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!initialEmail) return;
+    setForm((prev) => ({ ...prev, email: initialEmail }));
+  }, [open, initialEmail]);
 
   if (!open) return null;
 
