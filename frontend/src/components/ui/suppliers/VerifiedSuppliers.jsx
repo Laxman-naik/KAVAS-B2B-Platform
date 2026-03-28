@@ -4,62 +4,9 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-
-const suppliers = [
-  {
-    id: 1,
-    name: "TechLink India",
-    location: "Bengaluru",
-    category: "Electronics",
-    stats: { products: "1200+", rating: 4.9, response: "98%" },
-    tags: ["Verified", "Top Seller", "3 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1511499767150-a48a237f0083",
-      "https://images.unsplash.com/photo-1518444028785-8fbcd101ebb9",
-      "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04",
-    ],
-  },
-  {
-    id: 2,
-    name: "FabricWorld Co.",
-    location: "Surat",
-    category: "Apparel",
-    stats: { products: "850+", rating: 4.8, response: "96%" },
-    tags: ["Verified", "Premium", "5 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-      "https://images.unsplash.com/photo-1542272604-787c3835535d",
-      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
-    ],
-  },
-  {
-    id: 3,
-    name: "BoltCraft Hardware",
-    location: "Ludhiana",
-    category: "Hardware",
-    stats: { products: "430+", rating: 4.7, response: "94%" },
-    tags: ["Verified", "ISO Certified", "2 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1581092919535-7146ff1a590d",
-      "https://images.unsplash.com/photo-1581147036324-c1c1a0a4c9c1",
-      "https://images.unsplash.com/photo-1503387762-592deb58ef4e",
-    ],
-  },
-  {
-    id: 4,
-    name: "NovaDerm Supplies",
-    location: "Mumbai",
-    category: "Health",
-    stats: { products: "680+", rating: 4.9, response: "99%" },
-    tags: ["Verified", "GMP Certified", "4 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519",
-      "https://images.unsplash.com/photo-1580281657527-47c38f9c1c51",
-      "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
-    ],
-  },
-];
+import { Star, MapPin, ChevronLeft, ChevronRight, CheckCircle, } from "lucide-react";
+import Link from "next/link";
+import { suppliers } from "@/data/suppliers";
 
 const categories = [
   "All",
@@ -108,7 +55,6 @@ const SupplierImages = ({ images }) => {
 
   return (
     <div className="relative group">
-      {/* ✅ Reduced height */}
       <div className="grid grid-cols-3 gap-2 h-28">
         <div className="col-span-2 row-span-2 overflow-hidden rounded-xl">
           <img
@@ -117,7 +63,6 @@ const SupplierImages = ({ images }) => {
             className="w-full h-full object-cover transition duration-300 hover:scale-105"
           />
         </div>
-
         {visibleImages.slice(1).map((img, i) => (
           <div key={i} className="overflow-hidden rounded-xl">
             <img
@@ -129,7 +74,6 @@ const SupplierImages = ({ images }) => {
         ))}
       </div>
 
-      {/* Arrows */}
       <button
         onClick={prevSlide}
         className="absolute top-1/2 left-2 -translate-y-1/2 
@@ -158,11 +102,17 @@ const SupplierImages = ({ images }) => {
 };
 
 const VerifiedSuppliers = () => {
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  const filteredSuppliers =
+    selectedCategory === "All"
+      ? suppliers
+      : suppliers.filter((s) => s.category === selectedCategory);
+
   return (
     <div className="bg-gray-50 min-h-screen py-4 sm:py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
 
-        {/* Header */}
         <div className="bg-orange-500 text-white p-4 sm:p-6 rounded-xl text-center">
           <h1 className="text-lg sm:text-2xl font-bold">
             🏭 Verified Supplier Directory
@@ -172,13 +122,13 @@ const VerifiedSuppliers = () => {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="bg-white p-3 sm:p-4 rounded-xl flex flex-wrap gap-2 sm:gap-3 items-center shadow-sm">
           <span className="font-medium text-sm sm:text-base">Filter:</span>
-          {categories.map((cat, i) => (
+          {categories.map((cat) => (
             <Button
               key={cat}
-              variant={i === 0 ? "default" : "outline"}
+              onClick={() => setSelectedCategory(cat)}
+              variant={selectedCategory === cat ? "default" : "outline"}
               className="rounded-full px-3 sm:px-4 text-xs sm:text-sm"
             >
               {cat}
@@ -186,43 +136,51 @@ const VerifiedSuppliers = () => {
           ))}
         </div>
 
-        {/* Title */}
         <div className="flex justify-between items-center">
           <h2 className="text-base sm:text-lg font-semibold border-l-4 border-orange-500 pl-2">
             All Suppliers
           </h2>
-          <span className="text-orange-500 cursor-pointer font-medium text-sm">
+          <span className="text-orange-500 cursor-pointer font-medium text-sm hover:underline">
             Become a supplier →
           </span>
         </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-4 gap-6">
-          {suppliers.map((supplier) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          {filteredSuppliers.map((supplier) => (
             <Card
-              key={supplier.id}
-              className="rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 hover:border-orange-500 duration-300"
+              key={supplier.id}  
+              className="rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 hover:border-orange-500 duration-300 cursor-pointer"
             >
-              {/* ✅ Reduced padding */}
-              <CardContent className="p-3 space-y-3">
+              <CardContent className="p-4 space-y-4">
 
-                {/* Header */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 relative">
                   <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 font-bold">
                     {getInitials(supplier.name)}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-sm">
-                      {supplier.name}
-                    </h3>
-                    <div className="flex items-center text-xs text-gray-500 gap-1">
-                      <MapPin className="w-3 h-3 text-red-400" />
-                      {supplier.location} • {supplier.category}
+
+                  <div className="flex items-center gap-1">
+                    <div>
+                      <Link
+                        href={`/suppliers/${supplier.id}`}
+                        className="block"
+                      >
+                        <h3 className="font-semibold text-sm">
+                          {supplier.name}
+                        </h3>
+                      </Link>
+
+                      <div className="flex items-center text-xs text-gray-500 gap-1">
+                        <MapPin className="w-3 h-3 text-red-400" />
+                        {supplier.location} • {supplier.category}
+                      </div>
                     </div>
                   </div>
+                  {supplier.tags.includes("Verified") && (
+                    <div className="absolute top-3 right-2 flex items-center gap-1 bg-orange-500 px-2 py-1 rounded-2xl shadow-sm">
+                      <CheckCircle className="w-4 h-4 text-black" />
+                      <p className="text-xs text-black font-medium">Verified</p>
+                    </div>
+                  )}
                 </div>
-
-                {/* Tags */}
                 <div className="flex flex-wrap gap-2">
                   {supplier.tags.map((tag, index) => (
                     <Badge
@@ -237,13 +195,8 @@ const VerifiedSuppliers = () => {
                     </Badge>
                   ))}
                 </div>
-
-                {/* Images */}
                 <SupplierImages images={supplier.images} />
-
                 <hr />
-
-                {/* Stats */}
                 <div className="flex justify-between text-sm text-gray-600">
                   <div>
                     <p className="font-bold text-black">
@@ -251,7 +204,6 @@ const VerifiedSuppliers = () => {
                     </p>
                     <p className="text-xs">Products</p>
                   </div>
-
                   <div>
                     <div className="flex items-center gap-1">
                       <p className="font-bold text-black">
@@ -269,6 +221,13 @@ const VerifiedSuppliers = () => {
                     <p className="text-xs">Response</p>
                   </div>
                 </div>
+
+                <Button
+                  onClick={(e) => e.preventDefault()}
+                  className="w-full font-semibold py-5 bg-orange-500 hover:bg-orange-600 text-white text-sm"
+                >
+                  Contact Supplier →
+                </Button>
 
               </CardContent>
             </Card>

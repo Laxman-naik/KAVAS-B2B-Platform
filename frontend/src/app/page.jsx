@@ -9,11 +9,13 @@ import FlashDeals from "@/components/ui/common/FlashDeals";
 const page = () => {
   return (
     <>
+   
     <Home />
     <TrendingProducts/>
     <NewArrivals/>
     <FeaturedSuppliers />
     <FlashDeals />
+   
     </>
   );
 }
