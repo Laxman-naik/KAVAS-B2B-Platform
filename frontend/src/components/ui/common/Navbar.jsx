@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useState } from 'react'
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
@@ -41,6 +41,20 @@ const Navbar = () => {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
 
     const [initialEmail, setInitialEmail] = useState("");
+    const dropdownRef = useRef(null);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -83,8 +97,78 @@ const Navbar = () => {
                         </div>
                         <div className="flex items-center gap-2 ml-auto shrink-0">
                             <Button onClick={toggleDarkMode} variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">{darkMode ? "☀️" : "🌙"}</Button>
-                            <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setOpen(true); }} >Sign in</Button>
-                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10"><Heart color="#9e1a1a" /></Button>
+                            {!isAuthenticated ? (
+                                <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setInitialEmail(""); setOpen(true); }}> Sign in </Button>
+                            ) : (
+                                <div className="relative" ref={dropdownRef}>
+                                    <Button
+                                        variant="outline"
+                                        className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
+                                        onClick={() => setDropdown(!dropdown)}
+                                    >
+                                        <User className="h-4 w-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">
+                                            {(user?.full_name || user?.name || "User").split(" ")[0]}
+                                        </span>
+                                    </Button>
+                                    {dropdown && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+                                            <div className="px-4 py-3 text-xs bg-orange-500 text-white border-b font-bold justify-center flex">
+                                                {user?.email}
+                                            </div>
+
+                                            <div className="flex flex-col">
+
+                                                <Link
+                                                    href="/profile"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <User className="h-4 w-4" />
+                                                    Profile
+                                                </Link>
+
+                                                <Link
+                                                    href="/orders"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <Package className="h-4 w-4" />
+                                                    Orders
+                                                </Link>
+
+                                                <Link
+                                                    href="/wishlist"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <Heart className="h-4 w-4 text-red-500" />
+                                                    Favourites
+                                                </Link>
+
+                                                <Link
+                                                    href="/help"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <HelpCircle className="h-4 w-4" />
+                                                    Help
+                                                </Link>
+
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+                                                >
+                                                    <User className="h-4 w-4" />
+                                                    Logout
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex"><Heart color="#9e1a1a" /></Button>
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                     <span className="relative">

@@ -85,7 +85,7 @@ const products = [
 
 export default function NewArrivals() {
   return (
-    <div className="p-6 bg-gray-50 min-h-screen px-35">
+    <div className="p-6 bg-gray-50 min-h-screen px-35 dark:bg-gray-900">
       <div className="flex justify-between items-center mb-5">
         <div className="flex items-center gap-2">
           <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded">

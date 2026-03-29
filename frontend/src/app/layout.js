@@ -1,7 +1,5 @@
 import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/ui/common/Navbar";
-import Footer from "@/components/ui/common/Footer";
 import ReduxProvider from "@/store/provider";
 
 const inter = Inter({
@@ -26,10 +24,8 @@ export default function RootLayout({ children }) {
     <html lang="en" className={` ${roboto.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white text-black dark:bg-gray-900 dark:text-white transition-colors duration-300">
         <ReduxProvider>
-          <Navbar />
           <main className="flex-1">{children}</main>
-          <Footer />
-          </ReduxProvider>
+        </ReduxProvider>
         </body>
     </html>
   );

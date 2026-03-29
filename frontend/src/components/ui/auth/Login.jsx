@@ -36,7 +36,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-md bg-white relative rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-md bg-white relative rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[90vh] overflow-y-auto dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close */}
