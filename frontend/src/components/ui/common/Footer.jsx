@@ -67,7 +67,7 @@ const Footer = () => {
 export default Footer;
 
 const Icon = ({ children }) => (
-  <div className="w-8 h-8 flex items-center justify-center border rounded-md text-gray-600 hover:bg-orange-400 hover:text-white cursor-pointer transition">
+  <div className="w-8 h-8 flex items-center justify-center border rounded-md text-gray-600 cursor-pointer transition hover:bg-orange-100 hover:text-orange-500  hover:ring-1 hover:ring-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none">
     {children}
   </div>
 );

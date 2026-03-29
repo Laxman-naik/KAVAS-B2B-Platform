@@ -1,38 +1,39 @@
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const { redis } = require("../config/redis");
+
+// ================== REGISTER ==================
 
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password_hash, role } = req.body;
+    const { full_name, email, password, phone,  role } = req.body;
 
     const allowedRoles = ["buyer", "vendor"];
+    const userRole = allowedRoles.includes(role) ? role : "buyer";
 
-    const userRole = role && allowedRoles.includes(role)
-      ? role
-      : "buyer";
-
-    const hashed = await bcrypt.hash(password_hash, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (full_name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, full_name, email, role`,
-      [full_name, email, hashed, userRole]
+      `INSERT INTO users (full_name, email, password_hash, phone, role)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, full_name, email, phone, role`,
+      [full_name, email, hashed, phone, userRole]
     );
 
     res.json(result.rows[0]);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// ================== LOGIN ==================
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // basic validation
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
@@ -48,95 +49,134 @@ exports.login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // compare password
     const match = await bcrypt.compare(password, user.password_hash);
-
     if (!match) {
       return res.status(400).json({ message: "Wrong password" });
     }
 
-    // ✅ access token
-    const accessToken = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    // ✅ refresh token
-    const refreshToken = jwt.sign(
-      { id: user.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ MULTI-DEVICE SUPPORT (better)
+    const key = `refresh:${user.id}:${Date.now()}`;
 
-    // save refresh token
-    await pool.query(
-      "UPDATE users SET refresh_token=$1 WHERE id=$2",
-      [refreshToken, user.id]
-    );
+    await redis.set(key, refreshToken, "EX", 7 * 24 * 60 * 60);
 
-    res.json({
-      accessToken,
-      refreshToken
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, // true in production
+      sameSite: "Strict",
+      path: "/api/auth",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // ✅ added
     });
 
+    res.json({
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
+// ================== REFRESH TOKEN ==================
+
 exports.refreshTokenHandler = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const token = req.cookies.refreshToken;
 
-    if (!refreshToken) {
+    if (!token) {
       return res.status(401).json({ message: "No refresh token" });
     }
 
-    // verify refresh token
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-    // check DB (important)
-    const result = await pool.query(
-      "SELECT * FROM users WHERE id=$1 AND refresh_token=$2",
-      [decoded.id, refreshToken]
-    );
+    // 🔍 Find token in Redis (multi-session safe)
+    const keys = await redis.keys(`refresh:${decoded.id}:*`);
 
-    if (result.rows.length === 0) {
-      return res.status(403).json({ message: "Invalid refresh token" });
+    let valid = false;
+
+    for (const key of keys) {
+      const stored = await redis.get(key);
+      if (stored === token) {
+        valid = true;
+        break;
+      }
     }
 
-    const user = result.rows[0];
+    if (!valid) {
+      return res.status(403).json({ message: "Invalid session" });
+    }
 
-    // generate new access token
-    const newAccessToken = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+    const userRes = await pool.query(
+      "SELECT id, role FROM users WHERE id=$1",
+      [decoded.id]
     );
 
-    res.json({ accessToken: newAccessToken });
+    const user = userRes.rows[0];
 
+    const newAccessToken = generateAccessToken(user);
+
+    res.json({ accessToken: newAccessToken });
   } catch (err) {
     res.status(403).json({ message: "Token expired or invalid" });
   }
 };
 
+// ================== LOGOUT ==================
+
 exports.logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const token = req.cookies.refreshToken;
 
-    await pool.query(
-      "UPDATE users SET refresh_token=NULL WHERE refresh_token=$1",
-      [refreshToken]
-    );
+    if (token) {
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+      } catch {
+        decoded = null;
+      }
+
+      if (decoded) {
+        const keys = await redis.keys(`refresh:${decoded.id}:*`);
+
+        for (const key of keys) {
+          const stored = await redis.get(key);
+          if (stored === token) {
+            await redis.del(key);
+          }
+        }
+      }
+    }
+
+    res.clearCookie("refreshToken", {
+      path: "/api/auth",
+    });
 
     res.json({ message: "Logged out successfully" });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+// ================== GET CURRENT USER ==================
+
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.user.id; // ✅ use middleware
+
+    const result = await pool.query(
+      "SELECT id, full_name, email, role FROM users WHERE id=$1",
+      [userId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(401).json({ message: "Invalid token" });
   }
 };

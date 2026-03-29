@@ -24,7 +24,7 @@ const CheckOut = () => {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white border rounded-xl p-6 shadow-sm">
                         <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
-                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">1</div>
+                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm shrink-0">1</div>
                             <h3 className="text-lg font-semibold text-gray-800">Shipping / Business Address</h3>
                         </div>
 
@@ -79,7 +79,7 @@ const CheckOut = () => {
 
                     <div className="bg-white border rounded-xl p-6 shadow-sm">
                         <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
-                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">2</div>
+                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm shrink-0">2</div>
                             <h3 className="text-lg font-semibold text-gray-800">Payment Method</h3>
                         </div>
 
@@ -168,7 +168,7 @@ const CheckOut = () => {
 
                     <div className="bg-white border rounded-xl p-6 shadow-sm">
                         <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-200">
-                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm flex-shrink-0">3</div>
+                            <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-medium text-sm shrink-0">3</div>
                             <h3 className="text-lg font-semibold text-gray-800">Review & Place Order</h3>
                         </div>
 

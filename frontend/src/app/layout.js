@@ -2,6 +2,7 @@ import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/ui/common/Navbar";
 import Footer from "@/components/ui/common/Footer";
+import ReduxProvider from "@/store/provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,7 +13,7 @@ const inter = Inter({
 const roboto = Roboto({
   variable: "--font-roboto",
   subsets: ["latin"],
-  weight: ["100", "300", "400", "500", "700", "900"], // choose what you need
+  weight: ["100", "300", "400", "500", "700", "900"],
 });
 
 export const metadata = {
@@ -23,10 +24,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={` ${roboto.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <Navbar />
-        {children}
-        <Footer/>
+      <body className="min-h-full flex flex-col bg-white text-black dark:bg-gray-900 dark:text-white transition-colors duration-300">
+        <ReduxProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          </ReduxProvider>
         </body>
     </html>
   );

@@ -2,49 +2,101 @@
 import Image from "next/image";
 import { X, Eye } from "lucide-react";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUserThunk } from "../../../store/slices/authSlice";
 
-const Register = ({ open, setOpen, setMode }) => {
+const Register = ({ open, setOpen, setMode, onRegistered }) => {
   const [show, setShow] = useState(false);
+  const { loading, error } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value, }); };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // ✅ validation
+    if (!formData.email || !formData.password) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    // ✅ transform for backend
+    const payload = {
+      full_name: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      password: formData.password,
+      phone: formData.phone,
+    };
+
+    const res = await dispatch(registerUserThunk(payload));
+
+    if (res.meta.requestStatus === "fulfilled") {
+      alert("Registered successfully");
+      setOpen(false);
+      setMode("login");
+    }
+  };
+
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2 sm:p-4" onClick={() => setOpen(false)}>
       <div className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => setOpen(false)}className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black z-10"><X size={18} /></button>
+        <button onClick={() => setOpen(false)} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black z-10"><X size={18} /></button>
         <div className="flex justify-start mb-2 sm:mb-3">
-          <Image src="/KAVASlogo.png" alt="KAVAS Logo" width={140} height={60} className="h-10 sm:h-12 md:h-14 w-auto object-contain"/>
+          <Image src="/KAVASlogo.png" alt="KAVAS Logo" width={140} height={60} className="h-10 sm:h-12 md:h-14 w-auto object-contain" />
         </div>
-        <h2 className="text-base sm:text-lg md:text-xl font-semibold">Create free account</h2>
+        <h2 className="text-base sm:text-lg md:text-xl font-semibold">Create your account</h2>
         <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Join 50,000+ businesses on Kavas</p>
-        <form className="space-y-2 sm:space-y-2" onSubmit={(e) => {e.preventDefault(); console.log("Register clicked");}}>
+        <form className="space-y-2 sm:space-y-2" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
             <div>
               <label className="text-xs sm:text-sm font-medium">First name *</label>
-              <input type="text" placeholder="Rahul" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"/>
+              <input type="text" name="firstName" onChange={handleChange} placeholder="Rahul" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500" />
             </div>
             <div>
               <label className="text-xs sm:text-sm font-medium">Last name *</label>
-              <input type="text" placeholder="Sharma" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"/>
+              <input type="text" name="lastName" onChange={handleChange} placeholder="Sharma" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500" />
             </div>
           </div>
           <div>
             <label className="text-xs sm:text-sm font-medium">Email *</label>
-            <input  type="email" placeholder="you@company.com" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"/>
+            <input type="email" name="email" onChange={handleChange} placeholder="you@company.com" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
           </div>
           <div>
             <label className="text-xs sm:text-sm font-medium">Phone number *</label>
-            <input type="tel" placeholder="+91 98765 43210" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"/>
+            <input type="tel" name="phone" onChange={handleChange} placeholder="+91 98765 43210" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
           </div>
           <div className="relative">
             <label className="text-xs sm:text-sm font-medium">Create password *</label>
-            <input type="password" placeholder="Min. 6 characters" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm pr-10 focus:ring-1 focus:ring-orange-500 outline-none"/>
-            <Eye onClick={() => setShow(!show)} size={16} className="absolute right-3 top-8 sm:top-9 text-gray-400"/>
+            <input type={show ? "text" : "password"} name="password" onChange={handleChange} placeholder="Min. 6 characters" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm pr-10 focus:ring-1 focus:ring-orange-500 outline-none" />
+            <Eye onClick={() => setShow(!show)} size={16} className="absolute right-3 top-8 sm:top-9 text-gray-400" />
           </div>
           <div>
             <label className="text-xs sm:text-sm font-medium">Confirm password *</label>
-            <input type="password" placeholder="Re-enter password" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"/>
+            <input type="password" name="confirmPassword" onChange={handleChange} placeholder="Re-enter password" className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
           </div>
-          <button type="submit" className="w-full py-2 sm:py-2.5 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600">Create free account →</button>
+          <button type="submit" disabled={loading} className="w-full py-2 sm:py-2.5 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600">{loading ? "Registering..." : "Create your account →"}</button>
+          {error && (<p className="text-red-500 text-sm text-center">{error}</p>)}
         </form>
+        {/* <p className="text-xs text-center mt-3">
+          Already have an account?{" "} <span onClick={() => setMode("login")} className="text-orange-500 cursor-pointer">Sign in</span>
+        </p> */}
         <p className="text-[11px] sm:text-xs text-gray-500 text-center mt-3 sm:mt-4">By joining you agree to our{" "}
           <span className="text-orange-500 cursor-pointer">Terms</span>. Already have an account?{" "}
           <span onClick={() => setMode("login")} className="text-orange-500 font-medium cursor-pointer">Sign in →</span>
