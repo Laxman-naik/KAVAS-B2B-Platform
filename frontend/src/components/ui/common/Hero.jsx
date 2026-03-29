@@ -8,6 +8,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+
 
 const Hero = () => {
 
@@ -217,9 +219,11 @@ const Hero = () => {
                             <h2 className="font-semibold text-base sm:text-lg leading-tight">
                                 Want to grow your <br /> business 10X faster?
                             </h2>
+                            <Link href="\vendor">
                             <Button className="mt-2 bg-white text-red-500 text-sm px-4 py-1.5">
                                 🏪 Sell on Kavas
                             </Button>
+                            </Link>
                         </CardContent>
                     </Card>
                 </div>
