@@ -4,63 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-const suppliers = [
-  {
-    id: 1,
-    name: "TechLink India",
-    location: "Bengaluru",
-    category: "Electronics",
-    stats: { products: "1200+", rating: 4.9, response: "98%" },
-    tags: ["Verified", "Top Seller", "3 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1511499767150-a48a237f0083",
-      "https://images.unsplash.com/photo-1518444028785-8fbcd101ebb9",
-      "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04",
-    ],
-  },
-  {
-    id: 2,
-    name: "FabricWorld Co.",
-    location: "Surat",
-    category: "Apparel",
-    stats: { products: "850+", rating: 4.8, response: "96%" },
-    tags: ["Verified", "Premium", "5 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-      "https://images.unsplash.com/photo-1542272604-787c3835535d",
-      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
-      
-    ],
-  },
-  {
-    id: 3,
-    name: "BoltCraft Hardware",
-    location: "Ludhiana",
-    category: "Hardware",
-    stats: { products: "430+", rating: 4.7, response: "94%" },
-    tags: ["Verified", "ISO Certified", "2 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1581092919535-7146ff1a590d",
-      "https://images.unsplash.com/photo-1581147036324-c1c1a0a4c9c1",
-      "https://images.unsplash.com/photo-1503387762-592deb58ef4e",
-    ],
-  },
-  {
-    id: 4,
-    name: "NovaDerm Supplies",
-    location: "Mumbai",
-    category: "Health",
-    stats: { products: "680+", rating: 4.9, response: "99%" },
-    tags: ["Verified", "GMP Certified", "4 yrs"],
-    images: [
-      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519",
-      "https://images.unsplash.com/photo-1580281657527-47c38f9c1c51",
-      "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
-      "https://images.unsplash.com/photo-1599058917765-a780eda07a3e",
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-    ],
-  },
-];
+import { suppliers } from "@/data/suppliers";
+
+
 const SupplierImages = ({ images }) => {
   const [startIndex, setStartIndex] = useState(0);
 
@@ -85,8 +31,8 @@ const SupplierImages = ({ images }) => {
   const visibleImages = getVisibleImages();
 
   return (
-    <div className="relative group">
-      <div className="grid grid-cols-3 gap-2 h-48">
+    <div className="relative group ">
+      <div className="grid grid-cols-3  gap-2 h-48">
         <div className="col-span-2 row-span-2 overflow-hidden rounded-xl">
           <img
             src={visibleImages[0]}
@@ -166,11 +112,10 @@ const FeaturedSuppliers = () => {
                 {supplier.tags.map((tag, index) => (
                   <Badge
                     key={index}
-                    className={`text-xs ${
-                      index === 0
+                    className={`text-xs ${index === 0
                         ? "bg-green-100 text-green-800"
                         : "bg-orange-100 text-orange-800"
-                    }`}
+                      }`}
                   >
                     {tag}
                   </Badge>

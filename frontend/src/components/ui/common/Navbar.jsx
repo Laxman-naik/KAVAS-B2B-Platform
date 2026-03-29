@@ -1,7 +1,11 @@
 "use client";
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react'
+=======
+import React, { useState, useRef, useEffect } from "react";
+>>>>>>> a2d797040b95f2c06c08d84a00606ff58d738103
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
@@ -41,6 +45,20 @@ const Navbar = () => {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
 
     const [initialEmail, setInitialEmail] = useState("");
+    const dropdownRef = useRef(null);
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -63,11 +81,21 @@ const Navbar = () => {
                 </div>
                 <div className="w-full">
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
+<<<<<<< HEAD
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
                             <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                                 <img src="/KAVASlogo.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
+=======
+                        <Link href="/" className="flex items-center shrink-0 h-16 sm:h-20">
+                            <img
+                                src="/KAVASlogo.png"
+                                alt="KAVAS Logo"
+                                className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer"
+                            />
+                        </Link>
+>>>>>>> a2d797040b95f2c06c08d84a00606ff58d738103
                         <div className="hidden sm:flex items-center gap-2 border rounded-md px-3 py-1.5 h-10 bg-gray-50 hover:bg-gray-100 shrink-0">
                             <MapPin size={18} className="text-gray-600" />
                             <div className="flex items-center gap-1 text-sm text-gray-600">Deliver to <ChevronDown size={16} /></div>
@@ -86,6 +114,7 @@ const Navbar = () => {
                             {!isAuthenticated ? (
                                 <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setInitialEmail(""); setOpen(true); }}> Sign in </Button>
                             ) : (
+<<<<<<< HEAD
                                 <div className="relative">
                                     <Button variant="outline" className="h-9 sm:h-10 px-3 text-xs sm:text-sm" onClick={() => setDropdown(!dropdown)}>
                                         <User className="h-4 w-4 mr-2" /> {(user?.full_name || user?.name || "User").split(" ")[0]}
@@ -99,6 +128,71 @@ const Navbar = () => {
                                                 <Link href="/wishlist" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Favourites </Link>
                                                 <Link href="/help" className="px-4 py-2 text-sm hover:bg-gray-100 border-b"> Help </Link>
                                                 <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"> Logout </button>
+=======
+                                <div className="relative" ref={dropdownRef}>
+                                    <Button
+                                        variant="outline"
+                                        className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
+                                        onClick={() => setDropdown(!dropdown)}
+                                    >
+                                        <User className="h-4 w-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">
+                                            {(user?.full_name || user?.name || "User").split(" ")[0]}
+                                        </span>
+                                    </Button>
+                                    {dropdown && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
+                                            <div className="px-4 py-3 text-xs bg-orange-500 text-white border-b font-bold justify-center flex">
+                                                {user?.email}
+                                            </div>
+
+                                            <div className="flex flex-col">
+
+                                                <Link
+                                                    href="/profile"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <User className="h-4 w-4" />
+                                                    Profile
+                                                </Link>
+
+                                                <Link
+                                                    href="/orders"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <Package className="h-4 w-4" />
+                                                    Orders
+                                                </Link>
+
+                                                <Link
+                                                    href="/wishlist"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <Heart className="h-4 w-4 text-red-500" />
+                                                    Favourites
+                                                </Link>
+
+                                                <Link
+                                                    href="/help"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
+                                                    <HelpCircle className="h-4 w-4" />
+                                                    Help
+                                                </Link>
+
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+                                                >
+                                                    <User className="h-4 w-4" />
+                                                    Logout
+                                                </button>
+
+>>>>>>> a2d797040b95f2c06c08d84a00606ff58d738103
                                             </div>
                                         </div>
                                     )}
@@ -118,7 +212,27 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
+<<<<<<< HEAD
             {mode === "login" ? (<Login open={open} setOpen={setOpen} setMode={setMode} />) : (<Register open={open} setOpen={setOpen} setMode={setMode} />)}
+=======
+            {mode === "login" ? (
+                <Login
+                    open={open}
+                    setOpen={setOpen}
+                    setMode={setMode}
+                    initialEmail={initialEmail}
+                />
+            ) : (
+                <Register
+                    open={open}
+                    setOpen={setOpen}
+                    setMode={setMode}
+                    onRegistered={({ email }) => {
+                        setInitialEmail(email || "");
+                    }}
+                />
+            )}
+>>>>>>> a2d797040b95f2c06c08d84a00606ff58d738103
         </>
     )
 }
