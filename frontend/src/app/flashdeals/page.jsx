@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
@@ -52,8 +53,8 @@ export default function FlashDealsPage() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4">
-      <div className="bg-gradient-to-r from-orange-800 to-orange-500 text-white rounded-xl p-8 text-center relative overflow-hidden">
+    <div className="bg-gray-100 min-h-screen p-4 px-35">
+      <div className="bg-orange-500 text-white rounded-xl p-8 text-center relative overflow-hidden">
         <h1 className="text-3xl font-bold mb-2">
           🔥 Flash Deals & Bulk Discounts
         </h1>
@@ -78,7 +79,7 @@ export default function FlashDealsPage() {
         )}
       </div>
 
-      <div className="bg-gradient-to-r from-orange-900 to-orange-600 text-white mt-6 p-6 rounded-xl">
+      <div className="bg-orange-500 text-white mt-6 p-6 rounded-xl">
         <h2 className="font-bold mb-4">🏷 Exclusive Coupon Codes</h2>
 
         <div className="grid md:grid-cols-4 gap-4">
@@ -109,13 +110,12 @@ export default function FlashDealsPage() {
                 <img
                   src={item.img}
                   alt=""
-                  className="h-48 w-full object-cover group-hover:scale-110 transition duration-300"
+                  className="h-60 w-full object-cover group-hover:scale-110 transition duration-300"
                 />
                 <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                   {item.discount} OFF
                 </span>
               </div>
-
               <div className="p-4">
                 <h3 className="text-sm font-semibold">{item.title}</h3>
 

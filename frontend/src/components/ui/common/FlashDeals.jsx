@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Zap, CheckCircle, Lock, Truck, Handshake, RefreshCcw, } from "lucide-react";
+import Link from "next/link";
 
 const FlashDeals = () => {
   return (
@@ -34,9 +35,9 @@ const FlashDeals = () => {
               <p className="text-xs text-gray-200">HARDWARE</p>
             </div>
           </div>
-          <Button className="bg-white text-orange-600 font-bold px-7 py-5 rounded-lg hover:bg-orange-100">
+          <Link href="/flashdeals" className="bg-white text-orange-600 font-bold px-7 py-5 rounded-lg hover:bg-orange-100 ">
             Shop all deals →
-          </Button>
+          </Link>
         </div>
         <div className="w-full rounded-2xl border bg-gray-50 p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 sm:gap-8 place-items-center">
           <div className="flex flex-col items-center justify-center text-center gap-3  w-56 h-36 sm:w-64 sm:h-40 rounded-full bg-white shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-300 lg:col-span-2">
