@@ -112,7 +112,7 @@ const Hero = () => {
     const [showMenu, setShowMenu] = useState(false);
     const [activeCategory, setActiveCategory] = useState(categories[0]);
     return (
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-gray-50 min-h-screen dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 <div className="flex flex-col lg:flex-row gap-6">
                     <div
@@ -144,31 +144,21 @@ const Hero = () => {
                                 })}
                             </ul>
                         </aside>
-                        <div
-                            className={`hidden lg:flex absolute left-60 top-0 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-lg rounded-2xl rounded-l-none border transition-all duration-300 z-50
-          ${showMenu ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5 pointer-events-none"}`}
+                        <div className={`hidden lg:flex absolute left-60 top-0 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-lg rounded-2xl rounded-l-none border transition-all duration-300 z-50
+                            ${showMenu ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5 pointer-events-none"}`}
                         >
                             <div className="w-64 border-r p-4">
                                 <h3 className="font-semibold mb-3">{activeCategory.name}</h3>
 
                                 {activeCategory.subcategories.map((sub, i) => (
-                                    <p key={i} className="text-sm py-1 hover:text-orange-600 cursor-pointer">
-                                        {sub}
-                                    </p>
+                                    <p key={i} className="text-sm py-1 hover:text-orange-600 cursor-pointer">{sub}</p>
                                 ))}
                             </div>
                             <div className="w-72 p-4">
-                                <h3 className="font-semibold mb-3">
-                                    {activeCategory.name} ({activeCategory.products.length})
-                                </h3>
-
+                                <h3 className="font-semibold mb-3">{activeCategory.name} ({activeCategory.products.length})</h3>
                                 {activeCategory.products.map((prod, i) => (
-                                    <div
-                                        key={i}
-                                        className="flex justify-between text-sm py-1 hover:text-orange-600 cursor-pointer"
-                                    >
-                                        {prod}
-                                        <ChevronRight className="w-4 h-4" />
+                                    <div key={i} className="flex justify-between text-sm py-1 hover:text-orange-600 cursor-pointer">
+                                        {prod} <ChevronRight className="w-4 h-4" />
                                     </div>
                                 ))}
                             </div>
@@ -188,9 +178,7 @@ const Hero = () => {
                                     500+ verified vendors across 50+ categories. <br />
                                     Best bulk prices — all in one place.
                                 </p>
-                                <Button className="mt-4 sm:mt-5 bg-white py-3 sm:py-4 md:py-5 px-4 sm:px-5 font-bold text-orange-500 w-fit text-xs sm:text-sm md:text-base">
-                                    🚀 Start sourcing free
-                                </Button>
+                                <Button className="mt-4 sm:mt-5 bg-white py-3 sm:py-4 md:py-5 px-4 sm:px-5 font-bold text-orange-500 w-fit text-xs sm:text-sm md:text-base">🚀 Start sourcing free</Button>
                                 <div className="flex flex-col mt-3 sm:flex-row items-start sm:items-center justify-start sm:justify-center gap-2 sm:gap-4 md:gap-6 text-left sm:text-left">
                                     <div className="flex items-center gap-2">
                                         <CheckCircle className="w-4 h-4 text-green-400" />
@@ -215,7 +203,7 @@ const Hero = () => {
                             FREE
                         </div>
                         <CardContent className="px-6 py-4">
-                            <h2 className="font-semibold text-base sm:text-lg leading-tight">
+                            <h2 className="font-semibold text-base sm:text-lg leading-tight dark:text-black">
                                 Looking <br /> for a Product?
                             </h2>
                             <Button className="mt-2 bg-white text-black text-sm px-4 py-1.5">

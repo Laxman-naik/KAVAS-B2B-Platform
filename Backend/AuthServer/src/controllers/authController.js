@@ -59,15 +59,14 @@ exports.login = async (req, res) => {
 
     // ✅ MULTI-DEVICE SUPPORT (better)
     const key = `refresh:${user.id}:${Date.now()}`;
-
     await redis.set(key, refreshToken, "EX", 7 * 24 * 60 * 60);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, // true in production
-      sameSite: "Strict",
-      path: "/api/auth",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // ✅ added
+      path: "/api/auth",  
+      secure: false, 
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -95,8 +94,6 @@ exports.refreshTokenHandler = async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-
-    // 🔍 Find token in Redis (multi-session safe)
     const keys = await redis.keys(`refresh:${decoded.id}:*`);
 
     let valid = false;
@@ -119,7 +116,6 @@ exports.refreshTokenHandler = async (req, res) => {
     );
 
     const user = userRes.rows[0];
-
     const newAccessToken = generateAccessToken(user);
 
     res.json({ accessToken: newAccessToken });
@@ -154,10 +150,7 @@ exports.logout = async (req, res) => {
       }
     }
 
-    res.clearCookie("refreshToken", {
-      path: "/api/auth",
-    });
-
+    res.clearCookie("refreshToken", { path: "/", });
     res.json({ message: "Logged out successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -165,18 +158,41 @@ exports.logout = async (req, res) => {
 };
 
 // ================== GET CURRENT USER ==================
-
 exports.getMe = async (req, res) => {
   try {
-    const userId = req.user.id; // ✅ use middleware
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ user: null });
+    }
+
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+
+    // 🔥 CHECK REDIS (same as refresh)
+    const keys = await redis.keys(`refresh:${decoded.id}:*`);
+
+    let valid = false;
+
+    for (const key of keys) {
+      const stored = await redis.get(key);
+      if (stored === token) {
+        valid = true;
+        break;
+      }
+    }
+
+    if (!valid) {
+      return res.status(403).json({ user: null });
+    }
 
     const result = await pool.query(
       "SELECT id, full_name, email, role FROM users WHERE id=$1",
-      [userId]
+      [decoded.id]
     );
 
-    res.json(result.rows[0]);
+    res.json({ user: result.rows[0] });
+
   } catch (err) {
-    res.status(401).json({ message: "Invalid token" });
+    res.status(401).json({ user: null });
   }
 };

@@ -56,7 +56,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2 sm:p-4" onClick={() => setOpen(false)}>
-      <div className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[92vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg bg-white rounded-xl sm:rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[92vh] overflow-y-auto dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
         <button onClick={() => setOpen(false)} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black z-10"><X size={18} /></button>
         <div className="flex justify-start mb-2 sm:mb-3">
           <Image src="/KAVASlogo.png" alt="KAVAS Logo" width={140} height={60} className="h-10 sm:h-12 md:h-14 w-auto object-contain" />

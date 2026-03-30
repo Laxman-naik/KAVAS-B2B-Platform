@@ -95,7 +95,7 @@ const products = [
 
 export default function TrendingProducts() {
   return (
-    <div className="p-6 bg-gray-50 min-h-screen px-35">
+    <div className="p-6 bg-gray-50 min-h-screen px-35 dark:bg-gray-900">
       <div className="flex justify-between items-center mb-5">
         <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">
           Trending Products

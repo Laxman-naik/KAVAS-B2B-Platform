@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {register, login, refreshTokenHandler, logout, getMe,} = require("../controllers/authController");
 
-const authMiddleware = require("../middleware/authMiddleware");
+// const authMiddleware = require("../middleware/authMiddleware");
 
 // ================== AUTH ROUTES ==================
 
@@ -14,6 +14,6 @@ router.post("/logout", logout);
 
 // ================== USER ROUTE ==================
 
-router.get("/me", authMiddleware, getMe);
+router.get("/me", getMe);
 
 module.exports = router;
