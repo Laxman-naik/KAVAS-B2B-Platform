@@ -53,7 +53,7 @@ const initialState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true,
   loginLoading: false,
   error: null,
 };
