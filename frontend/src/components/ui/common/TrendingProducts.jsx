@@ -21,7 +21,7 @@ export default function TrendingProducts() {
           {products.map((item) => (
             <Link
               key={item.id}
-              href={`/products/${item.id}`}   // ✅ IMPORTANT
+              href={`/products/${item.id}`}
               className="bg-white rounded-xl shadow hover:shadow-xl transition group overflow-hidden"
             >
               <div className="h-56 overflow-hidden">

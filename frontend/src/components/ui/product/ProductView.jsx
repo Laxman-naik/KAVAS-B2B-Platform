@@ -2,13 +2,17 @@
 
 import { useParams } from "next/navigation";
 import { products } from "@/data/products";
+import { arrivalProducts } from "@/data/arrivalProducts";
 import { useState } from "react";
 
 export default function ProductView() {
   const params = useParams();
   const id = params?.id;
 
-  const product = products.find((p) => p.id == id);
+  // const product = products.find((p) => p.id == id);
+
+  const allProducts = [...products, ...arrivalProducts];
+  const product = allProducts.find((p) => p.id == id);
 
   const [qty, setQty] = useState(50);
   const [wishlist, setWishlist] = useState(false);
