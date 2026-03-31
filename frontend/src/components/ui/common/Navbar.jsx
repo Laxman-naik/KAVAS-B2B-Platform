@@ -44,7 +44,7 @@ const Navbar = () => {
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
-    if (loading) return null;
+    // if (loading) return null;
 
     const [initialEmail, setInitialEmail] = useState("");
     const dropdownRef = useRef(null);

@@ -85,57 +85,6 @@ exports.login = async (req, res) => {
 
 // ================== REFRESH TOKEN ==================
 
-// exports.refreshTokenHandler = async (req, res) => {
-//   try {
-//     const token = req.cookies.refreshToken;
-
-//     if (!token) {
-//       return res.status(401).json({ message: "No refresh token" });
-//     }
-
-//     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-//     const keys = await redis.keys(`refresh:${decoded.id}:*`);
-
-//     const key = `refresh:${user.id}:${Date.now()}`;
-
-//     await redis.set(
-//       key,
-//       JSON.stringify({
-//         token: refreshToken,
-//         device: req.headers["user-agent"],
-//         ip: req.ip,
-//         createdAt: Date.now(),
-//       }),
-//     "EX", 7 * 24 * 60 * 60
-//     );
-
-//     let valid = false;
-
-//     for (const key of keys) {
-//       const stored = await redis.get(key);
-//       if (stored === token) {
-//         valid = true;
-//         break;
-//       }
-//     }
-
-//     if (!valid) {
-//       return res.status(403).json({ message: "Invalid session" });
-//     }
-
-//     const userRes = await pool.query(
-//       "SELECT id, role FROM users WHERE id=$1",
-//       [decoded.id]
-//     );
-
-//     const user = userRes.rows[0];
-//     const newAccessToken = generateAccessToken(user);
-
-//     res.json({ accessToken: newAccessToken });
-//   } catch (err) {
-//     res.status(403).json({ message: "Token expired or invalid" });
-//   }
-// };
 exports.refreshTokenHandler = async (req, res) => {
   try {
     const oldToken = req.cookies.refreshToken;
