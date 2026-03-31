@@ -12,72 +12,59 @@ import {
   Box
 } from "lucide-react";
 
-import { suppliers } from "@/data/suppliers";   // ✅ DATA IMPORT
-import { useParams } from "next/navigation";    // ✅ PARAMS
+import { suppliers } from "@/data/suppliers";
+import { useParams } from "next/navigation";
 
 const Supplierview = () => {
 
-  // ✅ TAB STATE
   const [activeTab, setActiveTab] = useState("enquiry");
 
-  // ✅ GET ID FROM URL
   const params = useParams();
 
-  // ✅ FIND SUPPLIER
   const supplier = suppliers.find(
     (s) => s.id.toString() === params.id
   );
 
-  // ✅ NOT FOUND
   if (!supplier) {
     return <div className="p-10 text-center text-lg">Supplier not found</div>;
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen px-4 py-6 lg:px-10">
+    <div className="bg-white min-h-screen ">
+      <div className="bg-orange-500 text-white w-full shadow-md">
+        <div className="px-4 sm:px-6 lg:px-10 p-6 lg:p-8 flex flex-col lg:flex-row justify-between gap-6 items-start lg:items-center">
 
-      {/* 🔶 HEADER */}
-      <div className="bg-orange-500 text-white rounded-2xl p-6 lg:p-8 shadow-md flex flex-col lg:flex-row justify-between gap-6">
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="bg-blue-800 w-14 h-14 flex items-center justify-center rounded-xl text-lg font-bold shadow">
+              {supplier.name.charAt(0)}
+            </div>
 
-        {/* LEFT */}
-        <div className="flex items-start sm:items-center gap-4">
-          <div className="bg-blue-800 w-14 h-14 flex items-center justify-center rounded-xl text-lg font-bold shadow">
-            {supplier.name.charAt(0)}
-          </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-semibold">
+                {supplier.name}
+              </h1>
+              <p className="text-sm opacity-90">
+                📍 {supplier.location} • {supplier.category}
+              </p>
 
-          <div>
-            <h1 className="text-xl sm:text-2xl font-semibold">
-              {supplier.name}
-            </h1>
-
-            <p className="text-sm opacity-90">
-              📍 {supplier.location} • {supplier.category}
-            </p>
-
-            <div className="flex flex-wrap gap-2 mt-3 text-xs">
-              {supplier.tags.map((tag, i) => (
-                <Badge key={i} text={tag} />
-              ))}
+              <div className="flex flex-wrap gap-2 mt-3 text-xs">
+                {supplier.tags.map((tag, i) => (
+                  <Badge key={i} text={tag} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center w-full lg:w-auto">
+            <Stat value={supplier.stats.products} label="Products" />
+            <Stat value={`${supplier.stats.rating}★`} label="Rating" />
+            <Stat value={supplier.stats.response} label="Response" />
+            <Stat value="5+" label="Experience" />
+          </div>
 
-        {/* RIGHT STATS */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <Stat value={supplier.stats.products} label="Products" />
-          <Stat value={`${supplier.stats.rating}★`} label="Rating" />
-          <Stat value={supplier.stats.response} label="Response" />
-          <Stat value="5+" label="Experience" />
         </div>
       </div>
-
-      {/* 🔹 MAIN */}
-      <div className="grid lg:grid-cols-3 gap-x-6 gap-y-4 mt-4">
-
-        {/* LEFT SIDE */}
+      <div className="grid lg:grid-cols-3 gap-x-6 gap-y-4 mt-4 px-4 sm:px-6 lg:px-10">
         <div className="lg:col-span-2 space-y-4">
-
-          {/* ABOUT */}
           <Card title="About Supplier">
             <hr />
             <p className="text-gray-600 font-medium leading-relaxed mt-2">
@@ -86,104 +73,66 @@ const Supplierview = () => {
               and strong B2B relationships.
             </p>
           </Card>
-
-          {/* CAPABILITIES */}
           <Card title="Business Capabilities">
-            <div className="grid grid-cols-3 gap-x-5 gap-y-6">
-
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 sm:gap-x-5 gap-y-4 sm:gap-y-6">
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">{supplier.stats.products}</h2>
                 <p className="text-gray-600 text-sm mt-1">Products Listed</p>
               </div>
-
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">{supplier.stats.rating}★</h2>
                 <p className="text-gray-600 text-sm mt-1">Avg Rating</p>
               </div>
-
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">{supplier.stats.response}</h2>
                 <p className="text-gray-600 text-sm mt-1">Response Rate</p>
               </div>
-
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">48hr</h2>
                 <p className="text-gray-600 text-sm mt-1">Avg Response</p>
               </div>
-
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">₹25,000</h2>
                 <p className="text-gray-600 text-sm mt-1">Min. Order</p>
               </div>
-
               <div className="border border-yellow-300 rounded-xl p-2 text-center bg-yellow-50">
                 <h2 className="text-xl font-bold text-orange-600">10+ countries</h2>
                 <p className="text-gray-600 text-sm mt-1">Export Markets</p>
               </div>
-
+            </div>
+          </Card>
+          <Card title="Product Catalogue">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
+              {supplier.products.map((product) => (
+                <div key={product.id} className="border rounded-xl overflow-hidden bg-white">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-40 sm:h-44 md:h-48 w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <h4 className="text-sm font-medium">{product.name}</h4>
+                    <p className="text-orange-600 font-semibold mt-1">
+                      ₹{product.price}/{product.unit}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Min. {product.minOrder} units
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
 
-          {/* PRODUCT IMAGES */}
-          <Card title="Product Catalogue">
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-    {supplier.products.map((product) => (
-      <div key={product.id} className="border rounded-xl overflow-hidden bg-white">
-
-        <img
-          src={product.image}
-          alt={product.name}
-          className="h-40 w-full object-cover"
-        />
-
-        <div className="p-3">
-          <h4 className="text-sm font-medium">{product.name}</h4>
-
-          <p className="text-orange-600 font-semibold mt-1">
-            ₹{product.price}/{product.unit}
-          </p>
-
-          <p className="text-xs text-gray-500">
-            Min. {product.minOrder} units
-          </p>
         </div>
-
-      </div>
-    ))}
-
-  </div>
-</Card>
-        </div>
-
-        {/* RIGHT SIDE (FORM) */}
-        <div className="bg-white rounded-2xl shadow-md p-5 space-y-5 h-fit sticky top-6 max-w-sm w-full ml-auto">
-
+        <div className="bg-white rounded-2xl shadow-md p-5 space-y-5 h-fit lg:sticky lg:top-6 w-full max-w-md lg:max-w-sm mx-auto lg:ml-auto">
           <h3 className="text-lg font-semibold">Contact Supplier</h3>
-
-          {/* TABS */}
           <div className="flex justify-between border-b pb-2 text-sm">
-            <Tab
-              icon={<MessageCircle size={16} />}
-              text="Enquiry"
-              active={activeTab === "enquiry"}
-              onClick={() => setActiveTab("enquiry")}
-            />
-            <Tab
-              icon={<FileText size={16} />}
-              text="Get Quote"
-              active={activeTab === "quote"}
-              onClick={() => setActiveTab("quote")}
-            />
-            <Tab
-              icon={<Box size={16} />}
-              text="Sample"
-              active={activeTab === "sample"}
-              onClick={() => setActiveTab("sample")}
-            />
+            <Tab icon={<MessageCircle size={16} />} text="Enquiry" active={activeTab === "enquiry"} onClick={() => setActiveTab("enquiry")} />
+            <Tab icon={<FileText size={16} />} text="Get Quote" active={activeTab === "quote"} onClick={() => setActiveTab("quote")} />
+            <Tab icon={<Box size={16} />} text="Sample" active={activeTab === "sample"} onClick={() => setActiveTab("sample")} />
           </div>
 
-          {/* FORMS */}
           <div key={activeTab} className="space-y-4">
 
             {activeTab === "enquiry" && (
@@ -235,12 +184,11 @@ const Supplierview = () => {
 
           </div>
         </div>
+
       </div>
     </div>
   );
 };
-
-/* COMPONENTS */
 
 const Card = ({ title, children }) => (
   <div className="bg-white rounded-2xl shadow-sm border p-5">

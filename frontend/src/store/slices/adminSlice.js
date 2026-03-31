@@ -1,0 +1,125 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { loginAdminAPI, logoutAdminAPI, getAdminProfile, } from "../../services/adminServer";
+
+// ================== THUNKS ==================
+
+// Admin Login
+export const loginAdminThunk = createAsyncThunk(
+  "admin/loginAdmin",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await loginAdminAPI(data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Admin login failed");
+    }
+  }
+);
+
+// Load Admin Profile
+export const loadAdminThunk = createAsyncThunk(
+  "admin/loadAdmin",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getAdminProfile();
+      return res.data;
+    } catch {
+      return rejectWithValue("Admin not authenticated");
+    }
+  }
+);
+
+// Admin Logout
+export const logoutAdminThunk = createAsyncThunk(
+  "admin/logoutAdmin",
+  async (_, { rejectWithValue }) => {
+    try {
+      await logoutAdminAPI();
+      return true;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Logout failed");
+    }
+  }
+);
+
+// ================== INITIAL STATE ==================
+
+const initialState = {
+  admin: null,
+  token: null,
+  isAdminAuthenticated: false,
+  loading: false,
+  loginLoading: false,
+  error: null,
+};
+
+// ================== SLICE ==================
+
+const adminSlice = createSlice({
+  name: "admin",
+  initialState,
+
+  reducers: {
+    // Local logout (Redux only)
+    adminLogout: (state) => {
+      state.admin = null;
+      state.token = null;
+      state.isAdminAuthenticated = false;
+    },
+
+    setAdmin: (state, action) => {
+      state.admin = action.payload;
+      state.isAdminAuthenticated = true;
+    },
+
+    setAdminToken: (state, action) => {
+      state.token = action.payload;
+    },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      // LOGIN ADMIN
+      .addCase(loginAdminThunk.pending, (state) => {
+        state.loginLoading = true;
+        state.error = null;
+      })
+      .addCase(loginAdminThunk.fulfilled, (state, action) => {
+        state.admin = action.payload.user;
+        state.token = action.payload.accessToken;
+        state.isAdminAuthenticated = true;
+        state.loginLoading = false;
+      })
+      .addCase(loginAdminThunk.rejected, (state, action) => {
+        state.loginLoading = false;
+        state.error = action.payload?.message || action.payload || action.error.message;
+      })
+
+      // LOAD ADMIN PROFILE
+      .addCase(loadAdminThunk.pending, (state) => {
+        state.loading = true;
+      }) 
+      .addCase(loadAdminThunk.fulfilled, (state, action) => {
+        state.admin = action.payload.user;
+        state.isAdminAuthenticated = true;
+        state.loading = false;
+      })
+      .addCase(loadAdminThunk.rejected, (state) => {
+        state.admin = null;
+        state.isAdminAuthenticated = false;
+        state.loading = false;
+      })
+
+      // LOGOUT ADMIN
+      .addCase(logoutAdminThunk.fulfilled, (state) => {
+        state.admin = null;
+        state.token = null;
+        state.isAdminAuthenticated = false;
+      });
+  },
+});
+
+// ================== EXPORTS ==================
+
+export const { adminLogout, setAdmin, setAdminToken } = adminSlice.actions;
+export default adminSlice.reducer;

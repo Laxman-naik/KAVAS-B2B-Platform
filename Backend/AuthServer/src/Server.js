@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const roleMiddleware = require("./middleware/roleMiddleware");
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/", authRoutes);
+app.use("/", adminRoutes);
 
 pool.query("SELECT NOW()")
   .then(res => console.log("DB Connected:", res.rows))

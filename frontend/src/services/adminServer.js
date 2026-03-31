@@ -1,9 +1,11 @@
-import React from 'react'
+import api from "@/lib/axios";
 
-const adminServer = () => {
-  return (
-    <div>adminServer</div>
-  )
-}
+export const registerAdminAPI = (data) => api.post("/admin/auth/register", data);
 
-export default adminServer
+export const loginAdminAPI = (data) => api.post("/admin/auth/login", data);
+
+export const refreshAdminToken = () => api.post("/admin/auth/refresh");
+
+export const logoutAdminAPI = () => api.post("/admin/auth/logout");
+
+export const getAdminProfile = () => api.get("/admin/auth/me");

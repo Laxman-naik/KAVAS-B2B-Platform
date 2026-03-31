@@ -77,7 +77,7 @@ const SupplierImages = ({ images }) => {
 };
 const FeaturedSuppliers = () => {
   return (
-    <div className="p-6 md:p-8 lg:p-10">
+    <div className="p-6 md:p-8 lg:p-10 ">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl md:text-2xl font-semibold">
           Featured Suppliers
@@ -98,9 +98,14 @@ const FeaturedSuppliers = () => {
                   {supplier.name.slice(0, 2)}
                 </div>
                 <div>
+                  <Link
+                          href={`/suppliers/${supplier.id}`}
+                          className="block"
+                        >
                   <h3 className="font-semibold text-sm md:text-base">
                     {supplier.name}
                   </h3>
+                  </Link>
                   <div className="flex items-center text-xs text-gray-500 gap-1">
                     <MapPin className="w-3 h-3 text-red-400" />
                     {supplier.location} • {supplier.category}

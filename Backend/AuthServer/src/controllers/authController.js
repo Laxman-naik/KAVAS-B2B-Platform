@@ -85,42 +85,117 @@ exports.login = async (req, res) => {
 
 // ================== REFRESH TOKEN ==================
 
+// exports.refreshTokenHandler = async (req, res) => {
+//   try {
+//     const token = req.cookies.refreshToken;
+
+//     if (!token) {
+//       return res.status(401).json({ message: "No refresh token" });
+//     }
+
+//     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+//     const keys = await redis.keys(`refresh:${decoded.id}:*`);
+
+//     const key = `refresh:${user.id}:${Date.now()}`;
+
+//     await redis.set(
+//       key,
+//       JSON.stringify({
+//         token: refreshToken,
+//         device: req.headers["user-agent"],
+//         ip: req.ip,
+//         createdAt: Date.now(),
+//       }),
+//     "EX", 7 * 24 * 60 * 60
+//     );
+
+//     let valid = false;
+
+//     for (const key of keys) {
+//       const stored = await redis.get(key);
+//       if (stored === token) {
+//         valid = true;
+//         break;
+//       }
+//     }
+
+//     if (!valid) {
+//       return res.status(403).json({ message: "Invalid session" });
+//     }
+
+//     const userRes = await pool.query(
+//       "SELECT id, role FROM users WHERE id=$1",
+//       [decoded.id]
+//     );
+
+//     const user = userRes.rows[0];
+//     const newAccessToken = generateAccessToken(user);
+
+//     res.json({ accessToken: newAccessToken });
+//   } catch (err) {
+//     res.status(403).json({ message: "Token expired or invalid" });
+//   }
+// };
 exports.refreshTokenHandler = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const oldToken = req.cookies.refreshToken;
 
-    if (!token) {
-      return res.status(401).json({ message: "No refresh token" });
-    }
+    if (!oldToken) return res.status(401).json({ message: "No token" });
 
-    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+    const decoded = jwt.verify(oldToken, process.env.REFRESH_SECRET);
+
     const keys = await redis.keys(`refresh:${decoded.id}:*`);
 
-    let valid = false;
+    let foundKey = null;
 
     for (const key of keys) {
-      const stored = await redis.get(key);
-      if (stored === token) {
-        valid = true;
-        break;
+      const data = await redis.get(key);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (parsed.token === oldToken) {
+          foundKey = key;
+          break;
+        }
       }
     }
 
-    if (!valid) {
+    if (!foundKey) {
       return res.status(403).json({ message: "Invalid session" });
     }
 
-    const userRes = await pool.query(
-      "SELECT id, role FROM users WHERE id=$1",
-      [decoded.id]
+    // 🔥 DELETE OLD TOKEN
+    await redis.del(foundKey);
+
+    // 🔥 CREATE NEW TOKEN
+    const newRefreshToken = generateRefreshToken({ id: decoded.id });
+    const newAccessToken = generateAccessToken({ id: decoded.id });
+
+    const newKey = `refresh:${decoded.id}:${Date.now()}`;
+
+    await redis.set(
+      newKey,
+      JSON.stringify({
+        token: newRefreshToken,
+        device: req.headers["user-agent"],
+        ip: req.ip,
+        createdAt: Date.now(),
+      }),
+      "EX",
+      7 * 24 * 60 * 60
     );
 
-    const user = userRes.rows[0];
-    const newAccessToken = generateAccessToken(user);
+    // 🔥 SET NEW COOKIE
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: false,
+    });
 
     res.json({ accessToken: newAccessToken });
-  } catch (err) {
-    res.status(403).json({ message: "Token expired or invalid" });
+
+  } catch {
+    res.status(403).json({ message: "Invalid token" });
   }
 };
 
@@ -194,5 +269,57 @@ exports.getMe = async (req, res) => {
 
   } catch (err) {
     res.status(401).json({ user: null });
+  }
+};
+
+// ================== LOGOUT ALL DEVICES ==================
+
+exports.logoutAll = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (!token) return res.json({ message: "No session" });
+
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+
+    // 🔥 delete ALL sessions
+    const keys = await redis.keys(`refresh:${decoded.id}:*`);
+
+    for (const key of keys) {
+      await redis.del(key);
+    }
+
+    // clear cookie
+    res.clearCookie("refreshToken", {
+      path: "/",
+    });
+
+    res.json({ message: "Logged out from all devices" });
+  } catch {
+    res.status(500).json({ message: "Error logging out" });
+  }
+};
+
+// ================== GET SESSIONS ==================
+
+exports.getSessions = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+
+    const keys = await redis.keys(`refresh:${decoded.id}:*`);
+
+    const sessions = [];
+
+    for (const key of keys) {
+      const data = await redis.get(key);
+      if (data) {
+        sessions.push(JSON.parse(data));
+      }
+    }
+
+    res.json({ sessions });
+  } catch {
+    res.status(401).json({ message: "Unauthorized" });
   }
 };
