@@ -53,8 +53,8 @@ export default function FlashDealsPage() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4 px-35">
-      <div className="bg-orange-500 text-white rounded-xl p-8 text-center relative overflow-hidden">
+    <div className="bg-gray-100 min-h-screen p-4 pt-5">
+      <div className="bg-orange-500 text-white  p-5 text-center relative overflow-hidden">
         <h1 className="text-3xl font-bold mb-2">
           🔥 Flash Deals & Bulk Discounts
         </h1>
@@ -66,12 +66,12 @@ export default function FlashDealsPage() {
           {formatTime()}
         </div>
       </div>
-      <div className="flex gap-3 mt-6 flex-wrap justify-center">
+      <div className="flex gap-6 mt-4 flex-wrap justify-start max-w-7xl mx-auto">
         {["All Deals", "Electronics", "Apparel", "Hardware", "FMCG"].map(
           (item, i) => (
             <button
               key={i}
-              className="px-4 py-2 rounded-full bg-white shadow hover:bg-orange-500 hover:text-white transition"
+              className="px-4 py-2 rounded-full border-gray-100 bg-white shadow hover:bg-orange-500 hover:text-white transition"
             >
               {item}
             </button>
@@ -79,7 +79,7 @@ export default function FlashDealsPage() {
         )}
       </div>
 
-      <div className="bg-orange-500 text-white mt-6 p-6 rounded-xl">
+      <div className="bg-orange-500 text-white mt-6 p-6 rounded-xl max-w-7xl mx-auto">
         <h2 className="font-bold mb-4">🏷 Exclusive Coupon Codes</h2>
 
         <div className="grid md:grid-cols-4 gap-4">
@@ -87,7 +87,7 @@ export default function FlashDealsPage() {
             <motion.div
               whileHover={{ scale: 1.05 }}
               key={i}
-              className="bg-white/10 p-4 rounded-lg backdrop-blur"
+              className="bg-white/10 p-4 rounded-lg backdrop-blur bg-amber-200"
             >
               <h3 className="font-bold text-lg">{code}</h3>
               <p className="text-sm opacity-80">Copy code</p>
@@ -96,7 +96,7 @@ export default function FlashDealsPage() {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 max-w-7xl mx-auto">
         <h2 className="font-bold mb-4 text-lg">Today's Best Deals</h2>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
