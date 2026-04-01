@@ -19,7 +19,7 @@ const AdminLayout = ({ children }) => {
     <div className="bg-gray-100 min-h-screen">
       <Sidebar />
       <AdminHeader />
-      <main className="ml-64 mt-16 p-6 h-[calc(100vh-64px)] overflow-y-auto">
+      <main className="ml-54 mt-10 p-6  overflow-y-auto w-12xl">
         {children}
       </main>
     </div>
