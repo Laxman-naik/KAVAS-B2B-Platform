@@ -47,10 +47,10 @@ const TrustedSlide = () => {
   ];
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        <div className="rounded-2xl border bg-gray-100 p-6 sm:p-8">
+        
           <h1 className="text-xl md:text-2xl font-semibold border-l-4 pl-2 border-orange-500 mb-6">
             Our Services
           </h1>
@@ -88,7 +88,7 @@ const TrustedSlide = () => {
         </div>
 
       </div>
-    </div>
+    
   );
 };
 

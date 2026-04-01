@@ -123,7 +123,6 @@ export default function NewArrivals() {
       <div className="max-w-7xl mx-auto px-4">
 
         {/* WHITE CONTAINER */}
-        <div className="bg-white rounded-2xl shadow p-5">
           <div className="flex justify-between">
             {/* HEADER */}
             <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2 mb-5">
@@ -195,7 +194,7 @@ export default function NewArrivals() {
             </button>
 
           </div>
-        </div>
+      
 
       </div>
     </div>
