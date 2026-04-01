@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
-import Sidebar from "@/components/admin/AdminSidebar";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 const AdminLayout = ({ children }) => {
   const router = useRouter();
@@ -18,7 +18,7 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">
 
-      <Sidebar />
+      <AdminSidebar />
       <AdminHeader />
 
       {/* Main Content */}
