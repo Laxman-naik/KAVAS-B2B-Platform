@@ -8,7 +8,7 @@ const app = express();
 // ✅ CORS setup
 app.use(cors({
   origin: "http://localhost:3000",
-  credentials: true, // allow cookies
+  credentials: true,
 }));
 
 // Health check
