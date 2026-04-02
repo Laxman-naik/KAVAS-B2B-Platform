@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const pool = require("./config/db");
 require("dotenv").config();
-const rateLimit = require("express-rate-limit");
 
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
