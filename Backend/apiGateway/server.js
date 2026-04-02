@@ -102,6 +102,9 @@ app.get("/", (req, res) => {
 app.use('/api/auth', createProxyMiddleware({
   target: process.env.AUTH_SERVICE_URL,
   changeOrigin: true,
+  pathRewrite: {
+    '^/api/auth': ''   // 🔥 THIS FIXES EVERYTHING
+  },
 
   onProxyRes: (proxyRes, req, res) => {
     proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
