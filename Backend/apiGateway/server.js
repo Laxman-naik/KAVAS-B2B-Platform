@@ -100,7 +100,7 @@ app.get("/", (req, res) => {
 
 // ✅ AUTH
 app.use('/api/auth', createProxyMiddleware({
-  target: process.env.AUTH_SERVICE_URL,
+  target: process.env.AUTH_URL,
   changeOrigin: true,
   pathRewrite: {
     '^/api/auth': ''   // 🔥 THIS FIXES EVERYTHING
@@ -114,7 +114,7 @@ app.use('/api/auth', createProxyMiddleware({
 
 // ✅ ADMIN
 app.use('/api/admin', createProxyMiddleware({
-  target: process.env.AUTH_SERVICE_URL,
+  target: process.env.AUTH_URL,
   changeOrigin: true,
 
   onProxyRes: (proxyRes) => {
@@ -125,7 +125,7 @@ app.use('/api/admin', createProxyMiddleware({
 
 // ✅ PRODUCT
 app.use('/api/products', createProxyMiddleware({
-  target: process.env.PRODUCT_SERVICE_URL,
+  target: process.env.PRODUCT_URL,
   changeOrigin: true,
 }));
 

@@ -10,8 +10,6 @@ const loginLimiter = rateLimit({
   message: "Too many login attempts, try later"
 });
 
-// const authMiddleware = require("../middleware/authMiddleware");
-
 // ================== AUTH ROUTES ==================
 
 router.post("/register", register);
