@@ -123,7 +123,6 @@ export default function NewArrivals() {
       <div className="max-w-7xl mx-auto px-4">
 
         {/* WHITE CONTAINER */}
-        <div className="bg-white rounded-2xl shadow p-5">
           <div className="flex justify-between">
             {/* HEADER */}
             <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2 mb-5">
@@ -135,19 +134,13 @@ export default function NewArrivals() {
               </span>
             </Link>
           </div>
-
-          {/* MAIN ROW */}
           <div className="flex items-center gap-3">
-
-            {/* LEFT BUTTON */}
             <button
               onClick={scrollLeft}
               className="p-2 bg-gray-100 rounded-full hover:scale-110"
             >
               <ChevronLeft />
             </button>
-
-            {/* PRODUCTS SCROLL */}
             <div
               ref={scrollRef}
               className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar flex-1"
@@ -187,8 +180,6 @@ export default function NewArrivals() {
                 </Link>
               ))}
             </div>
-
-            {/* RIGHT BUTTON */}
             <button
               onClick={scrollRight}
               className="p-2 bg-gray-100 rounded-full hover:scale-110"
@@ -197,7 +188,7 @@ export default function NewArrivals() {
             </button>
 
           </div>
-        </div>
+      
 
       </div>
     </div>

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const FlashDeals = () => {
   return (
-    <div className="bg-gray-50 py-6">
+    <div className="bg-gray-50 py-6 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
 
         {/* WHITE CONTAINER */}

@@ -21,13 +21,14 @@ const categories = [
 
 const Page = () => {
     const [activeCategory, setActiveCategory] = useState("All Automotive");
+    const [liked, setLiked] = useState([]);
+    const [showFilters, setShowFilters] = useState(false); // ✅ NEW
 
     const filteredProducts =
         activeCategory === "All Automotive"
             ? products
             : products.filter((p) => p.category === activeCategory);
 
-    const [liked, setLiked] = useState([]);
     const toggleLike = (id) => {
         setLiked((prev) =>
             prev.includes(id)
@@ -38,18 +39,15 @@ const Page = () => {
 
     return (
         <div className="bg-gray-100 min-h-screen">
+
             {/* HEADER */}
-            <div className="bg-orange-500 px-6 py-6">
+            <div className="bg-orange-500 px-4 sm:px-6 py-5 sm:py-6">
                 <div className="max-w-7xl mx-auto text-white">
-                    {/* <p className="text-sm opacity-90">Home &gt; Trending Products</p> */}
+                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+                        Trending Products
+                    </h1>
 
-                    <div className="flex items-center gap-2 mt-2">
-                        <h1 className="text-2xl md:text-3xl font-bold">
-                            Trending Products
-                        </h1>
-                    </div>
-
-                    <p className="text-sm opacity-90 mt-1">
+                    <p className="text-xs sm:text-sm opacity-90 mt-1">
                         Best-selling wholesale products across all categories
                     </p>
 
@@ -60,13 +58,13 @@ const Page = () => {
             </div>
 
             {/* CATEGORY BAR */}
-            <div className="bg-white border-b px-4 py-3 sticky top-20 z-10">
-                <div className="max-w-7xl mx-auto flex flex-wrap gap-3 items-center">
+            <div className="bg-white border-b px-3 sm:px-4 py-3 sticky top-20 z-10 overflow-x-auto">
+                <div className="max-w-7xl mx-auto flex gap-2 sm:gap-3 items-center whitespace-nowrap">
                     {categories.map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
-                            className={`px-4 py-1.5 rounded-full text-sm border transition flex items-center gap-1
+                            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition
                 ${activeCategory === cat
                                     ? "bg-orange-500 text-white border-orange-500"
                                     : "bg-gray-100 text-gray-700 hover:bg-orange-50"
@@ -78,13 +76,24 @@ const Page = () => {
                 </div>
             </div>
 
+            {/* MOBILE FILTER BUTTON */}
+            <div className="md:hidden px-4 py-3">
+                <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="w-full bg-white border rounded-lg py-2 text-sm font-medium shadow"
+                >
+                    Filters {showFilters ? "▲" : "▼"}
+                </button>
+            </div>
+
             {/* MAIN SECTION */}
-            <div className="max-w-7xl mx-auto px-4 py-6">
-                {/* ✅ WIDTH REDUCED HERE */}
-                <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">
+            <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6">
+
+                {/* RESPONSIVE GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">
 
                     {/* FILTER SIDEBAR */}
-                    <div>
+                    <div className={`${showFilters ? "block" : "hidden"} md:block`}>
                         <div className="bg-white rounded-2xl shadow p-4 sticky top-28 border">
 
                             <div className="flex items-center gap-2 pb-3 border-b">
@@ -154,18 +163,20 @@ const Page = () => {
                         </div>
                     </div>
 
+                    {/* PRODUCTS */}
                     <div>
-                        {/* TOP INFO ROW */}
-                        <div className="flex justify-between items-center mb-5">
-                            <p className="text-gray-600">
+
+                        {/* TOP ROW */}
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-5">
+                            <p className="text-gray-600 text-sm">
                                 Showing{" "}
                                 <span className="font-semibold">
                                     {filteredProducts.length}
                                 </span>{" "}
-                                products in <span className="font-semibold">Automotive</span>
+                                products
                             </p>
 
-                            <select className="border rounded-md px-3 py-1 text-sm">
+                            <select className="border rounded-md px-3 py-1 text-sm w-full sm:w-auto">
                                 <option>Most relevant</option>
                                 <option>Price low to high</option>
                                 <option>Price high to low</option>
@@ -173,17 +184,16 @@ const Page = () => {
                         </div>
 
                         {/* GRID */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
                             {filteredProducts.map((product, index) => (
                                 <Card
                                     key={product.id}
                                     className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden"
                                 >
-                                    <CardContent className="!p-0 !py-0 flex flex-col h-full">
+                                    <CardContent className="!p-0 flex flex-col h-full">
 
-                                        {/* ✅ IMAGE SECTION (FIXED + CLEAN) */}
-                                        <div className="relative h-[200px] bg-gray-100 flex items-center justify-center">
-                                            <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                                        <div className="relative h-[160px] sm:h-[200px] bg-gray-100 flex items-center justify-center">
+                                            <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full z-10">
                                                 {index % 2 === 0 ? "Trending" : "Hot Deal"}
                                             </span>
 
@@ -194,64 +204,44 @@ const Page = () => {
                                             />
                                         </div>
 
-                                        <div className="p-3 flex flex-col flex-1">
-                                            <h3 className="text-sm font-semibold line-clamp-2 leading-snug min-h-[36px]">
+                                        <div className="p-2 sm:p-3 flex flex-col flex-1">
+                                            <h3 className="text-xs sm:text-sm font-semibold line-clamp-2">
                                                 {product.title}
                                             </h3>
 
-                                            <p className="text-[11px] text-orange-600 mt-1">
+                                            <p className="text-[10px] text-orange-600 mt-1">
                                                 {product.category}
                                             </p>
 
-                                            <p className="text-orange-600 font-bold text-base mt-1">
+                                            <p className="text-orange-600 font-bold text-sm sm:text-base mt-1">
                                                 {product.price}
                                             </p>
 
-                                            <p className="text-[11px] text-gray-500">
+                                            <p className="text-[10px] text-gray-500">
                                                 {product.min}
                                             </p>
 
-                                            <p className="text-[11px] text-gray-600 flex items-center gap-1 mt-1">
-                                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                                {product.company}
-                                            </p>
-
-                                            {/* ✅ BUTTONS */}
-                                            <div className="flex items-center gap-2 mt-auto pt-3 border-t">
-                                                <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md">
-                                                    <ShoppingCart size={14} className="mr-1" />
-                                                    Add
+                                            <div className="flex items-center gap-2 mt-auto pt-2">
+                                                <Button className="flex-1 bg-orange-500 text-white text-xs h-8">
+                                                    <ShoppingCart size={12} />
                                                 </Button>
 
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() => toggleLike(product.id)}
-                                                    className={`h-8 w-8 border-orange-200 ${liked.includes(product.id) ? "bg-red-50" : ""
-                                                        }`}
+                                                    className="h-8 w-8"
                                                 >
-                                                    <Heart
-                                                        size={14}
-                                                        className={
-                                                            liked.includes(product.id)
-                                                                ? "text-red-500"
-                                                                : "text-gray-600"
-                                                        }
-                                                        fill={
-                                                            liked.includes(product.id)
-                                                                ? "currentColor"
-                                                                : "none"
-                                                        }
-                                                    />
+                                                    <Heart size={12} />
                                                 </Button>
                                             </div>
                                         </div>
 
                                     </CardContent>
                                 </Card>
-
                             ))}
                         </div>
+
                     </div>
 
                 </div>

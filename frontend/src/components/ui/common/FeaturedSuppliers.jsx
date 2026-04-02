@@ -54,8 +54,8 @@ const FeaturedSuppliers = () => {
   const visibleSuppliers = getVisible();
 
   return (
-    <div className="bg-gray-50 w-full">
-      <div className="max-w-7xl bg-white rounded-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="bg-gray-50 w-full dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
