@@ -349,8 +349,8 @@ exports.login = async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       path: "/",
-      secure: false,
-      sameSite: "none",
+      secure: true,
+      sameSite: "None",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -422,8 +422,8 @@ exports.refreshTokenHandler = async (req, res) => {
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       path: "/", // ✅ FIXED
-      sameSite: "lax",
-      secure: false,
+      sameSite: "None",
+      secure: true,
     });
 
     res.json({ accessToken: newAccessToken });
