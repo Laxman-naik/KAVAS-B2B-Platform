@@ -102,12 +102,22 @@ app.get("/", (req, res) => {
 app.use('/api/auth', createProxyMiddleware({
   target: process.env.AUTH_SERVICE_URL,
   changeOrigin: true,
+
+  onProxyRes: (proxyRes, req, res) => {
+    proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
+    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+  }
 }));
 
 // ✅ ADMIN
 app.use('/api/admin', createProxyMiddleware({
   target: process.env.AUTH_SERVICE_URL,
   changeOrigin: true,
+
+  onProxyRes: (proxyRes) => {
+  proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
+  proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+}
 }));
 
 // ✅ PRODUCT
