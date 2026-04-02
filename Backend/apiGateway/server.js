@@ -16,7 +16,7 @@
 //   pathRewrite: {
 //     '^/api/auth': ''
 //   },
-  
+
 //   onProxyReq: (proxyReq, req) => {
 //     if (req.headers.cookie) {
 //       proxyReq.setHeader("cookie", req.headers.cookie);
@@ -69,15 +69,18 @@ app.get("/", (req, res) => {
 
 // Auth Service (Buyer/Vendor)
 app.use('/api/auth', createProxyMiddleware({
-  target: 'http://localhost:5001', // auth service
+  target: 'http://localhost:5001',
   changeOrigin: true,
   pathRewrite: {
-    '^/api/auth': '' // remove /api/auth before forwarding
+    '^/api/auth': ''
   },
   onProxyReq: (proxyReq, req) => {
-    // forward cookies if any
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
+    }
+
+    if (req.headers.authorization) {
+      proxyReq.setHeader("authorization", req.headers.authorization);
     }
   },
   cookieDomainRewrite: "localhost",
@@ -94,11 +97,12 @@ app.use('/api/admin', createProxyMiddleware({
   onProxyReq: (proxyReq, req) => {
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
+    } if (req.headers.authorization) {
+      proxyReq.setHeader("authorization", req.headers.authorization);
     }
-  },
-  cookieDomainRewrite: "localhost",
-  logLevel: "debug"
-}));
+  }
+},
+));
 
 // Product Service
 app.use("/api/products", createProxyMiddleware({

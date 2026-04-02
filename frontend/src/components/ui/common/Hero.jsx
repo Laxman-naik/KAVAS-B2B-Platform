@@ -105,9 +105,16 @@ const Hero = () => {
             }
         };
 
+        const handleScroll = () => {
+            setShowMenu(false); // ✅ CLOSE MENU ON SCROLL
+        };
+
         document.addEventListener("mousedown", handleClickOutside);
+        window.addEventListener("scroll", handleScroll); // ✅ ADD THIS
+
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            window.removeEventListener("scroll", handleScroll); // ✅ CLEANUP
         };
     }, []);
 
@@ -279,7 +286,7 @@ const Hero = () => {
                         </CardContent>
                     </Card>
                 </div>
-                
+
 
             </div>
         </div>
