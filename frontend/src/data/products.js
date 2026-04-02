@@ -1,6 +1,6 @@
 export const products = [
   {
-    id: "1",
+    id: "t1",
     title: "Wireless Earbuds TWS Pro Bulk",
     price: "₹580/unit",
     min: "Min. 50 units",
@@ -10,7 +10,7 @@ export const products = [
     brand: "TechLink",
   },
   {
-    id: "2",
+    id: "t2",
     title: "Lithium Power Bank 20000mAh OEM",
     price: "₹750/unit",
     min: "Min. 25 units",
@@ -20,7 +20,7 @@ export const products = [
     brand: "EnergyTech",
   },
   {
-    id: "3",
+    id: "t3",
     title: "Polo T-Shirts Corporate Bulk",
     price: "₹210/unit",
     min: "Min. 50 units",
@@ -30,7 +30,7 @@ export const products = [
     brand: "PoloPlus",
   },
   {
-    id: "4",
+    id: "t4",
     title: "SS Bolt Set Stainless Steel Kit",
     price: "₹980/unit",
     min: "Min. 20 units",
@@ -40,7 +40,7 @@ export const products = [
     brand: "BoltCraft",
   },
   {
-    id: "5",
+    id: "t5",
     title: "Hand Sanitizer 500ml Bulk Pack",
     price: "₹78/unit",
     min: "Min. 100 units",
@@ -50,7 +50,7 @@ export const products = [
     brand: "HealthPlus",
   },
   {
-    id: "6",
+    id: "t6",
     title: "Office Chair Ergonomic Mesh",
     price: "₹3600/unit",
     min: "Min. 10 units",
@@ -60,7 +60,7 @@ export const products = [
     brand: "ComfortSeats",
   },
   {
-    id: "7",
+    id: "t7",
     title: "Hybrid Wheat Seeds Certified 50kg",
     price: "₹2700/unit",
     min: "Min. 5 units",
@@ -70,7 +70,7 @@ export const products = [
     brand: "AgroFarm",
   },
   {
-    id: "8",
+    id: "t8",
     title: "Car Floor Mats Universal",
     price: "₹320/unit",
     min: "Min. 30 units",

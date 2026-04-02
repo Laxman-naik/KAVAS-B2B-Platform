@@ -1,154 +1,137 @@
-import React from "react";
-import { motion } from "framer-motion";
+"use client";
+
+import { useEffect, useState } from "react";
 
 const stats = [
-  { title: "GMV THIS MONTH", value: "₹1.24Cr", growth: "+22%" },
-  { title: "AVG ORDER VALUE", value: "₹18,430", growth: "+5%" },
-  { title: "REPEAT BUYERS", value: "68.2%", growth: "+3.1%" },
-  { title: "PLATFORM COMMISSION", value: "₹14.7L", growth: "+11%" },
+  {
+    title: "CONVERSION RATE",
+    value: "18.3%",
+    change: "+1.2%",
+    positive: true,
+  },
+  {
+    title: "AVG ORDER VALUE",
+    value: "₹6,250",
+    change: "+₹320",
+    positive: true,
+  },
+  {
+    title: "QUOTE ACCEPT",
+    value: "62%",
+    change: "-3%",
+    positive: false,
+  },
+  {
+    title: "REPEAT BUYERS",
+    value: "74%",
+    change: "+5%",
+    positive: true,
+  },
 ];
 
-const categories = [
-  { name: "Textiles", value: 72, color: "bg-orange-500" },
-  { name: "Apparel", value: 58, color: "bg-purple-500" },
-  { name: "Electronics", value: 41, color: "bg-blue-500" },
-  { name: "FMCG", value: 33, color: "bg-green-500" },
-  { name: "Hardware", value: 18, color: "bg-red-500" },
-];
-
-const states = [
-  { name: "Maharashtra", value: 65, color: "bg-orange-500" },
-  { name: "Gujarat", value: 54, color: "bg-blue-500" },
-  { name: "Karnataka", value: 43, color: "bg-green-500" },
-  { name: "Tamil Nadu", value: 38, color: "bg-purple-500" },
-  { name: "Delhi", value: 31, color: "bg-red-500" },
-];
-
-const vendors = [
-  { name: "Rajesh Textiles", gmv: "₹28.4L", orders: 284, rating: 4.8 },
-  { name: "Shree Garments", gmv: "₹21.1L", orders: 196, rating: 4.6 },
-  { name: "Modi Fabrics", gmv: "₹18.7L", orders: 142, rating: 4.5 },
+const revenueData = [
+  { name: "Electronics", value: "₹8.2L", percent: 85 },
+  { name: "Machinery", value: "₹6.5L", percent: 65 },
+  { name: "Chemicals", value: "₹4.8L", percent: 48 },
+  { name: "Raw Materials", value: "₹3.2L", percent: 32 },
+  { name: "Textiles", value: "₹1.3L", percent: 15 },
 ];
 
 const buyers = [
-  { name: "Aggarwal Stores", spend: "₹42.3L", orders: 84 },
-  { name: "Global Goods", spend: "₹38.4L", orders: 76 },
-  { name: "Bharat Traders", spend: "₹31.8L", orders: 67 },
+  { name: "Acme Corp", orders: 24, spend: "₹1.42L" },
+  { name: "TechSource", orders: 18, spend: "₹98K" },
+  { name: "BuildMart", orders: 15, spend: "₹76K" },
+  { name: "GlobeTraders", orders: 11, spend: "₹55K" },
+  { name: "ClearPath Co", orders: 9, spend: "₹43K" },
 ];
 
-const Card = ({ children }) => (
-  <motion.div
-    whileHover={{ scale: 1.03 }}
-    className="bg-white rounded-2xl shadow p-5 transition"
-  >
-    {children}
-  </motion.div>
-);
+export default function AnalyticsPage() {
+  const [progress, setProgress] = useState([]);
 
-export default function Dashboard() {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setProgress(revenueData.map((item) => item.percent));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="p-4 md:p-8 bg-gray-100 min-h-screen">
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="min-h-screen bg-[#0b1220] text-white p-6 space-y-6 ">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((item, i) => (
-          <Card key={i}>
-            <p className="text-gray-500 text-sm">{item.title}</p>
-            <h2 className="text-2xl font-bold mt-2">{item.value}</h2>
-            <p className="text-green-500 text-sm mt-1">{item.growth}</p>
-          </Card>
+          <div
+            key={i}
+            className="bg-[#162544] rounded-xl p-5 border border-[#22345a] shadow-lg 
+            transition transform hover:scale-105 cursor-pointer"
+          >
+            <p className="text-sm text-gray-400">{item.title}</p>
+
+            <h2 className="text-3xl font-bold mt-2">{item.value}</h2>
+
+            <p
+              className={`text-sm mt-2 ${
+                item.positive ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {item.positive ? "↑" : "↓"} {item.change}
+            </p>
+          </div>
         ))}
       </div>
 
-      {/* Middle Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-        <Card>
-          <h3 className="font-semibold mb-4">Top Categories by Revenue</h3>
-          {categories.map((c, i) => (
-            <div key={i} className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span>{c.name}</span>
-                <span>{c.value}%</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-[#162544] rounded-xl p-6 border border-[#22345a] shadow-lg">
+          <h3 className="font-semibold mb-5 text-lg">
+            Revenue by category
+          </h3>
+          {revenueData.map((item, i) => (
+            <div key={i} className="mb-4">
+              <div className="flex justify-between text-sm mb-1 text-gray-300">
+                <span>{item.name}</span>
+                <span>{item.value}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${c.value}%` }}
-                  transition={{ duration: 1 }}
-                  className={`h-2 rounded-full ${c.color}`}
-                />
+
+              <div className="w-full bg-[#1f3157] rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-2 rounded-full bg-yellow-400 transition-all duration-1000"
+                  style={{ width: progress[i] ? `${progress[i]}%` : "0%" }}
+                ></div>
               </div>
             </div>
           ))}
-        </Card>
+        </div>
+        <div className="bg-[#162544] rounded-xl p-6 border border-[#22345a] shadow-lg">
+          <h3 className="font-semibold mb-5 text-lg">
+            Top buyers this month
+          </h3>
 
-        <Card>
-          <h3 className="font-semibold mb-4">Top States by Orders</h3>
-          {states.map((s, i) => (
-            <div key={i} className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span>{s.name}</span>
-                <span>{s.value}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${s.value}%` }}
-                  transition={{ duration: 1 }}
-                  className={`h-2 rounded-full ${s.color}`}
-                />
-              </div>
-            </div>
-          ))}
-        </Card>
-      </div>
-
-      {/* Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-        <Card>
-          <h3 className="font-semibold mb-4">Vendor Performance</h3>
           <table className="w-full text-sm">
-            <thead className="text-gray-500">
+            <thead className="text-gray-400 border-b border-[#22345a]">
               <tr>
-                <th className="text-left">Vendor</th>
-                <th>GMV</th>
-                <th>Orders</th>
-                <th>Rating</th>
+                <th className="text-left py-2">COMPANY</th>
+                <th>ORDERS</th>
+                <th className="text-right">SPEND</th>
               </tr>
             </thead>
-            <tbody>
-              {vendors.map((v, i) => (
-                <tr key={i} className="border-t hover:bg-gray-50">
-                  <td className="py-2">{v.name}</td>
-                  <td>{v.gmv}</td>
-                  <td>{v.orders}</td>
-                  <td>⭐ {v.rating}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
 
-        <Card>
-          <h3 className="font-semibold mb-4">Top Buyers</h3>
-          <table className="w-full text-sm">
-            <thead className="text-gray-500">
-              <tr>
-                <th className="text-left">Buyer</th>
-                <th>Spend</th>
-                <th>Orders</th>
-              </tr>
-            </thead>
             <tbody>
               {buyers.map((b, i) => (
-                <tr key={i} className="border-t hover:bg-gray-50">
-                  <td className="py-2">{b.name}</td>
-                  <td>{b.spend}</td>
-                  <td>{b.orders}</td>
+                <tr
+                  key={i}
+                  className="border-b border-[#22345a] hover:bg-[#1f3157] transition cursor-pointer"
+                >
+                  <td className="py-3">{b.name}</td>
+                  <td className="text-center text-gray-300">
+                    {b.orders}
+                  </td>
+                  <td className="text-right text-yellow-400 font-semibold">
+                    {b.spend}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </Card>
+        </div>
       </div>
     </div>
   );

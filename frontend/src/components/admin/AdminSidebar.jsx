@@ -1,154 +1,141 @@
-// import React from 'react'
-
-// const AdminSidebar = () => {
-//   return (
-//     <div className="fixed left-0 top-0 w-64 h-screen bg-[#111] text-white z-40 p-4">AdminSidebar</div>
-//   )
-// }
-
-// export default AdminSidebar
-
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart2, Users, ShoppingCart, ShieldCheck, Store,
-  Package, CreditCard, FileText,  AlertTriangle, Layers, Crown, Settings } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Home,
+  BarChart2,
+  Users,
+  ShoppingCart,
+  FileText,
+  Settings,
+  Shield,
+  Menu,
+} from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 
-const Sidebar = () => {
-  const pathname = usePathname(); 
+const menuItems = [
+  { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+  { title: "Analytics", icon: BarChart2, path: "/admin/analytics" },
+
+  { section: "USERS" },
+  { title: "Buyers", icon: Users, badge: "248", path: "/admin/buyers" },
+  { title: "Vendors", icon: Users, badge: "12", path: "/admin/vendors" },
+
+  { section: "COMMERCE" },
+  { title: "Orders", icon: ShoppingCart, badge: "5", path: "/admin/orders" },
+  { title: "Catalog", icon: FileText, path: "/admin/catalog" },
+  { title: "RFQ / Quotes", icon: FileText, path: "/admin/rfq" },
+
+  { section: "FINANCE" },
+  { title: "Invoices", icon: FileText, path: "/admin/invoices" },
+  { title: "Payouts", icon: FileText, path: "/admin/payouts" },
+
+  { section: "SYSTEM" },
+  { title: "Settings", icon: Settings, path: "/admin/settings" },
+  { title: "Compliance", icon: Shield, path: "/admin/compliance" },
+];
+
+export default function AdminSidebar() {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   return (
-    <div className="fixed left-0 top-0 w-64 h-screen bg-[#111] text-white flex flex-col p-4 z-40">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-orange-500 w-10 h-10 flex items-center justify-center rounded-md font-bold">K</div>
-        <div>
-          <h2 className="font-semibold text-lg">Kavas</h2>
-          <p className="text-xs text-gray-400">Admin Console</p>
+    <>
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setOpen(!open)}
+          className="p-2 bg-[#0F1E33] text-white rounded-lg"
+        >
+          <Menu />
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <div
+        className={`fixed top-0 left-0 h-screen w-60 bg-[#0F1E33] text-white flex flex-col border-r border-gray-700 z-40
+        transform transition-transform duration-300
+        ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      >
+        {/* Scrollable Area */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Logo */}
+          <div className="flex items-center gap-2 p-3">
+            <div className="bg-orange-500 w-9 h-9 rounded-lg flex items-center justify-center font-bold">
+              TH
+            </div>
+            <div>
+              <h1 className="font-semibold text-sm">TradeHub</h1>
+              <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-full">
+                Admin
+              </span>
+            </div>
+          </div>
+
+          {/* Menu */}
+          <div className="mt-3 space-y-2">
+            {menuItems.map((item, index) => {
+              if (item.section) {
+                return (
+                  <p
+                    key={index}
+                    className="text-[10px] text-gray-400 px-3 mt-3"
+                  >
+                    {item.section}
+                  </p>
+                );
+              }
+
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+
+              return (
+                <div
+                  key={index}
+                  onClick={() => {
+                    if (item.path) router.push(item.path);
+                    setOpen(false); // close on mobile
+                  }}
+                  className={`flex items-center justify-between px-3 py-2 mx-2 rounded-lg cursor-pointer transition transform
+                  hover:scale-105 active:scale-95
+                  ${
+                    isActive
+                      ? "bg-[#1E2F4D] border border-orange-400"
+                      : "hover:bg-[#1B2A45]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-gray-300" />
+                    <span className="text-xs">{item.title}</span>
+                  </div>
+
+                  {item.badge && (
+                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bottom Profile */}
+        <div className="p-2 border-t border-gray-700">
+          <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1B2A45] transition transform hover:scale-105 active:scale-95 cursor-pointer">
+            <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
+              AD
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-medium truncate">Admin User</p>
+              <p className="text-[10px] text-gray-400 truncate">
+                Super Admin
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-      <Section title="OVERVIEW">
-        <Item
-          icon={<LayoutDashboard size={18} />}
-          label="Dashboard"
-          href="/admin/dashboard"
-          active={pathname === "/admin/dashboard"}
-        />
-        <Item
-          icon={<BarChart2 size={18} />}
-          label="Analytics"
-          href="/admin/analytics"
-          active={pathname.startsWith("/admin/analytics")}
-        />
-      </Section>
-      <Section title="BUYERS">
-        <Item
-          icon={<Users size={18} />}
-          label="All Buyers"
-          href="/admin/buyers"
-          badge="2"
-          active={pathname.startsWith("/admin/buyers")}
-        />
-        <Item
-          icon={<ShoppingCart size={18} />}
-          label="Buyer Orders"
-          href="/admin/buyer-orders"
-          badge="2"
-          active={pathname.startsWith("/admin/buyer-orders")}
-        />
-        <Item
-          icon={<ShieldCheck size={18} />}
-          label="KYC Approvals"
-          href="/admin/kyc"
-          badge="3"
-          active={pathname.startsWith("/admin/kyc")}
-        />
-      </Section>
-      <Section title="VENDORS">
-        <Item
-          icon={<Store size={18} />}
-          label="All Vendors"
-          href="/admin/vendors"
-          badge="1"
-          active={pathname.startsWith("/admin/vendors")}
-        />
-        <Item
-          icon={<Package size={18} />}
-          label="Products"
-          href="/admin/products"
-          active={pathname.startsWith("/admin/products")}
-        />
-        <Item
-          icon={<CreditCard size={18} />}
-          label="Payouts"
-          href="/admin/payouts"
-          badge="2"
-          active={pathname.startsWith("/admin/payouts")}
-        />
-        <Item
-          icon={<ShieldCheck size={18} />}
-          label="Vendor KYC"
-          href="/admin/vendor-kyc"
-          badge="3"
-          active={pathname.startsWith("/admin/vendor-kyc")}
-        />
-      </Section>
-      <Section title="OPERATIONS">
-        <Item
-          icon={<FileText size={18} />}
-          label="All Orders"
-          href="/admin/orders"
-          active={pathname.startsWith("/admin/orders")}
-        />
-        <Item
-          icon={<AlertTriangle size={18} />}
-          label="Disputes"
-          href="/admin/disputes"
-          badge="2"
-          active={pathname.startsWith("/admin/disputes")}
-        />
-        <Item
-          icon={<Layers size={18} />}
-          label="Categories"
-          href="/admin/categories"
-          active={pathname.startsWith("/admin/categories")}
-        />
-        <Item
-          icon={<Crown size={18} />}
-          label="Memberships"
-          href="/admin/memberships"
-          active={pathname.startsWith("/admin/memberships")}
-        />
-      </Section>
-      <Section title="SETTINGS">
-        <Item
-          icon={<Settings size={18} />}
-          label="Settings"
-          href="/admin/settings"
-          active={pathname.startsWith("/admin/settings")}
-        />
-      </Section>
-    </div>
+    </>
   );
-};
-
-export default Sidebar;
-
-const Section = ({ title, children }) => (
-  <div className="mb-6">
-    <p className="text-xs text-gray-400 mb-2">{title}</p>
-    <div className="space-y-1">{children}</div>
-  </div>
-);
-
-const Item = ({ icon, label, href = "#", badge, active }) => (
-  <Link href={href}>
-    <div
-      className={`flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition
-      ${active ? "bg-orange-500 text-white" : "text-gray-300 hover:bg-gray-800"}`}
-    >
-      <div className="flex items-center gap-3">{icon}<span className="text-sm">{label}</span></div>
-      {badge && (<span className="bg-orange-500 text-xs px-2 py-0.5 rounded-full">{badge}</span>)}
-    </div>
-  </Link>
-);
+}
