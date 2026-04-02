@@ -83,7 +83,7 @@ export const setupInterceptors = (store) => {
 
         try {
           const res = await axios.post(
-            `${API_BASE_URL}/auth/refresh`,
+            `${API_BASE_URL}/api/auth/refresh`,
             {},
             { withCredentials: true }
           );
