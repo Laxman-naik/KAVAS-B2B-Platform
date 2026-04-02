@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const AUTH_SERVICE = process.env.AUTH_SERVICE_URL;
@@ -75,6 +76,11 @@ app.use("/api/products", createProxyMiddleware({
 app.use((req, res) => {
   console.log("Route not found:", req.method, req.url);
   res.status(404).send("Not Found");
+});
+
+app.use((req, res, next) => {
+  console.log("REQ PATH:", req.url);
+  next();
 });
 
 // Start Gateway
