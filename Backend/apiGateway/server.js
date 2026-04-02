@@ -111,7 +111,7 @@ app.use('/api/auth', createProxyMiddleware({
 
 // ✅ ADMIN
 app.use('/api/admin', createProxyMiddleware({
-  target: process.env.AUTH_URL,
+  target:"https://kavas-b2b-platform-3.onrender.com" ,
   changeOrigin: true,
   pathRewrite: { '^/api/admin': '' },
   onProxyRes: (proxyRes) => {
