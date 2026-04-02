@@ -20,8 +20,8 @@ app.use(express.json());
 
 app.use(cookieParser());
 
-app.use("/", authRoutes);
-app.use("/", adminRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 pool.query("SELECT NOW()")
   .then(res => console.log("DB Connected:", res.rows))

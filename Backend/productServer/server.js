@@ -16,5 +16,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-  console.log(`API Server running on ${process.env.PORT}`);
+  console.log(`product Server running on ${process.env.PORT}`);
 });

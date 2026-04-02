@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL;
+const PRODUCT_SERVICE = process.env.PRODUCT_SERVICE_URL;
+
 
 const app = express();
 
@@ -18,28 +21,28 @@ app.get("/", (req, res) => {
 
 // Auth Service (Buyer/Vendor)
 app.use('/api/auth', createProxyMiddleware({
-  target: 'http://localhost:5001', // auth service
+  target: AUTH_SERVICE, // auth service
   changeOrigin: true,
-  pathRewrite: {
-    '^/api/auth': '' // remove /api/auth before forwarding
-  },
+  // pathRewrite: {
+  //   '^/api/auth': '' // remove /api/auth before forwarding
+  // },
   onProxyReq: (proxyReq, req) => {
     // forward cookies if any
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
     }
   },
-  cookieDomainRewrite: "localhost",
+  cookieDomainRewrite: "",
   logLevel: "debug"
 }));
 
 // Admin Service
 app.use('/api/admin', createProxyMiddleware({
-  target: 'http://localhost:5001', // admin service port
+  target: AUTH_SERVICE, // admin service port
   changeOrigin: true,
-  pathRewrite: {
-    '^/api/admin': '' // remove /api/admin before forwarding
-  },
+  // pathRewrite: {
+  //   '^/api/admin': '' // remove /api/admin before forwarding
+  // },
   onProxyReq: (proxyReq, req) => {
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
@@ -51,11 +54,11 @@ app.use('/api/admin', createProxyMiddleware({
 
 // Product Service
 app.use("/api/products", createProxyMiddleware({
-  target: "http://localhost:5002", // product service
+  target: PRODUCT_SERVICE, // product service
   changeOrigin: true,
-  pathRewrite: {
-    '^/api/products': '' // forward paths like /api/products/* -> /* on product service
-  },
+  // pathRewrite: {
+  //   '^/api/products': '' // forward paths like /api/products/* -> /* on product service
+  // },
   onProxyReq: (proxyReq, req) => {
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
