@@ -100,24 +100,32 @@ app.get("/", (req, res) => {
 
 // ✅ AUTH
 app.use('/api/auth', createProxyMiddleware({
-  target: "https://kavas-b2b-platform-3.onrender.com" ,
+  target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
-  pathRewrite: { "^/api/auth": "/api/auth", },
-  onProxyRes: (proxyRes, req, res) => {
-  proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
-  proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+  onProxyReq: (proxyReq, req) => {
+    if (req.headers.cookie) {
+      proxyReq.setHeader("cookie", req.headers.cookie);
+    }
+  },
+  onProxyRes: (proxyRes) => {
+    proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
+    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
   }
 }));
 
 // ✅ ADMIN
 app.use('/api/admin', createProxyMiddleware({
-  target:"https://kavas-b2b-platform-3.onrender.com" ,
+  target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
-  pathRewrite: { "^/api/auth": "/api/admin", },
+  onProxyReq: (proxyReq, req) => {
+    if (req.headers.cookie) {
+      proxyReq.setHeader("cookie", req.headers.cookie);
+    }
+  },
   onProxyRes: (proxyRes) => {
-  proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
-  proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
-}
+    proxyRes.headers['Access-Control-Allow-Origin'] = 'https://kavaswholesalehub.netlify.app';
+    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+  }
 }));
 
 // ✅ PRODUCT

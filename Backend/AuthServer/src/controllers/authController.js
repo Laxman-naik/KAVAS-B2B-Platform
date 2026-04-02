@@ -348,9 +348,9 @@ exports.login = async (req, res) => {
     // ✅ Consistent cookie config
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      path: "/", // ✅ FIXED
+      path: "/",
       secure: false,
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
