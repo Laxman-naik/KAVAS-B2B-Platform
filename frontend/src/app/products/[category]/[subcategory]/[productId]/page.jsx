@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { productsData } from "@/components/ui/product/productData";
+import { productsData } from "@/app/(buyer)/product/productData";
 import { slugify } from "@/utils/slugify";
 
 export default function ProductPage({ params }) {
@@ -10,7 +10,7 @@ export default function ProductPage({ params }) {
   const product = (productsData[category] || []).find(
     (p) =>
       p.id === Number(productId) &&
-      slugify(p.subcategory) === subcategory   // ✅ FIXED MATCH
+      slugify(p.subcategory) === subcategory   
   );
 
   if (!product) {

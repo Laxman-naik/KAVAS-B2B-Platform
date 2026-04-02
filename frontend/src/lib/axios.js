@@ -1,103 +1,110 @@
 // import axios from "axios";
-// import { store } from "@/store/store";
-// import { logout, setToken } from "@/store/slices/authSlice";
 
 // const api = axios.create({
-//   baseURL: "http://localhost:5000/api",
+//   baseURL: process.env.NEXT_PUBLIC_API_URL,
 //   withCredentials: true,
 // });
 
-// // ✅ Attach access token to every request
-// api.interceptors.request.use((config) => {
-//   const token = store.getState().auth.token;
+// export const setupInterceptors = (store) => {
+//   api.interceptors.request.use((config) => {
+//     const token = store.getState().auth.token;
+//     if (token) config.headers.Authorization = `Bearer ${token}`;
+//     return config;
+//   });
 
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
+//   api.interceptors.response.use(
+//     (res) => res,
+//     async (err) => {
+//       const originalRequest = err.config;
 
-//   return config;
-// });
+//       if (err.response?.status === 401 && !originalRequest._retry) {
+//         originalRequest._retry = true;
 
-// // ✅ Handle expired token
-// api.interceptors.response.use(
-//   (res) => res,
-//   async (err) => {
-//     const originalRequest = err.config;
+//         try {
+//           const res = await axios.post(
+//             "http://localhost:5000/api/auth/refresh",
+//             {},
+//             { withCredentials: true }
+//           );
 
-//     if (err.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
+//           const newAccessToken = res.data.accessToken;
 
-//       try {
-//         const res = await axios.post(
-//           "http://localhost:5000/api/auth/refresh",
-//           {},
-//           { withCredentials: true }
-//         );
+//           store.dispatch({ type: "auth/setToken", payload: newAccessToken });
 
-//         const newAccessToken = res.data.accessToken;
-
-//         // 🔥 update redux
-//         store.dispatch(setToken(newAccessToken));
-
-//         // 🔥 retry with new token
-//         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-//         return api(originalRequest);
-//       } catch (refreshError) {
-//         store.dispatch(logout());
-//         return Promise.reject(refreshError);
+//           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+//           return api(originalRequest);
+//         } catch (refreshError) {
+//           store.dispatch({ type: "auth/logout" });
+//           return Promise.reject(refreshError);
+//         }
 //       }
-//     }
 
-//     return Promise.reject(err);
-//   }
-// );
+//       return Promise.reject(err);
+//     }
+//   );
+// };
 
 // export default api;
 
-// src/lib/axios.js
 import axios from "axios";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
 
 export const setupInterceptors = (store) => {
-  api.interceptors.request.use((config) => {
-    const token = store.getState().auth.token;
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
+
+  api.interceptors.request.use(
+    (config) => {
+      const token = store.getState().auth?.token;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   api.interceptors.response.use(
-    (res) => res,
-    async (err) => {
-      const originalRequest = err.config;
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
 
-      if (err.response?.status === 401 && !originalRequest._retry) {
+      if (
+        error.response?.status === 401 &&
+        !originalRequest._retry
+      ) {
         originalRequest._retry = true;
 
         try {
           const res = await axios.post(
-            "http://localhost:5000/api/auth/refresh",
+            `${API_BASE_URL}/api/auth/refresh`,
             {},
             { withCredentials: true }
           );
 
-          const newAccessToken = res.data.accessToken;
+          const newAccessToken = res.data?.accessToken;
 
-          store.dispatch({ type: "auth/setToken", payload: newAccessToken });
+          store.dispatch({
+            type: "auth/setToken",
+            payload: newAccessToken,
+          });
 
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return api(originalRequest);
+
         } catch (refreshError) {
           store.dispatch({ type: "auth/logout" });
           return Promise.reject(refreshError);
         }
       }
 
-      return Promise.reject(err);
+      return Promise.reject(error);
     }
   );
 };

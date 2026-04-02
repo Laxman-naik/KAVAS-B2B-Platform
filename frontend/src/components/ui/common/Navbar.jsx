@@ -44,8 +44,6 @@ const Navbar = () => {
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
-    // if (loading) return null;
-
     const [initialEmail, setInitialEmail] = useState("");
     const dropdownRef = useRef(null);
 
@@ -84,7 +82,7 @@ const Navbar = () => {
 
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
                             <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-                                <img src="/KAVASlogo.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
+                                <img src="/lotussymbol.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
 
@@ -148,6 +146,8 @@ const Navbar = () => {
                                     )}
                                 </div>
                             )}
+
+    
                             <Button
                                 variant="outline"
                                 size="icon"
@@ -157,12 +157,13 @@ const Navbar = () => {
                                         setMode("login");
                                         setOpen(true);
                                     } else {
-                                        setFavOpen(true);
+                                        router.push("/favourites"); 
                                     }
                                 }}
                             >
                                 <Heart color="#9e1a1a" />
                             </Button>
+
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                     <span className="relative">
@@ -176,44 +177,11 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
+
             {mode === "login"
                 ? (<Login open={open} setOpen={setOpen} setMode={setMode} />)
                 : (<Register open={open} setOpen={setOpen} setMode={setMode} />)
             }
-            {favOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setFavOpen(false)}
-                    />
-                    <div className="relative w-full max-w-md sm:max-w-lg mx-3 bg-white rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-4 bg-orange-500 text-white">
-                            <h2 className="flex items-center gap-2 text-lg font-semibold">
-                                ❤️ My Favourites
-                            </h2>
-
-                            <button onClick={() => setFavOpen(false)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <div className="text-center py-12 px-6">
-                            <div className="text-6xl mb-4">❤️</div>
-                            <h3 className="font-semibold">No favourites yet</h3>
-                            <p className="text-sm text-gray-500">
-                                Tap ❤️ on any product to save it here.
-                            </p>
-                        </div>
-                        <div className="flex gap-3 p-4 border-t">
-                            <Button className="flex-1 bg-orange-500 text-white">
-                                Continue Shopping
-                            </Button>
-                            <Button variant="outline">
-                                Clear all
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     )
 }

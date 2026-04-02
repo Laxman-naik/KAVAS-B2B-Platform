@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useState, useMemo } from "react";
-import { productsData } from "@/components/ui/product/productData";
+import { productsData } from "@/app/(buyer)/product/productData";
 import Link from "next/link";
 import { slugify, deslugify } from "@/utils/slugify";
 
