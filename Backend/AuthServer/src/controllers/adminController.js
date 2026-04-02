@@ -3,58 +3,11 @@ const jwt = require("jsonwebtoken");
 const pool = require("../config/db"); // ✅ no .js needed in CommonJS
 
 // ✅ ADMIN LOGIN
-// const adminLogin = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-
-//     const user = await pool.query(
-//       "SELECT * FROM users WHERE email = $1",
-//       [email]
-//     );
-
-//     if (user.rows.length === 0) {
-//       return res.status(401).json({ message: "Invalid email" });
-//     }
-
-//     const admin = user.rows[0];
-
-//     if (admin.role !== "admin") {
-//       return res.status(403).json({ message: "Not an admin" });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, admin.password);
-
-//     if (!isMatch) {
-//       return res.status(401).json({ message: "Invalid password" });
-//     }
-
-//     const token = jwt.sign(
-//       {
-//         id: admin.id,
-//         role: admin.role
-//       },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1d" }
-//     );
-
-//     res.json({
-//       message: "Admin login successful",
-//       token,
-//       user: {
-//         id: admin.id,
-//         email: admin.email,
-//         role: admin.role
-//       }
-//     });
-
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
 const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    console.log(req.body)
 
     // Query the admins table
     const result = await pool.query(

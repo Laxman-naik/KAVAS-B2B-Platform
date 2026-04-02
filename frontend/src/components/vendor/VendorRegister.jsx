@@ -8,7 +8,6 @@ import {
   Truck,
   Star,
   BarChart3,
-  X,
 } from "lucide-react";
 
 const VendorRegister = () => {
@@ -130,13 +129,14 @@ const VendorRegister = () => {
       </section>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-3xl rounded-2xl p-8 relative shadow-xl animate-fadeIn">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        onClick={() => setShowForm(false)}>
+          <div className="bg-white w-full max-w-md rounded-xl p-5 relative shadow-xl animate-fadeIn"
+          onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowForm(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-black"
             >
-              <X />
             </button>
 
             <h2 className="text-xl font-semibold text-center mb-6">

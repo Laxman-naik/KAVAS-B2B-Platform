@@ -6,17 +6,15 @@ export default function TrendingProducts() {
     <div className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-        {/* HEADER */}
         <div className="flex justify-between">
           <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">
             Trending Products
           </h2>
-          <span className="text-orange-500 text-sm cursor-pointer hover:underline">
+          <Link href="/trendingviewall" className="text-orange-500 text-sm cursor-pointer hover:underline">
             View all →
-          </span>
+          </Link>
         </div>
 
-        {/* GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {products.map((item) => (
             <Link
@@ -41,7 +39,6 @@ export default function TrendingProducts() {
 
                 <p className="text-xs text-gray-500">{item.min}</p>
 
-                {/* BRAND */}
                 <div className="flex items-center text-xs gap-1 mt-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <span>{item.brand}</span>

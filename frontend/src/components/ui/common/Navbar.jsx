@@ -82,7 +82,7 @@ const Navbar = () => {
 
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
                             <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
-                                <img src="/KAVASlogo.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
+                                <img src="/lotussymbol.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
 

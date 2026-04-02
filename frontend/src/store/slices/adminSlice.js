@@ -45,9 +45,18 @@ export const logoutAdminThunk = createAsyncThunk(
 // ================== INITIAL STATE ==================
 
 const initialState = {
-  admin: null,
-  token: null,
-  isAdminAuthenticated: false,
+  admin: typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("admin"))
+    : null,
+
+  token: typeof window !== "undefined"
+    ? localStorage.getItem("token")
+    : null,
+
+  isAdminAuthenticated: typeof window !== "undefined"
+    ? !!localStorage.getItem("admin")
+    : false,
+
   loading: false,
   loginLoading: false,
   error: null,
@@ -89,6 +98,8 @@ const adminSlice = createSlice({
         state.token = action.payload.accessToken;
         state.isAdminAuthenticated = true;
         state.loginLoading = false;
+        // localStorage.setItem("admin", JSON.stringify(action.payload.user));
+        // localStorage.setItem("token", action.payload.accessToken);
       })
       .addCase(loginAdminThunk.rejected, (state, action) => {
         state.loginLoading = false;
@@ -115,6 +126,8 @@ const adminSlice = createSlice({
         state.admin = null;
         state.token = null;
         state.isAdminAuthenticated = false;
+        // localStorage.removeItem("admin");
+        // localStorage.removeItem("token");
       });
   },
 });

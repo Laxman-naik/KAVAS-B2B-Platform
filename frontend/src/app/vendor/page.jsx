@@ -1,5 +1,5 @@
 "use client";
-import VendorRegister from "../../components/ui/common/VendorRegister";
+import VendorRegister from "../../components/vendor/VendorRegister";
 
 export default function Page() {
   return <VendorRegister />;

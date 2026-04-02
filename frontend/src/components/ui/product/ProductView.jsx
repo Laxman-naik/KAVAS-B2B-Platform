@@ -2,13 +2,17 @@
 
 import { useParams } from "next/navigation";
 import { products } from "@/data/products";
+import { arrivalProducts } from "@/data/arrivalProducts";
 import { useState } from "react";
 
 export default function ProductView() {
   const params = useParams();
   const id = params?.id;
 
-  const product = products.find((p) => p.id == id);
+  // const product = products.find((p) => p.id == id);
+
+  const allProducts = [...products, ...arrivalProducts];
+  const product = allProducts.find((p) => p.id == id);
 
   const [qty, setQty] = useState(50);
   const [wishlist, setWishlist] = useState(false);
@@ -30,11 +34,7 @@ export default function ProductView() {
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
       <div className="grid lg:grid-cols-2 gap-7 items-start">
-
-        {/* LEFT IMAGE */}
         <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
-
-          {/* ❤️ WISHLIST */}
           <button
             onClick={() => setWishlist(!wishlist)}
             className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
@@ -49,23 +49,16 @@ export default function ProductView() {
             />
           </div>
         </div>
-
-        {/* RIGHT CONTENT */}
         <div className="pt-2 sm:pt-5">
-
-          {/* TITLE */}
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
             {product.title}
           </h1>
-
-          {/* RATING */}
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
             ⭐⭐⭐⭐⭐ <span>4.8</span>{" "}
             <span className="text-blue-500">(124 reviews)</span> •{" "}
             {product.company}
           </p>
 
-          {/* BULK PRICING */}
           <div className="mt-2 bg-yellow-50 border border-yellow-300 rounded-xl p-5 h-auto">
             <p className="text-xs sm:text-sm font-medium mb-2">
               💰 Bulk pricing tiers — save more when you order more:
@@ -113,8 +106,6 @@ export default function ProductView() {
               })}
             </div>
           </div>
-
-          {/* QUANTITY */}
           <div className="flex flex-wrap items-center gap-3 mt-3">
             <span className="text-sm text-black-700">Quantity:</span>
 
@@ -145,13 +136,10 @@ export default function ProductView() {
               Min. {product.min}
             </span>
           </div>
-
-          {/* ✅ DYNAMIC PRICE DISPLAY */}
           {/* <p className="text-lg font-bold text-orange-600 mt-2">
             ₹{activeTier?.price}/unit
           </p> */}
 
-          {/* BUTTONS */}
           <div className="mt-4 space-y-2">
 
             <button className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] text-white py-1.5 rounded-lg font-semibold text-sm sm:text-lg transition duration-200 shadow">
@@ -168,7 +156,6 @@ export default function ProductView() {
 
           </div>
 
-          {/* SPECIFICATIONS */}
           <div className="mt-4 rounded-xl shadow-sm p-3">
             <h3 className="font-semibold text-sm sm:text-md mb-1">
               Product Specifications
@@ -191,7 +178,6 @@ export default function ProductView() {
             </div>
           </div>
 
-          {/* SELLER CARD */}
           <div className="mt-4 bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:shadow-md transition">
             <div className="flex items-center gap-3">
               <div className="bg-blue-900 text-white w-10 h-10 flex items-center justify-center rounded-lg font-bold">
