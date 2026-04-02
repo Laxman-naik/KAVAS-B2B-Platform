@@ -6,7 +6,7 @@ const {register, login, refreshTokenHandler, logout, getMe,} = require("../contr
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 10000,
   message: "Too many login attempts, try later"
 });
 
