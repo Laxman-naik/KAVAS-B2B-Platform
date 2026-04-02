@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const pool = require("./config/db");
 require("dotenv").config();
+const rateLimit = require("express-rate-limit");
 
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
@@ -13,7 +14,10 @@ const app = express();
 
 // app.use(cors());
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "https://kavaswholesalehub.netlify.app"
+  ],
   credentials: true
 }));
 app.use(express.json());
