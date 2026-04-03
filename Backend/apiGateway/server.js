@@ -81,24 +81,24 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const app = express();
 
-// 🔥 DEBUG FIRST
+// DEBUG FIRST
 app.use((req, res, next) => {
   console.log("REQ:", req.method, req.url);
   next();
 });
 
-// ✅ CORS
+// CORS
 app.use(cors({
   origin: ["http://localhost:3000","https://kavaswholesalehub.netlify.app"],
   credentials: true,
 }));
 
-// ✅ Health
+// Health
 app.get("/", (req, res) => {
   res.send("API Gateway Running");
 });
 
-// ✅ AUTH
+// AUTH
 app.use('/api/auth', createProxyMiddleware({
   target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
@@ -119,7 +119,7 @@ app.use('/api/auth', createProxyMiddleware({
   }
 }));
 
-// ✅ ADMIN
+//  ADMIN
 app.use('/api/admin', createProxyMiddleware({
   target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
@@ -134,13 +134,13 @@ app.use('/api/admin', createProxyMiddleware({
   }
 }));
 
-// ✅ PRODUCT
+//  PRODUCT
 app.use('/api/products', createProxyMiddleware({
   target: process.env.PRODUCT_URL,
   changeOrigin: true,
 }));
 
-// ✅ START
+//  START
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`API Gateway running on ${PORT}`);

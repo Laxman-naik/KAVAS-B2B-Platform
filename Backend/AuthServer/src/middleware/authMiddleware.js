@@ -100,22 +100,22 @@ const authMiddleware = (req, res, next) => {
 
     console.log("AUTH HEADER:", authHeader);
 
-    // ✅ 1. From header
+    // 1. From header
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
     }
 
-    // ✅ 2. From cookie (fallback)
+    // 2. From cookie (fallback)
     if (!token && req.cookies?.accessToken) {
       token = req.cookies.accessToken;
     }
 
-    // ❌ No token anywhere
+    // No token anywhere
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // ✅ Verify
+    // Verify
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;

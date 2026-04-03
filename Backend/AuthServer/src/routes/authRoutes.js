@@ -12,14 +12,14 @@ const loginLimiter = rateLimit({
   message: "Too many login attempts, try later"
 });
 
-// ================== AUTH ROUTES ==================
+// AUTH ROUTES 
 
 router.post("/register", register);
 router.post("/login",loginLimiter, login);
 router.post("/refresh", refreshTokenHandler);
 router.post("/logout", logout);
 
-// ================== USER ROUTE ==================
+// USER ROUTE 
 
 router.get("/me", authMiddleware , getMe);
 
