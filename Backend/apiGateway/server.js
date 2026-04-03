@@ -102,6 +102,9 @@ app.get("/", (req, res) => {
 app.use('/api/auth', createProxyMiddleware({
   target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
+  pathRewrite: {
+    '^/api/auth': '' // 🔥 REMOVE prefix
+  },
   onProxyReq: (proxyReq, req) => {
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
@@ -117,6 +120,9 @@ app.use('/api/auth', createProxyMiddleware({
 app.use('/api/admin', createProxyMiddleware({
   target: "https://kavas-b2b-platform-3.onrender.com",
   changeOrigin: true,
+  pathRewrite: {
+    '^/api/admin': '' // 🔥 REMOVE prefix
+  },
   onProxyReq: (proxyReq, req) => {
     if (req.headers.cookie) {
       proxyReq.setHeader("cookie", req.headers.cookie);
