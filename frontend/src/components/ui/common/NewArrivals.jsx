@@ -128,29 +128,25 @@ export default function NewArrivals() {
             <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2 mb-5">
               New Arrivals
             </h2>
-            <span className="text-orange-500 text-sm cursor-pointer hover:underline">
-              View all →
-            </span>
+            <Link href="/newarrivalsviewall">
+              <span className="text-orange-500 text-sm cursor-pointer hover:underline">
+                View all →
+              </span>
+            </Link>
           </div>
-
-          {/* MAIN ROW */}
           <div className="flex items-center gap-3">
-
-            {/* LEFT BUTTON */}
             <button
               onClick={scrollLeft}
               className="p-2 bg-gray-100 rounded-full hover:scale-110"
             >
               <ChevronLeft />
             </button>
-
-            {/* PRODUCTS SCROLL */}
             <div
               ref={scrollRef}
               className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar flex-1"
             >
               {newProducts.map((item) => (
-                <Link key={item.id} href={`/newproducts/${item.id}`}>
+                <Link key={item.id} href={`/product/${item.id}`}>
                   <div className="min-w-55 bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col">
 
                     <div className="relative h-56 overflow-hidden">
@@ -184,8 +180,6 @@ export default function NewArrivals() {
                 </Link>
               ))}
             </div>
-
-            {/* RIGHT BUTTON */}
             <button
               onClick={scrollRight}
               className="p-2 bg-gray-100 rounded-full hover:scale-110"

@@ -12,7 +12,8 @@ export default function ProductView() {
   // const product = products.find((p) => p.id == id);
 
   const allProducts = [...products, ...arrivalProducts];
-  const product = allProducts.find((p) => p.id == id);
+  
+  const product = allProducts.find((p) => String(p.id) === String(id));
 
   const [qty, setQty] = useState(50);
   const [wishlist, setWishlist] = useState(false);

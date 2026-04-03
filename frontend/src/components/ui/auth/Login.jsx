@@ -25,6 +25,8 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loginLoading) return;
+
     const res = await dispatch(loginUserThunk(form));
 
     if (res.meta.requestStatus === "fulfilled") { setOpen(false); } 

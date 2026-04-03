@@ -55,7 +55,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let isInterceptorSetup = false;
+
 export const setupInterceptors = (store) => {
+  if (isInterceptorSetup) return; // 🛑 STOP duplicate setup
+  isInterceptorSetup = true;
 
   api.interceptors.request.use(
     (config) => {
@@ -75,8 +79,13 @@ export const setupInterceptors = (store) => {
     async (error) => {
       const originalRequest = error.config;
 
-      if ( error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes("/auth/refresh")) {
+      if (
+        error.response?.status === 401 &&
+        !originalRequest._retry &&
+        !originalRequest.url.includes("/auth/refresh")
+      ) {
         originalRequest._retry = true;
+
         try {
           const res = await axios.post(
             `${API_BASE_URL}/api/auth/refresh`,
@@ -92,8 +101,8 @@ export const setupInterceptors = (store) => {
           });
 
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
 
+          return api(originalRequest);
         } catch (refreshError) {
           store.dispatch({ type: "auth/logout" });
           return Promise.reject(refreshError);

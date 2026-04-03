@@ -15,14 +15,16 @@ const VendorRegister = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <section className="bg-orange-500 text-white py-20 text-center">
+      <section className="bg-orange-500 text-white py-14 sm:py-20 text-center">
         <div className="flex justify-center mb-4">
           <Factory size={40} />
         </div>
 
-        <h1 className="text-4xl font-bold mb-3">Sell on Kavas</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3">
+          Sell on Kavas
+        </h1>
 
-        <p className="text-lg text-gray-100 mb-6 max-w-xl mx-auto">
+        <p className="text-sm sm:text-base lg:text-lg text-gray-100 mb-6 max-w-xl mx-auto">
           Join 500+ verified vendors reaching 50,000+ B2B buyers across India.
           No listing fee for first 6 months.
         </p>
@@ -35,12 +37,12 @@ const VendorRegister = () => {
         </button>
       </section>
 
-      <section className="px-24 py-12">
+      <section className="px-4 sm:px-6 lg:px-16 xl:px-24 py-12">
         <h2 className="text-lg font-semibold mb-6 border-l-4 border-orange-500 pl-3">
           How to Get Started
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             {
               step: 1,
@@ -78,12 +80,12 @@ const VendorRegister = () => {
         </div>
       </section>
 
-      <section className="px-24 pb-12">
+      <section className="px-4 sm:px-6 lg:px-16 xl:px-24 pb-12">
         <h2 className="text-lg font-semibold mb-6 border-l-4 border-orange-500 pl-3">
           Why Sell on Kavas?
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
               icon: <Users />,
@@ -129,21 +131,26 @@ const VendorRegister = () => {
       </section>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-        onClick={() => setShowForm(false)}>
-          <div className="bg-white w-full max-w-md rounded-xl p-5 relative shadow-xl animate-fadeIn"
-          onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            className="bg-white w-[95%] sm:w-full max-w-md rounded-xl p-5 relative shadow-xl animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setShowForm(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-black"
             >
+              ✕
             </button>
 
             <h2 className="text-xl font-semibold text-center mb-6">
               Register as a Vendor Today
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input
                 placeholder="First Name"
                 className="border rounded-md px-3 py-2"
