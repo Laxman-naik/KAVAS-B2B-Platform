@@ -1,12 +1,18 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
+import { suppliers } from "@/data/suppliers";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite } from "@/store/slices/favouritesSlice";
 
 export default function ProductView() {
   const params = useParams();
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
 
   // const product = products.find((p) => p.id == id);
@@ -16,7 +22,6 @@ export default function ProductView() {
   const product = allProducts.find((p) => String(p.id) === String(id));
 
   const [qty, setQty] = useState(50);
-  const [wishlist, setWishlist] = useState(false);
   const [activeImage, setActiveImage] = useState(null);
 
   const tiers = [
@@ -34,6 +39,35 @@ export default function ProductView() {
 
   const images = [product.image, product.image, product.image];
   const selectedImage = activeImage || product.image;
+  const isWishlisted = favouriteItems.some((item) => String(item._id) === String(product.id));
+
+  const normalizeName = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\b(pvt|pvt\s+ltd|ltd|limited|co|company|india)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const normalizedCompany = normalizeName(product.company);
+
+  const supplier = suppliers.find((s) => {
+    const normalizedSupplier = normalizeName(s.name);
+    if (!normalizedSupplier || !normalizedCompany) return false;
+    return (
+      normalizedSupplier === normalizedCompany ||
+      normalizedSupplier.includes(normalizedCompany) ||
+      normalizedCompany.includes(normalizedSupplier)
+    );
+  });
+
+  const supplierInitials = (name) =>
+    String(name || "")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
 
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
@@ -41,10 +75,11 @@ export default function ProductView() {
         <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
 
           <button
-            onClick={() => setWishlist(!wishlist)}
+            type="button"
+            onClick={() => dispatch(toggleFavourite(product))}
             className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
           >
-            {wishlist ? "❤️" : "🤍"}
+            {isWishlisted ? "❤️" : "🤍"}
           </button>
 
           <div className="overflow-hidden rounded-lg">
@@ -202,17 +237,26 @@ export default function ProductView() {
           <div className="mt-4 bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:shadow-md transition">
             <div className="flex items-center gap-3">
               <div className="bg-blue-900 text-white w-10 h-10 flex items-center justify-center rounded-lg font-bold">
-                TL
+                {supplierInitials(supplier?.name || product.company)}
               </div>
               <div>
                 <p className="font-medium">{product.company}</p>
                 <p className="text-xs text-gray-500">
-                  📍 Bengaluru • Electronics
+                  {supplier ? `📍 ${supplier.location} • ${supplier.category}` : ""}
                 </p>
               </div>
             </div>
 
-            <button className="border px-4 py-2 rounded-lg text-orange-500 border-orange-400 hover:bg-orange-50 hover:scale-105 transition cursor-pointer">
+            <button
+              type="button"
+              onClick={() => supplier && router.push(`/suppliers/${supplier.id}`)}
+              disabled={!supplier}
+              className={`border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer ${
+                supplier
+                  ? "text-orange-500 hover:bg-orange-50 hover:scale-105"
+                  : "text-gray-400 border-gray-300 cursor-not-allowed"
+              }`}
+            >
               View Profile →
             </button>
           </div>

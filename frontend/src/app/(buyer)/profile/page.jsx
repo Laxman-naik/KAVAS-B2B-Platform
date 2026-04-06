@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSelector } from "react-redux";
 import {
     User,
     MapPin,
@@ -27,6 +28,8 @@ import {
 } from "@/components/ui/dialog";
 
 const Page = () => {
+    const authUser = useSelector((state) => state.auth.user);
+
     const [notifications, setNotifications] = useState(true);
     const [promo, setPromo] = useState(true);
 
@@ -42,20 +45,22 @@ const Page = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-                    credentials: "include",
-                });
+                if (!authUser) return;
 
-                if (!res.ok) throw new Error("Not authenticated");
-
-                const data = await res.json();
+                const fullName =
+                    authUser.full_name || authUser.fullName || authUser.name || "";
+                const [parsedFirstName = "", ...rest] = String(fullName)
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean);
+                const parsedLastName = rest.join(" ");
 
                 setUser({
-                    firstName: data.firstName,
-                    lastName: data.lastName,
-                    email: data.email,
-                    phone: data.phone,
-                    role: data.role, // 👈 user or vendor
+                    firstName: authUser.firstName || parsedFirstName || "",
+                    lastName: authUser.lastName || parsedLastName || "",
+                    email: authUser.email || "",
+                    phone: authUser.phone || "",
+                    role: authUser.role,
                 });
             } catch (err) {
                 console.log("User not logged in");
@@ -63,8 +68,7 @@ const Page = () => {
         };
 
         fetchUser();
-    }, []);
-
+    }, [authUser]);
 
     const [addresses, setAddresses] = useState([
         { id: 1, type: "Home", location: "Vijayawada, Andhra Pradesh" },
