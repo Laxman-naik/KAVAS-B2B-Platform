@@ -335,7 +335,7 @@ exports.login = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      path: "/",
+      path: "/api/auth/refresh",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -357,63 +357,90 @@ exports.login = async (req, res) => {
 };
 
 // ================== REFRESH TOKEN ==================
-exports.refreshTokenHandler = async (req, res) => {
+// exports.refreshTokenHandler = async (req, res) => {
+//   try {
+//     const oldToken = req.cookies.refreshToken;
+
+//     if (!oldToken) {
+//       return res.status(401).json({ message: "No token" });
+//     }
+
+//     const decoded = jwt.verify(oldToken, process.env.REFRESH_SECRET);
+
+//     const stored = await redis.get(`refresh:${decoded.id}`);
+
+//     if (!stored) {
+//       return res.status(403).json({ message: "Invalid session" });
+//     }
+
+//     const parsed = JSON.parse(stored);
+
+//     if (parsed.token !== oldToken) {
+//       return res.status(403).json({ message: "Invalid token" });
+//     }
+
+//     // ❌ delete old session
+//     await redis.del(`refresh:${decoded.id}`);
+
+//     // 🔄 generate new tokens
+//     const newRefreshToken = generateRefreshToken({ id: decoded.id });
+//     const newAccessToken = generateAccessToken({ id: decoded.id });
+
+//     // 💾 store new session
+//     await redis.set(
+//       `refresh:${decoded.id}`,
+//       JSON.stringify({
+//         token: newRefreshToken,
+//         device: req.headers["user-agent"],
+//         ip: req.ip,
+//         createdAt: Date.now(),
+//       }),
+//       "EX",
+//       7 * 24 * 60 * 60
+//     );
+
+//     // 🍪 set cookie (FIXED)
+//     res.cookie("refreshToken", newRefreshToken, {
+//       httpOnly: true,
+//       secure: true,
+//       sameSite: "none",
+//       path: "/",
+//       maxAge: 7 * 24 * 60 * 60 * 1000,
+//     });
+
+//     res.json({ accessToken: newAccessToken });
+//     console.log("COOKIE RECEIVED:", req.cookies);
+
+//   } catch (err) {
+//     console.error("REFRESH ERROR:", err);
+//     res.status(403).json({ message: "Invalid token" });
+//   }
+// };
+const refreshTokenHandler = async (req, res) => {
   try {
-    const oldToken = req.cookies.refreshToken;
+    const token = req.cookies.refreshToken;
 
-    if (!oldToken) {
-      return res.status(401).json({ message: "No token" });
+    if (!token) {
+      return res.status(401).json({ message: "No refresh token" });
     }
 
-    const decoded = jwt.verify(oldToken, process.env.REFRESH_SECRET);
+    // verify token
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-    const stored = await redis.get(`refresh:${decoded.id}`);
+    // (optional Redis check if you're using it)
+    const storedToken = await redis.get(decoded.id);
 
-    if (!stored) {
-      return res.status(403).json({ message: "Invalid session" });
+    if (!storedToken || storedToken !== token) {
+      return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const parsed = JSON.parse(stored);
+    // issue new access token
+    const newAccessToken = generateAccessToken(decoded.id);
 
-    if (parsed.token !== oldToken) {
-      return res.status(403).json({ message: "Invalid token" });
-    }
-
-    // ❌ delete old session
-    await redis.del(`refresh:${decoded.id}`);
-
-    // 🔄 generate new tokens
-    const newRefreshToken = generateRefreshToken({ id: decoded.id });
-    const newAccessToken = generateAccessToken({ id: decoded.id });
-
-    // 💾 store new session
-    await redis.set(
-      `refresh:${decoded.id}`,
-      JSON.stringify({
-        token: newRefreshToken,
-        device: req.headers["user-agent"],
-        ip: req.ip,
-        createdAt: Date.now(),
-      }),
-      "EX",
-      7 * 24 * 60 * 60
-    );
-
-    // 🍪 set cookie (FIXED)
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.json({ accessToken: newAccessToken });
-    console.log("COOKIE RECEIVED:", req.cookies);
+    return res.json({ accessToken: newAccessToken });
 
   } catch (err) {
-    console.error("REFRESH ERROR:", err);
-    res.status(403).json({ message: "Invalid token" });
+    return res.status(403).json({ message: "Token expired" });
   }
 };
 
