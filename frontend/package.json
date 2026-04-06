@@ -9,8 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.15.9",
     "@reduxjs/toolkit": "^2.11.2",
-    "axios": "^1.13.6",
+    "axios": "^1.14.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",

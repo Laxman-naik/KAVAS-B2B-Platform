@@ -1,158 +1,137 @@
 "use client";
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { suppliers } from "@/data/suppliers";
 
+const FeaturedSuppliers = () => {
+  const [activeIndex, setActiveIndex] = useState(2);
+  const [range, setRange] = useState(2); // default desktop
 
-const SupplierImages = ({ images }) => {
-  const [startIndex, setStartIndex] = useState(0);
+  const allSuppliers =
+    suppliers.length < 10 ? [...suppliers, ...suppliers] : suppliers;
 
-  const getVisibleImages = () => {
-    const result = [];
-    for (let i = 0; i < 3; i++) {
-      result.push(images[(startIndex + i) % images.length]);
-    }
-    return result;
-  };
+  // Handle responsive range properly
+  useEffect(() => {
+    const updateRange = () => {
+      const width = window.innerWidth;
+
+      if (width < 640) setRange(0);       // mobile → 1 item
+      else if (width < 1024) setRange(1); // tablet → 3 items
+      else setRange(2);                   // desktop → 5 items
+    };
+
+    updateRange();
+    window.addEventListener("resize", updateRange);
+
+    return () => window.removeEventListener("resize", updateRange);
+  }, []);
 
   const nextSlide = () => {
-    setStartIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevSlide = () => {
-    setStartIndex((prev) =>
-      prev === 0 ? images.length - 1 : prev - 1
+    setActiveIndex((prev) =>
+      prev + 1 >= allSuppliers.length ? 0 : prev + 1
     );
   };
 
-  const visibleImages = getVisibleImages();
+  const prevSlide = () => {
+    setActiveIndex((prev) =>
+      prev - 1 < 0 ? allSuppliers.length - 1 : prev - 1
+    );
+  };
+
+  const getVisible = () => {
+    let result = [];
+
+    for (let i = -range; i <= range; i++) {
+      const index =
+        (activeIndex + i + allSuppliers.length) % allSuppliers.length;
+      result.push(allSuppliers[index]);
+    }
+
+    return result;
+  };
+
+  const visibleSuppliers = getVisible();
 
   return (
-    <div className="relative group ">
-      <div className="grid grid-cols-3  gap-2 h-48">
-        <div className="col-span-2 row-span-2 overflow-hidden rounded-xl">
-          <img
-            src={visibleImages[0]}
-            alt="product"
-            className="w-full h-full object-cover transition duration-300 hover:scale-105"
-          />
-        </div>
-        {visibleImages.slice(1).map((img, i) => (
-          <div key={i} className="overflow-hidden rounded-xl">
-            <img
-              src={img}
-              alt="product"
-              className="w-full h-full object-cover transition duration-300 hover:scale-105"
-            />
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={prevSlide}
-        className="absolute top-1/2 left-2 -translate-y-1/2 
-                   bg-white/70 backdrop-blur-md 
-                   hover:bg-white 
-                   p-2 rounded-full shadow-md
-                   opacity-0 group-hover:opacity-100
-                   transition duration-300"
-      >
-        <ChevronLeft size={20} />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute top-1/2 right-2 -translate-y-1/2 
-                   bg-white/70 backdrop-blur-md 
-                   hover:bg-white 
-                   p-2 rounded-full shadow-md
-                   opacity-0 group-hover:opacity-100
-                   transition duration-300"
-      >
-        <ChevronRight size={20} />
-      </button>
-    </div>
-  );
-};
-const FeaturedSuppliers = () => {
-  return (
-    <div className="p-6 md:p-8 lg:p-10 ">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl md:text-2xl font-semibold">
-          Featured Suppliers
-        </h2>
-        <Link href="/suppliers/verified" className="text-sm text-orange-500 hover:underline">
-          View all →
-        </Link>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {suppliers.map((supplier) => (
-          <Card
-            key={supplier.id}
-            className="rounded-2xl shadow-sm hover:shadow-md transition border border-gray-100 hover:border-orange-500 duration-300"
+    <div className="bg-gray-50 w-full dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-lg sm:text-xl md:text-2xl border-l-4 pl-2 font-semibold border-orange-500">
+            Featured Suppliers
+          </h2>
+
+          <Link
+            href="/suppliers/verified"
+            className="text-sm text-orange-500 hover:underline"
           >
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-200 font-bold">
-                  {supplier.name.slice(0, 2)}
-                </div>
-                <div>
-                  <Link
-                          href={`/suppliers/${supplier.id}`}
-                          className="block"
-                        >
-                  <h3 className="font-semibold text-sm md:text-base">
-                    {supplier.name}
-                  </h3>
-                  </Link>
-                  <div className="flex items-center text-xs text-gray-500 gap-1">
-                    <MapPin className="w-3 h-3 text-red-400" />
-                    {supplier.location} • {supplier.category}
-                  </div>
-                </div>
-              </div>
-              <SupplierImages images={supplier.images} />
-              <div className="flex flex-wrap gap-2">
-                {supplier.tags.map((tag, index) => (
-                  <Badge
-                    key={index}
-                    className={`text-xs ${index === 0
-                        ? "bg-green-100 text-green-800"
-                        : "bg-orange-100 text-orange-800"
-                      }`}
+            View all →
+          </Link>
+        </div>
+
+        {/* Carousel */}
+        <div className="relative flex items-center justify-center w-full">
+
+          {/* Left Button */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-1 sm:left-2 z-10 bg-white shadow-md p-2 sm:p-3 rounded-full"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          {/* Items */}
+          <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-12 w-full overflow-hidden">
+            {visibleSuppliers.map((supplier, index) => {
+              const isCenter = index === range;
+
+              return (
+                <Link
+                  key={`${supplier.id}-${index}`}
+                  href={`/suppliers/${supplier.id}`}
+                  className="flex flex-col items-center transition-all duration-300"
+                >
+                  {/* Circle */}
+                  <div
+                    className={`
+                      flex items-center justify-center  rounded-full font-bold
+                      transition-all duration-300
+                      text-center
+                      ${isCenter
+                        ? "w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 text-sm sm:text-lg bg-orange-100 shadow-lg"
+                        : "w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 lg:w-36 lg:h-36 text-xs sm:text-sm bg-gray-200 opacity-80"}
+                    `}
                   >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <hr />
-              <div className="flex items-center text-sm text-gray-600 gap-6">
-                <div>
-                  <p className="font-bold text-black">
-                    {supplier.stats.products}
-                  </p>
-                  <p className="text-xs">Products</p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-1">
-                    <p className="font-bold text-black">
-                      {supplier.stats.rating}
-                    </p>
-                    <Star className="w-4 h-4 fill-black" />
+                    {supplier.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <p className="text-xs">Rating</p>
-                </div>
-                <div>
-                  <p className="font-bold text-black">
-                    {supplier.stats.response}
+
+                  {/* Name */}
+                  <p
+                    className={`
+                      mt-2 sm:mt-3 text-center
+                      ${isCenter
+                        ? "text-xs sm:text-sm font-semibold text-black"
+                        : "text-[10px] sm:text-xs text-gray-500"}
+                    `}
+                  >
+                    {supplier.name}
                   </p>
-                  <p className="text-xs">Response</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Right Button */}
+          <button
+            onClick={nextSlide}
+            className="absolute right-1 sm:right-2 z-10 bg-white shadow-md p-2 sm:p-3 rounded-full"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+        </div>
       </div>
     </div>
   );

@@ -16,8 +16,12 @@ const AdminLayout = ({ children }) => {
   }, []);
 
   return (
+<<<<<<< HEAD
     <div className="bg-[#0B1626] min-h-screen text-white">
 
+=======
+    <div className="bg-gray-100 min-h-screen">
+>>>>>>> 27c0d9df439978ea5b258bed575ca390f2bcb7d0
       <AdminSidebar />
       <AdminHeader />
 
