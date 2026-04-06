@@ -348,6 +348,7 @@ exports.login = async (req, res) => {
       },
       accessToken,
     });
+    console.log("SET COOKIE:", refreshToken);
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
@@ -408,6 +409,7 @@ exports.refreshTokenHandler = async (req, res) => {
     });
 
     res.json({ accessToken: newAccessToken });
+    console.log("COOKIE RECEIVED:", req.cookies);
 
   } catch (err) {
     console.error("REFRESH ERROR:", err);

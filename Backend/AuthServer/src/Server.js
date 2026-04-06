@@ -88,6 +88,11 @@ app.use(
   })
 );
 
+app.options("*", cors({
+  origin: "https://kavaswholesalehub.netlify.app",
+  credentials: true,
+}));
+
 /* ================== BODY + COOKIES ================== */
 app.use(express.json());
 app.use(cookieParser());
