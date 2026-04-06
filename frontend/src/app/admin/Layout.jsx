@@ -41,35 +41,24 @@
 //   );
 // }
 
+"use client";
+
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+
+  const { admin, loading } = useSelector((state) => state.admin);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.AUTH_PUBLIC_API_URL}/admin/me`,
-          {
-            credentials: "include", 
-          }
-        );
-
-        if (!res.ok) {
-          router.push("/admin/login");
-        } else {
-          setLoading(false);
-        }
-      } catch (err) {
-        router.push("/admin/login");
-      }
-    };
-
-    checkAuth();
-  }, [router]);
+    if (!loading && !admin) {
+      router.replace("/admin/login");
+    }
+  }, [loading, admin, router]);
 
   if (loading) return null;
 
