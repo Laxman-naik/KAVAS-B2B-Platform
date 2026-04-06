@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle } from "lucide-react";
 import Login from "../auth/Login";
@@ -15,6 +15,8 @@ const Navbar = () => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
     const [darkMode, setDarkMode] = useState(false);
+    const [dropdown, setDropdown] = useState(false);
+    const dropdownRef = useRef(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -41,6 +43,25 @@ const Navbar = () => {
             localStorage.setItem("theme", "light");
         }
     };
+
+    useEffect(() => {
+        if (!dropdown) return;
+
+        const handleClickOutside = (e) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(e.target)
+            ) {
+                setDropdown(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [dropdown]);
 
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
@@ -75,7 +96,6 @@ const Navbar = () => {
                             <Link
                                 href="/"
                                 onClick={() => {
-                                    router.push("/");
                                     if (typeof window !== "undefined") {
                                         window.scrollTo({ top: 0, behavior: "smooth" });
                                     }
@@ -123,7 +143,7 @@ const Navbar = () => {
                                     <Button
                                         variant="outline"
                                         className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
-                                        onClick={() => setDropdown(!dropdown)}
+                                        onClick={() => setDropdown(prev => !prev)}
                                     >
                                         <User className="h-4 w-4 sm:mr-2" />
                                         <span className="hidden sm:inline">

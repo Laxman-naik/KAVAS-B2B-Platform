@@ -66,7 +66,7 @@ const Page = () => {
                   </div>
 
                   <div className="p-3">
-                    <p className="text-sm font-medium line-clamp-2 min-h-[40px]">
+                    <p className="text-sm font-medium line-clamp-2 min-h-10">
                       {item.name}
                     </p>
                     {item.price && (
