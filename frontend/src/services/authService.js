@@ -73,11 +73,13 @@ const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
 const isBrowser = typeof window !== "undefined";
 
+/* ================== AXIOS INSTANCE ================== */
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
 });
 
+/* ================== REQUEST INTERCEPTOR ================== */
 api.interceptors.request.use((config) => {
   if (isBrowser) {
     const token = localStorage.getItem("token");
@@ -90,6 +92,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/* ================== REFRESH HANDLING ================== */
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -100,6 +103,7 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+/* ================== RESPONSE INTERCEPTOR ================== */
 api.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -107,6 +111,7 @@ api.interceptors.response.use(
 
     if (!originalRequest) return Promise.reject(error);
 
+    // prevent infinite loop
     if (originalRequest.url?.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
@@ -164,14 +169,20 @@ api.interceptors.response.use(
   }
 );
 
-export const registerUserAPI = (data) => api.post("/api/auth/register", data);
+/* ================== AUTH APIs ================== */
+export const registerUserAPI = (data) =>
+  api.post("/api/auth/register", data);
 
-export const loginUser = (data) => api.post("/api/auth/login", data);
+export const loginUser = (data) =>
+  api.post("/api/auth/login", data);
 
-export const refreshToken = () => api.post("/api/auth/refresh");
+export const refreshToken = () =>
+  api.post("/api/auth/refresh");
 
-export const logoutUser = () => api.post("/api/auth/logout");
+export const logoutUser = () =>
+  api.post("/api/auth/logout");
 
-export const getMe = () => api.get("/api/auth/me");
+export const getMe = () =>
+  api.get("/api/auth/me");
 
 export default api;
