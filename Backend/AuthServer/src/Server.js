@@ -75,10 +75,8 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
-/* ================== TRUST PROXY (IMPORTANT FOR RENDER) ================== */
 app.set("trust proxy", 1);
 
-/* ================== CORS FIX (CRITICAL) ================== */
 app.use(
   cors({
     origin: "https://kavaswholesalehub.netlify.app",
@@ -88,31 +86,21 @@ app.use(
   })
 );
 
-app.options("*", cors({
-  origin: "https://kavaswholesalehub.netlify.app",
-  credentials: true,
-}));
-
-/* ================== BODY + COOKIES ================== */
 app.use(express.json());
 app.use(cookieParser());
 
-/* ================== ROUTES ================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
-/* ================== DB CHECK ================== */
 pool
   .query("SELECT NOW()")
   .then((res) => console.log("DB Connected:", res.rows))
   .catch((err) => console.error("DB Error:", err));
 
-/* ================== TEST ROUTES ================== */
 app.get("/", (req, res) => {
   res.send("Server running");
 });
 
-/* ================== SERVER ================== */
 app.listen(process.env.PORT, () => {
   console.log(`Server running on ${process.env.PORT}`);
 });
