@@ -29,7 +29,7 @@ const {
   getAdminProfile,
 } = require("../controllers/adminController");
 
-const authorizeRoles = require("../middleware/roleMiddleware/authorizeRoles");
+const authorizeRoles = require("../middleware/roleMiddleware");
 
 // Public
 router.post("/login", adminLogin);
