@@ -48,7 +48,7 @@
 
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = "https://kavas-b2b-platform-1.onrender.com";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -58,7 +58,7 @@ const api = axios.create({
 let isInterceptorSetup = false;
 
 export const setupInterceptors = (store) => {
-  if (isInterceptorSetup) return; // 🛑 STOP duplicate setup
+  if (isInterceptorSetup) return;
   isInterceptorSetup = true;
 
   api.interceptors.request.use(
