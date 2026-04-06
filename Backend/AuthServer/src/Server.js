@@ -79,29 +79,25 @@ const roleMiddleware = require("./middleware/roleMiddleware");
 
 const app = express();
 
-/* ================== TRUST PROXY (IMPORTANT FOR RENDER) ================== */
 app.set("trust proxy", 1);
 
-/* ================== CORS CONFIG (NETLIFY SAFE) ================== */
 app.use(
   cors({
     origin: [
       "http://localhost:3000",
       "https://kavaswholesalehub.netlify.app"
     ],
-    credentials: true,
+    withCredentials: true
   })
 );
 
-/* ================== MIDDLEWARE ================== */
 app.use(express.json());
 app.use(cookieParser());
 
-/* ================== ROUTES ================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 
-/* ================== DB CHECK ================== */
+
 pool
   .query("SELECT NOW()")
   .then((res) => console.log("DB Connected:", res.rows))
@@ -138,12 +134,10 @@ app.get(
   }
 );
 
-/* ================== HEALTH CHECK ================== */
 app.get("/", (req, res) => {
   res.send("Server running 🚀");
 });
 
-/* ================== START SERVER ================== */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
