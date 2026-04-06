@@ -8,6 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
+const slugify = (text) =>
+    text.toLowerCase().replace(/ & /g, "and").replace(/\s+/g, "-");
+
 const Hero = () => {
 
     const categories = [
@@ -111,27 +114,32 @@ const Hero = () => {
         <div className="bg-gray-50 min-h-screen dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-                {/* ✅ TOP SECTION (ONLY categories + slider) */}
+                {/* TOP SECTION */}
                 <div className="flex flex-col lg:flex-row gap-6 ">
 
                     {/* CATEGORY */}
-                    <div
-                        className="relative w-full lg:w-60"
-                        onMouseEnter={() => setShowMenu(true)}
-                        onMouseLeave={() => setShowMenu(false)}
-                    >
-                        <aside className= " w-full lg:w-60 bg-white dark:bg-gray-800 rounded-2xl shadow-md border dark:border-gray-700 overflow-hidden">
-                            <div className="flex items-center gap-2 px-3 py-3 bg-orange-500 text-white font-semibold">
+                    <div className="relative w-full lg:w-60">
+                        <aside className=" w-full lg:w-60 bg-white dark:bg-gray-800 rounded-2xl shadow-md border dark:border-gray-700 overflow-hidden">
+
+                            {/* CLICK TO OPEN */}
+                            <div
+                                className="flex items-center gap-2 px-3 py-3 bg-orange-500 text-white font-semibold cursor-pointer"
+                                onClick={() => setShowMenu((prev) => !prev)}
+                            >
                                 <Menu className="w-5 h-5" />
                                 All Categories
                             </div>
+
                             <ul>
                                 {categories.map((cat, i) => {
                                     const Icon = cat.icon;
                                     return (
                                         <li
                                             key={i}
-                                            onMouseEnter={() => setActiveCategory(cat)}
+                                            onClick={() => {
+                                                setActiveCategory(cat);
+                                                setShowMenu(true);
+                                            }}
                                             className="flex items-center justify-between px-3 py-2 border-b hover:bg-orange-50 cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3">
@@ -143,10 +151,11 @@ const Hero = () => {
                                     );
                                 })}
                             </ul>
+
                             <div
-  className={`hidden lg:flex absolute left-full top-0 ml-2 bg-white dark:bg-gray-800 shadow-lg rounded-2xl border z-50 transition-all duration-300
-  ${showMenu ? "opacity-100 translate-x-0" : "opacity-0 translate-x-5 pointer-events-none"}`}
->
+                                className={`absolute left-full top-0 ml-2 bg-white dark:bg-gray-800 shadow-lg rounded-2xl border z-50 transition-all duration-300
+                                ${showMenu ? "opacity-100 translate-x-0 flex" : "opacity-0 translate-x-5 pointer-events-none hidden lg:flex"}`}
+                            >
 
                                 {/* SUBCATEGORIES */}
                                 <div className="w-60 border-r p-4">
@@ -154,9 +163,15 @@ const Hero = () => {
 
                                     {activeCategory.subcategories.length > 0 ? (
                                         activeCategory.subcategories.map((sub, i) => (
-                                            <p key={i} className="text-sm py-1 hover:text-orange-500 cursor-pointer">
-                                                {sub}
-                                            </p>
+                                            <Link
+                                                key={i}
+                                                href={`/products/${slugify(activeCategory.name)}/${slugify(sub)}`}
+                                                onClick={() => setShowMenu(false)}
+                                            >
+                                                <p className="text-sm py-1 hover:text-orange-500 cursor-pointer">
+                                                    {sub}
+                                                </p>
+                                            </Link>
                                         ))
                                     ) : (
                                         <p className="text-sm text-gray-400">No subcategories</p>
@@ -165,21 +180,27 @@ const Hero = () => {
 
                                 {/* PRODUCTS */}
                                 <div className="w-72 p-4 flex flex-col">
+
                                     <h3 className="font-semibold mb-3">Top Products</h3>
 
-                                    <div className="flex-1">
-                                        {activeCategory.products && activeCategory.products.length > 0 ? (
-                                            activeCategory.products.slice(0, 8).map((prod, i) => (
-                                                <p key={i} className="text-sm py-1 hover:text-orange-500 cursor-pointer">
-                                                    {prod}
-                                                </p>
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-gray-400">No products available</p>
-                                        )}
-                                    </div>
+                                    <Link href={`/products/${slugify(activeCategory.name)}`}>
+                                        <div className="flex-1">
+                                            {activeCategory.products && activeCategory.products.length > 0 ? (
+                                                activeCategory.products.slice(0, 8).map((prod, i) => (
+                                                    <p key={i} className="text-sm py-1 hover:text-orange-500 cursor-pointer">
+                                                        {prod}
+                                                    </p>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-gray-400">No products available</p>
+                                            )}
+                                        </div>
+                                    </Link>
 
-                                    <Link href={`/products/${activeCategory.name.toLowerCase()}`}>
+                                    <Link
+                                        href={`/products/${slugify(activeCategory.name)}`}
+                                        onClick={() => setShowMenu(false)}
+                                    >
                                         <button className="mt-4 bg-orange-500 hover:bg-orange-600 ml-10 text-white py-3 px-4 rounded-md text-sm font-medium transition">
                                             View All Products →
                                         </button>
@@ -189,7 +210,7 @@ const Hero = () => {
                         </aside>
                     </div>
 
-                    {/* SLIDER */}
+                    {/* SLIDER (UNCHANGED) */}
                     <div className="relative w-full overflow-hidden">
                         <div
                             className="flex transition-transform duration-500"
@@ -217,6 +238,7 @@ const Hero = () => {
                                             <p className="mt-3 text-gray-200">
                                                 {slide.desc}
                                             </p>
+
                                             <div className="mt-3 space-y-1">
                                                 {[
                                                     ["🔥 Electronics Deals", "Bulk Laptop Offers", "Headphones Sale"],
@@ -254,6 +276,8 @@ const Hero = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* VIDEOS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
                     <div className="rounded-xl relative overflow-hidden hover:scale-[1.01] hover:shadow-xl">
@@ -286,6 +310,7 @@ const Hero = () => {
 
                 </div>
 
+                {/* STATS */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 border border-amber-400 bg-yellow-50 p-4 py-5 rounded-xl shadow text-center">
                     <div><h3 className="font-bold text-xl text-orange-500">500+</h3><p>Verified Vendors</p></div>
                     <div><h3 className="font-bold text-xl text-orange-500">12,000+</h3><p>Products Listed</p></div>
