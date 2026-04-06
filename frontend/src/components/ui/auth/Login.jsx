@@ -52,7 +52,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
         {/* Logo */}
         <div className="flex justify-center sm:justify-start mb-2">
           <Image
-            src="/KAVASlogo.png"
+            src="/lotussymbol.png"
             alt="Kavas Logo"
             width={120}
             height={60}
