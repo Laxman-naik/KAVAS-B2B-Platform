@@ -6,8 +6,8 @@ const { adminLogin, adminLogout, getAdminDashboard, getAllUsers, getUserById, up
 const router = express.Router();
 
 // AUTH ROUTES
-router.post("/auth/login", adminLogin);
-router.post("/auth/logout", adminLogout);
+router.post("/login", adminLogin);
+router.post("/logout", adminLogout);
 
 // ADMIN ROUTES
 router.get("/dashboard", authMiddleware, authorizeRoles("admin"), getAdminDashboard);

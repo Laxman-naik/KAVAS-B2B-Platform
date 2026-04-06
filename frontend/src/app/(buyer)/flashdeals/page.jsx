@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 
 const deals = [
   {
@@ -53,53 +52,102 @@ export default function FlashDealsPage() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen px-4">
-      <div className="bg-orange-500 text-white p-5 text-center relative overflow-hidden">
-        <h1 className="text-3xl font-bold mb-2"> 🔥 Flash Deals & Bulk Discounts </h1>
-        <p className="text-sm opacity-80"> Exclusive wholesale discounts — limited time only </p>
-        <div className="mt-4 bg-white/20 inline-block px-6 py-3 rounded-lg text-xl font-bold">{formatTime()}</div>
-      </div>
-      <div className="flex gap-6 mt-4 flex-wrap justify-start max-w-7xl mx-auto">
-        {["All Deals", "Electronics", "Apparel", "Hardware", "FMCG"].map(
-          (item, i) => (
-            <button key={i} className="px-4 py-2 rounded-full border-gray-100 bg-white shadow hover:bg-orange-500 hover:text-white transition">
-              {item}
-            </button>
-          ),
-        )}
-      </div>
-      <div className="bg-orange-500 text-white mt-6 p-6 rounded-xl max-w-7xl mx-auto">
-        <h2 className="font-bold mb-4">🏷 Exclusive Coupon Codes</h2>
-        <div className="grid md:grid-cols-4 gap-4">
-          {["BULK500", "FIRST15", "PRO20", "KAVAS30"].map((code, i) => (
-            <motion.div whileHover={{ scale: 1.05 }} key={i} className="bg-white/10 p-4 rounded-lg backdrop-blur bg-amber-200">
-              <h3 className="font-bold text-lg">{code}</h3>
-              <p className="text-sm opacity-80">Copy code</p>
-            </motion.div>
-          ))}
+    <div className="bg-gray-100 min-h-screen">
+
+      {/* HEADER (FULL WIDTH) */}
+      <div className="bg-orange-500 text-white w-full p-5 text-center relative overflow-hidden">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+          🔥 Flash Deals & Bulk Discounts
+        </h1>
+        <p className="text-xs sm:text-sm opacity-80">
+          Exclusive wholesale discounts — limited time only
+        </p>
+        <div className="mt-4 bg-white/20 inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-lg sm:text-xl font-bold">
+          {formatTime()}
         </div>
       </div>
-      <div className="mt-6 max-w-7xl mx-auto">
-        <h2 className="font-bold mb-4 text-lg">Today's Best Deals</h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-5 gap-5">
+
+      {/* CATEGORY */}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex gap-3 mt-4 overflow-x-auto no-scrollbar">
+          {["All Deals", "Electronics", "Apparel", "Hardware", "FMCG", "Healthcare"].map(
+            (item, i) => (
+              <button
+                key={i}
+                className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm whitespace-nowrap rounded-full border-gray-100 bg-white shadow hover:bg-orange-500 hover:text-white transition"
+              >
+                {item}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* COUPONS */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <div className="bg-orange-500 text-white rounded-xl p-4 sm:p-6">
+          <h2 className="font-bold mb-4 text-sm sm:text-base">
+            Exclusive Coupon Codes
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            {["BULK500", "FIRST15", "PRO20", "KAVAS30"].map((code, i) => (
+              <div
+                key={i}
+                className="bg-white/10 p-3 sm:p-4 rounded-lg backdrop-blur hover:scale-105 transition-transform duration-200"
+              >
+                <h3 className="font-bold text-base sm:text-lg">{code}</h3>
+                <p className="text-xs sm:text-sm opacity-80">Copy code</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* PRODUCTS */}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        <h2 className="font-bold mb-4 text-base sm:text-lg">
+          Today's Best Deals
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-5 gap-4 sm:gap-5">
           {deals.map((item, i) => (
-            <motion.div key={i} whileHover={{ y: -8 }} className="bg-white rounded-xl shadow overflow-hidden group">
+            <div
+              key={i}
+              className="bg-white rounded-xl shadow overflow-hidden group hover:-translate-y-2 hover:scale-105 transition-all duration-300"
+            >
               <div className="relative">
-                <img src={item.img} alt="" className="h-60 w-full object-cover group-hover:scale-110 transition duration-300"/>
-                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">{item.discount} OFF</span>
+                <img
+                  src={item.img}
+                  alt=""
+                  className="h-52 sm:h-52 md:h-60 w-full object-cover group-hover:scale-110 transition duration-300"
+                />
+                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                  {item.discount} OFF
+                </span>
               </div>
-              <div className="p-4">
+
+              <div className="p-3 sm:p-4">
                 <h3 className="text-sm font-semibold">{item.title}</h3>
+
                 <div className="mt-2">
-                  <span className="text-orange-600 font-bold"> ₹{item.price}</span>
-                  <span className="line-through text-gray-400 ml-2 text-sm">₹{item.oldPrice}</span>
+                  <span className="text-orange-600 font-bold">
+                    ₹{item.price}
+                  </span>
+                  <span className="line-through text-gray-400 ml-2 text-xs sm:text-sm">
+                    ₹{item.oldPrice}
+                  </span>
                 </div>
-                <button className="mt-3 w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition">Add to Cart</button>
+
+                <button className="mt-3 w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition text-sm">
+                  Add to Cart
+                </button>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }

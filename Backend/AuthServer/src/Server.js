@@ -13,15 +13,17 @@ const app = express();
 
 // app.use(cors());
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost:3000","https://kavasb2bwholesalehub.netlify.app",
+  ],
   credentials: true
 }));
 app.use(express.json());
 
 app.use(cookieParser());
 
-app.use("/", authRoutes);
-app.use("/", adminRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 pool.query("SELECT NOW()")
   .then(res => console.log("DB Connected:", res.rows))

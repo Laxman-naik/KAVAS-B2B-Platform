@@ -4,7 +4,7 @@ let redis;
 
 if (!global._redis) {
   global._redis = new Redis(process.env.REDIS_URL, {
-    tls: {}, // ✅ REQUIRED for Upstash
+    tls: {}, // REQUIRED for Upstash
     maxRetriesPerRequest: 1, // reduce noise
     enableReadyCheck: false,
   });

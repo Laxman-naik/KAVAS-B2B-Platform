@@ -1,113 +1,86 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { clearFavourites, removeFavourite, hydrateFavourites } from "@/store/slices/favouritesSlice";
 
-// ✅ Hook
-export const useFavourites = () => {
-  const [favourites, setFavourites] = useState([]);
-
-  // Load from localStorage
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("favourites")) || [];
-    setFavourites(saved);
-  }, []);
-
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem("favourites", JSON.stringify(favourites));
-  }, [favourites]);
-
-  const clearFavourites = () => setFavourites([]);
-
-  return {
-    favourites,
-    setFavourites,
-    clearFavourites,
-  };
-};
-
-// ✅ Page Component
 const Page = () => {
   const router = useRouter();
-  const { favourites, clearFavourites } = useFavourites();
+  const dispatch = useDispatch();
+  const favourites = useSelector((state) => state.favourites.items);
 
-  // ✅ Dynamic close function
-  const handleClose = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
-  };
+  React.useEffect(() => {
+    dispatch(hydrateFavourites());
+  }, [dispatch]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="bg-gray-100 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-semibold">My Wishlist {favourites.length} items</h2>
 
-      {/* 🔹 BACKDROP */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
-      />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => dispatch(clearFavourites())}>
+              Clear all
+            </Button>
 
-      {/* 🔹 MODAL */}
-      <div className="relative w-full max-w-md sm:max-w-lg mx-3 bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-        {/* 🔹 HEADER */}
-        <div className="flex items-center justify-between px-5 py-4 bg-orange-500 text-white">
-          <h2 className="text-lg font-semibold">❤️ My Favourites</h2>
-
-          <button onClick={handleClose}>
-            <X size={18} />
-          </button>
+            <Button variant="outline" onClick={() => router.push("/")}
+              className="hidden sm:inline-flex"
+            >
+              Continue Shopping
+            </Button>
+          </div>
         </div>
 
-        {/* 🔹 CONTENT (MIDDLE LIST ITEMS) */}
-        <div className="p-4 max-h-80 overflow-y-auto">
+        <div className="mt-6">
           {favourites.length === 0 ? (
-            <div className="text-center py-10">
+            <div className="text-center py-16 bg-white rounded-2xl border">
               <div className="text-5xl mb-3">❤️</div>
               <p className="text-gray-500">No favourites yet</p>
             </div>
           ) : (
-            favourites.map((item) => (
-              <div
-                key={item._id}
-                className="flex items-center gap-3 border-b py-3"
-              >
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-14 h-14 object-cover rounded"
-                />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+              {favourites.map((item) => (
+                <div key={item._id} className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => dispatch(removeFavourite(item._id))}
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow"
+                      aria-label="Remove from wishlist"
+                    >
+                      <X size={16} />
+                    </button>
 
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">{item.name}</p>
-                  {item.price && (
-                    <p className="text-xs text-gray-500">
-                      ₹ {item.price}
+                    <Link href={`/product/${item._id}`} className="block">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-44 sm:h-52 object-cover"
+                      />
+                    </Link>
+                  </div>
+
+                  <div className="p-3">
+                    <p className="text-sm font-medium line-clamp-2 min-h-10">
+                      {item.name}
                     </p>
-                  )}
+                    {item.price && (
+                      <p className="text-sm font-semibold mt-1">{item.price}</p>
+                    )}
+
+                    <Button className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9">
+                      MOVE TO CART
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
-        </div>
-
-        {/* 🔹 FOOTER */}
-        <div className="flex gap-3 p-4 border-t">
-          <Button
-            className="flex-1 bg-orange-500 text-white"
-            onClick={() => router.push("/")}
-          >
-            Continue Shopping
-          </Button>
-
-          <Button variant="outline" onClick={clearFavourites}>
-            Clear all
-          </Button>
         </div>
       </div>
     </div>

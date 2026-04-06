@@ -1,22 +1,27 @@
 "use client";
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle, X } from "lucide-react";
+import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle } from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
+import { hydrateFavourites } from "@/store/slices/favouritesSlice";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
+    const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
     const [darkMode, setDarkMode] = useState(false);
-    const [favOpen, setFavOpen] = useState(false);
-    const router = useRouter(); 
+    const [dropdown, setDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+    const router = useRouter();
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     useEffect(() => {
         const saved = localStorage.getItem("theme");
 
@@ -39,17 +44,14 @@ const Navbar = () => {
         }
     };
 
-    const [dropdown, setDropdown] = useState(false);
-
-    const dispatch = useDispatch();
-    const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-
-    const [initialEmail, setInitialEmail] = useState("");
-    const dropdownRef = useRef(null);
-
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        if (!dropdown) return;
+
+        const handleClickOutside = (e) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(e.target)
+            ) {
                 setDropdown(false);
             }
         };
@@ -59,13 +61,23 @@ const Navbar = () => {
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, []);
+    }, [dropdown]);
+
+    const dispatch = useDispatch();
+    const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
+    const favouritesCount = useSelector((state) => state.favourites.items.length);
+
+    const [initialEmail, setInitialEmail] = useState("");
+
+    useEffect(() => {
+        dispatch(hydrateFavourites());
+    }, [dispatch]);
 
     const handleLogout = () => {
         dispatch(logoutUserThunk());
-        setDropdown(false);
     };
 
+    if (!mounted) return null;
     return (
         <>
             <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
@@ -81,7 +93,14 @@ const Navbar = () => {
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
 
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
-                            <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                            <Link
+                                href="/"
+                                onClick={() => {
+                                    if (typeof window !== "undefined") {
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }
+                                }}
+                            >
                                 <img src="/lotussymbol.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
@@ -106,63 +125,104 @@ const Navbar = () => {
                             <Button onClick={toggleDarkMode} variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
                                 {darkMode ? "☀️" : "🌙"}
                             </Button>
-
                             {!isAuthenticated ? (
-                                <Button variant="outline" className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3" onClick={() => { setMode("login"); setInitialEmail(""); setOpen(true); }}>
+                                <Button
+                                    variant="outline"
+                                    className="h-9 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+                                    onClick={() => {
+                                        setMode("login");
+                                        setInitialEmail("");
+                                        setOpen(true);
+                                    }}
+                                >
                                     Sign in
                                 </Button>
                             ) : (
                                 <div className="relative" ref={dropdownRef}>
+                                    {/* User Button */}
                                     <Button
                                         variant="outline"
                                         className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
-                                        onClick={() => setDropdown(!dropdown)}
+                                        onClick={() => setDropdown(prev => !prev)}
                                     >
                                         <User className="h-4 w-4 sm:mr-2" />
                                         <span className="hidden sm:inline">
                                             {(user?.full_name || user?.name || "User").split(" ")[0]}
                                         </span>
                                     </Button>
+
+                                    {/* Dropdown */}
                                     {dropdown && (
                                         <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden dark:bg-gray-900 dark:text-white">
-                                            <div className="px-4 py-3 text-xs bg-orange-500 text-white dark:bg-gray-900 border-b font-bold justify-center flex">
+
+                                            {/* Email Header */}
+                                            <div className="px-4 py-3 text-xs bg-orange-500 text-white border-b font-bold flex justify-center">
                                                 {user?.email}
                                             </div>
+
+                                            {/* Menu Items */}
                                             <div className="flex flex-col">
-                                                <Link href="/profile" onClick={() => setDropdown(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b">
+                                                <Link
+                                                    href="/profile"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
                                                     <User className="h-4 w-4" /> Profile
                                                 </Link>
-                                                <Link href="/buyerorders" onClick={() => setDropdown(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b">
+
+                                                <Link
+                                                    href="/buyerorders"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
                                                     <Package className="h-4 w-4" /> Orders
                                                 </Link>
-                                                <Link href="/help" onClick={() => setDropdown(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b">
+
+                                                <Link
+                                                    href="/help"
+                                                    onClick={() => setDropdown(false)}
+                                                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 border-b"
+                                                >
                                                     <HelpCircle className="h-4 w-4" /> Help
                                                 </Link>
-                                                <button onClick={handleLogout} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500">
+
+                                                <button
+                                                    onClick={handleLogout}
+                                                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-500"
+                                                >
                                                     <User className="h-4 w-4" /> Logout
                                                 </button>
                                             </div>
                                         </div>
                                     )}
+
                                 </div>
                             )}
 
-    
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex"
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        setMode("login");
-                                        setOpen(true);
-                                    } else {
-                                        router.push("/favourites"); 
-                                    }
-                                }}
-                            >
-                                <Heart color="#9e1a1a" />
-                            </Button>
+                            <div className="relative inline-block">
+
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-9 w-9 sm:h-10 sm:w-10 hidden sm:flex"
+                                    onClick={() => {
+                                        if (!isAuthenticated) {
+                                            setMode("login");
+                                            setOpen(true);
+                                        } else {
+                                            router.push("/favourites");
+                                        }
+                                    }}
+                                >
+                                    <Heart color="#9e1a1a" />
+                                </Button>
+
+                                {favouritesCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                                        {favouritesCount}
+                                    </span>
+                                )}
+                            </div>
 
                             <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
                                 <Link href="/cart" className="flex items-center gap-1 sm:gap-2">

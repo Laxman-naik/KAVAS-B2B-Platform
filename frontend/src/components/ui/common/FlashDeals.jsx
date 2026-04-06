@@ -8,16 +8,11 @@ const FlashDeals = () => {
   return (
     <div className="bg-gray-50 py-6 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4">
-
-        {/* WHITE CONTAINER */}
         <div className="rounded-2xl bg-orange-500 shadow p-5">
-
-          {/* MAIN FLASH DEAL BOX */}
           <div className="w-full rounded-2xl  text-white p-5 sm:p-6 lg:p-8 
                           flex flex-col lg:flex-row items-start lg:items-center 
                           justify-between gap-6">
 
-            {/* LEFT CONTENT */}
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="text-yellow-300" />

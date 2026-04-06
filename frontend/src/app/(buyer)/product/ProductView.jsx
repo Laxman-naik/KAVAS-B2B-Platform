@@ -1,23 +1,29 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
+import { suppliers } from "@/data/suppliers";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite } from "@/store/slices/favouritesSlice";
 
 export default function ProductView() {
   const params = useParams();
-  const id = params?.id;
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const favouriteItems = useSelector((state) => state.favourites.items);
+  const id = params?.Id ?? params?.id;
 
   // const product = products.find((p) => p.id == id);
 
   const allProducts = [...products, ...arrivalProducts];
-  const product = allProducts.find((p) => p.id == id);
+  
+  const product = allProducts.find((p) => String(p.id) === String(id));
 
   const [qty, setQty] = useState(50);
-  const [wishlist, setWishlist] = useState(false);
+  const [activeImage, setActiveImage] = useState(null);
 
-  // ✅ BULK TIERS LOGIC
   const tiers = [
     { min: 50, max: 99, price: 580 },
     { min: 100, max: 249, price: 539 },
@@ -31,24 +37,74 @@ export default function ProductView() {
     return <div className="p-10 text-center">Product Not Found</div>;
   }
 
+  const images = [product.image, product.image, product.image];
+  const selectedImage = activeImage || product.image;
+  const isWishlisted = favouriteItems.some((item) => String(item._id) === String(product.id));
+
+  const normalizeName = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\b(pvt|pvt\s+ltd|ltd|limited|co|company|india)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const normalizedCompany = normalizeName(product.company);
+
+  const supplier = suppliers.find((s) => {
+    const normalizedSupplier = normalizeName(s.name);
+    if (!normalizedSupplier || !normalizedCompany) return false;
+    return (
+      normalizedSupplier === normalizedCompany ||
+      normalizedSupplier.includes(normalizedCompany) ||
+      normalizedCompany.includes(normalizedSupplier)
+    );
+  });
+
+  const supplierInitials = (name) =>
+    String(name || "")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
+
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
       <div className="grid lg:grid-cols-2 gap-7 items-start">
         <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
+
           <button
-            onClick={() => setWishlist(!wishlist)}
+            type="button"
+            onClick={() => dispatch(toggleFavourite(product))}
             className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
           >
-            {wishlist ? "❤️" : "🤍"}
+            {isWishlisted ? "❤️" : "🤍"}
           </button>
 
           <div className="overflow-hidden rounded-lg">
             <img
-              src={product.image}
-              className="w-full h-[250px] sm:h-[320px] lg:h-[420px] object-contain transition duration-500 hover:scale-105"
+              src={selectedImage}
+              className="w-full h-62.5 sm:h-80 lg:h-105 object-contain"
             />
           </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            {images.map((img, idx) => (
+              <button
+                key={`${img}-${idx}`}
+                type="button"
+                onClick={() => setActiveImage(img)}
+                className={`rounded-lg border bg-white p-2 overflow-hidden ${
+                  selectedImage === img ? "border-orange-500" : "border-gray-200"
+                }`}
+              >
+                <img src={img} className="w-full h-16 object-contain" />
+              </button>
+            ))}
+          </div>
         </div>
+
         <div className="pt-2 sm:pt-5">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
             {product.title}
@@ -74,7 +130,7 @@ export default function ProductView() {
                   <div
                     key={i}
                     onClick={() => setQty(tier.min)}
-                    className={`rounded-lg px-3 py-2 w-[95px] sm:w-[110px] text-center transition hover:scale-105
+                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105
                       ${
                         isActive
                           ? "border-2 border-orange-500 bg-white"
@@ -181,17 +237,26 @@ export default function ProductView() {
           <div className="mt-4 bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 hover:shadow-md transition">
             <div className="flex items-center gap-3">
               <div className="bg-blue-900 text-white w-10 h-10 flex items-center justify-center rounded-lg font-bold">
-                TL
+                {supplierInitials(supplier?.name || product.company)}
               </div>
               <div>
                 <p className="font-medium">{product.company}</p>
                 <p className="text-xs text-gray-500">
-                  📍 Bengaluru • Electronics
+                  {supplier ? `📍 ${supplier.location} • ${supplier.category}` : ""}
                 </p>
               </div>
             </div>
 
-            <button className="border px-4 py-2 rounded-lg text-orange-500 border-orange-400 hover:bg-orange-50 hover:scale-105 transition cursor-pointer">
+            <button
+              type="button"
+              onClick={() => supplier && router.push(`/suppliers/${supplier.id}`)}
+              disabled={!supplier}
+              className={`border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer ${
+                supplier
+                  ? "text-orange-500 hover:bg-orange-50 hover:scale-105"
+                  : "text-gray-400 border-gray-300 cursor-not-allowed"
+              }`}
+            >
               View Profile →
             </button>
           </div>
