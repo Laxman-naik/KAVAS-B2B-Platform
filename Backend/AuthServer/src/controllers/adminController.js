@@ -3,63 +3,192 @@ const jwt = require("jsonwebtoken");
 const pool = require("../config/db"); // ✅ no .js needed in CommonJS
 
 // ✅ ADMIN LOGIN
+// const adminLogin = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     console.log(req.body)
+
+//     // Query the admins table
+//     const result = await pool.query(
+//       "SELECT * FROM admins WHERE email = $1",
+//       [email]
+//     );
+
+//     if (result.rows.length === 0) {
+//       return res.status(401).json({ message: "Invalid email or password" });
+//     }
+
+//     const admin = result.rows[0];
+
+//     // Check role
+//     if (admin.role !== "admin") {
+//       return res.status(403).json({ message: "Not an admin" });
+//     }
+
+//     // Compare password
+//     const isMatch = await bcrypt.compare(password, admin.password_hash);
+//     if (!isMatch) {
+//       return res.status(401).json({ message: "Invalid email or password" });
+//     }
+
+//     // Generate JWT token
+//     const accessToken = jwt.sign(
+//       { id: admin.id, role: admin.role },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1d" }
+//     );
+
+//     res.json({
+//       message: "Admin login successful",
+//       accessToken,
+//       user: {
+//         id: admin.id,
+//         email: admin.email,
+//         role: admin.role,
+//         full_name: admin.full_name
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Admin login error:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log(req.body)
-
-    // Query the admins table
     const result = await pool.query(
       "SELECT * FROM admins WHERE email = $1",
       [email]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const admin = result.rows[0];
 
-    // Check role
-    if (admin.role !== "admin") {
-      return res.status(403).json({ message: "Not an admin" });
-    }
-
-    // Compare password
     const isMatch = await bcrypt.compare(password, admin.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token
+    // 🔥 ACCESS TOKEN (short life)
     const accessToken = jwt.sign(
       { id: admin.id, role: admin.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "15m" }
     );
 
+    // 🔥 REFRESH TOKEN (long life)
+    const refreshToken = jwt.sign(
+      { id: admin.id },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // ✅ Store refresh token in DB (or Redis better)
+    await pool.query(
+      "UPDATE admins SET refresh_token=$1 WHERE id=$2",
+      [refreshToken, admin.id]
+    );
+
+    // ✅ Set cookies
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true, 
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
-      message: "Admin login successful",
-      accessToken,
+      message: "Login successful",
       user: {
         id: admin.id,
         email: admin.email,
         role: admin.role,
-        full_name: admin.full_name
       },
     });
-  } catch (error) {
-    console.error("Admin login error:", error);
+
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+const refreshTokenHandler = async (req, res) => {
+  const token = req.cookies.refreshToken;
+
+  if (!token) return res.status(401).json({ message: "No refresh token" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
+    const result = await pool.query(
+      "SELECT * FROM admins WHERE id=$1",
+      [decoded.id]
+    );
+
+    const admin = result.rows[0];
+
+    if (admin.refresh_token !== token) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: admin.id, role: admin.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.json({ message: "Token refreshed" });
+
+  } catch (err) {
+    return res.status(403).json({ message: "Expired refresh token" });
+  }
+};
+
 // ✅ ADMIN LOGOUT
+// const adminLogout = async (req, res) => {
+//   try {
+//     res.json({ message: "Logout successful" });
+//   } catch (error) {
+//     res.status(500).json({ message: "Logout error" });
+//   }
+// };
+
 const adminLogout = async (req, res) => {
   try {
-    res.json({ message: "Logout successful" });
-  } catch (error) {
+    const token = req.cookies.refreshToken;
+
+    if (token) {
+      await pool.query(
+        "UPDATE admins SET refresh_token=NULL WHERE refresh_token=$1",
+        [token]
+      );
+    }
+
+    res.clearCookie("accessToken");
+    res.clearCookie("refreshToken");
+
+    res.json({ message: "Logged out" });
+
+  } catch (err) {
     res.status(500).json({ message: "Logout error" });
   }
 };
