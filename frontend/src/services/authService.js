@@ -1,7 +1,11 @@
+
 import axios from "axios";
 
 const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
+const isBrowser = typeof window !== "undefined";
+
+/* ================== AXIOS INSTANCE ================== */
 const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
@@ -9,26 +13,25 @@ const api = axios.create({
 
 /* ================== REQUEST INTERCEPTOR ================== */
 api.interceptors.request.use((config) => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (isBrowser) {
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   return config;
 });
 
-/* ================== REFRESH CONTROL ================== */
+/* ================== REFRESH HANDLING ================== */
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
+  failedQueue.forEach((p) => {
+    error ? p.reject(error) : p.resolve(token);
   });
-
   failedQueue = [];
 };
 
@@ -38,19 +41,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (!originalRequest || originalRequest._retry) {
-      return Promise.reject(error);
-    }
+    if (!originalRequest) return Promise.reject(error);
 
-    // ❌ DO NOT refresh refresh endpoint
+    // prevent infinite loop
     if (originalRequest.url?.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      /* ================== QUEUE REQUESTS ================== */
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -63,7 +63,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // IMPORTANT: use SAME instance (axios OR api, not mixed)
         const res = await axios.post(
           `${BASE_URL}/api/auth/refresh`,
           {},
@@ -72,9 +71,11 @@ api.interceptors.response.use(
 
         const newToken = res.data?.accessToken;
 
-        if (!newToken) throw new Error("No access token received");
+        if (!newToken) throw new Error("No access token from refresh");
 
-        localStorage.setItem("token", newToken);
+        if (isBrowser) {
+          localStorage.setItem("token", newToken);
+        }
 
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
@@ -86,9 +87,9 @@ api.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
 
-        localStorage.removeItem("token");
-
-        window.location.href = "/login";
+        if (isBrowser) {
+          localStorage.removeItem("token");
+        }
 
         return Promise.reject(err);
       } finally {
@@ -100,7 +101,7 @@ api.interceptors.response.use(
   }
 );
 
-/* ================== AUTH API FUNCTIONS ================== */
+/* ================== AUTH APIs ================== */
 export const registerUserAPI = (data) =>
   api.post("/api/auth/register", data);
 
