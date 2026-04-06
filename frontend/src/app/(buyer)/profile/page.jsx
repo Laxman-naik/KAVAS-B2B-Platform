@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
     User,
     MapPin,
@@ -278,10 +279,31 @@ const Page = () => {
 
                         <Card className="rounded-2xl">
                             <CardContent className="p-4 space-y-3">
-                                <Button variant="outline" className="w-full justify-start"><Package size={16} /> My Orders</Button>
-                                <Button variant="outline" className="w-full justify-start"><Heart size={16} /> Favourites</Button>
-                                <Button variant="outline" className="w-full justify-start"><Shield size={16} /> Help Centre</Button>
-                                <Button variant="destructive" className="w-full justify-start"><LogOut size={16} /> Sign Out</Button>
+
+                                <Button asChild variant="outline" className="w-full justify-start">
+                                    <Link href="/buyerorders">
+                                        <Package size={16} /> My Orders
+                                    </Link>
+                                </Button>
+
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Link href="/favourites">
+                                    <Heart size={16} /> Favourites
+                                    </Link>
+                                </Button>
+
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Link href="/help">
+                                    <Shield size={16} /> Help Centre
+                                    </Link>
+                                </Button>
+
+                                <Button variant="destructive" className="w-full justify-start">
+                                    
+                                    <LogOut size={16} /> Sign Out
+                                    
+                                </Button>
+
                             </CardContent>
                         </Card>
                     </div>

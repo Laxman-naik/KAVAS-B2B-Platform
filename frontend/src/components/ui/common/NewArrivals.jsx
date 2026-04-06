@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const newProducts = [
   {
-    id: "1",
+    id: "n1",
     title: "Laptop Cooling Pad USB Wholesale",
     price: "₹420/unit",
     min: "Min. 30 units",
@@ -16,7 +16,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3",
   },
   {
-    id: "2",
+    id: "n2",
     title: "Over-Ear Headphones Noise Cancel",
     price: "₹1,100/unit",
     min: "Min. 20 units",
@@ -26,7 +26,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1518444065439-e933c06ce9cd",
   },
   {
-    id: "3",
+    id: "n3",
     title: "Denim Jeans Regular Fit Bulk",
     price: "₹320/unit",
     min: "Min. 50 units",
@@ -36,7 +36,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1542272604-787c3835535d",
   },
   {
-    id: "4",
+    id: "n4",
     title: "Woolen Muffler Winter Wholesale",
     price: "₹72/unit",
     min: "Min. 200 units",
@@ -46,7 +46,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1519681393784-d120267933ba",
   },
   {
-    id: "5",
+    id: "n5",
     title: "Adjustable Wrench Set Professional",
     price: "₹380/unit",
     min: "Min. 30 units",
@@ -56,7 +56,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837",
   },
   {
-    id: "6",
+    id: "n6",
     title: "Antibacterial Soap Bar 144pcs",
     price: "₹22/unit",
     min: "Min. 144 units",
@@ -66,7 +66,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1585238342028-4b2cfcab8d6d",
   },
   {
-    id: "7",
+    id: "n7",
     title: "IPA Solvent 99.9% Industrial 25L",
     price: "₹3,100/unit",
     min: "Min. 5 units",
@@ -76,7 +76,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1581091215367-59ab6b5b6f6d",
   },
   {
-    id: "8",
+    id: "n8",
     title: "Corrugated Box 12×10×8 Wholesale",
     price: "₹21/unit",
     min: "Min. 500 units",
@@ -86,7 +86,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519",
   },
   {
-    id: "9",
+    id: "n9",
     title: "Fresh Onions Farm Bulk",
     price: "₹44/unit",
     min: "Min. 500 units",
@@ -96,7 +96,7 @@ const newProducts = [
     image: "https://images.unsplash.com/photo-1582515073490-dc0a3a1f3e02",
   },
   {
-    id: "10",
+    id: "n10",
     title: "Industrial Pump Centrifugal 2HP",
     price: "₹9,800/unit",
     min: "Min. 2 units",

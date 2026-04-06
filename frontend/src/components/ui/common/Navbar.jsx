@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, ShoppingCart, Moon, Heart, ChevronDown, User, Package, HelpCircle, X } from "lucide-react";
@@ -11,12 +10,16 @@ import { logoutUserThunk } from "@/store/slices/authSlice";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
+    const [mounted, setMounted] = useState(false);
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState("login");
     const [darkMode, setDarkMode] = useState(false);
     const [favOpen, setFavOpen] = useState(false);
     const router = useRouter();
 
+    useEffect(() => {
+        setMounted(true); 
+    }, []);
     useEffect(() => {
         const saved = localStorage.getItem("theme");
 
@@ -40,7 +43,6 @@ const Navbar = () => {
     };
 
     const [dropdown, setDropdown] = useState(false);
-
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
 
@@ -66,6 +68,7 @@ const Navbar = () => {
         setDropdown(false);
     };
 
+    if (!mounted) return null;
     return (
         <>
             <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
@@ -81,7 +84,15 @@ const Navbar = () => {
                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
 
                         <div className="flex items-center shrink-0 h-16 sm:h-20">
-                            <Link href="/" onClick={() => { router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                            <Link
+                                href="/"
+                                onClick={() => {
+                                    router.push("/");
+                                    if (typeof window !== "undefined") {
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }
+                                }}
+                            >
                                 <img src="/lotussymbol.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
@@ -112,7 +123,7 @@ const Navbar = () => {
                                     Sign in
                                 </Button>
                             ) : (
-                                <div className="relative" >
+                                <div className="relative">
                                     <Button
                                         variant="outline"
                                         className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
@@ -219,7 +230,6 @@ const Navbar = () => {
 
                                 </div>
                             )}
-
 
                             <Button
                                 variant="outline"

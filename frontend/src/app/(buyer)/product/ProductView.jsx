@@ -7,7 +7,7 @@ import { useState } from "react";
 
 export default function ProductView() {
   const params = useParams();
-  const id = params?.id;
+  const id = params?.Id ?? params?.id;
 
   // const product = products.find((p) => p.id == id);
 
@@ -17,8 +17,8 @@ export default function ProductView() {
 
   const [qty, setQty] = useState(50);
   const [wishlist, setWishlist] = useState(false);
+  const [activeImage, setActiveImage] = useState(null);
 
-  // ✅ BULK TIERS LOGIC
   const tiers = [
     { min: 50, max: 99, price: 580 },
     { min: 100, max: 249, price: 539 },
@@ -32,10 +32,14 @@ export default function ProductView() {
     return <div className="p-10 text-center">Product Not Found</div>;
   }
 
+  const images = [product.image, product.image, product.image];
+  const selectedImage = activeImage || product.image;
+
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
       <div className="grid lg:grid-cols-2 gap-7 items-start">
         <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
+
           <button
             onClick={() => setWishlist(!wishlist)}
             className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
@@ -45,11 +49,27 @@ export default function ProductView() {
 
           <div className="overflow-hidden rounded-lg">
             <img
-              src={product.image}
-              className="w-full h-[250px] sm:h-[320px] lg:h-[420px] object-contain transition duration-500 hover:scale-105"
+              src={selectedImage}
+              className="w-full h-62.5 sm:h-80 lg:h-105 object-contain"
             />
           </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            {images.map((img, idx) => (
+              <button
+                key={`${img}-${idx}`}
+                type="button"
+                onClick={() => setActiveImage(img)}
+                className={`rounded-lg border bg-white p-2 overflow-hidden ${
+                  selectedImage === img ? "border-orange-500" : "border-gray-200"
+                }`}
+              >
+                <img src={img} className="w-full h-16 object-contain" />
+              </button>
+            ))}
+          </div>
         </div>
+
         <div className="pt-2 sm:pt-5">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
             {product.title}
@@ -75,7 +95,7 @@ export default function ProductView() {
                   <div
                     key={i}
                     onClick={() => setQty(tier.min)}
-                    className={`rounded-lg px-3 py-2 w-[95px] sm:w-[110px] text-center transition hover:scale-105
+                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105
                       ${
                         isActive
                           ? "border-2 border-orange-500 bg-white"
