@@ -29,12 +29,12 @@
 const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     try {
-      // ❌ No user (authMiddleware missing)
+      //  No user (authMiddleware missing)
       if (!req.user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // ❌ Role not allowed
+      // Role not allowed
       if (!allowedRoles.includes(req.user.role)) {
         return res.status(403).json({ message: "Access denied" });
       }

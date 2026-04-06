@@ -52,31 +52,70 @@
 
 // module.exports = authMiddleware;
 
+// const jwt = require("jsonwebtoken");
+
+// const authMiddleware = (req, res, next) => {
+//   try {
+//     const authHeader = req.headers.authorization;
+//     console.log("AUTH HEADER:", req.headers.authorization);
+
+//     // ❌ No header
+//     if (!authHeader) {
+//       return res.status(401).json({ message: "No token provided" });
+//     }
+
+//     // ❌ Wrong format
+//     if (!authHeader.startsWith("Bearer ")) {
+//       return res.status(401).json({ message: "Invalid token format" });
+//     }
+
+//     // ✅ Extract token
+//     const token = authHeader.split(" ")[1];
+
+//     if (!token) {
+//       return res.status(401).json({ message: "Token missing" });
+//     }
+
+//     // ✅ Verify
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     req.user = decoded;
+
+//     next();
+
+//   } catch (err) {
+//     return res.status(401).json({ message: "Invalid or expired token" });
+//   }
+// };
+
+// module.exports = authMiddleware;
+
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    console.log("AUTH HEADER:", req.headers.authorization);
+    let token;
 
-    // ❌ No header
-    if (!authHeader) {
+    const authHeader = req.headers.authorization;
+
+    console.log("AUTH HEADER:", authHeader);
+
+    // 1. From header
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    // 2. From cookie (fallback)
+    if (!token && req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
+
+    // No token anywhere
+    if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    // ❌ Wrong format
-    if (!authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Invalid token format" });
-    }
-
-    // ✅ Extract token
-    const token = authHeader.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({ message: "Token missing" });
-    }
-
-    // ✅ Verify
+    // Verify
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
