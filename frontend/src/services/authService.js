@@ -71,45 +71,47 @@ import axios from "axios";
 
 const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
+/* SAFE check for browser */
+const isBrowser = typeof window !== "undefined";
+
 /* AXIOS INSTANCE */
 const api = axios.create({
-  baseURL: BASE_URL, withCredentials: true, });
+  baseURL: BASE_URL,
+  withCredentials: true,
+});
 
-/* REQUEST INTERCEPTOR (token from localStorage)*/
+/* REQUEST INTERCEPTOR */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  if (isBrowser) {
+    const token = localStorage.getItem("token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   return config;
 });
 
-/* RESPONSE INTERCEPTOR (AUTO REFRESH TOKEN) */
+/* REFRESH CONTROL */
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+  failedQueue.forEach((p) => {
+    error ? p.reject(error) : p.resolve(token);
   });
-
   failedQueue = [];
 };
 
+/* RESPONSE INTERCEPTOR */
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
     const originalRequest = error.config;
 
-    if (!originalRequest) {
-      return Promise.reject(error);
-    }
+    if (!originalRequest) return Promise.reject(error);
+
     if (originalRequest.url?.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
@@ -118,16 +120,12 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = "Bearer " + token;
-            return api(originalRequest);
-          })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        });
       }
 
       isRefreshing = true;
@@ -141,9 +139,11 @@ api.interceptors.response.use(
 
         const newToken = res.data?.accessToken;
 
-        if (!newToken) throw new Error("No refresh token received");
+        if (!newToken) throw new Error("No access token from refresh");
 
-        localStorage.setItem("token", newToken);
+        if (isBrowser) {
+          localStorage.setItem("token", newToken);
+        }
 
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
@@ -154,7 +154,11 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        localStorage.removeItem("token");
+
+        if (isBrowser) {
+          localStorage.removeItem("token");
+        }
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -166,7 +170,6 @@ api.interceptors.response.use(
 );
 
 /* AUTH APIs */
-
 export const registerUserAPI = (data) =>
   api.post("/api/auth/register", data);
 

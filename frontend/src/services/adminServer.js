@@ -33,33 +33,39 @@ import axios from "axios";
 
 const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
+const isBrowser = typeof window !== "undefined";
+
 /* AXIOS INSTANCE */
-const adminApi = axios.create({ baseURL: BASE_URL, withCredentials: true,});
+const adminApi = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+});
 
-/* REQUEST INTERCEPTOR (Attach admin token) */
+/* REQUEST INTERCEPTOR */
 adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("admin_token");
+  if (isBrowser) {
+    const token = localStorage.getItem("admin_token");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   return config;
 });
 
-/* RESPONSE INTERCEPTOR (AUTO REFRESH ADMIN TOKEN) */
+/* REFRESH CONTROL */
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
+  failedQueue.forEach((p) => {
+    error ? p.reject(error) : p.resolve(token);
   });
-
   failedQueue = [];
 };
 
+/* RESPONSE INTERCEPTOR */
 adminApi.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -77,12 +83,10 @@ adminApi.interceptors.response.use(
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return adminApi(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return adminApi(originalRequest);
+        });
       }
 
       isRefreshing = true;
@@ -98,7 +102,9 @@ adminApi.interceptors.response.use(
 
         if (!newToken) throw new Error("No admin token received");
 
-        localStorage.setItem("admin_token", newToken);
+        if (isBrowser) {
+          localStorage.setItem("admin_token", newToken);
+        }
 
         adminApi.defaults.headers.common.Authorization = `Bearer ${newToken}`;
 
@@ -109,7 +115,11 @@ adminApi.interceptors.response.use(
         return adminApi(originalRequest);
       } catch (err) {
         processQueue(err, null);
-        localStorage.removeItem("admin_token");
+
+        if (isBrowser) {
+          localStorage.removeItem("admin_token");
+        }
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -121,7 +131,6 @@ adminApi.interceptors.response.use(
 );
 
 /* ADMIN APIs */
-
 export const registerAdminAPI = (data) =>
   adminApi.post("/api/admin/register", data);
 
