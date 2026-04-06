@@ -13,10 +13,10 @@ const AdminLayout = ({ children }) => {
     if (!isLoggedIn) {
       router.push("/admin/login");
     }
-  }, []);
+  }, [router]);
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-[#0B1626] min-h-screen text-white">
       <AdminSidebar />
       <AdminHeader />
       <main className="pt-16 md:pl-60 px-4 md:px-6 w-full">
