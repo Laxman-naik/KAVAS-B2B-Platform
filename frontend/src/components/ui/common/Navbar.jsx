@@ -112,7 +112,7 @@ const Navbar = () => {
                                     Sign in
                                 </Button>
                             ) : (
-                                <div className="relative" ref={dropdownRef}>
+                                <div className="relative" >
                                     <Button
                                         variant="outline"
                                         className="h-9 sm:h-10 px-2 sm:px-3 text-xs sm:text-sm"
@@ -124,7 +124,7 @@ const Navbar = () => {
                                         </span>
                                     </Button>
                                     {dropdown && (
-                                        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden dark:bg-gray-900 dark:text-white">
+                                        <div ref={dropdownRef} className="absolute right-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50 overflow-hidden dark:bg-gray-900 dark:text-white">
                                             <div className="px-4 py-3 text-xs bg-orange-500 text-white dark:bg-gray-900 border-b font-bold justify-center flex">
                                                 {user?.email}
                                             </div>
