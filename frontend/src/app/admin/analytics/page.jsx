@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 text-white p-6 space-y-6 ">
+    <div className="min-h-screen bg-[#0b1220] text-white p-6 space-y-6 ">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((item, i) => (
           <div

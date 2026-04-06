@@ -19,14 +19,14 @@ export default function TrendingProducts() {
           {products.map((item) => (
             <Link
               key={item.id}
-              href={`/products/${item.id}`}
+              href={`/product/${item.id}`}
               className="bg-white rounded-xl shadow hover:shadow-xl transition group overflow-hidden"
             >
               <div className="h-56 overflow-hidden">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition"
+                  className="w-full h-full object-cover"
                 />
               </div>
 

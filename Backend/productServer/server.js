@@ -12,9 +12,9 @@ app.use(express.json());
 app.use("/api/products", productRoutes);
 
 app.get("/", (req, res) => {
-  res.send("API Server Running");
+  res.send("API product Server Running");
 });
 
 app.listen(process.env.PORT, () => {
-  console.log(`API Server running on ${process.env.PORT}`);
+  console.log(`product Server running on ${process.env.PORT}`);
 });
