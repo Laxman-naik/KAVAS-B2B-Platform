@@ -14,8 +14,7 @@ const app = express();
 // app.use(cors());
 app.use(cors({
   origin: [
-    "http://localhost:3000",
-    "https://kavaswholesalehub.netlify.app"
+    "http://localhost:3000","https://kavasb2bwholesalehub.netlify.app",
   ],
   credentials: true
 }));
