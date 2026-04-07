@@ -10,7 +10,6 @@ import {
   Shield,
   Menu,
   User,
-  Activity,
   LogOut,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
@@ -40,11 +39,38 @@ const menuItems = [
 export default function AdminSidebar() {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
   const profileRef = useRef(null);
 
-  // Close profile dropdown on outside click
+  // ✅ Profile State
+  const [profile, setProfile] = useState({
+    name: "Admin User",
+    email: "superadmin@tradehub.com",
+    phone: "",
+  });
+
+  // Load from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("profile");
+    if (saved) setProfile(JSON.parse(saved));
+  }, []);
+
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem("profile", JSON.stringify(profile));
+  }, [profile]);
+
+  // Avatar initials
+  const initials = profile.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+  // Close dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
@@ -55,7 +81,6 @@ export default function AdminSidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("admin");
     router.push("/admin/login");
@@ -63,6 +88,7 @@ export default function AdminSidebar() {
 
   return (
     <>
+      {/* Mobile Menu */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setOpen(!open)}
@@ -72,11 +98,13 @@ export default function AdminSidebar() {
         </button>
       </div>
 
+      {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 h-screen w-60 bg-[#0F1E33] text-white flex flex-col border-r border-gray-700 z-40
         transform transition-transform duration-300
         ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
+        {/* Menu */}
         <div className="flex-1 overflow-y-auto">
           <div className="flex items-center gap-2 p-3">
             <div className="bg-orange-500 w-9 h-9 rounded-lg flex items-center justify-center font-bold">
@@ -89,6 +117,7 @@ export default function AdminSidebar() {
               </span>
             </div>
           </div>
+
           <div className="mt-3 space-y-2">
             {menuItems.map((item, index) => {
               if (item.section) {
@@ -109,8 +138,7 @@ export default function AdminSidebar() {
                     if (item.path) router.push(item.path);
                     setOpen(false);
                   }}
-                  className={`flex items-center justify-between px-3 py-2 mx-2 rounded-lg cursor-pointer transition transform
-                  hover:scale-105 active:scale-95
+                  className={`flex items-center justify-between px-3 py-2 mx-2 rounded-lg cursor-pointer
                   ${
                     isActive
                       ? "bg-[#1E2F4D] border border-orange-400"
@@ -133,62 +161,130 @@ export default function AdminSidebar() {
           </div>
         </div>
 
+        {/* Profile */}
         <div className="p-2 border-t border-gray-700 relative" ref={profileRef}>
-          
           <div
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1B2A45] transition transform hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1B2A45] cursor-pointer"
           >
             <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
-              AD
+              {initials}
             </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-medium truncate">Admin User</p>
-              <p className="text-[10px] text-gray-400 truncate">
-                Super Admin
-              </p>
+            <div>
+              <p className="text-xs font-medium">{profile.name}</p>
+              <p className="text-[10px] text-gray-400">{profile.email}</p>
             </div>
           </div>
 
+          {/* Dropdown */}
           <div
-            className={`absolute bottom-14 left-2 right-2 bg-[#0F1E33] border border-gray-700 rounded-xl shadow-lg overflow-hidden transform transition-all duration-200 ${
-              profileOpen
-                ? "opacity-100 translate-y-0 visible"
-                : "opacity-0 translate-y-2 invisible"
+            className={`absolute bottom-14 left-2 right-2 bg-[#0F1E33] border border-gray-700 rounded-xl shadow-lg ${
+              profileOpen ? "block" : "hidden"
             }`}
           >
-            <div className="text-sm">
+            <button
+              onClick={() => {
+                setShowProfile(true);
+                setProfileOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C]"
+            >
+              <User className="w-4 h-4" /> My Profile
+            </button>
 
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
-                <User className="w-4 h-4" />
-                My Profile
-              </button>
+            <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C]">
+              <Settings className="w-4 h-4" /> Settings
+            </button>
 
-              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
-                <Settings className="w-4 h-4" />
-                Settings
-              </button>
+            <div className="border-t border-gray-700"></div>
 
-              {/* <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
-                <Activity className="w-4 h-4" />
-                Activity Log
-              </button> */}
-
-              <div className="border-t border-gray-700"></div>
-
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
-              >
-                <LogOut className="w-4 h-4" />
-                Log out
-              </button>
-
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10"
+            >
+              <LogOut className="w-4 h-4" /> Log out
+            </button>
           </div>
-
         </div>
       </div>
+
+      {/* PROFILE POPUP */}
+      {showProfile && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="w-[420px] bg-[#0F1E33] rounded-2xl p-6 text-white">
+
+            <div className="flex items-center gap-3 mb-4 bg-[#1E2F4D] p-3 rounded-xl">
+              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center font-bold">
+                {initials}
+              </div>
+              <div>
+                <p className="font-semibold">{profile.name}</p>
+                <p className="text-xs text-gray-400">{profile.email}</p>
+                <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">
+                  ● Super Admin
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-orange-400 mb-2">EDIT PROFILE</p>
+
+            <input
+              className="w-full mb-2 p-2 rounded bg-[#13263C]"
+              value={profile.name}
+              onChange={(e) =>
+                setProfile({ ...profile, name: e.target.value })
+              }
+            />
+
+            <input
+              className="w-full mb-2 p-2 rounded bg-[#13263C]"
+              value={profile.email}
+              onChange={(e) =>
+                setProfile({ ...profile, email: e.target.value })
+              }
+            />
+
+            <input
+              className="w-full mb-3 p-2 rounded bg-[#13263C]"
+              value={profile.phone}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
+              placeholder="+91..."
+            />
+
+            <p className="text-xs text-orange-400 mb-2">SECURITY</p>
+
+            <input
+              type="password"
+              className="w-full mb-2 p-2 rounded bg-[#13263C]"
+              placeholder="Current password"
+            />
+
+            <input
+              type="password"
+              className="w-full mb-4 p-2 rounded bg-[#13263C]"
+              placeholder="New password"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowProfile(false)}
+                className="px-4 py-2 bg-gray-600 rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => setShowProfile(false)}
+                className="px-4 py-2 bg-orange-500 rounded"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
