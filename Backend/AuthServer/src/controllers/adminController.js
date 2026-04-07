@@ -2,6 +2,22 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 
+const generateAccessToken = (admin) => {
+  return jwt.sign(
+    { id: admin.id, role: admin.role },
+    process.env.ACCESS_SECRET,
+    { expiresIn: "15m" }
+  );
+};
+
+const generateRefreshToken = (admin) => {
+  return jwt.sign(
+    { id: admin.id },
+    process.env.REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -15,30 +31,20 @@ const login = async (req, res) => {
       [email]
     );
 
-    const admin = result.rows[0];
-
-    if (!admin) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid email" });
     }
 
-    // ✅ FIX: password check
+    const admin = result.rows[0];
+
     const isMatch = await bcrypt.compare(password, admin.password);
 
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid password" });
     }
 
-    const accessToken = jwt.sign(
-      { id: admin.id, role: admin.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: admin.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
+    const accessToken = generateAccessToken(admin);
+    const refreshToken = generateRefreshToken(admin);
 
     await pool.query(
       "UPDATE admins SET refresh_token=$1 WHERE id=$2",
@@ -47,7 +53,6 @@ const login = async (req, res) => {
 
     const isProd = process.env.NODE_ENV === "production";
 
-    // ✅ FIX: cookies properly configured
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: isProd,
@@ -73,7 +78,7 @@ const login = async (req, res) => {
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -85,7 +90,7 @@ const refreshToken = async (req, res) => {
       return res.status(401).json({ message: "No refresh token" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
     const result = await pool.query(
       "SELECT * FROM admins WHERE id=$1",
@@ -98,11 +103,7 @@ const refreshToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const newAccessToken = jwt.sign(
-      { id: admin.id, role: admin.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    const newAccessToken = generateAccessToken(admin);
 
     const isProd = process.env.NODE_ENV === "production";
 
@@ -130,7 +131,7 @@ const logout = async (req, res) => {
     const token = req.cookies?.refreshToken;
 
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+      const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
       await pool.query(
         "UPDATE admins SET refresh_token=NULL WHERE id=$1",
@@ -147,8 +148,4 @@ const logout = async (req, res) => {
   return res.json({ message: "Logged out" });
 };
 
-module.exports = {
-  login,
-  refreshToken,
-  logout,
-};
+module.exports = { login, refreshToken, logout };
