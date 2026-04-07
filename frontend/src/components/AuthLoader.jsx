@@ -31,7 +31,7 @@
 
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { loadAdminThunk } from "@/store/slices/adminSlice";
+// import { loadAdminThunk } from "@/store/slices/adminSlice";
 import { loadUserThunk } from "@/store/slices/authSlice";
 import { usePathname } from "next/navigation";
 

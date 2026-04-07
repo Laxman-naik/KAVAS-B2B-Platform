@@ -18,6 +18,10 @@ const Navbar = () => {
     const [dropdown, setDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const router = useRouter();
+    const dispatch = useDispatch();
+    const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
+    const favouritesCount = useSelector((state) => state.favourites.items.length);
+    const [initialEmail, setInitialEmail] = useState("");
 
     useEffect(() => {
         setMounted(true);
@@ -30,6 +34,10 @@ const Navbar = () => {
             setDarkMode(true);
         }
     }, []);
+
+    useEffect(() => {
+    console.log("AUTH STATE:", { user, isAuthenticated });
+}, [user, isAuthenticated]);
 
     const toggleDarkMode = () => {
         const newMode = !darkMode;
@@ -63,19 +71,24 @@ const Navbar = () => {
         };
     }, [dropdown]);
 
-    const dispatch = useDispatch();
-    const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
-    const favouritesCount = useSelector((state) => state.favourites.items.length);
-
-    const [initialEmail, setInitialEmail] = useState("");
+   
 
     useEffect(() => {
         dispatch(hydrateFavourites());
     }, [dispatch]);
 
-    const handleLogout = () => {
-        dispatch(logoutUserThunk());
-    };
+  const handleLogout = async () => {
+    try {
+        await dispatch(logoutUserThunk()).unwrap();
+
+        setDropdown(false);
+
+        router.refresh();
+        router.push("/"); 
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     if (!mounted) return null;
     return (

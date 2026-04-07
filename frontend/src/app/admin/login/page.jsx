@@ -44,7 +44,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { loginAdminThunk } from "../../../store/slices/adminSlice";
+// import { loginAdminThunk } from "../../../store/slices/adminSlice";
 
 const AdminLoginPage = () => {
   const router = useRouter();

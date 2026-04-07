@@ -103,7 +103,10 @@ app.use(
 );
 
 /* 🔥 IMPORTANT: preflight handler */
-app.options("*", cors());
+// app.options("*", cors());
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 /* =========================
    CORE MIDDLEWARE

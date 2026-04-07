@@ -3,7 +3,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUserThunk } from "@/store/slices/authSlice";
+import { loadUserThunk, loginUserThunk } from "@/store/slices/authSlice";
 
 const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   if (!open) return null;
 
   // Handle input
-  const handleChange = (e) => {setForm({ ...form, [e.target.name]: e.target.value, });};
+  const handleChange = (e) => { setForm({ ...form, [e.target.name]: e.target.value, }); };
 
   // Handle submit
   const handleSubmit = async (e) => {
@@ -27,9 +27,18 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
 
     if (loginLoading) return;
 
-    const res = await dispatch(loginUserThunk(form));
+    try {
+      const res = await dispatch(loginUserThunk(form));
 
-    if (res.meta.requestStatus === "fulfilled") { setOpen(false); } 
+      if (res.meta.requestStatus === "fulfilled") {
+        setOpen(false);
+
+        // 🔥 IMPORTANT: force refresh user state
+        dispatch(loadUserThunk());
+      }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -96,9 +105,10 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
 
           {/* Error */}
           {error && (
-            <p className="text-red-500 text-xs mt-1">{error.message}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {typeof error === "string" ? error : error?.message || "Login failed"}
+            </p>
           )}
-
           {/* Forgot */}
           <div className="text-right">
             <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">

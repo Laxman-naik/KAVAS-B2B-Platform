@@ -3,7 +3,7 @@ import Image from "next/image";
 import { X, Eye } from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { registerUserThunk } from "../../../store/slices/authSlice";
+// import { registerUserThunk } from "../../../store/slices/authSlice";
 
 const Register = ({ open, setOpen, setMode, onRegistered }) => {
   const [show, setShow] = useState(false);

@@ -203,36 +203,34 @@ exports.getMe = async (req, res) => {
 // ================== LOGOUT ==================
 exports.logout = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (token) {
-      let decoded;
+    if (refreshToken) {
+      let decoded = null;
+
       try {
-        decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-      } catch {
-        decoded = null;
-      }
+        decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+      } catch {}
 
       if (decoded) {
         const keys = await redis.keys(`refresh:${decoded.id}:*`);
 
         for (const key of keys) {
           const stored = await redis.get(key);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.token === token) {
-              await redis.del(key);
-            }
+          if (stored && JSON.parse(stored).token === refreshToken) {
+            await redis.del(key);
           }
         }
       }
     }
 
-    res.clearCookie("refreshToken", { path: "/" }); // ✅ FIXED
-    res.json({ message: "Logged out successfully" });
+    // ✅ CLEAR BOTH COOKIES
+    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("accessToken", { path: "/" });
+
+    return res.json({ message: "Logged out successfully" });
   } catch (err) {
-    console.error("LOGOUT ERROR:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
