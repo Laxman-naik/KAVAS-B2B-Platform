@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSelector } from "react-redux";
 import {
     User,
     MapPin,
@@ -26,6 +28,8 @@ import {
 } from "@/components/ui/dialog";
 
 const Page = () => {
+    const authUser = useSelector((state) => state.auth.user);
+
     const [notifications, setNotifications] = useState(true);
     const [promo, setPromo] = useState(true);
 
@@ -41,20 +45,22 @@ const Page = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-                    credentials: "include",
-                });
+                if (!authUser) return;
 
-                if (!res.ok) throw new Error("Not authenticated");
-
-                const data = await res.json();
+                const fullName =
+                    authUser.full_name || authUser.fullName || authUser.name || "";
+                const [parsedFirstName = "", ...rest] = String(fullName)
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean);
+                const parsedLastName = rest.join(" ");
 
                 setUser({
-                    firstName: data.firstName,
-                    lastName: data.lastName,
-                    email: data.email,
-                    phone: data.phone,
-                    role: data.role, // 👈 user or vendor
+                    firstName: authUser.firstName || parsedFirstName || "",
+                    lastName: authUser.lastName || parsedLastName || "",
+                    email: authUser.email || "",
+                    phone: authUser.phone || "",
+                    role: authUser.role,
                 });
             } catch (err) {
                 console.log("User not logged in");
@@ -62,8 +68,7 @@ const Page = () => {
         };
 
         fetchUser();
-    }, []);
-
+    }, [authUser]);
 
     const [addresses, setAddresses] = useState([
         { id: 1, type: "Home", location: "Vijayawada, Andhra Pradesh" },
@@ -278,10 +283,31 @@ const Page = () => {
 
                         <Card className="rounded-2xl">
                             <CardContent className="p-4 space-y-3">
-                                <Button variant="outline" className="w-full justify-start"><Package size={16} /> My Orders</Button>
-                                <Button variant="outline" className="w-full justify-start"><Heart size={16} /> Favourites</Button>
-                                <Button variant="outline" className="w-full justify-start"><Shield size={16} /> Help Centre</Button>
-                                <Button variant="destructive" className="w-full justify-start"><LogOut size={16} /> Sign Out</Button>
+
+                                <Button asChild variant="outline" className="w-full justify-start">
+                                    <Link href="/buyerorders">
+                                        <Package size={16} /> My Orders
+                                    </Link>
+                                </Button>
+
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Link href="/favourites">
+                                    <Heart size={16} /> Favourites
+                                    </Link>
+                                </Button>
+
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Link href="/help">
+                                    <Shield size={16} /> Help Centre
+                                    </Link>
+                                </Button>
+
+                                <Button variant="destructive" className="w-full justify-start">
+                                    
+                                    <LogOut size={16} /> Sign Out
+                                    
+                                </Button>
+
                             </CardContent>
                         </Card>
                     </div>
