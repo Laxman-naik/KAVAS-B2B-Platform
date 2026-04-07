@@ -29,8 +29,8 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { loadAdminThunk } from "@/store/slices/adminSlice";
 import { loadUserThunk } from "@/store/slices/authSlice";
 import { usePathname } from "next/navigation";
@@ -38,27 +38,31 @@ import { usePathname } from "next/navigation";
 const AuthLoader = ({ children }) => {
   const dispatch = useDispatch();
   const pathname = usePathname();
-  const [ready, setReady] = useState(false);
+
+  const admin = useSelector((state) => state.admin.admin);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        if (pathname.startsWith("/admin")) {
-          await dispatch(loadAdminThunk());
-        } else {
-          await dispatch(loadUserThunk());
-        }
-      } finally {
-        setReady(true);
-      }
-    };
+    const isAdminRoute = pathname.startsWith("/admin");
+    const isAdminLogin = pathname === "/admin/login";
+    const isUserLogin = pathname === "/login";
 
-    init();
-  }, [dispatch, pathname]);
+    // Skip login pages (prevents loop)
+    if (isAdminLogin || isUserLogin) return;
 
-  if (!ready) return null;
+    // Avoid unnecessary API calls
+    if (isAdminRoute && admin) return;
+    if (!isAdminRoute && user) return;
 
-  return children;
+    // Fire and forget (non-blocking)
+    if (isAdminRoute) {
+      dispatch(loadAdminThunk());
+    } else {
+      dispatch(loadUserThunk());
+    }
+  }, [pathname, dispatch]); 
+
+  return children; 
 };
 
 export default AuthLoader;
