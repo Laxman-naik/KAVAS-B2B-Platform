@@ -45,6 +45,9 @@ const Navbar = () => {
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
     const favouritesCount = useSelector((state) => state.favourites.items.length);
+    const cartCount = useSelector((state) =>
+  state.cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
+);
 
     const [initialEmail, setInitialEmail] = useState("");
 
@@ -150,15 +153,25 @@ const Navbar = () => {
                                 )}
                             </div>
 
-                            <Button variant="outline" className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3">
-                                <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
-                                    <span className="relative">
-                                        <ShoppingCart className="h-4 w-4" />
-                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1 rounded-full">0</span>
-                                    </span>
-                                    <span className="hidden sm:inline">Cart</span>
-                                </Link>
-                            </Button>
+                            <div className="relative inline-block">
+
+  <Button
+    variant="outline"
+    className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3"
+  >
+    <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
+      <ShoppingCart className="h-4 w-4" />
+      <span className="hidden sm:inline">Cart</span>
+    </Link>
+  </Button>
+
+  {cartCount > 0 && (
+    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
+      {cartCount}
+    </span>
+  )}
+
+</div>
                         </div>
                     </div>
                 </div>

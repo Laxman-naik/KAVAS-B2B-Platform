@@ -8,6 +8,7 @@ import { Heart, ShoppingCart } from "lucide-react";
 import { arrivalProducts } from "@/data/arrivalProducts";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 
 const categories = [
     "All ",
@@ -34,6 +35,9 @@ const Page = () => {
     const onToggleFavourite = (product) => {
         dispatch(toggleFavourite(product));
     };
+    const onAddToCart = (product) => {
+  dispatch(addToCart(product));
+};
 
     const [showFilters, setShowFilters] = useState(false);
 
@@ -59,7 +63,7 @@ const Page = () => {
                 </div>
             </div>
 
-            {/* CATEGORY BAR */}
+           
             <div className="bg-white border-b px-3 sm:px-4 py-3 sticky top-20 z-10">
                 <div className="max-w-7xl mx-auto flex flex-wrap gap-2 sm:gap-3 items-center overflow-x-auto">
                     {categories.map((cat) => (
@@ -88,10 +92,10 @@ const Page = () => {
                     </button>
                 </div>
 
-                {/* ✅ MAIN GRID (FIXED FOR TABLET) */}
+            
                 <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">
 
-                    {/* FILTER SIDEBAR */}
+                  
                     <div className={`${showFilters ? "block" : "hidden"} md:block`}>
                         <div className="bg-white rounded-2xl shadow p-4 sticky top-28 border">
 
@@ -99,7 +103,7 @@ const Page = () => {
                                 <span className="text-sm font-semibold">Filters</span>
                             </div>
 
-                            {/* Min Order */}
+                   
                             <div className="mt-4 mb-4">
                                 <h3 className="font-medium mb-2 text-sm">Min. Order Qty</h3>
                                 <div className="space-y-1 text-sm">
@@ -122,7 +126,7 @@ const Page = () => {
                                 </div>
                             </div>
 
-                            {/* Rating */}
+                            
                             <div className="mb-4">
                                 <h3 className="font-medium mb-2 text-sm">Rating</h3>
                                 <div className="space-y-1 text-sm">
@@ -137,7 +141,7 @@ const Page = () => {
                                 </div>
                             </div>
 
-                            {/* Supplier */}
+                            
                             <div className="mb-4">
                                 <h3 className="font-medium mb-2 text-sm">Supplier Type</h3>
                                 <div className="space-y-1 text-sm">
@@ -177,7 +181,7 @@ const Page = () => {
                             </p>
 
                             <div className="flex justify-end">
-                                <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto max-w-[200px]">
+                                <select className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto max-w-50">
                                     <option>Most relevant</option>
                                     <option>Price low to high</option>
                                     <option>Price high to low</option>
@@ -191,9 +195,9 @@ const Page = () => {
                             {filteredProducts.map((product, index) => (
                                 <Link key={product.id} href={`/product/${product.id}`} className="block">
                                     <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
-                                    <CardContent className="!p-0 !py-0 flex flex-col h-full">
+                                    <CardContent className="p-0! py-0! flex flex-col h-full">
 
-                                        <div className="relative h-[180px] sm:h-[200px] bg-gray-100 flex items-center justify-center">
+                                        <div className="relative h-45 sm:h-50 bg-gray-100 flex items-center justify-center">
                                             <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-full z-10">
                                                 {index % 2 === 0 ? "Trending" : "Hot Deal"}
                                             </span>
@@ -206,7 +210,7 @@ const Page = () => {
                                         </div>
 
                                         <div className="p-3 flex flex-col flex-1">
-                                            <h3 className="text-sm font-semibold line-clamp-2 leading-snug min-h-[36px]">
+                                            <h3 className="text-sm font-semibold line-clamp-2 leading-snug min-h-9">
                                                 {product.title}
                                             </h3>
 
@@ -229,15 +233,16 @@ const Page = () => {
 
                                             <div className="flex items-center gap-2 mt-auto pt-3 border-t">
                                                 <Button
-                                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                    }}
-                                                >
-                                                    <ShoppingCart size={14} className="mr-1" />
-                                                    Add
-                                                </Button>
+  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md"
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAddToCart(product); // ✅ added
+  }}
+>
+  <ShoppingCart size={14} className="mr-1" />
+  Add to cart
+</Button>
 
                                                 <Button
                                                     variant="outline"
