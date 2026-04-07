@@ -44,10 +44,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  loginAdminThunk,
-  loadAdminThunk,
-} from "../../../store/slices/adminSlice";
+import { loginAdminThunk } from "../../../store/slices/adminSlice";
 
 const AdminLoginPage = () => {
   const router = useRouter();
@@ -60,27 +57,25 @@ const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // 🔥 Check session on page load (auto login if cookie exists)
-  useEffect(() => {
-    dispatch(loadAdminThunk());
-  }, [dispatch]);
-
-  // 🔥 Redirect if already logged in
+  // ✅ ONLY redirect when already authenticated
   useEffect(() => {
     if (isAdminAuthenticated) {
-      router.replace("/admin/dashboard"); // replace avoids back button issue
+      router.replace("/admin/dashboard");
     }
   }, [isAdminAuthenticated, router]);
 
-  // 🔥 Handle login
+  // ✅ login handler only (no session check here)
   const handleLogin = async () => {
     if (!email || !password) {
-      alert("Please enter email and password");
+      alert("Email and password required");
       return;
     }
 
-    const res = await dispatch(loginAdminThunk({ email, password }));
+    const res = await dispatch(
+      loginAdminThunk({ email, password })
+    );
 
+    // redirect only on success
     if (loginAdminThunk.fulfilled.match(res)) {
       router.replace("/admin/dashboard");
     }
@@ -89,7 +84,9 @@ const AdminLoginPage = () => {
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-md w-80">
-        <h2 className="text-xl font-semibold mb-4">Admin Login</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Admin Login
+        </h2>
 
         <input
           type="email"
