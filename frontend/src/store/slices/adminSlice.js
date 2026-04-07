@@ -146,66 +146,45 @@ import {
 
 // ================== THUNKS ==================
 
-// ✅ Admin Login
+// LOGIN ADMIN (cookie-based auth)
 export const loginAdminThunk = createAsyncThunk(
   "admin/loginAdmin",
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginAdminAPI(data);
-      return res.data; // { user }
+
+      if (!res || !res.data) {
+        return rejectWithValue("Invalid server response");
+      }
+
+      return res.data.user;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Admin login failed"
+        err.response?.data?.message ||
+        err.response?.data ||
+        err.message ||
+        "Admin login failed"
       );
     }
   }
 );
 
-// ✅ Load Admin (with refresh fallback)
-// export const loadAdminThunk = createAsyncThunk(
-//   "admin/loadAdmin",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       // 1️⃣ Try normal profile fetch
-//       let res = await getAdminProfile();
-
-//       // 2️⃣ If fails → try refresh
-//       if (!res || !res.data) {
-//         const refreshRes = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_URL}/admin/refresh`,
-//           {
-//             method: "POST",
-//             credentials: "include",
-//           }
-//         );
-
-//         if (!refreshRes.ok) {
-//           return rejectWithValue("Session expired");
-//         }
-
-//         // 3️⃣ Retry profile
-//         res = await getAdminProfile();
-//       }
-
-//       return res.data; // { user }
-//     } catch (err) {
-//       return rejectWithValue("Admin not authenticated");
-//     }
-//   }
-// );
+// LOAD ADMIN PROFILE (from cookie session)
 export const loadAdminThunk = createAsyncThunk(
   "admin/loadAdmin",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await getAdminProfile(); // interceptor handles refresh
-      return res.data;
+      const res = await getAdminProfile();
+      return res.data.user;
     } catch (err) {
-      return rejectWithValue("Admin not authenticated");
+      return rejectWithValue(
+        err.response?.data || "Admin not authenticated"
+      );
     }
   }
 );
 
-// ✅ Logout
+// LOGOUT ADMIN (clears backend cookies + DB refresh token)
 export const logoutAdminThunk = createAsyncThunk(
   "admin/logoutAdmin",
   async (_, { rejectWithValue }) => {
@@ -225,8 +204,8 @@ export const logoutAdminThunk = createAsyncThunk(
 const initialState = {
   admin: null,
   isAdminAuthenticated: false,
-  loading: true,        // for initial auth check
-  loginLoading: false,  // for login button
+  loading: false,
+  loginLoading: false,
   error: null,
 };
 
@@ -237,27 +216,24 @@ const adminSlice = createSlice({
   initialState,
 
   reducers: {
-    // Optional manual reset
+    // local reset only (NOT real logout)
     adminLogout: (state) => {
       state.admin = null;
       state.isAdminAuthenticated = false;
-    },
-
-    setAdmin: (state, action) => {
-      state.admin = action.payload;
-      state.isAdminAuthenticated = true;
+      state.error = null;
     },
   },
 
   extraReducers: (builder) => {
     builder
-      // ================= LOGIN =================
+
+      // ================== LOGIN ==================
       .addCase(loginAdminThunk.pending, (state) => {
         state.loginLoading = true;
         state.error = null;
       })
       .addCase(loginAdminThunk.fulfilled, (state, action) => {
-        state.admin = action.payload.user;
+        state.admin = action.payload;
         state.isAdminAuthenticated = true;
         state.loginLoading = false;
       })
@@ -269,12 +245,12 @@ const adminSlice = createSlice({
           action.error.message;
       })
 
-      // ================= LOAD ADMIN =================
+      // ================== LOAD ADMIN ==================
       .addCase(loadAdminThunk.pending, (state) => {
         state.loading = true;
       })
       .addCase(loadAdminThunk.fulfilled, (state, action) => {
-        state.admin = action.payload.user;
+        state.admin = action.payload;
         state.isAdminAuthenticated = true;
         state.loading = false;
       })
@@ -284,7 +260,7 @@ const adminSlice = createSlice({
         state.loading = false;
       })
 
-      // ================= LOGOUT =================
+      // ================== LOGOUT ==================
       .addCase(logoutAdminThunk.fulfilled, (state) => {
         state.admin = null;
         state.isAdminAuthenticated = false;
@@ -294,5 +270,5 @@ const adminSlice = createSlice({
 
 // ================== EXPORTS ==================
 
-export const { adminLogout, setAdmin } = adminSlice.actions;
+export const { adminLogout } = adminSlice.actions;
 export default adminSlice.reducer;

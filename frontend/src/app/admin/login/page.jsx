@@ -57,33 +57,42 @@ const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ✅ ONLY redirect when already authenticated
+  // redirect if already logged in
   useEffect(() => {
     if (isAdminAuthenticated) {
       router.replace("/admin/dashboard");
     }
   }, [isAdminAuthenticated, router]);
 
-  // ✅ login handler only (no session check here)
   const handleLogin = async () => {
     if (!email || !password) {
       alert("Email and password required");
       return;
     }
 
-    const res = await dispatch(
-      loginAdminThunk({ email, password })
-    );
+    try {
+      const resultAction = await dispatch(
+        loginAdminThunk({ email, password })
+      );
 
-    // redirect only on success
-    if (loginAdminThunk.fulfilled.match(res)) {
-      router.replace("/admin/dashboard");
+      // ✅ proper success check
+      if (loginAdminThunk.fulfilled.match(resultAction)) {
+        router.replace("/admin/dashboard");
+        return;
+      }
+
+      // ❌ handled rejection
+      console.log("Login failed:", resultAction.payload);
+
+    } catch (err) {
+      console.log("Unexpected error:", err);
     }
   };
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-md w-80">
+
         <h2 className="text-xl font-semibold mb-4">
           Admin Login
         </h2>
@@ -106,17 +115,21 @@ const AdminLoginPage = () => {
 
         <button
           onClick={handleLogin}
-          className="w-full bg-orange-500 text-white p-2 rounded"
           disabled={loginLoading}
+          className="w-full bg-orange-500 text-white p-2 rounded disabled:opacity-50"
         >
           {loginLoading ? "Logging in..." : "Login"}
         </button>
 
+        {/* safe error rendering */}
         {error && (
-          <p className="text-red-500 mt-2">
-            {error.message || error}
+          <p className="text-red-500 mt-2 text-sm">
+            {typeof error === "string"
+              ? error
+              : error?.message || "Login failed"}
           </p>
         )}
+
       </div>
     </div>
   );
