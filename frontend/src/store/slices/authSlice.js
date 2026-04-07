@@ -442,9 +442,15 @@ const authSlice = createSlice({
       })
 
       .addCase(loadUserThunk.fulfilled, (state, action) => {
-        state.user = action.payload.user;
-        state.role = "user";
-        state.isAuthenticated = true;
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.role = "user";
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.role = null;
+          state.isAuthenticated = false;
+        }
       })
 
       .addCase(logoutUserThunk.fulfilled, (state) => {

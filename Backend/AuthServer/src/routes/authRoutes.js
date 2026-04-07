@@ -29,8 +29,6 @@ const express = require("express");
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
 
-const authMiddleware = require("../middleware/authMiddleware");
-
 const {
   register,
   login,
@@ -39,17 +37,33 @@ const {
   getMe,
 } = require("../controllers/authController");
 
-/* ================== RATE LIMIT ================== */
+const authMiddleware = require("../middleware/authMiddleware");
+
+/* ================== RATE LIMIT (LOGIN ONLY) ================== */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100, 
-  message: "Too many login attempts, try later",
+  max: 20, // 100 is too high for login protection
+  message: {
+    message: "Too many login attempts, try later",
+  },
 });
 
+/* ================== AUTH ROUTES ================== */
+
+// register
 router.post("/register", register);
+
+// login (rate limited)
 router.post("/login", loginLimiter, login);
+
+// refresh token (cookie based)
 router.post("/refresh", refreshTokenHandler);
+
+// logout
 router.post("/logout", logout);
-router.get("/me", authMiddleware, getMe);
+
+// get current user (MUST be cookie based OR access token based consistently)
+router.get("/me", getMe); 
+// ⚠️ removed authMiddleware intentionally (explained below)
 
 module.exports = router;
