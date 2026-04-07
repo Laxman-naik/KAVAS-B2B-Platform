@@ -1,11 +1,7 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 
-/**
- * =========================
- * ADMIN LOGIN
- * =========================
- */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -22,11 +18,15 @@ const login = async (req, res) => {
     const admin = result.rows[0];
 
     if (!admin) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // ⚠️ You should add bcrypt compare here (you are currently not verifying password)
-    // if (!bcrypt.compareSync(password, admin.password)) ...
+    // ✅ FIX: password check
+    const isMatch = await bcrypt.compare(password, admin.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const accessToken = jwt.sign(
       { id: admin.id, role: admin.role },
@@ -45,16 +45,21 @@ const login = async (req, res) => {
       [refreshToken, admin.id]
     );
 
+    const isProd = process.env.NODE_ENV === "production";
+
+    // ✅ FIX: cookies properly configured
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({
@@ -65,25 +70,21 @@ const login = async (req, res) => {
         role: admin.role,
       },
     });
+
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-/**
- * =========================
- * REFRESH TOKEN
- * =========================
- */
 const refreshToken = async (req, res) => {
-  const token = req.cookies?.refreshToken;
-
-  if (!token) {
-    return res.status(401).json({ message: "No refresh token" });
-  }
-
   try {
+    const token = req.cookies?.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ message: "No refresh token" });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
     const result = await pool.query(
@@ -103,63 +104,49 @@ const refreshToken = async (req, res) => {
       { expiresIn: "15m" }
     );
 
+    const isProd = process.env.NODE_ENV === "production";
+
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       maxAge: 15 * 60 * 1000,
     });
 
     return res.json({ message: "Access token refreshed" });
+
   } catch (err) {
+    console.error("REFRESH ERROR:", err);
+
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
-    return res.status(401).json({ message: "Session expired, login again" });
+    return res.status(401).json({ message: "Session expired" });
   }
 };
 
-/**
- * =========================
- * LOGOUT
- * =========================
- */
 const logout = async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  try {
+    const token = req.cookies?.refreshToken;
 
-  if (token) {
-    try {
+    if (token) {
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
       await pool.query(
         "UPDATE admins SET refresh_token=NULL WHERE id=$1",
         [decoded.id]
       );
-    } catch (err) {
-      console.log("Logout error:", err.message);
     }
+  } catch (err) {
+    console.log("Logout error:", err.message);
   }
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 
   return res.json({ message: "Logged out" });
 };
 
-/**
- * =========================
- * EXPORT (SINGLE OBJECT)
- * =========================
- */
 module.exports = {
   login,
   refreshToken,

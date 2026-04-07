@@ -7,18 +7,20 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 
 export default function AdminLayout({ children }) {
- const router = useRouter();
+  const router = useRouter();
 
-  const { admin, loading } = useSelector((state) => state.admin);
+ const { user, role, loading } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (!loading && !admin) {
-      router.replace("/admin/login");
-    }
-  }, [loading, admin, router]);
+const isAdmin = user && role === "admin";
 
-  if (loading) return null;
+useEffect(() => {
+  if (!loading && !isAdmin) {
+    router.replace("/admin/login");
+  }
+}, [loading, isAdmin]);
 
+if (loading) return <div>Loading...</div>;
+if (!isAdmin) return null;
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">
       

@@ -44,15 +44,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-// import { loginAdminThunk } from "../../../store/slices/adminSlice";
+import { loginAdminThunk } from "../../../store/slices/authSlice";
 
 const AdminLoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { isAdminAuthenticated, loginLoading, error } = useSelector(
-    (state) => state.admin
-  );
+  const { isAuthenticated, role, loading, error } = useSelector(
+  (state) => state.auth
+);
+  const isAdminAuthenticated = isAuthenticated && role === "admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
