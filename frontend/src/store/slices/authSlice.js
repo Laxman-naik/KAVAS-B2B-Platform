@@ -428,16 +428,16 @@ const authSlice = createSlice({
       })
 
       .addCase(loginUserThunk.pending, (state) => {
-        state.authLoading = true;
+        state.loading= true;
       })
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.role = "user";
         state.isAuthenticated = true;
-        state.authLoading = false;
+        state.loading = false;
       })
       .addCase(loginUserThunk.rejected, (state) => {
-        state.authLoading = false;
+        state.loading = false;
         state.isAuthenticated = false;
       })
 
@@ -462,16 +462,16 @@ const authSlice = createSlice({
       /* ================= ADMIN ================= */
 
       .addCase(loginAdminThunk.pending, (state) => {
-        state.authLoading = true;
+        state.loading = true;
       })
       .addCase(loginAdminThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.role = "admin";
         state.isAuthenticated = true;
-        state.authLoading = false;
+        state.loading = false;
       })
       .addCase(loginAdminThunk.rejected, (state) => {
-        state.authLoading = false;
+        state.loading = false;
       })
 
       .addCase(loadAdminThunk.fulfilled, (state, action) => {

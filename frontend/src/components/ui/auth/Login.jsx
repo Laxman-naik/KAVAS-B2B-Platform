@@ -8,7 +8,7 @@ import { loadUserThunk, loginUserThunk } from "@/store/slices/authSlice";
 const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const dispatch = useDispatch();
   const [form, setForm] = useState({ email: "", password: "", });
-  const { loginLoading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!open) return;
@@ -25,7 +25,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loginLoading) return;
+    if (loading) return;
 
     try {
       const res = await dispatch(loginUserThunk(form));
@@ -119,10 +119,10 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loginLoading}
+            disabled={loading}
             className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600 disabled:opacity-60"
           >
-            {loginLoading ? "Signing in..." : "Sign in to Kavas"}
+            {loading ? "Signing in..." : "Sign in to Kavas"}
           </button>
         </form>
 

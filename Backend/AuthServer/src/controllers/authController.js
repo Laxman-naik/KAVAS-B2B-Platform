@@ -372,47 +372,26 @@ exports.refreshTokenHandler = async (req, res) => {
   }
 };
 
-// ================== GET ME ==================
-// exports.getMe = async (req, res) => {
-//   try {
-//     const token = req.cookies.refreshToken;
-
-//     if (!token) {
-//       return res.status(401).json({ user: null });
-//     }
-
-//     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-
-//     const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
-
-//     if (!stored || stored !== token) {
-//       return res.status(403).json({ user: null });
-//     }
-
-//     const result = await pool.query(
-//       "SELECT id, full_name, email, role FROM users WHERE id=$1",
-//       [decoded.id]
-//     );
-
-//     res.json({ user: result.rows[0] });
-//   } catch (err) {
-//     console.error("GET ME ERROR:", err);
-//     res.status(401).json({ user: null });
-//   }
-// };
-
 exports.getMe = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ user: null });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
     const result = await pool.query(
       "SELECT id, full_name, email, role FROM users WHERE id=$1",
-      [userId]
+      [decoded.id]
     );
 
-    res.json({ user: result.rows[0] });
-  } catch {
-    res.status(401).json({ user: null });
+    return res.json({ user: result.rows[0] });
+  } catch (err) {
+    return res.status(401).json({ user: null });
   }
 };
 
