@@ -114,14 +114,11 @@ const Hero = () => {
         <div className="bg-gray-50 min-h-screen dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-                {/* TOP SECTION */}
                 <div className="flex flex-col lg:flex-row gap-6 ">
 
-                    {/* CATEGORY */}
                     <div className="relative w-full lg:w-60">
                         <aside className=" w-full lg:w-60 bg-white dark:bg-gray-800 rounded-2xl shadow-md border dark:border-gray-700 overflow-hidden">
 
-                            {/* CLICK TO OPEN */}
                             <div
                                 className="flex items-center gap-2 px-3 py-3 bg-orange-500 text-white font-semibold cursor-pointer"
                                 onClick={() => setShowMenu((prev) => !prev)}
@@ -157,7 +154,6 @@ const Hero = () => {
                                 ${showMenu ? "opacity-100 translate-x-0 flex" : "opacity-0 translate-x-5 pointer-events-none hidden lg:flex"}`}
                             >
 
-                                {/* SUBCATEGORIES */}
                                 <div className="w-60 border-r p-4">
                                     <h3 className="font-semibold mb-3">{activeCategory.name}</h3>
 
@@ -178,7 +174,6 @@ const Hero = () => {
                                     )}
                                 </div>
 
-                                {/* PRODUCTS */}
                                 <div className="w-72 p-4 flex flex-col">
 
                                     <h3 className="font-semibold mb-3">Top Products</h3>
@@ -210,7 +205,6 @@ const Hero = () => {
                         </aside>
                     </div>
 
-                    {/* SLIDER (UNCHANGED) */}
                     <div className="relative w-full overflow-hidden">
                         <div
                             className="flex transition-transform duration-500"
@@ -277,7 +271,6 @@ const Hero = () => {
                     </div>
                 </div>
 
-                {/* VIDEOS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
                     <div className="rounded-xl relative overflow-hidden hover:scale-[1.01] hover:shadow-xl">
@@ -310,7 +303,6 @@ const Hero = () => {
 
                 </div>
 
-                {/* STATS */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 border border-amber-400 bg-yellow-50 p-4 py-5 rounded-xl shadow text-center">
                     <div><h3 className="font-bold text-xl text-orange-500">500+</h3><p>Verified Vendors</p></div>
                     <div><h3 className="font-bold text-xl text-orange-500">12,000+</h3><p>Products Listed</p></div>
