@@ -41,8 +41,8 @@ const Page = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
-                    credentials: "include", // ✅ IMPORTANT (for cookies)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+                    credentials: "include",
                 });
 
                 if (!res.ok) throw new Error("Not authenticated");
