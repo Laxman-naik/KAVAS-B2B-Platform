@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
@@ -15,14 +15,19 @@ export default function ProductView() {
   const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
 
-  // const product = products.find((p) => p.id == id);
-
   const allProducts = [...products, ...arrivalProducts];
-  
   const product = allProducts.find((p) => String(p.id) === String(id));
 
   const [qty, setQty] = useState(50);
+
+  // ✅ USE DATA FILE MEDIA (IMPORTANT FIX)
+  const mediaItems =
+    product?.media && product.media.length > 0
+      ? product.media
+      : [{ type: "image", src: product?.image }];
+
   const [activeImage, setActiveImage] = useState(null);
+  const selectedMedia = activeImage || mediaItems[0];
 
   const tiers = [
     { min: 50, max: 99, price: 580 },
@@ -37,9 +42,9 @@ export default function ProductView() {
     return <div className="p-10 text-center">Product Not Found</div>;
   }
 
-  const images = [product.image, product.image, product.image];
-  const selectedImage = activeImage || product.image;
-  const isWishlisted = favouriteItems.some((item) => String(item._id) === String(product.id));
+  const isWishlisted = favouriteItems.some(
+    (item) => String(item._id) === String(product.id),
+  );
 
   const normalizeName = (value) =>
     String(value || "")
@@ -72,8 +77,8 @@ export default function ProductView() {
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
       <div className="grid lg:grid-cols-2 gap-7 items-start">
+        {/* IMAGE SECTION */}
         <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
-
           <button
             type="button"
             onClick={() => dispatch(toggleFavourite(product))}
@@ -82,29 +87,55 @@ export default function ProductView() {
             {isWishlisted ? "❤️" : "🤍"}
           </button>
 
-          <div className="overflow-hidden rounded-lg">
-            <img
-              src={selectedImage}
-              className="w-full h-62.5 sm:h-80 lg:h-105 object-contain"
-            />
+          {/* Main Display */}
+          <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105">
+            {selectedMedia.type === "image" ? (
+              <img
+                src={selectedMedia.src}
+                className="w-full h-full object-contain transition duration-300 "
+              />
+            ) : (
+              <video
+                src={selectedMedia.src}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
 
-          <div className="mt-3 grid grid-cols-3 gap-3">
-            {images.map((img, idx) => (
-              <button
-                key={`${img}-${idx}`}
-                type="button"
-                onClick={() => setActiveImage(img)}
-                className={`rounded-lg border bg-white p-2 overflow-hidden ${
-                  selectedImage === img ? "border-orange-500" : "border-gray-200"
-                }`}
-              >
-                <img src={img} className="w-full h-16 object-contain" />
-              </button>
-            ))}
+          {/* Thumbnails */}
+          <div className="mt-3 grid grid-cols-5 gap-3">
+            {mediaItems.map((item, idx) => {
+              const isActive =
+                selectedMedia.src === item.src &&
+                selectedMedia.type === item.type;
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveImage(item)}
+                  className={`rounded-lg border p-1 overflow-hidden transition ${
+                    isActive ? "border-orange-500" : "border-gray-200"
+                  }`}
+                >
+                  {item.type === "image" ? (
+                    <img
+                      src={item.src}
+                      className="w-full h-16 object-contain"
+                    />
+                  ) : (
+                    <div className="relative w-full h-16 bg-black flex items-center justify-center">
+                      <span className="text-white text-xs">▶</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
+        {/* RIGHT SIDE (UNCHANGED) */}
         <div className="pt-2 sm:pt-5">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">
             {product.title}
@@ -121,21 +152,18 @@ export default function ProductView() {
             </p>
 
             <div className="flex flex-wrap gap-2 sm:gap-5 cursor-pointer">
-
               {tiers.map((tier, i) => {
-                const isActive =
-                  qty >= tier.min && qty <= tier.max;
+                const isActive = qty >= tier.min && qty <= tier.max;
 
                 return (
                   <div
                     key={i}
                     onClick={() => setQty(tier.min)}
-                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105
-                      ${
-                        isActive
-                          ? "border-2 border-orange-500 bg-white"
-                          : "bg-gray-100 hover:bg-gray-200"
-                      }`}
+                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${
+                      isActive
+                        ? "border-2 border-orange-500 bg-white"
+                        : "bg-gray-100 hover:bg-gray-200"
+                    }`}
                   >
                     <p className="text-[10px] sm:text-xs text-gray-500">
                       {tier.max === Infinity
@@ -150,11 +178,7 @@ export default function ProductView() {
 
                     {!isActive && (
                       <p className="text-green-600 text-[10px] sm:text-xs">
-                        Save{" "}
-                        {Math.round(
-                          ((580 - tier.price) / 580) * 100
-                        )}
-                        %
+                        Save {Math.round(((580 - tier.price) / 580) * 100)}%
                       </p>
                     )}
                   </div>
@@ -162,6 +186,7 @@ export default function ProductView() {
               })}
             </div>
           </div>
+
           <div className="flex flex-wrap items-center gap-3 mt-3">
             <span className="text-sm text-black-700">Quantity:</span>
 
@@ -192,24 +217,23 @@ export default function ProductView() {
               Min. {product.min}
             </span>
           </div>
-          {/* <p className="text-lg font-bold text-orange-600 mt-2">
-            ₹{activeTier?.price}/unit
-          </p> */}
 
           <div className="mt-4 space-y-2">
+            {/* Top Row Buttons */}
+            <div className="flex gap-2">
 
-            <button className="w-full cursor-pointer bg-orange-500 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] text-white py-1.5 rounded-lg font-semibold text-sm sm:text-lg transition duration-200 shadow">
-              🛒 Add to Cart
-            </button>
+              <button className="w-1/2 cursor-pointer text-white  bg-orange-500 hover:bg-orange-600 py-1.5 rounded-lg font-medium text-gray-700  hover:scale-[1.02] active:scale-[0.98] transition">
+                Buy
+              </button>
+              <button className="w-1/2 cursor-pointer bg-orange-500 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] text-white py-1.5 rounded-lg font-semibold text-sm sm:text-lg transition duration-200 shadow">
+                🛒 Add to Cart
+              </button>
+            </div>
 
+            {/* Full Width Button */}
             <button className="w-full border cursor-pointer border-gray-400 py-1.5 rounded-lg font-medium hover:bg-gray-300 transition">
               📄 Send Enquiry
             </button>
-
-            <button className="w-full cursor-pointer bg-gray-200 py-1.5  rounded-lg font-medium text-gray-700 hover:bg-gray-300 transition">
-              Buy
-            </button>
-
           </div>
 
           <div className="mt-4 rounded-xl shadow-sm p-3">
@@ -242,14 +266,18 @@ export default function ProductView() {
               <div>
                 <p className="font-medium">{product.company}</p>
                 <p className="text-xs text-gray-500">
-                  {supplier ? `📍 ${supplier.location} • ${supplier.category}` : ""}
+                  {supplier
+                    ? `📍 ${supplier.location} • ${supplier.category}`
+                    : ""}
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={() => supplier && router.push(`/suppliers/${supplier.id}`)}
+              onClick={() =>
+                supplier && router.push(`/suppliers/${supplier.id}`)
+              }
               disabled={!supplier}
               className={`border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer ${
                 supplier
@@ -260,9 +288,60 @@ export default function ProductView() {
               View Profile →
             </button>
           </div>
-
         </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="flex justify-between">
+          <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">
+            Similar Products
+          </h2>
+          <Link
+            href="/trendingviewall"
+            className="text-orange-500 text-sm cursor-pointer hover:underline"
+          >
+            View all →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          {" "}
+          {products.map((item) => (
+            <Link
+              key={item.id}
+              href={`/product/${item.id}`}
+              className="bg-white rounded-xl shadow hover:shadow-xl transition group overflow-hidden"
+            >
+              <div className="h-56 overflow-hidden">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="p-3">
+                <h3 className="text-sm font-semibold">{item.title}</h3>
+
+                <p className="text-orange-600 font-semibold">{item.price}</p>
+
+                <p className="text-xs text-gray-500">{item.min}</p>
+
+                <div className="flex items-center text-xs gap-1 mt-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span>{item.brand}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+      <Link
+        href="/trendingviewall"
+        className="text-orange-500 flex justify-center text-xl cursor-pointer hover:underline"
+      >
+        View all →
+      </Link>
     </div>
   );
 }
