@@ -1,5 +1,4 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -21,6 +20,7 @@ useEffect(() => {
 
 if (loading) return <div>Loading...</div>;
 if (!isAdmin) return null;
+console.log("AUTH STATE:", { user, role, loading });
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">
       
