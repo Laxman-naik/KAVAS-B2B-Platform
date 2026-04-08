@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart } from "lucide-react";
 import { products } from "@/data/products";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite } from "@/store/slices/favouritesSlice";
 
 const categories = [
     "All ",
@@ -21,20 +24,19 @@ const categories = [
 
 const Page = () => {
     const [activeCategory, setActiveCategory] = useState("All Automotive");
-    const [liked, setLiked] = useState([]);
     const [showFilters, setShowFilters] = useState(false); // ✅ NEW
+
+    const dispatch = useDispatch();
+    const favouriteItems = useSelector((state) => state.favourites.items);
+    const liked = favouriteItems.map((item) => item._id);
 
     const filteredProducts =
         activeCategory === "All Automotive"
             ? products
             : products.filter((p) => p.category === activeCategory);
 
-    const toggleLike = (id) => {
-        setLiked((prev) =>
-            prev.includes(id)
-                ? prev.filter((item) => item !== id)
-                : [...prev, id]
-        );
+    const onToggleFavourite = (product) => {
+        dispatch(toggleFavourite(product));
     };
 
     return (
@@ -186,11 +188,9 @@ const Page = () => {
                         {/* GRID */}
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
                             {filteredProducts.map((product, index) => (
-                                <Card
-                                    key={product.id}
-                                    className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden"
-                                >
-                                    <CardContent className="!p-0 flex flex-col h-full">
+                                <Link key={product.id} href={`/product/${product.id}`} className="block">
+                                    <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
+                                        <CardContent className="!p-0 flex flex-col h-full">
 
                                         <div className="relative h-[160px] sm:h-[200px] bg-gray-100 flex items-center justify-center">
                                             <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full z-10">
@@ -222,23 +222,38 @@ const Page = () => {
                                             </p>
 
                                             <div className="flex items-center gap-2 mt-auto pt-2">
-                                                <Button className="flex-1 bg-orange-500 text-white text-xs h-8">
+                                                <Button
+                                                    className="flex-1 bg-orange-500 text-white text-xs h-8"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
+                                                >
                                                     <ShoppingCart size={12} />
                                                 </Button>
 
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    onClick={() => toggleLike(product.id)}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        onToggleFavourite(product);
+                                                    }}
                                                     className="h-8 w-8"
                                                 >
-                                                    <Heart size={12} />
+                                                    <Heart
+                                                        size={12}
+                                                        className={liked.includes(product.id) ? "text-red-500" : "text-gray-700"}
+                                                        fill={liked.includes(product.id) ? "currentColor" : "none"}
+                                                    />
                                                 </Button>
                                             </div>
                                         </div>
 
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </Link>
                             ))}
                         </div>
 

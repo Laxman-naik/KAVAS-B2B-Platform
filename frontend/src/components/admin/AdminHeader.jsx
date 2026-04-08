@@ -138,7 +138,7 @@ export default function AdminHeader() {
       {/* PROFILE MODAL */}
       {showProfile && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="w-[420px] bg-[#0F1E33] rounded-2xl p-6 text-white">
+          <div className="w-105 bg-[#0F1E33] rounded-2xl p-6 text-white">
 
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center font-bold">

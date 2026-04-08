@@ -4,17 +4,20 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { useSelector } from "react-redux";
 
 export default function AdminLayout({ children }) {
-  const router = useRouter();
+ const router = useRouter();
+
+  const { admin, loading } = useSelector((state) => state.admin);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("admin");
-
-    if (!isLoggedIn) {
-      router.push("/admin/login");
+    if (!loading && !admin) {
+      router.replace("/admin/login");
     }
-  }, [router]);
+  }, [loading, admin, router]);
+
+  if (loading) return null;
 
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">
@@ -40,3 +43,4 @@ export default function AdminLayout({ children }) {
     </div>
   );
 }
+

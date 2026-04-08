@@ -49,10 +49,9 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
           <X size={18} />
         </button>
 
-        {/* Logo */}
         <div className="flex justify-center sm:justify-start mb-2">
           <Image
-            src="/KAVASlogo.png"
+            src="/lotussymbol.png"
             alt="Kavas Logo"
             width={120}
             height={60}
@@ -60,7 +59,6 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
           />
         </div>
 
-        {/* Heading */}
         <h3 className="text-base sm:text-lg font-semibold">Welcome back</h3>
         <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
           Sign in to your Kavas account

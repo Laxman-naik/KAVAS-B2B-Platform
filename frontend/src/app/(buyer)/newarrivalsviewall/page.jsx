@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart } from "lucide-react";
-import { products } from "@/data/products";
+import { arrivalProducts } from "@/data/arrivalProducts";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleFavourite } from "@/store/slices/favouritesSlice";
 
 const categories = [
     "All ",
@@ -22,21 +25,16 @@ const categories = [
 const Page = () => {
     const [activeCategory, setActiveCategory] = useState("All Automotive");
 
-    const filteredProducts =
-        activeCategory === "All Automotive"
-            ? products
-            : products.filter((p) => p.category === activeCategory);
+    const filteredProducts = arrivalProducts;
 
-    const [liked, setLiked] = useState([]);
-    const toggleLike = (id) => {
-        setLiked((prev) =>
-            prev.includes(id)
-                ? prev.filter((item) => item !== id)
-                : [...prev, id]
-        );
+    const dispatch = useDispatch();
+    const favouriteItems = useSelector((state) => state.favourites.items);
+    const liked = favouriteItems.map((item) => item._id);
+
+    const onToggleFavourite = (product) => {
+        dispatch(toggleFavourite(product));
     };
 
-    // ✅ MOBILE FILTER TOGGLE
     const [showFilters, setShowFilters] = useState(false);
 
     return (
@@ -56,7 +54,7 @@ const Page = () => {
                     </p>
 
                     <p className="text-xs opacity-90 mt-2">
-                        Showing {filteredProducts.length} of {products.length} products
+                        Showing {filteredProducts.length} of {arrivalProducts.length} products
                     </p>
                 </div>
             </div>
@@ -81,8 +79,6 @@ const Page = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-3 sm:px-4 py-6">
-
-                {/* ✅ MOBILE FILTER BUTTON ONLY */}
                 <div className="md:hidden mb-4">
                     <button
                         onClick={() => setShowFilters(!showFilters)}
@@ -193,10 +189,8 @@ const Page = () => {
                         {/* GRID */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
                             {filteredProducts.map((product, index) => (
-                                <Card
-                                    key={product.id}
-                                    className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden"
-                                >
+                                <Link key={product.id} href={`/product/${product.id}`} className="block">
+                                    <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                                     <CardContent className="!p-0 !py-0 flex flex-col h-full">
 
                                         <div className="relative h-[180px] sm:h-[200px] bg-gray-100 flex items-center justify-center">
@@ -234,7 +228,13 @@ const Page = () => {
                                             </p>
 
                                             <div className="flex items-center gap-2 mt-auto pt-3 border-t">
-                                                <Button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md">
+                                                <Button
+                                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                    }}
+                                                >
                                                     <ShoppingCart size={14} className="mr-1" />
                                                     Add
                                                 </Button>
@@ -242,7 +242,11 @@ const Page = () => {
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    onClick={() => toggleLike(product.id)}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        onToggleFavourite(product);
+                                                    }}
                                                     className={`h-8 w-8 border-orange-200 ${liked.includes(product.id) ? "bg-red-50" : ""}`}
                                                 >
                                                     <Heart
@@ -263,7 +267,8 @@ const Page = () => {
                                         </div>
 
                                     </CardContent>
-                                </Card>
+                                    </Card>
+                                </Link>
                             ))}
                         </div>
 
