@@ -46,8 +46,8 @@ const Navbar = () => {
     const { user, isAuthenticated, loading } = useSelector((state) => state.auth);
     const favouritesCount = useSelector((state) => state.favourites.items.length);
     const cartCount = useSelector((state) =>
-  state.cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
-);
+        state.cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
+    );
 
     const [initialEmail, setInitialEmail] = useState("");
 
@@ -71,10 +71,10 @@ const Navbar = () => {
                     </div>
                 </div>
 
-                <div className="w-full">
-                    <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
+                <div className="w-full  bg-[#063149] ">
+                    <div className="flex flex-wrap lg:flex-nowrap  items-center gap-3 px-4 sm:px-6 lg:px-10 py-2">
 
-                        <div className="flex items-center shrink-0 h-16 sm:h-20">
+                        <div className="flex items-center  shrink-0 h-16 sm:h-20">
                             <Link
                                 href="/"
                                 onClick={() => {
@@ -84,7 +84,7 @@ const Navbar = () => {
                                     }
                                 }}
                             >
-                                <img src="/lotussymbol.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
+                                <img src="/LOGOKAVAS.png" alt="KAVAS Logo" className="h-10 sm:h-12 md:h-14 w-auto object-contain cursor-pointer" />
                             </Link>
                         </div>
 
@@ -155,23 +155,23 @@ const Navbar = () => {
 
                             <div className="relative inline-block">
 
-  <Button
-    variant="outline"
-    className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3"
-  >
-    <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
-      <ShoppingCart className="h-4 w-4" />
-      <span className="hidden sm:inline">Cart</span>
-    </Link>
-  </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-9 sm:h-10 gap-1 sm:gap-2 px-2 sm:px-3"
+                                >
+                                    <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
+                                        <ShoppingCart className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Cart</span>
+                                    </Link>
+                                </Button>
 
-  {cartCount > 0 && (
-    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
-      {cartCount}
-    </span>
-  )}
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                                        {cartCount}
+                                    </span>
+                                )}
 
-</div>
+                            </div>
                         </div>
                     </div>
                 </div>

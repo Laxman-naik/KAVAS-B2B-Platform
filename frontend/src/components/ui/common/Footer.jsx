@@ -3,7 +3,7 @@ import { FaLinkedin, FaFacebook, FaTwitter, FaYoutube } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-900 mt-10 text-gray-700 dark:text-gray-300">
+    <footer className="bg-[#063149] dark:bg-gray-900 mt-10 text-gray-700 dark:text-gray-300">
       <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:flex lg:justify-between lg:gap-6 gap-8">
         <div className="md:col-span-2">
           <h2 className="text-2xl font-bold text-orange-500">Kavas</h2>
