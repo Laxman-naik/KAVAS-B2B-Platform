@@ -30,17 +30,19 @@ app.use(
   })
 );
 
-// app.options("/api/*", cors());
-
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
+app.get("/", (req, res) => {
+  res.status(200).send("Server is running 🚀");
+});
 
 app.get("/ping", (req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
