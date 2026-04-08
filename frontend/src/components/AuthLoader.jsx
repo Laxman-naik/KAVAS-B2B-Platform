@@ -31,7 +31,7 @@
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { loadUserThunk } from "@/store/slices/authSlice";
+import { loadUserThunk, loadAdminThunk } from "@/store/slices/authSlice";
 import { usePathname } from "next/navigation";
 
 const AuthLoader = ({ children }) => {
@@ -40,7 +40,12 @@ const AuthLoader = ({ children }) => {
 
   useEffect(() => {
     const isAdminRoute = pathname.startsWith("/admin");
-    if (isAdminRoute) { dispatch(loadUserThunk()); }
+    if (isAdminRoute) {
+      dispatch(loadAdminThunk());
+    } 
+    else {
+       dispatch(loadUserThunk()); 
+      }
   }, [pathname, dispatch]);
   return children;
 };
