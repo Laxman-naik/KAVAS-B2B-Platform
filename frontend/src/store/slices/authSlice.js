@@ -351,8 +351,9 @@ export const loadUserThunk = createAsyncThunk(
 // Logout user
 export const logoutUserThunk = createAsyncThunk(
   "auth/logoutUser",
-  async () => {
+  async (_, { dispatch }) => {
     await logoutUser();
+    dispatch(clearAuth());
   }
 );
 
@@ -396,7 +397,7 @@ export const logoutAdminThunk = createAsyncThunk(
 
 const initialState = {
   user: null,
-  role: null, // "user" | "admin"
+  role: null, 
   isAuthenticated: false,
 
   loading: false,

@@ -83,7 +83,6 @@ const Navbar = () => {
 
         setDropdown(false);
 
-        router.refresh();
         router.push("/"); 
     } catch (err) {
         console.log(err);
