@@ -219,4 +219,8 @@ export const logoutAdminAPI = () =>
   api.post("/api/admin/logout");
 
 export const getAdminMe = () =>
-  api.get("/api/admin/me");
+  api.get("/api/admin/me", {
+    headers: {
+      "Cache-Control": "no-cache",
+    },
+  });
