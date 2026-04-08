@@ -56,9 +56,17 @@ const Navbar = () => {
         dispatch(hydrateFavourites());
     }, [dispatch]);
 
-    const handleLogout = () => {
-        dispatch(logoutUserThunk());
-    };
+  const handleLogout = async () => {
+    try {
+        await dispatch(logoutUserThunk()).unwrap();
+
+        setDropdown(false);
+
+        router.push("/"); 
+    } catch (err) {
+        console.log(err);
+    }
+};
 
     if (!mounted) return null;
 

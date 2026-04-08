@@ -1,23 +1,61 @@
 "use client";
-
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AdminHeader from "@/components/admin/AdminHeader";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "../../components/admin/AdminSidebar";
+import AdminSidebar from "../../components/admin/AdminHeader";
 import { useSelector } from "react-redux";
 
 export default function AdminLayout({ children }) {
- const router = useRouter();
+  // const router = useRouter();
+  // const { isAuthenticated, role, loading } = useSelector((state) => state.auth);
 
-  const { admin, loading } = useSelector((state) => state.admin);
+  // const isAdmin = isAuthenticated && role === "admin";
+
+  // useEffect(() => {
+  //   if (!loading && !isAdmin) {
+  //     router.replace("/admin/login");
+  //   }
+  // }, [loading, isAdmin]);
+
+  // // if (loading) {
+  // //   return (
+  // //     <div className="h-screen flex items-center justify-center">
+  // //       Loading...
+  // //     </div>
+  // //   );
+  // // }
+
+  // if (!isAdmin) return null;
+
+const router = useRouter();
+  const pathname = usePathname();
+
+  const { isAuthenticated, role, loading } = useSelector(
+    (state) => state.auth
+  );
+
+  const isAdmin = isAuthenticated && role === "admin";
+
+  const isPublicRoute = pathname === "/admin/login";
 
   useEffect(() => {
-    if (!loading && !admin) {
+    // ⛔ wait until auth state is known
+    if (loading) return;
+
+    if (!isAdmin && !isPublicRoute) {
       router.replace("/admin/login");
     }
-  }, [loading, admin, router]);
+  }, [loading, isAdmin, isPublicRoute]);
 
-  if (loading) return null;
+  // allow login page always
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  // prevent flashing / redirect loop
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">

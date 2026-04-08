@@ -20,4 +20,4 @@ if (!global._redis) {
 
 redis = global._redis;
 
-module.exports = { redis };
+module.exports = redis;
