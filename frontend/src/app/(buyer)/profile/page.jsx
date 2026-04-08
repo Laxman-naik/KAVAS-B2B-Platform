@@ -283,31 +283,31 @@ const Page = () => {
 
                         <Card className="rounded-2xl">
                             <CardContent className="p-4 space-y-3">
+                                <Button asChild variant="outline" className="w-full justify-start">
+                                    <Link href="/buyerorders" className="flex items-center gap-2 w-full">
+                                        <Package size={16} />
+                                        <span>My Orders</span>
+                                    </Link>
+                                </Button>
 
                                 <Button asChild variant="outline" className="w-full justify-start">
-                                    <Link href="/buyerorders">
-                                        <Package size={16} /> My Orders
+                                    <Link href="/favourites" className="flex items-center gap-2 w-full">
+                                        <Heart size={16} />
+                                        <span>Favourites</span>
                                     </Link>
                                 </Button>
 
-                                <Button variant="outline" className="w-full justify-start">
-                                    <Link href="/favourites">
-                                    <Heart size={16} /> Favourites
+                                <Button asChild variant="outline" className="w-full justify-start">
+                                    <Link href="/help" className="flex items-center gap-2 w-full">
+                                        <Shield size={16} />
+                                        <span>Help Centre</span>
                                     </Link>
                                 </Button>
 
-                                <Button variant="outline" className="w-full justify-start">
-                                    <Link href="/help">
-                                    <Shield size={16} /> Help Centre
-                                    </Link>
+                                <Button variant="destructive" className="w-full justify-start flex items-center gap-2">
+                                    <LogOut size={16} />
+                                    <span>Sign Out</span>
                                 </Button>
-
-                                <Button variant="destructive" className="w-full justify-start">
-                                    
-                                    <LogOut size={16} /> Sign Out
-                                    
-                                </Button>
-
                             </CardContent>
                         </Card>
                     </div>
