@@ -262,8 +262,11 @@
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { generateAccessToken, generateRefreshToken, } = require("../utils/token");
-const { redis } = require("../config/redis");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../utils/token");
+const redis = require("../config/redis");
 
 const REFRESH_PREFIX = "refresh:user:";
 
@@ -283,6 +286,7 @@ exports.register = async (req, res) => {
 
     res.json({ user: result.rows[0] });
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -316,17 +320,20 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    //  FIXED Redis usage
     await redis.set(
-      `refresh:user:${user.id}`,
+      `${REFRESH_PREFIX}${user.id}`,
       refreshToken,
       "EX",
       7 * 24 * 60 * 60
     );
 
+    const isProd = process.env.NODE_ENV === "production";
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "None",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -340,8 +347,8 @@ exports.login = async (req, res) => {
       },
       accessToken,
     });
-
   } catch (err) {
+    console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -349,7 +356,7 @@ exports.login = async (req, res) => {
 // ================== REFRESH TOKEN ==================
 exports.refreshTokenHandler = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies?.refreshToken;
 
     if (!token) {
       return res.status(401).json({ message: "No refresh token" });
@@ -357,7 +364,7 @@ exports.refreshTokenHandler = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-    const stored = await redis.get(`refresh:user:${decoded.id}`);
+    const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
 
     if (!stored || stored !== token) {
       return res.status(403).json({ message: "Invalid session" });
@@ -366,12 +373,13 @@ exports.refreshTokenHandler = async (req, res) => {
     const newAccessToken = generateAccessToken({ id: decoded.id });
 
     res.json({ accessToken: newAccessToken });
-
-  } catch {
+  } catch (err) {
+    console.error("REFRESH ERROR:", err);
     res.status(403).json({ message: "Session expired" });
   }
 };
 
+// ================== GET ME ==================
 exports.getMe = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -391,6 +399,7 @@ exports.getMe = async (req, res) => {
 
     return res.json({ user: result.rows[0] });
   } catch (err) {
+    console.error("GET ME ERROR:", err);
     return res.status(401).json({ user: null });
   }
 };
@@ -398,23 +407,25 @@ exports.getMe = async (req, res) => {
 // ================== LOGOUT ==================
 exports.logout = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies?.refreshToken;
 
     if (token) {
       const decoded = jwt.decode(token);
+
       if (decoded?.id) {
-        await redis.del(`refresh:user:${decoded.id}`);
+        await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
       }
     }
 
     res.clearCookie("refreshToken", {
       path: "/",
-      sameSite: "None",
+      sameSite: "none",
       secure: true,
     });
 
     res.json({ message: "Logged out" });
-  } catch {
+  } catch (err) {
+    console.error("LOGOUT ERROR:", err);
     res.status(500).json({ message: "Logout failed" });
   }
 };
@@ -422,7 +433,7 @@ exports.logout = async (req, res) => {
 // ================== LOGOUT ALL ==================
 exports.logoutAll = async (req, res) => {
   try {
-    const token = req.cookies.refreshToken;
+    const token = req.cookies?.refreshToken;
 
     if (!token) {
       return res.json({ message: "No session" });
@@ -434,7 +445,11 @@ exports.logoutAll = async (req, res) => {
       await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
     }
 
-    res.clearCookie("refreshToken", { path: "/" });
+    res.clearCookie("refreshToken", {
+      path: "/",
+      sameSite: "none",
+      secure: true,
+    });
 
     res.json({ message: "Logged out all sessions" });
   } catch (err) {
