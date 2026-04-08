@@ -8,19 +8,32 @@ import { useSelector } from "react-redux";
 export default function AdminLayout({ children }) {
   const router = useRouter();
 
- const { user, role, loading } = useSelector((state) => state.auth);
+  const { user, role, loading } = useSelector((state) => state.auth);
 
-const isAdmin = user && role === "admin";
+  const isAdmin = user && role === "admin";
 
-useEffect(() => {
-  if (!loading && !isAdmin) {
-    router.replace("/admin/login");
+  // debug (keep this while testing)
+  console.log("AUTH STATE:", { user, role, loading });
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      router.replace("/admin/login");
+    }
+  }, [loading, isAdmin, router]);
+
+  // block UI until auth is resolved
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Checking authentication...
+      </div>
+    );
   }
-}, [loading, isAdmin]);
 
-if (loading) return <div>Loading...</div>;
-if (!isAdmin) return null;
-console.log("AUTH STATE:", { user, role, loading });
+  // prevent flashing protected UI
+  if (!isAdmin) {
+    return null;
+  }
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">
       
