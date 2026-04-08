@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
+const redis = require("../config/redis");
+
+/* ================= TOKENS ================= */
 
 const generateAccessToken = (admin) => {
   return jwt.sign(
@@ -17,6 +20,8 @@ const generateRefreshToken = (admin) => {
     { expiresIn: "7d" }
   );
 };
+
+/* ================= LOGIN ================= */
 
 const login = async (req, res) => {
   try {
@@ -37,6 +42,10 @@ const login = async (req, res) => {
 
     const admin = result.rows[0];
 
+    if (!admin.password_hash) {
+      return res.status(500).json({ message: "Password not set" });
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password_hash);
 
     if (!isMatch) {
@@ -46,9 +55,11 @@ const login = async (req, res) => {
     const accessToken = generateAccessToken(admin);
     const refreshToken = generateRefreshToken(admin);
 
-    await pool.query(
-      "UPDATE admins SET refresh_token=$1 WHERE id=$2",
-      [refreshToken, admin.id]
+    await redis.set(
+      `admin_refresh:${admin.id}`,
+      refreshToken,
+      "EX",
+      7 * 24 * 60 * 60 
     );
 
     const isProd = process.env.NODE_ENV === "production";
@@ -82,6 +93,8 @@ const login = async (req, res) => {
   }
 };
 
+/* ================= REFRESH ================= */
+
 const refreshToken = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -92,18 +105,18 @@ const refreshToken = async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-    const result = await pool.query(
-      "SELECT * FROM admins WHERE id=$1",
-      [decoded.id]
-    );
+   
+    const storedToken = await redis.get(`admin_refresh:${decoded.id}`);
 
-    const admin = result.rows[0];
-
-    if (!admin || admin.refresh_token !== token) {
+    if (!storedToken || storedToken !== token) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const newAccessToken = generateAccessToken(admin);
+    const newAccessToken = jwt.sign(
+      { id: decoded.id, role: "admin" },
+      process.env.ACCESS_SECRET,
+      { expiresIn: "15m" }
+    );
 
     const isProd = process.env.NODE_ENV === "production";
 
@@ -126,17 +139,16 @@ const refreshToken = async (req, res) => {
   }
 };
 
+/* ================= LOGOUT ================= */
+
 const logout = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
 
     if (token) {
       const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-
-      await pool.query(
-        "UPDATE admins SET refresh_token=NULL WHERE id=$1",
-        [decoded.id]
-      );
+      
+      await redis.del(`admin_refresh:${decoded.id}`);
     }
   } catch (err) {
     console.log("Logout error:", err.message);
