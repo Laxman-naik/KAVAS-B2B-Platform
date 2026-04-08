@@ -62,7 +62,8 @@ const login = async (req, res) => {
       7 * 24 * 60 * 60 
     );
 
-    const isProd = process.env.NODE_ENV === "production";
+    // const isProd = process.env.NODE_ENV === "production";
+    const isProd = true
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -147,7 +148,7 @@ const logout = async (req, res) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-      
+
       await redis.del(`admin_refresh:${decoded.id}`);
     }
   } catch (err) {
@@ -160,4 +161,18 @@ const logout = async (req, res) => {
   return res.json({ message: "Logged out" });
 };
 
-module.exports = { login, refreshToken, logout };
+const getMe = async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, full_name, email, role FROM admins WHERE id=$1",
+      [req.user.id]
+    );
+
+    return res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error("GET ME ERROR:", err);
+    return res.status(500).json({ user: null });
+  }
+};
+
+module.exports = { login, refreshToken, logout, getMe };

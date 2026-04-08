@@ -16,10 +16,7 @@ router.get(
   "/me",
   authMiddleware,
   authorizeRoles("admin"),
-  (req, res) => {
-     res.set("Cache-Control", "no-store");
-    res.json({ user: req.user });
-  }
+  adminController.getMe
 );
 
 module.exports = router;

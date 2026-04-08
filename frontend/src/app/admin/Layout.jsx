@@ -30,7 +30,6 @@ export default function AdminLayout({ children }) {
     );
   }
 
-  // prevent flashing protected UI
   if (!isAdmin) {
     return null;
   }
