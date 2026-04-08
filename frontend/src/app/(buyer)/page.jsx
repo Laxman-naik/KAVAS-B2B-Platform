@@ -8,14 +8,17 @@ import AllProducts from "@/components/ui/common/AllProducts";
 
 export default function BuyerHome() {
   return (
+
     <>
-      <Home />
-      <NewArrivals />
-      <FlashDeals />
-      <TrendingProducts />
-      <AllProducts />
-      <FeaturedSuppliers />
-      <TrustedSlide />
+      <div className="px-10">
+        <Home />
+        <NewArrivals />
+        <FlashDeals />
+        <TrendingProducts />
+        <AllProducts />
+        <FeaturedSuppliers />
+        <TrustedSlide />
+      </div>
     </>
   );
 }

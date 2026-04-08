@@ -119,7 +119,7 @@ export default function NewArrivals() {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 py-6">
+    <div className="dark:bg-gray-900 py-6">
       <div className="max-w-7xl mx-auto px-4">
 
         {/* WHITE CONTAINER */}

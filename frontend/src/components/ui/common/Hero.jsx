@@ -389,7 +389,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen dark:bg-gray-900">
+    <div className=" min-h-screen dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-6">
           <div ref={menuRef} className="relative w-full lg:w-64 shrink-0">
@@ -425,7 +425,7 @@ const Hero = () => {
                       }}
                       className={`flex items-center justify-between px-3 sm:px-4 py-2.5 border-b hover:bg-orange-50 cursor-pointer min-h-[42px] ${
                         activeCategory.name === cat.name
-                          ? "bg-orange-50 text-orange-600"
+                          ? ""
                           : ""
                       }`}
                     >
