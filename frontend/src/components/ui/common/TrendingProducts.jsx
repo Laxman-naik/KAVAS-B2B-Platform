@@ -3,7 +3,9 @@ import { products } from "@/data/products";
 
 export default function TrendingProducts() {
   return (
+    
     <div className="bg-gray-50 dark:bg-gray-900">
+      <div className="bg-red-100 rounded-xl ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
         <div className="flex justify-between">
@@ -47,7 +49,13 @@ export default function TrendingProducts() {
             </Link>
           ))}
         </div>
+        <Link href="/trendingviewall" className="text-orange-500 text-sm cursor-pointer flex justify-center hover:underline">
+            {/* <div className="w-35 h-5 flex justify-center bg-[#063149]"> */}
+            View More →
+            {/* </div> */}
+          </Link>
       </div>
+    </div>
     </div>
   );
 }

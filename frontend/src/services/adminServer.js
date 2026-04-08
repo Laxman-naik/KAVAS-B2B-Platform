@@ -1,140 +1,222 @@
-// import api from "@/lib/axios";
+// // import axios from "axios";
 
-// export const registerAdminAPI = (data) => api.post("api/admin/register", data);
+// // const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
-// export const loginAdminAPI = (data) => api.post("api/admin/login", data);
+// // /* AXIOS INSTANCE */
+// // const adminApi = axios.create({
+// //   baseURL: BASE_URL,
+// //   withCredentials: true, // 🔥 REQUIRED for cookies
+// // });
 
-// export const refreshAdminToken = () => api.post("api/admin/refresh");
+// // /* REFRESH CONTROL */
+// // let isRefreshing = false;
+// // let failedQueue = [];
 
-// export const logoutAdminAPI = () => api.post("api/admin/logout");
+// // const processQueue = (error) => {
+// //   failedQueue.forEach((p) => {
+// //     error ? p.reject(error) : p.resolve();
+// //   });
+// //   failedQueue = [];
+// // };
 
-// export const getAdminProfile = () => api.get("api/admin/me");
+// // /* RESPONSE INTERCEPTOR */
+// // adminApi.interceptors.response.use(
+// //   (res) => res,
+// //   async (error) => {
+// //     const originalRequest = error.config;
+
+// //     if (!originalRequest) return Promise.reject(error);
+
+// //     // ❌ Don't retry refresh itself
+// //     if (originalRequest.url?.includes("/admin/refresh")) {
+// //       return Promise.reject(error);
+// //     }
+
+// //     // ✅ If access token expired
+// //     if (error.response?.status === 401 && !originalRequest._retry) {
+// //       originalRequest._retry = true;
+
+// //       if (isRefreshing) {
+// //         return new Promise((resolve, reject) => {
+// //           failedQueue.push({ resolve, reject });
+// //         }).then(() => adminApi(originalRequest));
+// //       }
+
+// //       isRefreshing = true;
+
+// //       try {
+// //         // 🔥 Call refresh (cookie-based)
+// //         await axios.post(
+// //           `${BASE_URL}/api/admin/refresh`,
+// //           {},
+// //           { withCredentials: true }
+// //         );
+
+// //         processQueue(null);
+
+// //         // 🔥 Retry original request (cookie already updated)
+// //         return adminApi(originalRequest);
+// //       } catch (err) {
+// //         processQueue(err);
+
+// //         // Optional: redirect to login
+// //         if (typeof window !== "undefined") {
+// //           window.location.href = "/admin/login";
+// //         }
+
+// //         return Promise.reject(err);
+// //       } finally {
+// //         isRefreshing = false;
+// //       }
+// //     }
+
+// //     return Promise.reject(error);
+// //   }
+// // );
+
+// // /* ADMIN APIs */
+// // export const registerAdminAPI = (data) =>
+// //   adminApi.post("/api/admin/register", data);
+
+// // export const loginAdminAPI = (data) =>
+// //   adminApi.post("/api/admin/login", data);
+
+// // export const logoutAdminAPI = () =>
+// //   adminApi.post("/api/admin/logout");
+
+// // export const getAdminProfile = () =>
+// //   adminApi.get("/api/admin/me");
+
+// // export default adminApi;
 
 // import axios from "axios";
 
 // const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 
-// export const registerAdminAPI = (data) =>
-//   axios.post(`${BASE_URL}/api/admin/register`, data);
+// /* =========================
+//    PUBLIC API (NO INTERCEPTOR)
+// ========================= */
+// export const publicApi = axios.create({
+//   baseURL: BASE_URL,
+// });
 
+// /* =========================
+//    ADMIN API (PROTECTED)
+// ========================= */
+// export const adminApi = axios.create({
+//   baseURL: BASE_URL,
+//   withCredentials: true,
+// });
+
+// /* =========================
+//    REFRESH CONTROL STATE
+// ========================= */
+// let isRefreshing = false;
+// let failedQueue = [];
+
+// const processQueue = (error) => {
+//   failedQueue.forEach((p) => {
+//     error ? p.reject(error) : p.resolve();
+//   });
+//   failedQueue = [];
+// };
+
+// /* =========================
+//    RESPONSE INTERCEPTOR
+//    (ONLY FOR adminApi)
+// ========================= */
+// adminApi.interceptors.response.use(
+//   (res) => res,
+//   async (error) => {
+//     const originalRequest = error.config;
+
+//     if (!originalRequest) {
+//       return Promise.reject(error);
+//     }
+
+//     const url = originalRequest.url || "";
+
+//     // ❌ NEVER intercept login/register/refresh
+//     if (
+//       url.includes("/login") ||
+//       url.includes("/register") ||
+//       url.includes("/refresh")
+//     ) {
+//       return Promise.reject(error);
+//     }
+
+//     // ❌ only handle token expiry
+//     if (error.response?.status === 401 && !originalRequest._retry) {
+//       originalRequest._retry = true;
+
+//       // queue requests while refreshing
+//       if (isRefreshing) {
+//         return new Promise((resolve, reject) => {
+//           failedQueue.push({ resolve, reject });
+//         }).then(() => adminApi(originalRequest));
+//       }
+
+//       isRefreshing = true;
+
+//       try {
+//         await axios.post(
+//           `${BASE_URL}/api/admin/refresh`,
+//           {},
+//           { withCredentials: true }
+//         );
+
+//         processQueue(null);
+
+//         return adminApi(originalRequest);
+//       } catch (err) {
+//         processQueue(err);
+
+//         // cleanup session
+//         if (typeof window !== "undefined") {
+//           window.location.href = "/admin/login";
+//         }
+
+//         return Promise.reject(err);
+//       } finally {
+//         isRefreshing = false;
+//       }
+//     }
+
+//     return Promise.reject(error);
+//   }
+// );
+
+// /* =========================
+//    ADMIN API FUNCTIONS
+// ========================= */
+
+// // LOGIN (PUBLIC API)
 // export const loginAdminAPI = (data) =>
-//   axios.post(`${BASE_URL}/api/admin/login`, data);
+//   publicApi.post("/api/admin/login", data, {
+//     withCredentials: true,
+//   });
 
-// export const refreshAdminToken = () =>
-//   axios.post(`${BASE_URL}/api/admin/refresh`);
+// // REGISTER (PUBLIC API)
+// export const registerAdminAPI = (data) =>
+//   publicApi.post("/api/admin/register", data);
 
+// // LOGOUT (PROTECTED API)
 // export const logoutAdminAPI = () =>
-//   axios.post(`${BASE_URL}/api/admin/logout`);
+//   adminApi.post("/api/admin/logout");
 
+// // PROFILE (PROTECTED API)
 // export const getAdminProfile = () =>
-//   axios.get(`${BASE_URL}/api/admin/me`);
+//   adminApi.get("/api/admin/me");
 
-import axios from "axios";
+// export default adminApi;
 
-const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
-
-/* AXIOS INSTANCE */
-const adminApi = axios.create({ baseURL: BASE_URL, withCredentials: true,});
-
-/* REQUEST INTERCEPTOR (Attach admin token) */
-adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem("admin_token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-/* RESPONSE INTERCEPTOR (AUTO REFRESH ADMIN TOKEN) */
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
-  });
-
-  failedQueue = [];
-};
-
-adminApi.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (!originalRequest) return Promise.reject(error);
-
-    if (originalRequest.url?.includes("/admin/refresh")) {
-      return Promise.reject(error);
-    }
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return adminApi(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
-      isRefreshing = true;
-
-      try {
-        const res = await axios.post(
-          `${BASE_URL}/api/admin/refresh`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newToken = res.data?.accessToken;
-
-        if (!newToken) throw new Error("No admin token received");
-
-        localStorage.setItem("admin_token", newToken);
-
-        adminApi.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-
-        processQueue(null, newToken);
-
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
-        return adminApi(originalRequest);
-      } catch (err) {
-        processQueue(err, null);
-        localStorage.removeItem("admin_token");
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-/* ADMIN APIs */
-
-export const registerAdminAPI = (data) =>
-  adminApi.post("/api/admin/register", data);
+import api from "../lib/axios";
 
 export const loginAdminAPI = (data) =>
-  adminApi.post("/api/admin/login", data);
-
-export const refreshAdminToken = () =>
-  adminApi.post("/api/admin/refresh");
+  api.post("/api/admin/login", data);
 
 export const logoutAdminAPI = () =>
-  adminApi.post("/api/admin/logout");
+  api.post("/api/admin/logout");
 
-export const getAdminProfile = () =>
-  adminApi.get("/api/admin/me");
-
-export default adminApi;
+export const getAdminMe = () =>
+  api.get("/api/admin/me");

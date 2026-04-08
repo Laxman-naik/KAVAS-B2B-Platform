@@ -115,3 +115,24 @@
 // };
 
 // export default api;
+
+import axios from "axios";
+
+const BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = store.getState().auth.accessToken;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+export default api;

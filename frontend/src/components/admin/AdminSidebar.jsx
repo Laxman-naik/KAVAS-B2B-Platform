@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Home,
   BarChart2,
@@ -9,6 +9,9 @@ import {
   Settings,
   Shield,
   Menu,
+  User,
+  Activity,
+  LogOut,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -36,12 +39,30 @@ const menuItems = [
 
 export default function AdminSidebar() {
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const profileRef = useRef(null);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem("admin");
+    router.push("/admin/login");
+  };
 
   return (
     <>
-      {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setOpen(!open)}
@@ -51,15 +72,12 @@ export default function AdminSidebar() {
         </button>
       </div>
 
-      {/* Sidebar */}
       <div
         className={`fixed top-0 left-0 h-screen w-60 bg-[#0F1E33] text-white flex flex-col border-r border-gray-700 z-40
         transform transition-transform duration-300
         ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        {/* Scrollable Area */}
         <div className="flex-1 overflow-y-auto">
-          {/* Logo */}
           <div className="flex items-center gap-2 p-3">
             <div className="bg-orange-500 w-9 h-9 rounded-lg flex items-center justify-center font-bold">
               TH
@@ -71,16 +89,11 @@ export default function AdminSidebar() {
               </span>
             </div>
           </div>
-
-          {/* Menu */}
           <div className="mt-3 space-y-2">
             {menuItems.map((item, index) => {
               if (item.section) {
                 return (
-                  <p
-                    key={index}
-                    className="text-[10px] text-gray-400 px-3 mt-3"
-                  >
+                  <p key={index} className="text-[10px] text-gray-400 px-3 mt-3">
                     {item.section}
                   </p>
                 );
@@ -94,7 +107,7 @@ export default function AdminSidebar() {
                   key={index}
                   onClick={() => {
                     if (item.path) router.push(item.path);
-                    setOpen(false); // close on mobile
+                    setOpen(false);
                   }}
                   className={`flex items-center justify-between px-3 py-2 mx-2 rounded-lg cursor-pointer transition transform
                   hover:scale-105 active:scale-95
@@ -120,9 +133,12 @@ export default function AdminSidebar() {
           </div>
         </div>
 
-        {/* Bottom Profile */}
-        <div className="p-2 border-t border-gray-700">
-          <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1B2A45] transition transform hover:scale-105 active:scale-95 cursor-pointer">
+        <div className="p-2 border-t border-gray-700 relative" ref={profileRef}>
+          
+          <div
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1B2A45] transition transform hover:scale-105 active:scale-95 cursor-pointer"
+          >
             <div className="w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
               AD
             </div>
@@ -133,6 +149,44 @@ export default function AdminSidebar() {
               </p>
             </div>
           </div>
+
+          <div
+            className={`absolute bottom-14 left-2 right-2 bg-[#0F1E33] border border-gray-700 rounded-xl shadow-lg overflow-hidden transform transition-all duration-200 ${
+              profileOpen
+                ? "opacity-100 translate-y-0 visible"
+                : "opacity-0 translate-y-2 invisible"
+            }`}
+          >
+            <div className="text-sm">
+
+              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
+                <User className="w-4 h-4" />
+                My Profile
+              </button>
+
+              <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
+
+              {/* <button className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[#13263C] transition">
+                <Activity className="w-4 h-4" />
+                Activity Log
+              </button> */}
+
+              <div className="border-t border-gray-700"></div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10 transition"
+              >
+                <LogOut className="w-4 h-4" />
+                Log out
+              </button>
+
+            </div>
+          </div>
+
         </div>
       </div>
     </>

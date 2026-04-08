@@ -9,9 +9,9 @@ const CartPage = () => {
 
   const dispatch = useDispatch();
 
-  React.useEffect(() => {
-    dispatch(hydrateCart());
-  }, [dispatch]);
+  // React.useEffect(() => {
+    // dispatch(hydrateCart());
+  // }, [dispatch]);
 
   const cartItems = useSelector((state) => state.cart?.items || []);
 
@@ -30,10 +30,10 @@ const CartPage = () => {
   const hasInvalidMoq = cartItems.some((item) => (item.moq || 1) > (item.quantity || 0));
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">      
+    <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <div className="lg:col-span-2">          
+
+        <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5" />
             <h2 className="text-lg sm:text-xl font-semibold">
@@ -75,66 +75,68 @@ const CartPage = () => {
                   const displayQty = qty < moq ? moq : qty;
 
                   return (
-                <div
-                  key={item._id}
-                  className="bg-white border rounded-xl p-4 flex items-center gap-4"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
+                    <div
+                      key={item._id}
+                      className="bg-white border rounded-xl p-4 flex items-center gap-4"
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded"
+                      />
 
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold">{item.name}</h4>
-                    <p className="text-xs text-gray-500">₹{item.price}</p>
-                    <p className="text-[11px] text-gray-500">{item.min || `Min. ${item.moq || 1} units`}</p>
-                    {!isMoqValid && (
-                      <p className="text-[11px] text-red-600 mt-1">
-                        Quantity must be at least the minimum units
-                      </p>
-                    )}
-                    <div className="mt-2 flex items-center justify-between gap-3">
-                      <div className="flex items-center border rounded-md overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => dispatch(decreaseQuantity(item._id))}
-                          disabled={qty <= moq}
-                          className={`px-2.5 py-1 bg-gray-100 ${
-                            qty <= moq
-                              ? "opacity-50 cursor-not-allowed"
-                              : "hover:bg-gray-200"
-                          }`}
-                          aria-label="Decrease quantity"
-                        >
-                          -
-                        </button>
-                        <div className="px-3 py-1 text-sm min-w-17.5 text-center">
-                          {displayQty} units
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold">{item.name}</h4>
+                        <p className="text-xs text-gray-500">₹{item.price}</p>
+                        <p className="text-[11px] text-gray-500">
+                          Min. {item.moq} units
+                        </p>
+
+                        {!isMoqValid && (
+                          <p className="text-[11px] text-red-600 mt-1">
+                            Quantity must be at least the minimum units
+                          </p>
+                        )}
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center border rounded-md overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => dispatch(decreaseQuantity(item._id))}
+                              disabled={qty <= moq}
+                              className={`px-2.5 py-1 bg-gray-100 ${qty <= moq
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "hover:bg-gray-200"
+                                }`}
+                              aria-label="Decrease quantity"
+                            >
+                              -
+                            </button>
+                            <div className="px-3 py-1 text-sm min-w-17.5 text-center">
+                              {displayQty} units
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => dispatch(increaseQuantity(item._id))}
+                              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200"
+                              aria-label="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div className="text-sm font-semibold text-gray-900">
+                            ₹{itemTotal.toFixed(0)}
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => dispatch(increaseQuantity(item._id))}
-                          className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200"
-                          aria-label="Increase quantity"
-                        >
-                          +
-                        </button>
                       </div>
 
-                      <div className="text-sm font-semibold text-gray-900">
-                        ₹{itemTotal.toFixed(0)}
-                      </div>
+                      <button
+                        onClick={() => dispatch(removeFromCart(item._id))}
+                        className="text-red-500"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                  </div>
-
-                  <button
-                    onClick={() => dispatch(removeFromCart(item._id))}
-                    className="text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
                   );
                 })()
               ))}
@@ -196,11 +198,10 @@ const CartPage = () => {
           <Link href="/checkout">
             <button
               disabled={hasInvalidMoq}
-              className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${
-                hasInvalidMoq
+              className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${hasInvalidMoq
                   ? "bg-orange-300 text-white cursor-not-allowed"
                   : "bg-orange-500 hover:bg-orange-600 text-white"
-              }`}
+                }`}
             >
               Proceed to Checkout →
             </button>

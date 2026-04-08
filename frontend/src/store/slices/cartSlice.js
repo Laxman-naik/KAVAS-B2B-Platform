@@ -28,7 +28,7 @@ const normalizeItem = (payload) => {
       ? rawPrice
       : Number(String(rawPrice || "").replace(/[^0-9.]/g, "")) || 0;
 
-  const rawMin = payload?.min;
+  const rawMin = payload?.minQty || payload?.min; // ✅ FIX
   const moq = Math.max(
     1,
     Number(String(rawMin || "").replace(/[^0-9.]/g, "")) || 1
@@ -39,11 +39,12 @@ const normalizeItem = (payload) => {
     name: payload?.name || payload?.title || "",
     image: payload?.image || "",
     price,
-    min: payload?.min || `Min. ${moq} units`,
+    min: `Min. ${moq} units`, // ✅ FIX (consistent)
     moq,
     quantity: payload?.quantity || moq,
   };
 };
+
 
 const normalizeStoredItems = (items) => {
   const list = Array.isArray(items) ? items : [];

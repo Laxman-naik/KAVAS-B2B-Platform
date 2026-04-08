@@ -45,7 +45,7 @@ const Page = () => {
         <div className="bg-gray-100 min-h-screen">
 
             {/* HEADER */}
-            <div className="bg-orange-500 px-4 sm:px-6 py-6">
+            <div className="bg-orange-500 px-2 sm:px-6 py-2">
                 <div className="max-w-7xl mx-auto text-white">
                     <div className="flex items-center gap-2 mt-2">
                         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
