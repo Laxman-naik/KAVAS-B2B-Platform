@@ -3,12 +3,12 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUserThunk } from "@/store/slices/authSlice";
+import { loadUserThunk, loginUserThunk } from "@/store/slices/authSlice";
 
 const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const dispatch = useDispatch();
   const [form, setForm] = useState({ email: "", password: "", });
-  const { loginLoading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!open) return;
@@ -19,17 +19,26 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   if (!open) return null;
 
   // Handle input
-  const handleChange = (e) => {setForm({ ...form, [e.target.name]: e.target.value, });};
+  const handleChange = (e) => { setForm({ ...form, [e.target.name]: e.target.value, }); };
 
   // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loginLoading) return;
+    if (loading) return;
 
-    const res = await dispatch(loginUserThunk(form));
+    try {
+      const res = await dispatch(loginUserThunk(form));
 
-    if (res.meta.requestStatus === "fulfilled") { setOpen(false); } 
+      if (res.meta.requestStatus === "fulfilled") {
+        setOpen(false);
+
+        // 🔥 IMPORTANT: force refresh user state
+        dispatch(loadUserThunk());
+      }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -96,9 +105,10 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
 
           {/* Error */}
           {error && (
-            <p className="text-red-500 text-xs mt-1">{error.message}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {typeof error === "string" ? error : error?.message || "Login failed"}
+            </p>
           )}
-
           {/* Forgot */}
           <div className="text-right">
             <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">
@@ -109,10 +119,10 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loginLoading}
+            disabled={loading}
             className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600 disabled:opacity-60"
           >
-            {loginLoading ? "Signing in..." : "Sign in to Kavas"}
+            {loading ? "Signing in..." : "Sign in to Kavas"}
           </button>
         </form>
 
