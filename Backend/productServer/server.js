@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const pool = require("./config/db");
 
 const productRoutes = require("./routes/productRoutes");
 
@@ -34,8 +35,13 @@ app.use("/api/products", productRoutes);
 
 // HEALTH
 app.get("/", (req, res) => {
-  res.send("Product Server Running 🚀");
+  res.send("Product Server Running ");
 });
+
+pool
+  .query("SELECT NOW()")
+  .then((res) => console.log("DB Connected:", res.rows))
+  .catch((err) => console.error("DB Error:", err));
 
 const PORT = process.env.PORT || 5002;
 
