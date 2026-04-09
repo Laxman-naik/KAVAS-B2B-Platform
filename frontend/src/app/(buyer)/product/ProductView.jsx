@@ -231,7 +231,7 @@ export default function ProductView() {
             {/* Top Row Buttons */}
             <div className="flex gap-2">
 
-              <button className="w-1/2 cursor-pointer text-white  bg-orange-500 hover:bg-orange-600 py-1.5 rounded-lg font-medium text-gray-700  hover:scale-[1.02] active:scale-[0.98] transition">
+              <button className="w-1/2 cursor-pointer text-whit  bg-orange-500 hover:bg-orange-600 py-1.5 rounded-lg font-medium text-gray-700  hover:scale-[1.02] active:scale-[0.98] transition">
                 Buy
               </button>
               <button className="w-1/2 cursor-pointer bg-orange-500 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] text-white py-1.5 rounded-lg font-semibold text-sm sm:text-lg transition duration-200 shadow">

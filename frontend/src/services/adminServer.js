@@ -1,4 +1,4 @@
-import authapi from "../lib/axios";
+import {authapi} from "../lib/axios";
 
 export const loginAdminAPI = (data) =>
   authapi.post("/api/admin/login", data);

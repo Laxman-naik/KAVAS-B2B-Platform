@@ -1,33 +1,26 @@
 const pool = require("../config/db");
 
+/* CREATE PRODUCT */
 exports.createProduct = async (req, res) => {
   try {
-    const data = req.body;
+    const { name, slug, categoryId, subcategoryId, organizationId, isTopProduct, parentProductId, price, mrp,
+      minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, } = req.body;
 
     const result = await pool.query(
-      `INSERT INTO products
-      (name, sku, category_id, vendor_id, unit_price, moq, unit, lead_time, description, tags, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      `INSERT INTO products (
+        name, slug, category_id, subcategory_id, organization_id, is_top_product, parent_product_id, price, mrp, min_order_qty, stock,
+        unit, weight, dispatch_time_days, description, image_url, is_active, is_featured
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
       RETURNING *`,
-      [
-        data.name,
-        data.sku,
-        data.category_id,
-        data.vendor_id,
-        data.unit_price,
-        data.moq,
-        data.unit,
-        data.lead_time,
-        data.description,
-        data.tags,
-        data.status || "listed",
-      ]
+      [name, slug, categoryId, subcategoryId, organizationId, isTopProduct || false,
+        parentProductId || null, price, mrp, minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive ?? true, isFeatured || false,]
     );
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === "23505") {
-      return res.status(400).json({ message: "SKU already exists" });
+      return res.status(400).json({ message: "Slug already exists" });
     }
     res.status(500).json({ message: err.message });
   }
@@ -37,39 +30,19 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const { name, slug, categoryId, subcategoryId, organizationId, isTopProduct, parentProductId, price,  mrp,
+      minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, } = req.body;
+
     const result = await pool.query(
-      `UPDATE products SET
-        name=$1,
-        sku=$2,
-        category_id=$3,
-        vendor_id=$4,
-        unit_price=$5,
-        moq=$6,
-        unit=$7,
-        lead_time=$8,
-        description=$9,
-        tags=$10,
-        status=$11,
-        updated_at=CURRENT_TIMESTAMP
-      WHERE id=$12
+      `UPDATE products SET  name=$1, slug=$2, category_id=$3, subcategory_id=$4, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
+        min_order_qty=$10, stock=$11, unit=$12, weight=$13, dispatch_time_days=$14, description=$15, image_url=$16, is_active=$17, is_featured=$18, updated_at=CURRENT_TIMESTAMP
+      WHERE id=$19
       RETURNING *`,
-      [
-        req.body.name,
-        req.body.sku,
-        req.body.category_id,
-        req.body.vendor_id,
-        req.body.unit_price,
-        req.body.moq,
-        req.body.unit,
-        req.body.lead_time,
-        req.body.description,
-        req.body.tags,
-        req.body.status,
-        id,
-      ]
+      [name, slug, categoryId, subcategoryId, organizationId, isTopProduct, parentProductId, price,
+         mrp, minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, id,]
     );
 
-    if (result.rows.length === 0) {
+    if (!result.rows.length) {
       return res.status(404).json({ message: "Product not found" });
     }
 
@@ -84,15 +57,15 @@ exports.deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      `UPDATE products SET status='archived' WHERE id=$1 RETURNING *`,
+      `UPDATE products SET is_active=false WHERE id=$1 RETURNING *`,
       [id]
     );
 
-    if (result.rows.length === 0) {
+    if (!result.rows.length) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json({ message: "Product archived" });
+    res.json({ message: "Product deactivated" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -106,13 +79,38 @@ exports.getProducts = async (req, res) => {
 
     const result = await pool.query(
       `SELECT * FROM products
-       WHERE status != 'archived'
+       WHERE is_active = true
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
 
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getSingleProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // basic validation (don’t skip this)
+    if (!id) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
+
+    const result = await pool.query(
+      `SELECT * FROM products 
+       WHERE id = $1 AND is_active = true`,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

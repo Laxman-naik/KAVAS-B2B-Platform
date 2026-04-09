@@ -1,4 +1,4 @@
-import authapi from "../lib/axios";
+import {authapi} from "../lib/axios";
 
 /* AUTH */
 export const loginUser = (data) =>
