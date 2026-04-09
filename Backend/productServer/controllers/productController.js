@@ -121,15 +121,15 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { name, slug, categoryId, subcategoryId, organizationId, isTopProduct, parentProductId, price,  mrp,
+    const { name, slug, subcategoryId, organizationId, isTopProduct, parentProductId, price,  mrp,
       minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, } = req.body;
 
     const result = await pool.query(
-      `UPDATE products SET  name=$1, slug=$2, category_id=$3, subcategory_id=$4, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
+      `UPDATE products SET  name=$1, slug=$2,, subcategory_id=$4, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
         min_order_qty=$10, stock=$11, unit=$12, weight=$13, dispatch_time_days=$14, description=$15, image_url=$16, is_active=$17, is_featured=$18, updated_at=CURRENT_TIMESTAMP
       WHERE id=$19
       RETURNING *`,
-      [name, slug, categoryId, subcategoryId, organizationId, isTopProduct, parentProductId, price,
+      [name, slug, subcategoryId, organizationId, isTopProduct, parentProductId, price,
          mrp, minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, id,]
     );
 
@@ -190,7 +190,7 @@ exports.getSingleProduct = async (req, res) => {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    // 1️⃣ Get main product
+    // Get main product
     const productResult = await pool.query(
       `SELECT * FROM products 
        WHERE id = $1 AND is_active = true`,
@@ -203,13 +203,13 @@ exports.getSingleProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // 2️⃣ Get images
+    // Get images
     const imagesResult = await pool.query(
       `SELECT image_url FROM product_images WHERE product_id = $1`,
       [id]
     );
 
-    // 3️⃣ Get specifications
+    // Get specifications
     const specsResult = await pool.query(
       `SELECT key, value FROM product_specifications WHERE product_id = $1`,
       [id]
