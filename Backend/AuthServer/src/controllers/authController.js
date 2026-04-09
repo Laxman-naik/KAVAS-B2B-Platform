@@ -147,25 +147,27 @@ exports.refreshTokenHandler = async (req, res) => {
 };
 
 // ================== GET ME ==================
-app.get("/api/auth/me", async (req, res) => {
+exports.getMe = async (req, res) => {
   try {
     const token = req.cookies?.accessToken;
 
     if (!token) {
-      return res.status(401).json({ message: "No token" });
+      return res.status(401).json({ user: null });
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
-    const user = await getUserById(decoded.id); 
+    const result = await pool.query(
+      "SELECT id, full_name, email, role FROM users WHERE id=$1",
+      [decoded.id]
+    );
 
-    res.json(user);
+    return res.json({ user: result.rows[0] });
 
-  } catch (error) {
-    console.error("ME ERROR:", error.message);
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    return res.status(401).json({ user: null });
   }
-});
+};
 
 // ================== LOGOUT ==================
 exports.logout = async (req, res) => {
