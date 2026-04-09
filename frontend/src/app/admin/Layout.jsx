@@ -1,33 +1,13 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AdminHeader from "../../components/admin/AdminSidebar";
-import AdminSidebar from "../../components/admin/AdminHeader";
+import AdminHeader from "../../components/admin/AdminHeader";
+import AdminSidebar from "../../components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 
 export default function AdminLayout({ children }) {
-  // const router = useRouter();
-  // const { isAuthenticated, role, loading } = useSelector((state) => state.auth);
 
-  // const isAdmin = isAuthenticated && role === "admin";
-
-  // useEffect(() => {
-  //   if (!loading && !isAdmin) {
-  //     router.replace("/admin/login");
-  //   }
-  // }, [loading, isAdmin]);
-
-  // // if (loading) {
-  // //   return (
-  // //     <div className="h-screen flex items-center justify-center">
-  // //       Loading...
-  // //     </div>
-  // //   );
-  // // }
-
-  // if (!isAdmin) return null;
-
-const router = useRouter();
+   const router = useRouter();
   const pathname = usePathname();
 
   const { isAuthenticated, role, loading } = useSelector(
@@ -36,13 +16,11 @@ const router = useRouter();
 
   const isAdmin = isAuthenticated && role === "admin";
 
+  // allow public admin routes
   const isPublicRoute = pathname === "/admin/login";
 
   useEffect(() => {
-    // ⛔ wait until auth state is known
-    if (loading) return;
-
-    if (!isAdmin && !isPublicRoute) {
+    if (!loading && !isAdmin && !isPublicRoute) {
       router.replace("/admin/login");
     }
   }, [loading, isAdmin, isPublicRoute]);
@@ -52,8 +30,8 @@ const router = useRouter();
     return <>{children}</>;
   }
 
-  // prevent flashing / redirect loop
-  if (loading || !isAdmin) {
+  // block protected routes until auth resolved
+  if (!loading && !isAdmin) {
     return null;
   }
 
