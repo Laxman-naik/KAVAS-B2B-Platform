@@ -1,7 +1,8 @@
 import axios from "axios";
 
-const BASE_URL = "https://kavas-b2b-platform-2.onrender.com";
+const AUTH_BASE_URL = "https://kavas-b2b-platform-2.onrender.com";
+const PRODUCT_BASE_URL = "https://kavas-b2b-platform-2.onrender.com";
 
-const api = axios.create({ baseURL: BASE_URL, withCredentials: true,});
+const authapi = axios.create({ baseURL: AUTH_BASE_URL, withCredentials: true,});
 
-export default api;
+export default authapi;

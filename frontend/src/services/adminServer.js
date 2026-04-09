@@ -1,13 +1,13 @@
-import api from "../lib/axios";
+import authapi from "../lib/axios";
 
 export const loginAdminAPI = (data) =>
-  api.post("/api/admin/login", data);
+  authapi.post("/api/admin/login", data);
 
 export const logoutAdminAPI = () =>
-  api.post("/api/admin/logout");
+  authapi.post("/api/admin/logout");
 
 export const getAdminMe = () =>
-  api.get("/api/admin/me", {
+  authapi.get("/api/admin/me", {
     headers: {
       "Cache-Control": "no-cache",
     },
