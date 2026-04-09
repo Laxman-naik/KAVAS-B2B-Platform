@@ -2,14 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import {
-  Search,
-  Bell,
-  HelpCircle,
-  User,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { Search, Bell, HelpCircle, User, Settings, LogOut } from "lucide-react";
 
 export default function AdminHeader() {
   const pathname = usePathname();
@@ -22,22 +15,69 @@ export default function AdminHeader() {
   const dropdownRef = useRef(null);
 
   // ✅ Profile state (persisted)
-  const [profile, setProfile] = useState({
-    name: "Admin User",
-    email: "superadmin@tradehub.com",
-    phone: "",
+  const [profile, setProfile] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("profile");
+      return saved
+        ? JSON.parse(saved)
+        : {
+            name: "Admin User",
+            email: "superadmin@tradehub.com",
+            phone: "",
+          };
+    }
+
+    return {
+      name: "Admin User",
+      email: "superadmin@tradehub.com",
+      phone: "",
+    };
   });
 
-  // Load from localStorage
+
+  // 🔥 SYNC LISTENER
   useEffect(() => {
-    const saved = localStorage.getItem("profile");
-    if (saved) setProfile(JSON.parse(saved));
+    const syncProfile = () => {
+      const saved = localStorage.getItem("profile");
+      if (!saved) return;
+
+      const parsed = JSON.parse(saved);
+
+      setProfile((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(parsed)) {
+          return prev;
+        }
+        return parsed;
+      });
+    };
+
+    window.addEventListener("profileUpdated", syncProfile);
+    return () => window.removeEventListener("profileUpdated", syncProfile);
   }, []);
 
-  // Save to localStorage whenever profile changes
+  // 🔥 SAVE + NOTIFY
   useEffect(() => {
-    localStorage.setItem("profile", JSON.stringify(profile));
+    const current = localStorage.getItem("profile");
+    const updated = JSON.stringify(profile);
+
+    if (current !== updated) {
+      localStorage.setItem("profile", updated);
+      window.dispatchEvent(new Event("profileUpdated"));
+    }
   }, [profile]);
+
+  // 🔥 NEW: Listen to Sidebar trigger
+  useEffect(() => {
+    const openProfileFromSidebar = () => {
+      setOpen(true); // open dropdown
+    };
+
+    window.addEventListener("openHeaderProfile", openProfileFromSidebar);
+
+    return () => {
+      window.removeEventListener("openHeaderProfile", openProfileFromSidebar);
+    };
+  }, []);
 
   const title = pathname.split("/").pop() || "dashboard";
 
@@ -61,7 +101,6 @@ export default function AdminHeader() {
     router.push("/admin/login");
   };
 
-  // Avatar initials
   const initials = profile.name
     .split(" ")
     .map((n) => n[0])
@@ -77,7 +116,10 @@ export default function AdminHeader() {
 
         <div className="flex items-center gap-3 md:gap-4">
           <div className="hidden sm:flex items-center bg-[#13263C] px-3 py-1.5 rounded-lg">
-            <Search className="w-4 h-4 text-gray-400 cursor-pointer" onClick={handleSearch} />
+            <Search
+              className="w-4 h-4 text-gray-400 cursor-pointer"
+              onClick={handleSearch}
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -91,7 +133,6 @@ export default function AdminHeader() {
           <HelpCircle className="w-5 h-5" />
 
           <div className="relative" ref={dropdownRef}>
-            {/* Avatar */}
             <div
               onClick={() => setOpen(!open)}
               className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer"
@@ -99,7 +140,6 @@ export default function AdminHeader() {
               {initials}
             </div>
 
-            {/* Dropdown */}
             <div
               className={`absolute right-0 mt-3 w-56 bg-[#0F1E33] border border-gray-700 rounded-xl shadow-lg ${
                 open ? "block" : "hidden"
@@ -135,11 +175,9 @@ export default function AdminHeader() {
         </div>
       </div>
 
-      {/* PROFILE MODAL */}
       {showProfile && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="w-105 bg-[#0F1E33] rounded-2xl p-6 text-white">
-
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center font-bold">
                 {initials}
@@ -161,20 +199,32 @@ export default function AdminHeader() {
             <input
               className="w-full mb-2 p-2 rounded bg-[#13263C]"
               value={profile.email}
-              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              onChange={(e) =>
+                setProfile({ ...profile, email: e.target.value })
+              }
             />
 
             <input
               className="w-full mb-2 p-2 rounded bg-[#13263C]"
               value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+              onChange={(e) =>
+                setProfile({ ...profile, phone: e.target.value })
+              }
               placeholder="Phone"
             />
 
             <p className="text-xs text-orange-400 mt-4 mb-2">SECURITY</p>
 
-            <input type="password" className="w-full mb-2 p-2 rounded bg-[#13263C]" placeholder="Current password" />
-            <input type="password" className="w-full mb-4 p-2 rounded bg-[#13263C]" placeholder="New password" />
+            <input
+              type="password"
+              className="w-full mb-2 p-2 rounded bg-[#13263C]"
+              placeholder="Current password"
+            />
+            <input
+              type="password"
+              className="w-full mb-4 p-2 rounded bg-[#13263C]"
+              placeholder="New password"
+            />
 
             <div className="flex justify-end gap-2">
               <button
