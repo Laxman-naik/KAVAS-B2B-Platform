@@ -1,13 +1,8 @@
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../utils/token");
-
+const { generateAccessToken, generateRefreshToken, } = require("../utils/token");
 const redis = require("../config/redis");
-
 const REFRESH_PREFIX = "refresh:user:";
 
 // ================== REGISTER ==================

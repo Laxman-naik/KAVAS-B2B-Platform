@@ -6,7 +6,7 @@ const statusStyles = {
   "Under Review": "bg-yellow-500/20 text-yellow-400",
 };
 
-// ✅ Dummy data
+// Dummy data
 const dummyProducts = [
   {
     sku: "EL-0041",
@@ -40,7 +40,7 @@ const dummyProducts = [
 export default function ProductCatalog() {
   const [open, setOpen] = useState(false);
 
-  // ✅ Load from localStorage OR dummy
+  //  Load from localStorage OR dummy
   const [products, setProducts] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("products");
@@ -55,7 +55,7 @@ export default function ProductCatalog() {
     return [];
   });
 
-  // ✅ Save to localStorage
+  //  Save to localStorage
   useEffect(() => {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
@@ -249,19 +249,7 @@ export default function ProductCatalog() {
           </div>
         </div>
       )}
-
-      {/* Input Styling */}
-      <style jsx>{`
-        .input {
-          padding: 10px;
-          background: #13263C;
-          border-radius: 8px;
-          border: 1px solid #2d3b55;
-          outline: none;
-          color: white;
-        }
-      `}</style>
-
+      <style jsx>{`.input {padding: 10px; background: #13263C; border-radius: 8px; border: 1px solid #2d3b55; outline: none; color: white;}`}</style>
     </div>
   );
 }
