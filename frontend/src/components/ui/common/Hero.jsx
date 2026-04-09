@@ -22,7 +22,13 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const slugify = (text) =>
-  text.toLowerCase().replace(/ & /g, "and").replace(/\s+/g, "-");
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, " and ")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
 
 const Hero = () => {
   const categories = [
@@ -389,7 +395,7 @@ const Hero = () => {
   };
 
   return (
-    <div className=" min-h-screen dark:bg-gray-900">
+    <div className="min-h-screen dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-6">
           <div ref={menuRef} className="relative w-full lg:w-64 shrink-0">
@@ -423,11 +429,7 @@ const Hero = () => {
                         setActiveCategory(cat);
                         setShowMenu(true);
                       }}
-                      className={`flex items-center justify-between px-3 sm:px-4 py-2.5 border-b hover:bg-orange-50 cursor-pointer min-h-[42px] ${
-                        activeCategory.name === cat.name
-                          ? ""
-                          : ""
-                      }`}
+                      className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b hover:bg-orange-50 cursor-pointer min-h-[42px]"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <Icon className="w-5 h-5 shrink-0" />
@@ -482,25 +484,35 @@ const Hero = () => {
                       Top Products
                     </h3>
 
-                    <Link href={`/products/${slugify(activeCategory.name)}`}>
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-x-4">
-                        {activeCategory.products &&
-                        activeCategory.products.length > 0 ? (
-                          activeCategory.products.slice(0, 8).map((prod, i) => (
-                            <p
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-x-4">
+                      {activeCategory.products &&
+                      activeCategory.products.length > 0 ? (
+                        activeCategory.products.slice(0, 8).map((prod, i) => {
+                          const firstSub = activeCategory.subcategories?.[0];
+
+                          return (
+                            <Link
                               key={i}
-                              className="text-sm py-1 hover:text-orange-500 cursor-pointer break-words"
+                              href={`/products/${slugify(activeCategory.name)}/${slugify(firstSub)}/${slugify(prod)}`}
+                              onClick={() => {
+                                setShowMenu(false);
+                                if (window.innerWidth < 1024) {
+                                  setShowCategoryListMobile(false);
+                                }
+                              }}
                             >
-                              {prod}
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-400">
-                            No products available
-                          </p>
-                        )}
-                      </div>
-                    </Link>
+                              <p className="text-sm py-1 hover:text-orange-500 cursor-pointer break-words">
+                                {prod}
+                              </p>
+                            </Link>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-400">
+                          No products available
+                        </p>
+                      )}
+                    </div>
 
                     <Link
                       href={`/products/${slugify(activeCategory.name)}`}

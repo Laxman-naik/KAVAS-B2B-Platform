@@ -82,7 +82,7 @@ const Navbar = () => {
     } catch (err) {
       console.log(err);
     }
-};
+  };
 
   if (!mounted) return null;
 

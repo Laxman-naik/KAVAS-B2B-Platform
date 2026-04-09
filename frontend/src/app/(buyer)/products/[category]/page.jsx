@@ -1,172 +1,242 @@
 "use client";
 
-import { use } from "react";
-import { useState, useMemo } from "react";
-import { productsData } from "@/app/(buyer)/product/productData";
 import Link from "next/link";
-import { slugify, deslugify } from "@/utils/slugify";
+import { useEffect, useMemo, useState } from "react";
 
-const PRODUCTS_PER_PAGE = 8;
+const slugLabel = (value = "") =>
+  value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function CategoryPage({ params }) {
-  const { category, subcategory } = use(params);
+  const [category, setCategory] = useState("");
+  const [products, setProducts] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const allProducts = productsData[category] || [];
-
-  const filteredBySubcategory = subcategory
-    ? allProducts.filter(
-        (p) => slugify(p.subcategory) === subcategory
-      )
-    : allProducts;
-
-  const [filters, setFilters] = useState({ price: [], supplier: [] });
-  const [tempFilters, setTempFilters] = useState({ price: [], supplier: [] });
-  const [page, setPage] = useState(1);
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [sort, setSort] = useState("default");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [supplierType, setSupplierType] = useState([]);
+  const [minQty, setMinQty] = useState("");
 
-  const toggleFilter = (type, value) => {
-    setTempFilters((prev) => {
-      const exists = prev[type].includes(value);
-      return {
-        ...prev,
-        [type]: exists
-          ? prev[type].filter((v) => v !== value)
-          : [...prev[type], value],
-      };
-    });
+  useEffect(() => {
+    const load = async () => {
+      const resolved = await params;
+      const cat = resolved.category;
+      setCategory(cat);
+
+      try {
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/products?category=${cat}&top=true`;
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json();
+
+        setProducts(Array.isArray(data) ? data : []);
+        const uniqueSubs = [
+          ...new Set((Array.isArray(data) ? data : []).map((p) => p.subcategorySlug).filter(Boolean)),
+        ];
+        setSubcategories(uniqueSubs);
+      } catch (error) {
+        setProducts([]);
+        setSubcategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [params]);
+
+  const toggleSupplier = (value) => {
+    setSupplierType((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
   };
 
   const filteredProducts = useMemo(() => {
-    return filteredBySubcategory.filter((p) => {
-      if (filters.price.length) {
-        if (filters.price.includes("low") && p.price > 500) return false;
-        if (filters.price.includes("mid") && (p.price < 500 || p.price > 2000)) return false;
-        if (filters.price.includes("high") && p.price < 2000) return false;
-      }
-      if (filters.supplier.length && !filters.supplier.includes(p.supplier)) return false;
-      return true;
-    });
-  }, [filters, filteredBySubcategory]);
+    let list = [...products];
 
-  const sorted = useMemo(() => {
-    let arr = [...filteredProducts];
-    if (sort === "low") arr.sort((a, b) => a.price - b.price);
-    if (sort === "high") arr.sort((a, b) => b.price - a.price);
-    return arr;
-  }, [filteredProducts, sort]);
+    if (selectedSubcategory) {
+      list = list.filter((p) => p.subcategorySlug === selectedSubcategory);
+    }
 
-  const paginated = sorted.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
-  const totalPages = Math.ceil(sorted.length / PRODUCTS_PER_PAGE);
+    if (minPrice !== "") {
+      list = list.filter((p) => Number(p.price) >= Number(minPrice));
+    }
 
-  const subcategories = [
-    ...new Set(allProducts.map((p) => slugify(p.subcategory))),
-  ];
+    if (maxPrice !== "") {
+      list = list.filter((p) => Number(p.price) <= Number(maxPrice));
+    }
+
+    if (minQty !== "") {
+      list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
+    }
+
+    if (supplierType.length) {
+      list = list.filter((p) => supplierType.includes(p.supplierType));
+    }
+
+    if (sort === "price_asc") {
+      list.sort((a, b) => Number(a.price) - Number(b.price));
+    } else if (sort === "price_desc") {
+      list.sort((a, b) => Number(b.price) - Number(a.price));
+    } else if (sort === "newest") {
+      list.sort(
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+    }
+
+    return list;
+  }, [products, selectedSubcategory, minPrice, maxPrice, minQty, supplierType, sort]);
+
+  const resetFilters = () => {
+    setSelectedSubcategory("");
+    setSort("default");
+    setMinPrice("");
+    setMaxPrice("");
+    setSupplierType([]);
+    setMinQty("");
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen">
-
-      {/* HEADER */}
       <div className="bg-orange-500 px-4 sm:px-6 py-5 sm:py-6 text-white">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold capitalize">
-          {subcategory ? deslugify(subcategory) : category}
+          {slugLabel(category)}
         </h1>
-        <p className="text-sm mt-1">{sorted.length}+ products available</p>
+        <p className="text-sm mt-1">
+          {filteredProducts.length}+ top products available
+        </p>
       </div>
 
-      {/* SUBCATEGORY TABS */}
       <div className="bg-white px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto">
-        <Link
-          href={`/products/${category}`}
-          className="px-4 py-1.5 bg-orange-600 text-white rounded-full text-sm whitespace-nowrap"
+        <button
+          onClick={() => setSelectedSubcategory("")}
+          className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
+            selectedSubcategory === ""
+              ? "bg-orange-600 text-white"
+              : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
+          }`}
         >
-          All {category}
-        </Link>
+          All {slugLabel(category)}
+        </button>
 
-        {subcategories.map((sub, i) => (
-          <Link
-            key={i}
-            href={`/products/${category}/${sub}`}
-            className="px-4 py-1.5 bg-gray-100 rounded-full text-sm whitespace-nowrap hover:bg-orange-100 hover:text-orange-600 transition"
+        {subcategories.map((sub) => (
+          <button
+            key={sub}
+            onClick={() => setSelectedSubcategory(sub)}
+            className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
+              selectedSubcategory === sub
+                ? "bg-orange-600 text-white"
+                : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
+            }`}
           >
-            {deslugify(sub)}
-          </Link>
+            {slugLabel(sub)}
+          </button>
         ))}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 px-4 sm:px-6 py-5">
-
-        {/* FILTER */}
-        <div className="w-full lg:w-64 bg-white border rounded-lg p-4">
+        <div className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit">
           <h3 className="font-semibold mb-3">Filters</h3>
 
           <p className="text-sm mb-2">Price</p>
-          {["low", "mid", "high"].map((p) => (
-            <label key={p} className="block text-sm">
-              <input onChange={() => toggleFilter("price", p)} type="checkbox" /> {p}
-            </label>
-          ))}
+          <div className="space-y-2 mb-4">
+            <input
+              type="number"
+              placeholder="Min Price"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              placeholder="Max Price"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
 
-          <p className="text-sm mt-4 mb-2">Supplier</p>
-          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((s) => (
-            <label key={s} className="block text-sm">
-              <input onChange={() => toggleFilter("supplier", s)} type="checkbox" /> {s}
+          <p className="text-sm mb-2">Minimum Order Qty</p>
+          <input
+            type="number"
+            placeholder="e.g. 50"
+            value={minQty}
+            onChange={(e) => setMinQty(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm mb-4"
+          />
+
+          <p className="text-sm mb-2">Supplier Type</p>
+          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((type) => (
+            <label key={type} className="block text-sm mb-1">
+              <input
+                type="checkbox"
+                checked={supplierType.includes(type)}
+                onChange={() => toggleSupplier(type)}
+                className="mr-2"
+              />
+              {type}
             </label>
           ))}
 
           <button
-            onClick={() => setFilters(tempFilters)}
-            className="mt-3 w-full bg-orange-500 text-white py-2 rounded"
+            onClick={resetFilters}
+            className="mt-4 w-full border py-2 rounded hover:border-orange-500 hover:text-orange-500 transition"
           >
-            Apply
+            Reset Filters
           </button>
         </div>
 
-        {/* PRODUCTS */}
         <div className="flex-1">
+          <div className="flex justify-between items-center mb-3 gap-3 flex-wrap">
+            <p>{filteredProducts.length} products</p>
 
-          <div className="flex justify-between mb-3">
-            <p>{sorted.length} products</p>
-            <select onChange={(e) => setSort(e.target.value)}>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="border rounded px-3 py-2 text-sm"
+            >
               <option value="default">Sort</option>
-              <option value="low">Low → High</option>
-              <option value="high">High → Low</option>
+              <option value="price_asc">Low → High</option>
+              <option value="price_desc">High → Low</option>
+              <option value="newest">Newest</option>
             </select>
           </div>
 
-          {/* GRID FIXED */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {paginated.map((p) => (
-              <Link
-                key={p.id}
-                href={`/products/${category}/${slugify(p.subcategory)}/${p.id}`}
-              >
-                <div className="bg-white p-3 border rounded">
-                  <img
-                    src={p.image}
-                    className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
-                  />
-                  <h3 className="text-sm mt-2 line-clamp-2">{p.name}</h3>
-                  <p className="text-blue-600">₹{p.price}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* PAGINATION */}
-          <div className="flex flex-wrap justify-center mt-6 gap-2">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i + 1)}
-                className={`px-3 py-1 ${
-                  page === i + 1 ? "bg-blue-600 text-white" : "border"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-
+          {loading ? (
+            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+              Loading...
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+              No products found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredProducts.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/products/${category}/${item.subcategorySlug}/${item.slug}`}
+                >
+                  <div className="bg-white p-3 border rounded shadow hover:shadow-md transition">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
+                    />
+                    <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
+                    <p className="text-blue-600">₹{item.price}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Min. {item.minOrderQty} units
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {item.supplierType}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
