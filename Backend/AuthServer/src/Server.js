@@ -11,13 +11,12 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://kavasb2bwholesalehub.netlify.app",
+  "https://kavsawholesalehub.netlify.app/",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (Postman, mobile apps)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {

@@ -1,5 +1,5 @@
 "use client";
-
+ import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -10,10 +10,13 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { logoutAdminThunk } from "@/store/slices/authSlice";
 
 export default function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -21,7 +24,7 @@ export default function AdminHeader() {
 
   const dropdownRef = useRef(null);
 
-  // ✅ Profile state (persisted)
+  //  Profile state (persisted)
   const [profile, setProfile] = useState({
     name: "Admin User",
     email: "superadmin@tradehub.com",
@@ -56,10 +59,12 @@ export default function AdminHeader() {
     router.push(`/search?q=${query}`);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin");
-    router.push("/admin/login");
-  };
+ 
+
+const handleLogout = async () => {
+  await dispatch(logoutAdminThunk());
+  router.push("/admin/login");
+};
 
   // Avatar initials
   const initials = profile.name
