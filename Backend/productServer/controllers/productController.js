@@ -125,7 +125,7 @@ exports.updateProduct = async (req, res) => {
       minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, } = req.body;
 
     const result = await pool.query(
-      `UPDATE products SET  name=$1, slug=$2,, subcategory_id=$4, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
+      `UPDATE products SET  name=$1, slug=$2, subcategory_id=$4, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
         min_order_qty=$10, stock=$11, unit=$12, weight=$13, dispatch_time_days=$14, description=$15, image_url=$16, is_active=$17, is_featured=$18, updated_at=CURRENT_TIMESTAMP
       WHERE id=$19
       RETURNING *`,
