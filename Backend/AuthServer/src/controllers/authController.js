@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    // ✅ store refresh token in Redis
+    //  store refresh token in Redis
     await redis.set(
       `${REFRESH_PREFIX}${user.id}`,
       refreshToken,
@@ -70,7 +70,7 @@ exports.login = async (req, res) => {
 
     const isProd = process.env.NODE_ENV === "production";
 
-    // ✅ ACCESS TOKEN COOKIE (IMPORTANT)
+    //  ACCESS TOKEN COOKIE (IMPORTANT)
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: isProd,
@@ -79,7 +79,7 @@ exports.login = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    // ✅ REFRESH TOKEN COOKIE
+    //  REFRESH TOKEN COOKIE
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: isProd,
@@ -88,7 +88,7 @@ exports.login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // ❌ DO NOT send accessToken in response
+    //  DO NOT send accessToken in response
     res.json({
       user: {
         id: user.id,
@@ -125,7 +125,7 @@ exports.refreshTokenHandler = async (req, res) => {
 
     const isProd = process.env.NODE_ENV === "production";
 
-    // ✅ set new access token cookie
+    //  set new access token cookie
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: isProd,
@@ -147,27 +147,25 @@ exports.refreshTokenHandler = async (req, res) => {
 };
 
 // ================== GET ME ==================
-exports.getMe = async (req, res) => {
+app.get("/api/auth/me", async (req, res) => {
   try {
     const token = req.cookies?.accessToken;
 
     if (!token) {
-      return res.status(401).json({ user: null });
+      return res.status(401).json({ message: "No token" });
     }
 
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
-    const result = await pool.query(
-      "SELECT id, full_name, email, role FROM users WHERE id=$1",
-      [decoded.id]
-    );
+    const user = await getUserById(decoded.id); 
 
-    return res.json({ user: result.rows[0] });
+    res.json(user);
 
-  } catch (err) {
-    return res.status(401).json({ user: null });
+  } catch (error) {
+    console.error("ME ERROR:", error.message);
+    res.status(401).json({ message: "Invalid token" });
   }
-};
+});
 
 // ================== LOGOUT ==================
 exports.logout = async (req, res) => {
