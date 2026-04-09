@@ -72,7 +72,7 @@ const app = express();
 // ✅ ONLY allow Gateway + Localhost
 const allowedOrigins = [
   "http://localhost:3000",
-  process.env.GATEWAY_URL, // 🔥 IMPORTANT
+  process.env.GATEWAY_URL,
 ];
 
 app.use(
