@@ -4,6 +4,7 @@ require("dotenv").config();
 const pool = require("./config/db");
 
 const productRoutes = require("./routes/productRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(express.json());
 
 // ROUTES
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
 
 // HEALTH
 app.get("/", (req, res) => {
