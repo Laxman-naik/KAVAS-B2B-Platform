@@ -26,8 +26,7 @@ const page = () => {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      <div className="bg-orange-500 py-10 sm:py-12 md:py-16 text-center text-white px-4">
-
+<div className="bg-orange-500 py-4 sm:py-6 md:py-8 text-center text-white px-4">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 flex items-center justify-center gap-2">
           <HelpCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           How can we help you?
@@ -140,7 +139,7 @@ const page = () => {
           <div className="mt-6 bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
             <p className="font-medium text-sm sm:text-base">Still need help?</p>
             <p className="text-xs sm:text-sm text-gray-600">
-              Email support@kavas.com or call +91-98765-00000
+              Email info@kavaswholesalehub.com or call +91-98765-00000
             </p>
           </div>
 
