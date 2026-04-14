@@ -766,9 +766,9 @@ const ProductView = () => {
                 <span className="text-xl">💳</span>
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                    Pay on delivery available
+                     All Orders must be prepaid. 
                   </p>
-                  <p className="text-xs text-gray-500">COD subject to availability</p>
+                  <p className="text-xs text-gray-500">Cash on Delivery (COD) is not available</p>
                 </div>
               </div>
 
