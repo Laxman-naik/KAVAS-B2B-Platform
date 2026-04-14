@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { FaLinkedin, FaFacebook, FaTwitter, FaYoutube } from "react-icons/fa";
 
 const Footer = () => {
@@ -34,15 +35,22 @@ const Footer = () => {
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">For Vendors</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
+            <Link href="/vendor">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Sell on Kavas</li>
+            </Link>
+             <Link
+            href="/suppliers/verified">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Supplier directory</li>
+            </Link>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">Company</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">About us</li>
+            <Link href="/help">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Help centre</li>
+            </Link>
           </ul>
         </div>
         <div>
@@ -50,7 +58,9 @@ const Footer = () => {
           <ul className="space-y-2 text-[14px] text-gray-400">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Privacy policy</li>
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Terms of use</li>
+            <Link href="/shipinginfo">
             <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Shipping info</li>
+            </Link>
           </ul>
         </div>
       </div>

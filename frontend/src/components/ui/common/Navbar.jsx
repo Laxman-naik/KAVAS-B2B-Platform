@@ -106,7 +106,7 @@ const Navbar = () => {
                                 placeholder="Search products, suppliers, brands......."
                                 className="h-9 w-full rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600 px-3 text-sm outline-none"
                             />
-                            <div className="h-9 px-3 sm:px-4 flex justify-center items-center rounded-r-md bg-orange-500 hover:bg-orange-600 text-white text-sm">
+                            <div className="h-9 px-3 sm:px-4 flex justify-center items-center rounded-r-md cursor-pointer bg-orange-500 hover:bg-orange-600 text-white text-sm">
                                 <Search size={15} className="mr-1 sm:mr-2" />
                                 <span className="hidden sm:inline">Search</span>
                             </div>
@@ -125,7 +125,7 @@ const Navbar = () => {
                             {!isAuthenticated ? (
                                 <Button
                                     variant="outline"
-                                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
+                                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 cursor-pointer"
                                     onClick={() => {
                                         setMode("login");
                                         setInitialEmail("");
@@ -138,7 +138,7 @@ const Navbar = () => {
                                 <div className="relative">
                                     <Button
                                         variant="outline"
-                                        className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                                        className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm "
                                         onClick={() => router.push("/profile")}
                                     >
                                         <User className="h-4 w-4 sm:mr-2" />
@@ -149,11 +149,11 @@ const Navbar = () => {
                                 </div>
                             )}
 
-                            <div className="relative inline-block">
+                            <div className="relative inline-block cursor-p">
                                 <Button
                                     variant="outline"
                                     size="icon"
-                                    className="h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex"
+                                    className="h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex cursor-pointer "
                                     onClick={() => {
                                         if (!isAuthenticated) {
                                             setMode("login");
@@ -176,7 +176,7 @@ const Navbar = () => {
                             <div className="relative inline-block">
                                 <Button
                                     variant="outline"
-                                    className="h-8 sm:h-9 gap-1 sm:gap-2 px-2 sm:px-3"
+                                    className="h-8 sm:h-9 gap-1 sm:gap-2 px-2 sm:px-3 cursor-pointer"
                                 >
                                     <Link href="/cart" className="flex items-center gap-1 sm:gap-2">
                                         <ShoppingCart className="h-4 w-4" />
