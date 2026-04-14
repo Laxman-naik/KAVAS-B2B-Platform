@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useParams,  } from "next/navigation";
+import { useParams } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
 import { suppliers } from "@/data/suppliers";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -21,6 +22,11 @@ const ProductView = () => {
   const product = allProducts.find((p) => String(p.id) === String(id));
 
   const [qty, setQty] = useState(50);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const mediaItems =
     product?.media && product.media.length > 0
@@ -410,9 +416,13 @@ const ProductView = () => {
     return <div className="p-10 text-center">Product Not Found</div>;
   }
 
-  const isWishlisted = favouriteItems.some(
-    (item) => String(item._id) === String(product.id),
-  );
+  if (!mounted) return null;
+
+  const isWishlisted = mounted
+  ? favouriteItems.some(
+      (item) => String(item._id) === String(product.id),
+    )
+  : false;
 
   const normalizeName = (value) =>
     String(value || "")

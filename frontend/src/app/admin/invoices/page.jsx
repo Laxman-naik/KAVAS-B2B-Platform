@@ -43,7 +43,7 @@ const statusStyles = {
 };
 
 const formatCurrency = (val) =>
-  `$${val.toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
+  `₹${val.toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
 
 export default function InvoicesPage() {
   const [search, setSearch] = useState("");

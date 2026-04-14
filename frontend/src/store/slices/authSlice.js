@@ -1,311 +1,16 @@
-// // import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// // import { loginUser, logoutUser, registerUserAPI, getMe, } from "@/services/authService";
-
-// // // ================== THUNKS ==================
-
-// // export const loginUserThunk = createAsyncThunk( "auth/loginUser",
-// //   async (data, { rejectWithValue }) => {
-// //     try {
-// //       const res = await loginUser(data);
-// //       return res.data;
-// //     } catch (err) {
-// //       return rejectWithValue(err.response?.data || "Login failed");
-// //     }
-// //   }
-// // );
-
-// // export const loadUserThunk = createAsyncThunk( "auth/loadUser",
-// //   async (_, { rejectWithValue }) => {
-// //     try {
-// //       const res = await getMe(); // 🔥 uses cookie
-// //       return res.data;
-// //     } catch (err) {
-// //       return rejectWithValue("Not authenticated");
-// //     }
-// //   }
-// // );
-
-// // export const registerUserThunk = createAsyncThunk( "auth/registerUser",
-// //   async (data, { rejectWithValue }) => {
-// //     try {
-// //       const res = await registerUserAPI(data);
-// //       return res.data;
-// //     } catch (err) {
-// //       return rejectWithValue(err.response?.data || "Register failed");
-// //     }
-// //   }
-// // );
-
-// // // export const logoutUserThunk = createAsyncThunk( "auth/logoutUser",
-// // //   async (_, { rejectWithValue }) => {
-// // //     try {
-// // //       await logoutUser();
-// // //       return true;
-// // //     } catch (err) {
-// // //       return rejectWithValue(err.response?.data || "Logout failed");
-// // //     }
-// // //   }
-// // // );
-// // export const logoutUserThunk = createAsyncThunk(
-// //   "auth/logoutUser",
-// //   async (_, { rejectWithValue, dispatch }) => {
-// //     try {
-// //       await logoutUser();
-
-// //       // 🔥 IMPORTANT CLEANUP
-// //       if (typeof window !== "undefined") {
-// //         localStorage.removeItem("token");
-// //       }
-
-// //       dispatch(logout()); 
-
-// //       return true;
-// //     } catch (err) {
-// //       return rejectWithValue(err.response?.data || "Logout failed");
-// //     }
-// //   }
-// // );
-
-// // // ================== SLICE ==================
-
-// // const initialState = {
-// //    user: typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user")) || null : null,
-// //   token: typeof window !== "undefined" ? localStorage.getItem("token") || null : null,
-// //   isAuthenticated: typeof window !== "undefined" ? !!localStorage.getItem("user") : false,
-// //   loading: false, 
-// //   loginLoading: false,
-// //   error: null,
-// // };
-
-// // const authSlice = createSlice({
-// //   name: "auth",
-// //   initialState,
-
-// //   reducers: {
-// //     logout: (state) => {
-// //       state.user = null;
-// //       state.token = null;
-// //       state.isAuthenticated = false;
-// //     },
-
-// //     setUser: (state, action) => {
-// //       state.user = action.payload;
-// //       state.isAuthenticated = true;
-// //     },
-
-// //     setToken: (state, action) => {
-// //       state.token = action.payload;
-// //     },
-// //   },
-
-// //   extraReducers: (builder) => {
-// //     builder
-
-// //       // LOGIN
-// //       .addCase(loginUserThunk.pending, (state) => {
-// //         state.loginLoading = true;
-// //         state.error = null;
-// //       })
-
-// //       .addCase(loginUserThunk.fulfilled, (state, action) => {
-// //         state.user = action.payload.user;
-// //         state.token = action.payload.accessToken; 
-// //         state.isAuthenticated = true;
-// //         state.loginLoading = false;
-// //         localStorage.setItem("user", JSON.stringify(action.payload.user));
-// //         localStorage.setItem("token", action.payload.accessToken);
-// //       })
-
-// //       .addCase(loginUserThunk.rejected, (state, action) => {
-// //         state.loginLoading = false;
-// //         state.error = action.payload || action.error;
-// //        })
-
-// //       // LOAD USER (🔥 KEY PART)
-// //       .addCase(loadUserThunk.pending, (state) => {
-// //         state.loading = true;
-// //       })
-// //       .addCase(loadUserThunk.fulfilled, (state, action) => {
-// //         state.user = action.payload.user;
-// //         state.isAuthenticated = true;
-// //         state.loading = false;
-// //       })
-// //       .addCase(loadUserThunk.rejected, (state) => {
-// //         state.user = null;
-// //         state.isAuthenticated = false;
-// //         state.loading = false;
-// //       })
-
-// //       // LOGOUT
-// //       .addCase(logoutUserThunk.fulfilled, (state) => {
-// //         state.user = null;
-// //         state.token = null;
-// //         state.isAuthenticated = false;
-// //          state.loading = false;
-// //       });
-// //   },
-// // });
-
-// // export const { logout, setUser, setToken } = authSlice.actions;
-// // export default authSlice.reducer;
-
-// import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// import {
-//   loginUser,
-//   logoutUser,
-//   registerUserAPI,
-//   getMe,
-// } from "@/services/authService";
-
-// // ================== THUNKS ==================
-
-// export const loginUserThunk = createAsyncThunk(
-//   "auth/loginUser",
-//   async (data, { rejectWithValue }) => {
-//     try {
-//       const res = await loginUser(data);
-
-//       return res.data;
-//     } catch (err) {
-//       return rejectWithValue(err.response?.data || "Login failed");
-//     }
-//   }
-// );
-
-// export const loadUserThunk = createAsyncThunk(
-//   "auth/loadUser",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const res = await getMe();
-//       return res.data;
-//     } catch (err) {
-//       return rejectWithValue("Not authenticated");
-//     }
-//   }
-// );
-
-// export const registerUserThunk = createAsyncThunk(
-//   "auth/registerUser",
-//   async (data, { rejectWithValue }) => {
-//     try {
-//       const res = await registerUserAPI(data);
-//       return res.data;
-//     } catch (err) {
-//       return rejectWithValue(err.response?.data || "Register failed");
-//     }
-//   }
-// );
-
-// export const logoutUserThunk = createAsyncThunk(
-//   "auth/logoutUser",
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       await logoutUser();
-//       return true;
-//     } catch (err) {
-//       return rejectWithValue(err.response?.data || "Logout failed");
-//     }
-//   }
-// );
-
-// // ================== STATE ==================
-
-// const initialState = {
-//   user: null,
-//   token: null,
-//   isAuthenticated: false,
-//   loading: false,
-//   loginLoading: false,
-//   error: null,
-// };
-
-// // ================== SLICE ==================
-
-// const authSlice = createSlice({
-//   name: "auth",
-//   initialState,
-
-//   reducers: {
-//     logoutLocal: (state) => {
-//       state.user = null;
-//       state.token = null;
-//       state.isAuthenticated = false;
-
-//       if (typeof window !== "undefined") {
-//         localStorage.removeItem("user");
-//         localStorage.removeItem("token");
-//       }
-//     },
-
-//     setUser: (state, action) => {
-//       state.user = action.payload;
-//       state.isAuthenticated = true;
-//     },
-//   },
-
-//   extraReducers: (builder) => {
-//     builder
-
-//       // LOGIN
-//       .addCase(loginUserThunk.pending, (state) => {
-//         state.loginLoading = true;
-//         state.error = null;
-//       })
-
-//       .addCase(loginUserThunk.fulfilled, (state, action) => {
-//         state.user = action.payload.user;
-//         state.token = action.payload.accessToken;
-//         state.isAuthenticated = true;
-//         state.loginLoading = false;
-
-//         if (typeof window !== "undefined") {
-//           localStorage.setItem("user", JSON.stringify(action.payload.user));
-//           localStorage.setItem("token", action.payload.accessToken);
-//         }
-//       })
-
-//       .addCase(loginUserThunk.rejected, (state, action) => {
-//         state.loginLoading = false;
-//         state.error = action.payload;
-//       })
-
-//       // LOAD USER
-//       .addCase(loadUserThunk.pending, (state) => {
-//         state.loading = true;
-//       })
-
-//       .addCase(loadUserThunk.fulfilled, (state, action) => {
-//         state.user = action.payload.user;
-//         state.isAuthenticated = true;
-//         state.loading = false;
-//       })
-
-//       .addCase(loadUserThunk.rejected, (state) => {
-//         state.user = null;
-//         state.isAuthenticated = false;
-//         state.loading = false;
-//       })
-
-//       // LOGOUT
-//       .addCase(logoutUserThunk.fulfilled, (state) => {
-//         state.user = null;
-//         state.token = null;
-//         state.isAuthenticated = false;
-
-//         if (typeof window !== "undefined") {
-//           localStorage.removeItem("user");
-//           localStorage.removeItem("token");
-//         }
-//       });
-//   },
-// });
-
-// export const { logoutLocal, setUser } = authSlice.actions;
-// export default authSlice.reducer;
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { registerUserAPI, loginUser, logoutUser, getMe,} from "@/services/authService";
-import { loginAdminAPI, logoutAdminAPI, getAdminMe,} from "@/services/adminServer";
+import {
+  registerUserAPI,
+  loginUser,
+  logoutUser,
+  getMe,
+} from "@/services/authService";
+
+import {
+  loginAdminAPI,
+  logoutAdminAPI,
+  getAdminMe,
+} from "@/services/adminServer";
 
 /* ================= USER ================= */
 
@@ -335,7 +40,7 @@ export const loginUserThunk = createAsyncThunk(
   }
 );
 
-// Get logged-in user
+// Load user
 export const loadUserThunk = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
@@ -351,8 +56,9 @@ export const loadUserThunk = createAsyncThunk(
 // Logout user
 export const logoutUserThunk = createAsyncThunk(
   "auth/logoutUser",
-  async () => {
+  async (_, { dispatch }) => {
     await logoutUser();
+    dispatch(clearAuth());
   }
 );
 
@@ -371,13 +77,13 @@ export const loginAdminThunk = createAsyncThunk(
   }
 );
 
-// Get logged-in admin
+// Load admin (ONLY ONE SOURCE OF TRUTH)
 export const loadAdminThunk = createAsyncThunk(
   "auth/loadAdmin",
   async (_, { rejectWithValue }) => {
     try {
       const res = await getAdminMe();
-      return res.data;
+      return res.data; // { user }
     } catch {
       return rejectWithValue("Not admin");
     }
@@ -387,8 +93,9 @@ export const loadAdminThunk = createAsyncThunk(
 // Logout admin
 export const logoutAdminThunk = createAsyncThunk(
   "auth/logoutAdmin",
-  async () => {
+  async (_, { dispatch }) => {
     await logoutAdminAPI();
+    dispatch(clearAuth());
   }
 );
 
@@ -396,12 +103,11 @@ export const logoutAdminThunk = createAsyncThunk(
 
 const initialState = {
   user: null,
-  role: null, // "user" | "admin"
+  role: null,
   isAuthenticated: false,
-
   loading: false,
-  authLoading: false,
   error: null,
+  initialized: false,
 };
 
 /* ================= SLICE ================= */
@@ -421,14 +127,10 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ================= USER ================= */
-
-      .addCase(registerUserThunk.fulfilled, (state) => {
-        // optional: auto-login after register if backend returns session
-      })
+      /* ===== USER ===== */
 
       .addCase(loginUserThunk.pending, (state) => {
-        state.loading= true;
+        state.loading = true;
       })
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
@@ -459,7 +161,7 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
       })
 
-      /* ================= ADMIN ================= */
+      /* ===== ADMIN ===== */
 
       .addCase(loginAdminThunk.pending, (state) => {
         state.loading = true;
@@ -474,10 +176,22 @@ const authSlice = createSlice({
         state.loading = false;
       })
 
+      .addCase(loadAdminThunk.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(loadAdminThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.role = "admin";
         state.isAuthenticated = true;
+        state.loading = false;
+        state.initialized = true;
+      })
+      .addCase(loadAdminThunk.rejected, (state) => {
+        state.user = null;
+        state.role = null;
+        state.isAuthenticated = false;
+        state.loading = false;
+        state.initialized = true;
       })
 
       .addCase(logoutAdminThunk.fulfilled, (state) => {

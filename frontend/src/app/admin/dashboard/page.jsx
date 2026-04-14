@@ -1,8 +1,24 @@
 "use client";
-
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { loadAdminThunk } from "@/store/slices/authSlice";
+import { useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 
 export default function DashboardBody() {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated, loading, initialized } = useSelector((state) => state.auth);
+
+useEffect(() => {
+  dispatch(loadAdminThunk());
+}, [dispatch]);
+
+useEffect(() => {
+  if (initialized && !isAuthenticated) {
+    router.push("/admin/login");
+  }
+}, [initialized, isAuthenticated]);
   return (
     <div className="space-y-6  p-15 min-h-screen text-white  bg-[#0b1220]">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -38,9 +54,8 @@ export default function DashboardBody() {
         ].map((card, i) => (
           <div
             key={i}
-            className={`bg-[#13263C] ${
-              card.border || "border border-gray-700"
-            } rounded-xl p-5 transition duration-300 transform hover:scale-105 hover:shadow-xl`}
+            className={`bg-[#13263C] ${card.border || "border border-gray-700"
+              } rounded-xl p-5 transition duration-300 transform hover:scale-105 hover:shadow-xl`}
           >
             <p className="text-xs text-gray-400">{card.title}</p>
             <h2 className="text-2xl font-bold mt-2">{card.value}</h2>

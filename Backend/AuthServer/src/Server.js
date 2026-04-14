@@ -1,141 +1,3 @@
-// // const express = require("express");
-// // const cors = require("cors");
-// // const pool = require("./config/db");
-// // require("dotenv").config();
-
-// // const cookieParser = require("cookie-parser");
-// // const authRoutes = require("./routes/authRoutes");
-// // const adminRoutes = require("./routes/adminRoutes");
-// // const authMiddleware = require("./middleware/authMiddleware");
-// // const roleMiddleware = require("./middleware/roleMiddleware");
-
-// // const app = express();
-
-// // // app.use(cors());
-// // app.use(cors({
-// //   origin: ["http://localhost:3000","https://kavasb2bwholesalehub.netlify.app",
-// //   ],
-// //   credentials: true
-// // }));
-// // app.use(express.json());
-
-// // app.use(cookieParser());
-
-// // app.use("/api/auth", authRoutes);
-// // app.use("/api/admin", adminRoutes);
-
-// // pool.query("SELECT NOW()")
-// //   .then(res => console.log("DB Connected:", res.rows))
-// //   .catch(err => console.error("DB Error:", err));
-
-// // app.get(
-// //   "/api/admin",
-// //   authMiddleware,
-// //   roleMiddleware("admin"),
-// //   (req, res) => {
-// //     res.json({ message: "Admin access granted" });
-// //   }
-// // );
-
-// // app.get(
-// //   "/api/vendor",
-// //   authMiddleware,
-// //   roleMiddleware("vendor", "admin"),
-// //   (req, res) => {
-// //     res.json({ message: "Vendor access granted" });
-// //   }
-// // );
-
-// // app.get(
-// //   "/api/user",
-// //   authMiddleware,
-// //   (req, res) => {
-// //     res.json({ message: "User access", user: req.user });
-// //   }
-// // );
-
-// // app.get("/", (req, res) => {
-// //   res.send("Server running");
-// // });
-
-// // app.listen(process.env.PORT, () => {
-// //   console.log(`Server running on ${process.env.PORT}`);
-// // });
-
-// const express = require("express");
-// const cors = require("cors");
-// const pool = require("./config/db");
-// require("dotenv").config();
-
-// const cookieParser = require("cookie-parser");
-
-// const authRoutes = require("./routes/authRoutes");
-// const adminRoutes = require("./routes/adminRoutes");
-
-// const authMiddleware = require("./middleware/authMiddleware");
-// const roleMiddleware = require("./middleware/roleMiddleware");
-
-// const app = express();
-
-// const allowedOrigins = [
-//   "http://localhost:3000",
-//   "https://kavasb2bwholesalehub.netlify.app",
-// ];
-
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       if (!origin) return callback(null, true);
-//       if (allowedOrigins.includes(origin)) return callback(null, true);
-//       return callback(null, false);
-//     },
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
-
-// app.options(/.*/, cors());
-
-// app.use(express.json());
-// app.use(cookieParser());
-
-// app.use("/api/auth", authRoutes);
-// app.use("/api/admin", adminRoutes);
-
-// app.get(
-//   "/api/admin",
-//   authMiddleware,
-//   roleMiddleware("admin"),
-//   (req, res) => {
-//     res.json({ message: "Admin access granted" });
-//   }
-// );
-
-// app.get("/api/vendor", authMiddleware, roleMiddleware("vendor", "admin"), (req, res) => {
-//   res.json({ message: "Vendor access granted" });
-// });
-
-// app.get("/api/user", authMiddleware, (req, res) => {
-//   res.json({ message: "User access", user: req.user });
-// });
-
-// app.get("/", (req, res) => {
-//   res.send("Server running");
-// });
-
-// app.use((req, res) => {
-//   res.status(404).json({ message: "Route not found" });
-// });
-
-// pool.query("SELECT NOW()")
-//   .then((res) => console.log("DB Connected:", res.rows))
-//   .catch((err) => console.error("DB Error:", err));
-
-// app.listen(process.env.PORT, () => {
-//   console.log(`Server running on ${process.env.PORT}`);
-// });
-
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -147,36 +9,116 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://kavasb2bwholesalehub.netlify.app"
-  ],
-  credentials: true
-}));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://kavsawholesalehub.netlify.app",
+];
 
-app.options(/.*/, cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
+app.get("/", (req, res) => {
+  res.status(200).send("Server is running 🚀");
+});
 
 app.get("/ping", (req, res) => {
   res.json({ ok: true });
 });
 
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-pool.query("SELECT NOW()")
+pool
+  .query("SELECT NOW()")
   .then((res) => console.log("DB Connected:", res.rows))
   .catch((err) => console.error("DB Error:", err));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log("Server running on", PORT);
 });
+
+// const express = require("express");
+// const cors = require("cors");
+// const cookieParser = require("cookie-parser");
+// const pool = require("./config/db");
+// require("dotenv").config();
+
+// const authRoutes = require("./routes/authRoutes");
+// const adminRoutes = require("./routes/adminRoutes");
+
+// const app = express();
+
+// // ✅ ONLY allow Gateway + Localhost
+// const allowedOrigins = [
+//   "http://localhost:3000",
+//   process.env.GATEWAY_URL,
+// ];
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin) return callback(null, true);
+
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       }
+
+//       return callback(new Error("Not allowed by CORS"));
+//     },
+//     credentials: true,
+//   })
+// );
+
+// app.use(express.json());
+// app.use(cookieParser());
+
+// // HEALTH
+// app.get("/", (req, res) => {
+//   res.status(200).send("Auth Server Running 🚀");
+// });
+
+// app.get("/ping", (req, res) => {
+//   res.json({ ok: true });
+// });
+
+// // ROUTES
+// app.use("/api/auth", authRoutes);
+// app.use("/api/admin", adminRoutes);
+
+// // 404
+// app.use((req, res) => {
+//   res.status(404).json({ message: "Route not found" });
+// });
+
+// // DB CHECK
+// pool
+//   .query("SELECT NOW()")
+//   .then((res) => console.log("DB Connected:", res.rows))
+//   .catch((err) => console.error("DB Error:", err));
+
+// const PORT = process.env.PORT || 5001;
+
+// app.listen(PORT, () => {
+//   console.log("Auth Server running on", PORT);
+// });

@@ -51,7 +51,7 @@ const statusStyles = {
 };
 
 const formatCurrency = (val) =>
-  `$${val.toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
+  `₹${val.toLocaleString(undefined, { minimumFractionDigits: 0 })}`;
 
 export default function VendorPayouts() {
   const [search, setSearch] = useState("");

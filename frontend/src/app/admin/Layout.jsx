@@ -1,23 +1,39 @@
 "use client";
-
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import AdminHeader from "@/components/admin/AdminHeader";
-import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "../../components/admin/AdminHeader";
+import AdminSidebar from "../../components/admin/AdminSidebar";
 import { useSelector } from "react-redux";
 
 export default function AdminLayout({ children }) {
- const router = useRouter();
 
-  const { admin, loading } = useSelector((state) => state.admin);
+   const router = useRouter();
+  const pathname = usePathname();
+
+  const { isAuthenticated, role, loading } = useSelector(
+    (state) => state.auth
+  );
+
+  const isAdmin = isAuthenticated && role === "admin";
+
+  // allow public admin routes
+  const isPublicRoute = pathname === "/admin/login";
 
   useEffect(() => {
-    if (!loading && !admin) {
+    if (!loading && !isAdmin && !isPublicRoute) {
       router.replace("/admin/login");
     }
-  }, [loading, admin, router]);
+  }, [loading, isAdmin, isPublicRoute]);
 
-  if (loading) return null;
+  // allow login page always
+  if (isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  // block protected routes until auth resolved
+  if (!loading && !isAdmin) {
+    return null;
+  }
 
   return (
     <div className="bg-[#0B1626] min-h-screen text-white">

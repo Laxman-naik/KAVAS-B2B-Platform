@@ -16,9 +16,7 @@ router.get(
   "/me",
   authMiddleware,
   authorizeRoles("admin"),
-  (req, res) => {
-    res.json({ user: req.user });
-  }
+  adminController.getMe
 );
 
 module.exports = router;

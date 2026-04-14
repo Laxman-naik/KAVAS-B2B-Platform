@@ -1,11 +1,38 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
+const redis = require("../config/redis");
 
-/**
- * =========================
- * ADMIN LOGIN
- * =========================
- */
+/* ================= CONFIG ================= */
+
+const isProd = true;
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+};
+
+/* ================= TOKENS ================= */
+
+const generateAccessToken = (admin) => {
+  return jwt.sign(
+    { id: admin.id, role: admin.role },
+    process.env.ACCESS_SECRET,
+    { expiresIn: "15m" }
+  );
+};
+
+const generateRefreshToken = (admin) => {
+  return jwt.sign(
+    { id: admin.id },
+    process.env.REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+/* ================= LOGIN ================= */
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -19,42 +46,40 @@ const login = async (req, res) => {
       [email]
     );
 
-    const admin = result.rows[0];
-
-    if (!admin) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: "Invalid email" });
     }
 
-    // ⚠️ You should add bcrypt compare here (you are currently not verifying password)
-    // if (!bcrypt.compareSync(password, admin.password)) ...
+    const admin = result.rows[0];
 
-    const accessToken = jwt.sign(
-      { id: admin.id, role: admin.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
+    if (!admin.password_hash) {
+      return res.status(500).json({ message: "Password not set" });
+    }
 
-    const refreshToken = jwt.sign(
-      { id: admin.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: "7d" }
-    );
+    const isMatch = await bcrypt.compare(password, admin.password_hash);
 
-    await pool.query(
-      "UPDATE admins SET refresh_token=$1 WHERE id=$2",
-      [refreshToken, admin.id]
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    const accessToken = generateAccessToken(admin);
+    const refreshToken = generateRefreshToken(admin);
+
+    await redis.set(
+      `admin_refresh:${admin.id}`,
+      refreshToken,
+      "EX",
+      7 * 24 * 60 * 60
     );
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({
@@ -64,104 +89,95 @@ const login = async (req, res) => {
         email: admin.email,
         role: admin.role,
       },
+      accessToken, refreshToken,
     });
+
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-/**
- * =========================
- * REFRESH TOKEN
- * =========================
- */
+/* ================= REFRESH ================= */
+
 const refreshToken = async (req, res) => {
-  const token = req.cookies?.refreshToken;
-
-  if (!token) {
-    return res.status(401).json({ message: "No refresh token" });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const token = req.cookies?.refreshToken;
 
-    const result = await pool.query(
-      "SELECT * FROM admins WHERE id=$1",
-      [decoded.id]
-    );
+    if (!token) {
+      return res.status(401).json({ message: "No refresh token" });
+    }
 
-    const admin = result.rows[0];
+    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-    if (!admin || admin.refresh_token !== token) {
+    const storedToken = await redis.get(`admin_refresh:${decoded.id}`);
+
+    if (!storedToken || storedToken !== token) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
     const newAccessToken = jwt.sign(
-      { id: admin.id, role: admin.role },
-      process.env.JWT_SECRET,
+      { id: decoded.id, role: "admin" },
+      process.env.ACCESS_SECRET,
       { expiresIn: "15m" }
     );
 
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 
     return res.json({ message: "Access token refreshed" });
-  } catch (err) {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
 
-    return res.status(401).json({ message: "Session expired, login again" });
+  } catch (err) {
+    console.error("REFRESH ERROR:", err);
+
+    // ✅ FIXED (match cookie options)
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+
+    return res.status(401).json({ message: "Session expired" });
   }
 };
 
-/**
- * =========================
- * LOGOUT
- * =========================
- */
+/* ================= LOGOUT ================= */
+
 const logout = async (req, res) => {
-  const token = req.cookies?.refreshToken;
+  try {
+    const token = req.cookies?.refreshToken;
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    if (token) {
+      const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
 
-      await pool.query(
-        "UPDATE admins SET refresh_token=NULL WHERE id=$1",
-        [decoded.id]
-      );
-    } catch (err) {
-      console.log("Logout error:", err.message);
+      // ✅ Remove session from Redis
+      await redis.del(`admin_refresh:${decoded.id}`);
     }
+  } catch (err) {
+    console.log("Logout error:", err.message);
   }
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+  // ❌ REMOVED wrong "token" cookie
+  // ✅ FIXED cookie clearing (must match options)
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 
   return res.json({ message: "Logged out" });
 };
 
-/**
- * =========================
- * EXPORT (SINGLE OBJECT)
- * =========================
- */
-module.exports = {
-  login,
-  refreshToken,
-  logout,
+/* ================= GET ME ================= */
+
+const getMe = async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, full_name, email, role FROM admins WHERE id=$1",
+      [req.user.id]
+    );
+
+    return res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error("GET ME ERROR:", err);
+    return res.status(500).json({ user: null });
+  }
 };
+
+module.exports = { login, refreshToken, logout, getMe,};

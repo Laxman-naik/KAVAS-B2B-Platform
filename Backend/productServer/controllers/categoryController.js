@@ -1,6 +1,4 @@
-// controllers/categoryController.js
-
-const pool = require("../db");
+const pool = require("../config/db");
 
 exports.getCategoriesWithSub = async (req, res) => {
   try {

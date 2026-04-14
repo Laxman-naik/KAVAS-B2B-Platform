@@ -9,6 +9,7 @@ import { Categories } from "@/components/ui/common/Categories";
 
 export default function BuyerHome() {
   return (
+
     <>
     
       <Home />
