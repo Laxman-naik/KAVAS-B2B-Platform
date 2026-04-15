@@ -65,8 +65,8 @@ useEffect(() => {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 pt-4 pb-2 sm:py-6 space-y-4 sm:space-y-6">
+    <div className="bg-white  overflow-x-hidden">
+      <div className="max-w-350 mx-auto px-3 sm:px-4 md:px-6 pt-4 pb-2 sm:py-6 space-y-4 sm:space-y-6">
         <div className="relative z-10 w-full overflow-hidden h-70 sm:h-100 md:h-125 lg:h-137.5 rounded-xl">
           
           <div

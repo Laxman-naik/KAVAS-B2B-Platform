@@ -119,12 +119,9 @@ export default function NewArrivals() {
   };
 
   return (
-    <div className="dark:bg-gray-900 py-6">
-      <div className="max-w-7xl mx-auto px-4">
-
-        {/* WHITE CONTAINER */}
+    <div className=" py-6">
+      <div className="max-w-350 mx-auto px-4  rounded-2xl">
           <div className="flex justify-between">
-            {/* HEADER */}
             <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2 mb-5">
               New Arrivals
             </h2>
@@ -186,10 +183,7 @@ export default function NewArrivals() {
             >
               <ChevronRight />
             </button>
-
           </div>
-      
-
       </div>
     </div>
   );

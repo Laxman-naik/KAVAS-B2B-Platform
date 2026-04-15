@@ -54,7 +54,7 @@ const TrustedSlide = () => {
 
   return (
     <div className="dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
 
         <h1 className="text-xl md:text-2xl font-semibold border-l-4 pl-2 border-orange-500 mb-6">
@@ -67,7 +67,7 @@ const TrustedSlide = () => {
           {items.map((item, index) => (
             <div
               key={index}
-              className={`flex flex-col items-center text-center gap-3 
+              className={`flex flex-col  items-center text-center gap-3 
                             p-4 sm:p-5 rounded-xl shadow-sm
                             hover:shadow-md hover:-translate-y-1 transition-all duration-300 ${item.color}`}
             >

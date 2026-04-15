@@ -17,11 +17,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   }, [open, initialEmail]);
 
   if (!open) return null;
-
-  // Handle input
   const handleChange = (e) => { setForm({ ...form, [e.target.name]: e.target.value, }); };
-
-  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -32,8 +28,6 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
 
       if (res.meta.requestStatus === "fulfilled") {
         setOpen(false);
-
-        // 🔥 IMPORTANT: force refresh user state
         dispatch(loadUserThunk());
       }
     } catch (err) {
@@ -50,7 +44,6 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
         className="w-full max-w-md bg-white relative rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[90vh] overflow-y-auto dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close */}
         <button
           onClick={() => setOpen(false)}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -60,7 +53,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
 
         <div className="flex justify-center sm:justify-start mb-2">
           <Image
-            src="/lotussymbol.png"
+            src="/LOGOKAVAS.png"
             alt="Kavas Logo"
             width={120}
             height={60}
@@ -72,10 +65,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
         <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
           Sign in to your Kavas account
         </p>
-
-        {/* Form */}
         <form className="space-y-2" onSubmit={handleSubmit}>
-          {/* Email */}
           <div>
             <label className="text-xs sm:text-sm font-medium">
               Email / Vendor ID
@@ -89,8 +79,6 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
           </div>
-
-          {/* Password */}
           <div>
             <label className="text-xs sm:text-sm font-medium">Password</label>
             <input
@@ -102,21 +90,16 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
             />
           </div>
-
-          {/* Error */}
           {error && (
             <p className="text-red-500 text-xs mt-1">
               {typeof error === "string" ? error : error?.message || "Login failed"}
             </p>
           )}
-          {/* Forgot */}
           <div className="text-right">
             <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">
               Forgot password?
             </span>
           </div>
-
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -125,20 +108,14 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
             {loading ? "Signing in..." : "Sign in to Kavas"}
           </button>
         </form>
-
-        {/* Divider */}
         <div className="flex items-center my-3 sm:my-4">
           <div className="flex grow h-px bg-gray-200" />
           <span className="mx-2 text-xs sm:text-sm text-gray-400">or</span>
           <div className="flex grow h-px bg-gray-200" />
         </div>
-
-        {/* Google */}
         <button className="w-full border py-1.5 sm:py-2 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50">
           Continue with Google
         </button>
-
-        {/* Register */}
         <p className="text-xs sm:text-sm text-center mt-3 sm:mt-4 text-gray-500">
           New?{" "}
           <span

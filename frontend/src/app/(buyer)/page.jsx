@@ -16,9 +16,10 @@ export default function BuyerHome() {
       <NewArrivals />
       <FlashDeals />
       <TrendingProducts />
+      <TrustedSlide />
       <AllProducts />
       <FeaturedSuppliers />
-      <TrustedSlide />
+      
     </>
   );
 }
