@@ -101,11 +101,11 @@ const Page = () => {
     <div className="bg-white min-h-screen max-w-350">
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
-           <p className="text-xs text-gray-500 mb-1">
+          <p className="text-xs text-gray-500 mb-1">
             <Link href="/"><span className="hover:text-orange-600">
-      Home </span></Link><span className="mx-1">{">>"}</span> 
-      <span className="text-black font-medium">New Arrivals</span>
-    </p>
+              Home </span></Link><span className="mx-1">{">>"}</span>
+            <span className="text-black font-semibold">New Arrivals</span>
+          </p>
           <div className="flex items-center gap-2 mt-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
               New Arrivals
@@ -114,9 +114,9 @@ const Page = () => {
           <p className="text-xs sm:text-sm text-black mt-1">
             Best-selling wholesale products across all categories
           </p>
-          <p className="text-xs text-black mt-2">
+          {/* <p className="text-xs text-black mt-2">
             Showing <span className="font-semibold">{filteredProducts.length} </span> of <span className="font-semibold"> {arrivalProducts.length}</span> products
-          </p>
+          </p> */}
         </div>
       </div>
       <div className="bg-white px-3 sm:px-4 py-3 sticky top-20 z-10">
@@ -126,11 +126,10 @@ const Page = () => {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition flex items-center gap-1
-              ${
-                activeCategory === cat
+              ${activeCategory === cat
                   ? "bg-orange-500 text-white border-orange-500"
                   : "bg-gray-100 text-gray-700 hover:bg-orange-50"
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -155,7 +154,7 @@ const Page = () => {
               <div className="mt-4 mb-4">
                 <h3 className="font-medium mb-2 text-sm">Min. Order Qty</h3>
                 <div className="space-y-1 text-sm">
-                  {["Under 50 units","50–200 units","200–500 units","500+ units"].map((item)=>(
+                  {["Under 50 units", "50–200 units", "200–500 units", "500+ units"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -171,7 +170,7 @@ const Page = () => {
               <div className="mb-4">
                 <h3 className="font-medium mb-2 text-sm">Rating</h3>
                 <div className="space-y-1 text-sm">
-                  {["4.5","4.0"].map((item)=>(
+                  {["4.5", "4.0"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -187,7 +186,7 @@ const Page = () => {
               <div className="mb-4">
                 <h3 className="font-medium mb-2 text-sm">Supplier Type</h3>
                 <div className="space-y-1 text-sm">
-                  {["Verified only","Manufacturer","Distributor"].map((item)=>(
+                  {["Verified only", "Manufacturer", "Distributor"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -256,7 +255,7 @@ const Page = () => {
                           {product.category}
                         </p>
 
-                        <p className="text-black font-bold text-base mt-1">
+                        <p className="text-orange-500 font-bold text-base mt-1">
                           {product.price}
                         </p>
 
@@ -290,9 +289,8 @@ const Page = () => {
                               e.stopPropagation();
                               onToggleFavourite(product);
                             }}
-                            className={`h-8 w-8 border-orange-200 ${
-                              liked.includes(product.id) ? "bg-red-50" : ""
-                            }`}
+                            className={`h-8 w-8 border-orange-200 ${liked.includes(product.id) ? "bg-red-50" : ""
+                              }`}
                           >
                             <Heart
                               size={14}

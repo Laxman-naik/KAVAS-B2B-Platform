@@ -14,6 +14,8 @@ import {
 
 import { suppliers } from "@/data/suppliers";
 import { useParams } from "next/navigation";
+import Navbar from '../common/Navbar';
+import Footer from '../common/Footer';
 
 const Supplierview = () => {
 
@@ -30,8 +32,10 @@ const Supplierview = () => {
   }
 
   return (
+    <>
+    <Navbar />
     <div className="bg-white min-h-screen ">
-      <div className="bg-orange-400 text-white w-full shadow-md">
+      <div className="bg-orange-500 text-white w-full shadow-md">
         <div className="px-4 sm:px-6 lg:px-10 p-6 lg:p-8 flex flex-col lg:flex-row justify-between gap-6 items-start lg:items-center">
 
           <div className="flex items-start sm:items-center gap-4">
@@ -187,6 +191,8 @@ const Supplierview = () => {
 
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

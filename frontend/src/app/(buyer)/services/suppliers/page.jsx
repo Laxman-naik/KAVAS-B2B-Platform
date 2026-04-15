@@ -68,7 +68,7 @@ const Page = () => {
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-green-500 rounded-2xl p-3 sm:p-4 shadow-sm">
+              <div className="bg-orange-500 rounded-2xl p-3 sm:p-4 shadow-sm">
                 <CheckCircle className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white" />
               </div>
             </div>
@@ -83,7 +83,7 @@ const Page = () => {
 
             <div className="mt-5 sm:mt-6">
               <Link href="/suppliers/verified">
-                <Button className="bg-green-600 hover:bg-green-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
                   Browse Verified Suppliers →
                 </Button>
               </Link>
@@ -112,16 +112,16 @@ const Page = () => {
               >
                 <CardContent className="p-4 sm:p-5 md:p-6 text-center h-full flex flex-col justify-start">
                   <div className="flex justify-center mb-3">
-                    <div className="bg-green-500 text-white w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full font-semibold text-sm sm:text-base">
+                    <div className="bg-orange-500 text-white w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full font-semibold text-sm sm:text-base">
                       {step.id}
                     </div>
                   </div>
 
-                  <div className="flex justify-center mb-3 text-green-600">
+                  <div className="flex justify-center mb-3 text-orange-600">
                     {step.icon}
                   </div>
 
-                  <h3 className="font-semibold text-sm sm:text-base md:text-[17px] text-gray-900 mb-2 leading-snug min-h-[2.5rem] flex items-center justify-center">
+                  <h3 className="font-semibold text-sm sm:text-base md:text-[17px] text-gray-900 mb-2 leading-snug min-h-10 flex items-center justify-center">
                     {step.title}
                   </h3>
 
@@ -132,13 +132,13 @@ const Page = () => {
               </Card>
             ))}
 
-            <Card className="rounded-2xl border-2 border-green-400 bg-green-50 shadow-sm h-full">
+            <Card className="rounded-2xl border-2 border-orange-400 bg-orange-50 shadow-sm h-full">
               <CardContent className="p-4 sm:p-5 md:p-6 text-center h-full flex flex-col items-center justify-center">
-                <BadgeCheck className="w-10 h-10 sm:w-11 sm:h-11 text-green-600 mb-3" />
-                <h3 className="font-semibold text-green-700 text-sm sm:text-base md:text-[17px] mb-2">
+                <BadgeCheck className="w-10 h-10 sm:w-11 sm:h-11 text-orange-600 mb-3" />
+                <h3 className="font-semibold text-orange-700 text-sm sm:text-base md:text-[17px] mb-2">
                   Verified Badge Earned
                 </h3>
-                <p className="text-xs sm:text-sm text-green-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-orange-600 leading-relaxed">
                   Only 1 in 4 applicants qualify
                 </p>
               </CardContent>
@@ -150,10 +150,10 @@ const Page = () => {
       {/* STATS */}
       <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-10 sm:pb-12 md:pb-14">
         <div className="mx-auto max-w-7xl">
-          <div className="bg-white border border-green-200 rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm">
+          <div className="bg-white border border-orange-200 rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4 sm:gap-x-6 text-center">
               <div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-700">
                   12,400+
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -162,7 +162,7 @@ const Page = () => {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-700">
                   98.7%
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -171,7 +171,7 @@ const Page = () => {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-700">
                   &lt;0.3%
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">
@@ -180,7 +180,7 @@ const Page = () => {
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-700">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-700">
                   24 hrs
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1">

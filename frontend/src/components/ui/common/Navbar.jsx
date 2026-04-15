@@ -2,19 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  MapPin,
-  Search,
-  ShoppingCart,
-  Heart,
-  ChevronDown,
-  User,
-  Menu,
-  X,
-  Package,
-  CircleHelp,
-  LogOut,
-} from "lucide-react";
+import { MapPin, Search,ShoppingCart, Heart, ChevronDown, User,Menu, X,Package,CircleHelp,LogOut,} from "lucide-react";
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
@@ -40,13 +28,10 @@ const Navbar = () => {
     (state) =>
       state.cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
   );
-
   const [initialEmail, setInitialEmail] = useState("");
-
   useEffect(() => {
     setMounted(true);
   }, []);
-
   useEffect(() => {
     const saved = localStorage.getItem("theme");
 
@@ -55,7 +40,6 @@ const Navbar = () => {
       setDarkMode(true);
     }
   }, []);
-
   useEffect(() => {
     dispatch(hydrateFavourites());
   }, [dispatch]);
@@ -82,7 +66,7 @@ const Navbar = () => {
     } catch (err) {
       console.log(err);
     }
-};
+  };
 
   if (!mounted) return null;
 
@@ -113,7 +97,7 @@ const Navbar = () => {
                   <img
                     src="/LOGOKAVAS.png"
                     alt="KAVAS Logo"
-                    className="h-8 sm:h-10 md:h-11 w-auto object-contain cursor-pointer"
+                    className="h-12 sm:h-14 md:h-16 w-auto object-contain cursor-pointer"
                   />
                 </Link>
               </div>
@@ -132,7 +116,6 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* RIGHT SIDE */}
               <div className="flex items-center gap-2 shrink-0">
                 {/* <Button
                   onClick={toggleDarkMode}
@@ -179,11 +162,11 @@ const Navbar = () => {
 
                     {dropdown && (
                       <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                        <div className="px-5 py-4 bg-[#f5eedc] dark:bg-gray-700 text-center border-b border-gray-200 dark:border-gray-600">
+                        <div className="px-5 py-4 bg-orange-500 dark:bg-gray-700 text-center border-b border-gray-200 dark:border-gray-600">
                           <div className="text-xl font-semibold text-gray-900 dark:text-white leading-tight">
                             {user?.full_name || user?.name || "Rahul Sharma"}
                           </div>
-                          <div className="text-sm text-sky-600 dark:text-sky-400 mt-1 truncate">
+                          <div className="text-sm text-black mt-1 truncate">
                             {user?.email || "you@company.com"}
                           </div>
                         </div>
@@ -193,7 +176,7 @@ const Navbar = () => {
                               router.push("/profile");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 hover:text-orange-500 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <User className="h-5 w-5" />
                             <span>My Profile</span>
@@ -204,7 +187,7 @@ const Navbar = () => {
                               router.push("/orders");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <Package className="h-5 w-5" />
                             <span>My Orders</span>
@@ -215,7 +198,7 @@ const Navbar = () => {
                               router.push("/favourites");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center justify-between px-5 py-3 text-left text-[15px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center justify-between px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <span className="flex items-center gap-3">
                               <Heart className="h-5 w-5 text-red-500" />
@@ -232,7 +215,7 @@ const Navbar = () => {
                               router.push("/help");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <CircleHelp className="h-5 w-5" />
                             <span>Help Centre</span>
@@ -281,7 +264,15 @@ const Navbar = () => {
                   <Button
                     variant="outline"
                     className="h-8 sm:h-9 gap-1 sm:gap-2 px-2 sm:px-3"
-                    onClick={() => router.push("/cart")}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setMode("login");
+                        setInitialEmail("");
+                        setOpen(true);
+                      } else {
+                        router.push("/cart");
+                      }
+                    }}
                   >
                     <ShoppingCart className="h-4 w-4" />
                     <span className="hidden sm:inline text-xs sm:text-sm">Cart</span>

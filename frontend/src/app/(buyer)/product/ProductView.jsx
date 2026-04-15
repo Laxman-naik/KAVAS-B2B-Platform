@@ -11,11 +11,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
+import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 
 const ProductView = () => {
   const params = useParams();
- 
+
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
@@ -59,9 +59,19 @@ const ProductView = () => {
     product?.media && product.media.length > 0
       ? product.media
       : [{ type: "image", src: product?.image }];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const selectedMedia = mediaItems[currentIndex];
+  const handlePrev = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? mediaItems.length - 1 : prev - 1
+    );
+  };
 
-  const [activeImage, setActiveImage] = useState(null);
-  const selectedMedia = activeImage || mediaItems[0];
+  const handleNext = () => {
+    setCurrentIndex((prev) =>
+      prev === mediaItems.length - 1 ? 0 : prev + 1
+    );
+  };
 
   const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
@@ -185,9 +195,8 @@ const ProductView = () => {
                       aria-label={`Rate ${value} stars`}
                     >
                       <Star
-                        className={`h-6 w-6 ${
-                          active ? "fill-amber-500 text-amber-500" : "text-gray-300"
-                        }`}
+                        className={`h-6 w-6 ${active ? "fill-amber-500 text-amber-500" : "text-gray-300"
+                          }`}
                       />
                     </button>
                   );
@@ -289,11 +298,10 @@ const ProductView = () => {
                 type="button"
                 disabled={isSubmitDisabled}
                 onClick={submitReview}
-                className={`w-1/2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
-                  isSubmitDisabled
+                className={`w-1/2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${isSubmitDisabled
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-gray-900 hover:bg-gray-800"
-                }`}
+                  }`}
               >
                 Submit
               </button>
@@ -446,10 +454,10 @@ const ProductView = () => {
   if (!mounted) return null;
 
   const isWishlisted = mounted
-  ? favouriteItems.some(
+    ? favouriteItems.some(
       (item) => String(item._id) === String(product.id),
     )
-  : false;
+    : false;
 
   const normalizeName = (value) =>
     String(value || "")
@@ -484,19 +492,42 @@ const ProductView = () => {
       <div className="grid lg:grid-cols-2 gap-7 items-start">
         <div className="space-y-4">
           <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
+
             <button
               type="button"
               onClick={() => dispatch(toggleFavourite(product))}
-              className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
+              className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur rounded-full p-2 shadow-md hover:scale-110 hover:bg-white transition"
             >
-              {isWishlisted ? "❤️" : "🤍"}
+              <Heart
+                className={`w-5 h-5 transition ${isWishlisted
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-500"
+                  }`}
+              />
             </button>
 
-            <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105">
+            <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105 relative">
+
+              {/* LEFT ARROW */}
+              <button
+                onClick={handlePrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur shadow p-2 rounded-full hover:scale-110 hover:bg-white transition z-10"
+              >
+                ◀
+              </button>
+
+              {/* RIGHT ARROW */}
+              <button
+                onClick={handleNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 backdrop-blur shadow p-2 rounded-full hover:scale-110 hover:bg-white transition z-10"
+              >
+                ▶
+              </button>
+
               {selectedMedia.type === "image" ? (
                 <img
                   src={selectedMedia.src}
-                  className="w-full h-full object-contain transition duration-300 "
+                  className="w-full h-full object-contain transition duration-300"
                 />
               ) : (
                 <video
@@ -517,10 +548,9 @@ const ProductView = () => {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveImage(item)}
-                    className={`rounded-lg border p-1 overflow-hidden transition ${
-                      isActive ? "border-orange-500" : "border-gray-200"
-                    }`}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`rounded-lg border p-1 overflow-hidden transition ${isActive ? "border-orange-500" : "border-gray-200"
+                      }`}
                   >
                     {item.type === "image" ? (
                       <img
@@ -619,11 +649,10 @@ const ProductView = () => {
                   <div
                     key={i}
                     onClick={() => setQty(tier.min)}
-                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${
-                      isActive
+                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${isActive
                         ? "border-2 border-orange-500 bg-white"
                         : "bg-gray-100 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     <p className="text-[10px] sm:text-xs text-gray-500">
                       {tier.max === Infinity
@@ -646,8 +675,6 @@ const ProductView = () => {
               })}
             </div>
           </div>
-
-          {/* ✅ SIZES DISPLAY (NEW ADDED ONLY) */}
           {product?.sizes && (
             <div className="mt-4">
               <h3 className="text-sm font-medium mb-2">Available Sizes</h3>
@@ -697,11 +724,11 @@ const ProductView = () => {
 
           <div className="mt-4 space-y-2">
             <div className="flex gap-2">
-              <button className="w-1/2 cursor-pointer text-white bg-orange-500 hover:bg-orange-600 py-1.5 rounded-lg font-medium  hover:scale-[1.02] active:scale-[0.98] transition">
+              <button className="w-1/2 cursor-pointer text-white bg-gray-400 hover:bg-gray-500 py-1.5 rounded-lg font-medium  hover:scale-[1.02] active:scale-[0.98] transition">
                 Buy
               </button>
               <button className="w-1/2 cursor-pointer bg-orange-500 hover:bg-orange-600 hover:scale-[1.02] active:scale-[0.98] text-white py-1.5 rounded-lg font-semibold text-sm sm:text-lg transition duration-200 shadow">
-                🛒 Add to Cart
+               Add to Cart
               </button>
             </div>
 
@@ -720,7 +747,7 @@ const ProductView = () => {
                 `Built for bulk procurement, this ${product.title} is designed for consistent performance and reliable quality. Suitable for regular stocking, distribution, and business use.`}
             </p>
 
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            {/* <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               {[
                 ["Brand", product.brand || "—"],
                 ["Supplier", product.company || "—"],
@@ -735,7 +762,7 @@ const ProductView = () => {
                   <span className="font-medium text-gray-900">{item[1]}</span>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-4 bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
@@ -798,7 +825,7 @@ const ProductView = () => {
                 <span className="text-xl">💳</span>
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                     All Orders must be prepaid. 
+                    All Orders must be prepaid.
                   </p>
                   <p className="text-xs text-gray-500">Cash on Delivery (COD) is not available</p>
                 </div>
@@ -842,25 +869,25 @@ const ProductView = () => {
               </div>
             </div>
 
-           
 
-{supplier ? (
-  <Link href={`/suppliers/${supplier.id}`}>
-    <button
-      type="button"
-      className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
-    >
-      View Profile →
-    </button>
-  </Link>
-) : (
-  <button
-    disabled
-    className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
-  >
-    View Profile →
-  </button>
-)}
+
+            {supplier ? (
+              <Link href={`/suppliers/${supplier.id}`}>
+                <button
+                  type="button"
+                  className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
+                >
+                  View Profile →
+                </button>
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
+              >
+                View Profile →
+              </button>
+            )}
           </div>
         </div>
       </div>

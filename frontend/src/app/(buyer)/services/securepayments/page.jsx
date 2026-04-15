@@ -71,12 +71,11 @@ const payments = [
 const Page = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* HERO (MATCHED STYLE) */}
       <section className="px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 text-center">
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-center mb-4">
-            <div className="bg-blue-100 p-3 sm:p-4 rounded-xl">
-              <Lock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+            <div className="bg-orange-100 p-3 sm:p-4 rounded-xl">
+              <Lock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-orange-500" />
             </div>
           </div>
 
@@ -91,7 +90,7 @@ const Page = () => {
 
           <div className="mt-5 sm:mt-6">
             <Link href="/signin">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
                 Start Buying Securely →
               </Button>
             </Link>
@@ -99,7 +98,6 @@ const Page = () => {
         </div>
       </section>
 
-      {/* ESCROW STEPS */}
       <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6 sm:mb-8 md:mb-10">
@@ -112,18 +110,20 @@ const Page = () => {
           </div>
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-            <div className="hidden xl:block absolute top-8 left-[8%] right-[8%] h-0.5 bg-blue-200 z-0" />
+            {/* 🔥 changed blue line → orange */}
+            <div className="hidden xl:block absolute top-8 left-[8%] right-[8%] h-0.5 bg-orange-200 z-0" />
 
             {steps.map((step) => (
               <div
                 key={step.id}
                 className="relative z-10 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6 text-center h-full"
               >
-                <div className="mx-auto mb-3 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold">
+                {/* 🔥 changed step circle */}
+                <div className="mx-auto mb-3 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-orange-500 text-white font-semibold">
                   {step.id}
                 </div>
 
-                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900 mb-2 min-h-[2.5rem] flex items-center justify-center">
+                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900 mb-2 min-h-10 flex items-center justify-center">
                   {step.title}
                 </h3>
 
@@ -164,7 +164,6 @@ const Page = () => {
           </div>
         </div>
 
-        {/* BACK */}
         <div className="flex justify-center mt-5 sm:mt-6">
           <Link href="/">
             <Button

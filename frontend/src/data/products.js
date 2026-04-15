@@ -30,7 +30,7 @@ export const products = [
 
   {
     id: "t2",
-    title: "Lithium Power Bank 20000mAh OEM",
+    title: "Lithium Power Bank 20000mAh ",
     price: "₹750/unit",
     min: "25 units",
     company: "TechLink India",

@@ -7,7 +7,7 @@ import { loadUserThunk, loginUserThunk } from "@/store/slices/authSlice";
 
 const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   const dispatch = useDispatch();
-  const [form, setForm] = useState({ email: "", password: "", });
+  const [form, setForm] = useState({ email: "", password: "" });
   const { loading, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -17,7 +17,11 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   }, [open, initialEmail]);
 
   if (!open) return null;
-  const handleChange = (e) => { setForm({ ...form, [e.target.name]: e.target.value, }); };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -41,90 +45,107 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-md bg-white relative rounded-2xl shadow-lg p-4 sm:p-5 md:p-6 max-h-[90vh] overflow-y-auto dark:bg-gray-900"
+        className="w-full max-w-md bg-white relative rounded-2xl shadow-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* CLOSE BUTTON */}
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
         >
           <X size={18} />
         </button>
 
-        <div className="flex justify-center sm:justify-start mb-2">
+        {/* ✅ FULL WIDTH HEADER */}
+        <div className="w-full bg-[#063149] py-3 px-4 flex justify-center sm:justify-start rounded-t-2xl">
           <Image
             src="/LOGOKAVAS.png"
             alt="Kavas Logo"
-            width={120}
-            height={60}
-            className="h-12 sm:h-14 w-auto object-contain"
+            width={140}
+            height={70}
+            className="h-14 sm:h-16 w-auto object-contain"
           />
         </div>
 
-        <h3 className="text-base sm:text-lg font-semibold">Welcome back</h3>
-        <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-          Sign in to your Kavas account
-        </p>
-        <form className="space-y-2" onSubmit={handleSubmit}>
-          <div>
-            <label className="text-xs sm:text-sm font-medium">
-              Email / Vendor ID
-            </label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="you@company.com"
-              className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
-            />
+        {/* ✅ CONTENT WITH PADDING */}
+        <div className="p-4 sm:p-5 md:p-6">
+          <h3 className="text-base sm:text-lg font-semibold">Welcome back</h3>
+          <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+            Sign in to your Kavas account
+          </p>
+
+          <form className="space-y-2" onSubmit={handleSubmit}>
+            <div>
+              <label className="text-xs sm:text-sm font-medium">
+                Email / Vendor ID
+              </label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="you@company.com"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs sm:text-sm font-medium">
+                Password
+              </label>
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter password"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-500 text-xs mt-1">
+                {typeof error === "string"
+                  ? error
+                  : error?.message || "Login failed"}
+              </p>
+            )}
+
+            <div className="text-right">
+              <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">
+                Forgot password?
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600 disabled:opacity-60"
+            >
+              {loading ? "Signing in..." : "Sign in to Kavas"}
+            </button>
+          </form>
+
+          <div className="flex items-center my-3 sm:my-4">
+            <div className="flex grow h-px bg-gray-200" />
+            <span className="mx-2 text-xs sm:text-sm text-gray-400">or</span>
+            <div className="flex grow h-px bg-gray-200" />
           </div>
-          <div>
-            <label className="text-xs sm:text-sm font-medium">Password</label>
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Enter password"
-              className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
-            />
-          </div>
-          {error && (
-            <p className="text-red-500 text-xs mt-1">
-              {typeof error === "string" ? error : error?.message || "Login failed"}
-            </p>
-          )}
-          <div className="text-right">
-            <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">
-              Forgot password?
-            </span>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600 disabled:opacity-60"
-          >
-            {loading ? "Signing in..." : "Sign in to Kavas"}
+
+          <button className="w-full border py-1.5 sm:py-2 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50">
+            Continue with Google
           </button>
-        </form>
-        <div className="flex items-center my-3 sm:my-4">
-          <div className="flex grow h-px bg-gray-200" />
-          <span className="mx-2 text-xs sm:text-sm text-gray-400">or</span>
-          <div className="flex grow h-px bg-gray-200" />
+
+          <p className="text-xs sm:text-sm text-center mt-3 sm:mt-4 text-gray-500">
+            New?{" "}
+            <span
+              onClick={() => setMode("register")}
+              className="text-orange-500 font-medium hover:underline cursor-pointer"
+            >
+              Create your account →
+            </span>
+          </p>
         </div>
-        <button className="w-full border py-1.5 sm:py-2 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50">
-          Continue with Google
-        </button>
-        <p className="text-xs sm:text-sm text-center mt-3 sm:mt-4 text-gray-500">
-          New?{" "}
-          <span
-            onClick={() => setMode("register")}
-            className="text-orange-500 font-medium hover:underline cursor-pointer"
-          >
-            Create your account →
-          </span>
-        </p>
       </div>
     </div>
   );

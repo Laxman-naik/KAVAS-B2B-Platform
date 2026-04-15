@@ -103,7 +103,7 @@ const CartPage = () => {
           </div>
 
           {cartItems.length === 0 ? (
-            <div className="bg-white border rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[300px]">
+            <div className="bg-white border rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-75">
               <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 text-gray-600 mb-4" />
               <h3 className="text-base sm:text-lg font-semibold mb-2">
                 Your cart is empty
