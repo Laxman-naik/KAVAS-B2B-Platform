@@ -121,7 +121,7 @@ const Navbar = () => {
                 <div className="w-full max-w-3xl px-2">
                   <div className="flex items-center rounded-md shadow-lg overflow-hidden">
                     <input
-                      placeholder="Search products, suppliers, brands......."
+                      placeholder="Search Products, Suppliers, Brands......."
                       className="h-10 w-full border border-gray-300 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600 px-4 text-sm outline-none rounded-l-md"
                     />
                     <button className="h-10 px-5 flex justify-center items-center bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-r-md shrink-0">
@@ -132,7 +132,6 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* RIGHT SIDE */}
               <div className="flex items-center gap-2 shrink-0">
                 {/* <Button
                   onClick={toggleDarkMode}
@@ -146,7 +145,7 @@ const Navbar = () => {
                 {!isAuthenticated ? (
                   <Button
                     variant="outline"
-                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
+                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 cursor-pointer"
                     onClick={() => {
                       setMode("login");
                       setInitialEmail("");
