@@ -1,13 +1,16 @@
 "use client";
 import Link from "next/link";
-import { useParams,  } from "next/navigation";
+import { useParams } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
 import { suppliers } from "@/data/suppliers";
+import { productsData } from "@/app/(buyer)/product/productData";
 import { useState, useEffect } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
 
 const ProductView = () => {
@@ -17,11 +20,40 @@ const ProductView = () => {
   const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
 
-  const allProducts = [...products, ...arrivalProducts];
-  const product = allProducts.find((p) => String(p.id) === String(id));
+  const normalizeProduct = (p) => {
+    if (!p) return null;
+
+    const title = p.title ?? p.name ?? "";
+    const price = p.price ?? "";
+    const min = p.min ?? (p.minQty ? `${p.minQty} units` : "");
+    const company = p.company ?? p.supplier ?? "";
+    const brand = p.brand ?? p.supplier ?? "";
+    const image = p.image ?? "";
+    const media = Array.isArray(p.media) ? p.media : image ? [{ type: "image", src: image }] : [];
+
+    return {
+      ...p,
+      title,
+      price,
+      min,
+      company,
+      brand,
+      image,
+      media,
+    };
+  };
+
+  const catalogProducts = Object.values(productsData || {}).flat();
+  const allProducts = [...products, ...arrivalProducts, ...catalogProducts];
+  const productRaw = allProducts.find((p) => String(p.id) === String(id));
+  const product = normalizeProduct(productRaw);
 
   const [qty, setQty] = useState(50);
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const mediaItems =
     product?.media && product.media.length > 0

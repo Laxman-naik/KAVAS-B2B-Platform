@@ -10,7 +10,7 @@ const AllProducts = () => {
 
   return (
     <div className="dark:bg-gray-900">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -44,7 +44,7 @@ const AllProducts = () => {
 
               {/* Content */}
               <div className="p-3 sm:p-4">
-                <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-[2.5rem]">
+                <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-10">
                   {item.name}
                 </h3>
 
