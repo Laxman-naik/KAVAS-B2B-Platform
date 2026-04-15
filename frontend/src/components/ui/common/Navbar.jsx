@@ -89,7 +89,7 @@ const Navbar = () => {
   return (
     <>
       <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
-        <div className="bg-black text-white text-[11px] py-1 overflow-hidden hidden sm:block">
+        <div className="bg-amber-200 text-black text-[11px] py-1 overflow-hidden hidden sm:block">
           <div className="whitespace-nowrap animate-marquee flex gap-8 px-4">
             <span>Pro Membership — 14 days free trial, no credit card needed</span>
             <span>Sell on Kavas — List your products FREE for 6 months</span>
