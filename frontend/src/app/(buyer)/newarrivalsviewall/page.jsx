@@ -25,20 +25,16 @@ const categories = [
 
 const Page = () => {
   const [activeCategory, setActiveCategory] = useState("All");
-
-  // ✅ FILTER STATES
   const [filters, setFilters] = useState({
-    minQty: ["Under 50 units", "50–200 units"],
-    rating: ["4.5"],
-    supplier: ["Verified only"],
+    minQty: [],
+    rating: [],
+    supplier: [],
   });
 
   const [sortOption, setSortOption] = useState("Most relevant");
-
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const liked = favouriteItems.map((item) => item._id);
-
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
   };
@@ -48,8 +44,6 @@ const Page = () => {
   };
 
   const [showFilters, setShowFilters] = useState(false);
-
-  // ✅ HANDLE FILTER CHANGE
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
       const exists = prev[type].includes(value);
@@ -62,15 +56,12 @@ const Page = () => {
     });
   };
 
-  // ✅ FILTER + SORT LOGIC
   const filteredProducts = arrivalProducts
     .filter((product) => {
-      // Category
       if (activeCategory !== "All" && product.category !== activeCategory) {
         return false;
       }
 
-      // Min Qty
       if (filters.minQty.length > 0) {
         const qty = parseInt(product.min?.match(/\d+/)?.[0] || 0);
 
@@ -83,16 +74,12 @@ const Page = () => {
 
         if (!matchQty) return false;
       }
-
-      // Rating
       if (filters.rating.length > 0) {
         const matchRating = filters.rating.some(
           (r) => product.rating >= parseFloat(r)
         );
         if (!matchRating) return false;
       }
-
-      // Supplier
       if (filters.supplier.length > 0) {
         const matchSupplier = filters.supplier.includes(product.supplierType);
         if (!matchSupplier) return false;
@@ -112,9 +99,13 @@ const Page = () => {
 
   return (
     <div className="bg-white min-h-screen max-w-350">
-      {/* HEADER */}
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
+           <p className="text-xs text-gray-500 mb-1">
+            <Link href="/"><span className="hover:text-orange-600">
+      Home </span></Link><span className="mx-1">{">>"}</span> 
+      <span className="text-black font-medium">New Arrivals</span>
+    </p>
           <div className="flex items-center gap-2 mt-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
               New Arrivals
@@ -124,12 +115,10 @@ const Page = () => {
             Best-selling wholesale products across all categories
           </p>
           <p className="text-xs text-black mt-2">
-            Showing {filteredProducts.length} of {arrivalProducts.length} products
+            Showing <span className="font-semibold">{filteredProducts.length} </span> of <span className="font-semibold"> {arrivalProducts.length}</span> products
           </p>
         </div>
       </div>
-
-      {/* CATEGORY BAR */}
       <div className="bg-white px-3 sm:px-4 py-3 sticky top-20 z-10">
         <div className="mx-auto flex flex-wrap gap-2 sm:gap-3 items-center overflow-x-auto">
           {categories.map((cat) => (
@@ -148,7 +137,6 @@ const Page = () => {
           ))}
         </div>
       </div>
-
       <div className="mx-auto px-3 sm:px-4 py-6">
         <div className="md:hidden mb-4">
           <button
@@ -158,7 +146,6 @@ const Page = () => {
             Filters {showFilters ? "▲" : "▼"}
           </button>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">
           <div className={`${showFilters ? "block" : "hidden"} md:block`}>
             <div className="bg-white rounded-2xl shadow p-4 sticky top-28 border">
@@ -214,14 +201,14 @@ const Page = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-orange-400 text-white py-2 rounded-lg hover:bg-orange-600 transition font-medium">
+              <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition font-medium">
                 Apply Filters
               </button>
             </div>
           </div>
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-              <p className="text-gray-600 text-sm">
+              <p className="text-black text-sm">
                 Showing{" "}
                 <span className="font-semibold">
                   {filteredProducts.length}
@@ -249,7 +236,7 @@ const Page = () => {
                     <CardContent className="p-0! py-0! flex flex-col h-full">
 
                       <div className="relative h-45 sm:h-50 bg-gray-100 flex items-center justify-center">
-                        <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                        <span className="absolute top-3 left-3 bg-[#063149] text-white text-xs px-2 py-1 rounded-full z-10">
                           {index % 2 === 0 ? "Trending" : "Hot Deal"}
                         </span>
 
@@ -269,7 +256,7 @@ const Page = () => {
                           {product.category}
                         </p>
 
-                        <p className="text-orange-600 font-bold text-base mt-1">
+                        <p className="text-black font-bold text-base mt-1">
                           {product.price}
                         </p>
 
@@ -329,7 +316,6 @@ const Page = () => {
                 </Link>
               ))}
             </div>
-
           </div>
         </div>
       </div>
