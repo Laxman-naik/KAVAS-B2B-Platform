@@ -6,7 +6,7 @@ export default function TrendingProducts() {
 
     <div className="dark:bg-gray-900">
       {/* <div className="bg-red-100 rounded-xl "> */}
-        <div className="max-w-7xl mx-auto sm:px-6 py-6 space-y-6">
+        <div className="max-w-350 mx-auto sm:px-6 py-6 space-y-6">
 
           <div className="flex justify-between">
             <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">

@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { suppliers } from "@/data/suppliers";
+import Navbar from "../common/Navbar";
+import Footer from "../common/Footer";
 
 const categories = [
   "All",
@@ -114,10 +116,12 @@ const VerifiedSuppliers = () => {
       : suppliers.filter((s) => s.category === selectedCategory);
 
   return (
+    <>
+    <Navbar />
     <div className="bg-white min-h-screen">
       {/* HEADER */}
       <div
-        className="bg-orange-500 text-white w-full shadow-md 
+        className="bg-orange-400 text-white w-full shadow-md 
                 flex flex-col items-center justify-center 
                 text-center 
                 py-6 sm:py-8 lg:py-10 
@@ -261,6 +265,8 @@ const VerifiedSuppliers = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

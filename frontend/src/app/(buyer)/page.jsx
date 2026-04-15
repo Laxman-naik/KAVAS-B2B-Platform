@@ -5,20 +5,21 @@ import FeaturedSuppliers from "@/components/ui/common/FeaturedSuppliers";
 import FlashDeals from "@/components/ui/common/FlashDeals";
 import TrustedSlide from "@/components/ui/common/TrustedSlide";
 import AllProducts from "@/components/ui/common/AllProducts";
+import { Categories } from "@/components/ui/common/Categories";
 
 export default function BuyerHome() {
   return (
 
     <>
-      <div className="px-10">
-        <Home />
-        <NewArrivals />
-        <FlashDeals />
-        <TrendingProducts />
-        <AllProducts />
-        <FeaturedSuppliers />
-        <TrustedSlide />
-      </div>
+    
+      <Home />
+      <NewArrivals />
+      <FlashDeals />
+      <TrendingProducts />
+      <TrustedSlide />
+      <AllProducts />
+      <FeaturedSuppliers />
+      
     </>
   );
 }

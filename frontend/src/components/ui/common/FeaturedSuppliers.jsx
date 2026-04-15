@@ -198,7 +198,7 @@ const FeaturedSuppliers = () => {
 
   return (
     <div className="w-full dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -214,10 +214,10 @@ const FeaturedSuppliers = () => {
           </Link>
         </div>
 
-        {/* Carousel */}
+     
         <div className="relative flex items-center justify-center w-full">
 
-          {/* Left */}
+         
           <button
             onClick={prevSlide}
             className="absolute left-1 sm:left-2 z-10 bg-white shadow-md p-2 sm:p-3 rounded-full dark:text-black"
@@ -225,8 +225,7 @@ const FeaturedSuppliers = () => {
             <ChevronLeft size={20} />
           </button>
 
-          {/* Items */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-12 w-full overflow-hidden">
+          <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-20 w-full overflow-hidden">
             {visibleSuppliers.map((supplier, index) => {
               const isCenter = index === range;
 

@@ -12,148 +12,150 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const page = () => {
-  const steps = [
-    {
-      id: 1,
-      title: "You Pay Kavas",
-      desc: "Funds held in our secure escrow — never sent directly to supplier",
-    },
-    {
-      id: 2,
-      title: "Order Dispatched",
-      desc: "Supplier ships only after payment is confirmed in escrow",
-    },
-    {
-      id: 3,
-      title: "You Approve",
-      desc: "Inspect goods within 48 hours. Raise a dispute if anything is wrong",
-    },
-    {
-      id: 4,
-      title: "Supplier Paid",
-      desc: "Funds released to supplier only after your approval",
-    },
-  ];
+const steps = [
+  {
+    id: 1,
+    title: "You Pay Kavas",
+    desc: "Funds held in our secure escrow — never sent directly to supplier",
+  },
+  {
+    id: 2,
+    title: "Order Dispatched",
+    desc: "Supplier ships only after payment is confirmed in escrow",
+  },
+  {
+    id: 3,
+    title: "You Approve",
+    desc: "Inspect goods within 48 hours. Raise a dispute if anything is wrong",
+  },
+  {
+    id: 4,
+    title: "Supplier Paid",
+    desc: "Funds released to supplier only after your approval",
+  },
+];
 
-  const payments = [
-    {
-      icon: <Landmark className="w-6 h-6 text-gray-600" />,
-      title: "Net Banking",
-      desc: "All major banks",
-    },
-    {
-      icon: <Smartphone className="w-6 h-6 text-gray-600" />,
-      title: "UPI",
-      desc: "GPay, PhonePe, Paytm",
-    },
-    {
-      icon: <CreditCard className="w-6 h-6 text-gray-600" />,
-      title: "Cards",
-      desc: "Visa, Mastercard, RuPay",
-    },
-    {
-      icon: <FileText className="w-6 h-6 text-gray-600" />,
-      title: "NEFT / RTGS",
-      desc: "For large orders",
-    },
-    {
-      icon: <CreditCard className="w-6 h-6 text-gray-600" />,
-      title: "Credit Line",
-      desc: "Up to ₹25L (Pro+)",
-    },
-    {
-      icon: <ShieldCheck className="w-6 h-6 text-gray-600" />,
-      title: "256-bit SSL",
-      desc: "PCI-DSS Level 1",
-    },
-  ];
+const payments = [
+  {
+    icon: <Landmark className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "Net Banking",
+    desc: "All major banks",
+  },
+  {
+    icon: <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "UPI",
+    desc: "GPay, PhonePe, Paytm",
+  },
+  {
+    icon: <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "Cards",
+    desc: "Visa, Mastercard, RuPay",
+  },
+  {
+    icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "NEFT / RTGS",
+    desc: "For large orders",
+  },
+  {
+    icon: <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "Credit Line",
+    desc: "Up to ₹25L (Pro+)",
+  },
+  {
+    icon: <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />,
+    title: "256-bit SSL",
+    desc: "PCI-DSS Level 1",
+  },
+];
 
+const Page = () => {
   return (
-    <div className="w-full min-h-screen bg-gray-100 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50">
+      {/* HERO (MATCHED STYLE) */}
+      <section className="px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 text-center">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-center mb-4">
+            <div className="bg-blue-100 p-3 sm:p-4 rounded-xl">
+              <Lock className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+            </div>
+          </div>
 
-      {/* 🔵 Banner */}
-      <div className="bg-blue-600 text-white py-12 sm:py-14 md:py-16 px-4 sm:px-6 text-center">
-        <div className="flex justify-center mb-4">
-          <div className="bg-white/20 p-3 sm:p-4 rounded-full">
-            <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-300" />
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            Secure Payments, Always
+          </h1>
+
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
+            Your money never goes directly to a supplier until your order is
+            delivered and approved. Our escrow system keeps every rupee safe.
+          </p>
+
+          <div className="mt-5 sm:mt-6">
+            <Link href="/signin">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
+                Start Buying Securely →
+              </Button>
+            </Link>
           </div>
         </div>
+      </section>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-          Secure Payments, Always
-        </h1>
+      {/* ESCROW STEPS */}
+      <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-6 sm:mb-8 md:mb-10">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
+              How Our Escrow Works
+            </h2>
+            <p className="text-gray-500 mt-2 text-sm sm:text-base">
+              Simple, transparent, buyer-first
+            </p>
+          </div>
 
-        <p className="mt-4 text-sm sm:text-base max-w-xl mx-auto text-gray-200">
-          Your money never goes directly to a supplier until your order is delivered and approved.
-          Our escrow system keeps every rupee safe.
-        </p>
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+            <div className="hidden xl:block absolute top-8 left-[8%] right-[8%] h-0.5 bg-blue-200 z-0" />
 
-        <Link href="/signin">
-          <Button className="mt-6 bg:white px-5 sm:px-6 py-2 text-sm sm:text-base">
-            Start Buying Securely →
-          </Button>
-        </Link>
-      </div>
+            {steps.map((step) => (
+              <div
+                key={step.id}
+                className="relative z-10 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6 text-center h-full"
+              >
+                <div className="mx-auto mb-3 w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold">
+                  {step.id}
+                </div>
 
-      {/* ⚪ Escrow Steps */}
-      <div className="py-10 sm:py-12 md:py-14 px-4 sm:px-6 md:px-10 text-center">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold">
-          How Our Escrow Works
-        </h2>
+                <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900 mb-2 min-h-[2.5rem] flex items-center justify-center">
+                  {step.title}
+                </h3>
 
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">
-          Simple, transparent, buyer-first
-        </p>
-
-        {/* GRID FIX (IMPORTANT) */}
-        <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-          {/* LINE (only desktop) */}
-          <div className="hidden lg:block absolute top-8 left-0 right-0 h-0.5 bg-blue-200 z-0" />
-
-          {steps.map((step) => (
-            <div
-              key={step.id}
-              className="relative z-10 bg-white rounded-xl shadow-sm border p-5 sm:p-6 text-center"
-            >
-              <div className="mx-auto mb-3 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-blue-600 text-white font-semibold">
-                {step.id}
+                <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+                  {step.desc}
+                </p>
               </div>
-
-              <h3 className="font-semibold text-sm sm:text-base lg:text-lg">
-                {step.title}
-              </h3>
-
-              <p className="text-xs sm:text-sm text-gray-500 mt-2 leading-relaxed">
-                {step.desc}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* 💳 Payments */}
-      <div className="px-4 sm:px-6 md:px-10 pb-12 md:pb-16">
-        <div className="bg-white rounded-xl border p-5 sm:p-6 md:p-8 max-w-6xl mx-auto">
-
-          <h3 className="text-base sm:text-lg font-semibold mb-6 flex items-center gap-2">
+      {/* PAYMENTS */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-10 sm:pb-12 md:pb-14">
+        <div className="max-w-6xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 md:p-8 shadow-sm">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-5 sm:mb-6 text-gray-900 flex items-center gap-2">
             💳 Accepted Payment Methods
           </h3>
 
-          {/* GRID FIX */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {payments.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 sm:gap-4 border rounded-lg px-3 sm:px-4 py-3 sm:py-4 bg-yellow-50 hover:shadow-sm transition"
+                className="flex items-start gap-3 sm:gap-4 border border-gray-200 rounded-xl px-4 py-4 bg-gray-50 hover:shadow-sm transition h-full"
               >
-                <div>{item.icon}</div>
+                <div className="shrink-0 mt-0.5">{item.icon}</div>
+
                 <div>
-                  <h4 className="font-medium text-sm sm:text-base">
+                  <h4 className="font-medium text-sm sm:text-base text-gray-900">
                     {item.title}
                   </h4>
-                  <p className="text-xs sm:text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
                     {item.desc}
                   </p>
                 </div>
@@ -163,17 +165,19 @@ const page = () => {
         </div>
 
         {/* BACK */}
-        <div className="flex justify-center mt-6 sm:mt-8">
+        <div className="flex justify-center mt-5 sm:mt-6">
           <Link href="/">
-            <Button variant="outline" className="px-5 sm:px-6 text-sm sm:text-base">
+            <Button
+              variant="outline"
+              className="px-5 sm:px-6 text-sm sm:text-base rounded-xl w-full sm:w-auto"
+            >
               ← Back to Home
             </Button>
           </Link>
         </div>
-      </div>
-
+      </section>
     </div>
   );
 };
 
-export default page;
+export default Page;

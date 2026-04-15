@@ -89,7 +89,7 @@ const Navbar = () => {
   return (
     <>
       <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
-        <div className="bg-black text-white text-[11px] py-1 overflow-hidden hidden sm:block">
+        <div className="bg-amber-200 text-black text-[11px] py-1 overflow-hidden hidden sm:block">
           <div className="whitespace-nowrap animate-marquee flex gap-8 px-4">
             <span>Pro Membership — 14 days free trial, no credit card needed</span>
             <span>Sell on Kavas — List your products FREE for 6 months</span>
@@ -100,7 +100,6 @@ const Navbar = () => {
         <div className="w-full bg-[#063149]">
           <div className="px-4 sm:px-6 lg:px-10 py-2">
             <div className="flex items-center justify-between gap-3 lg:gap-6">
-              {/* LEFT: LOGO */}
               <div className="flex items-center shrink-0 h-12 sm:h-14">
                 <Link
                   href="/"
@@ -118,8 +117,6 @@ const Navbar = () => {
                   />
                 </Link>
               </div>
-
-              {/* DESKTOP SEARCH - CENTERED WITH EQUAL FEEL */}
               <div className="hidden lg:flex flex-1 justify-center min-w-0">
                 <div className="w-full max-w-3xl px-2">
                   <div className="flex items-center rounded-md shadow-lg overflow-hidden">
@@ -174,7 +171,7 @@ const Navbar = () => {
                             .slice(0, 2) || "U"
                         ).toUpperCase()}
                       </div>
-                      <span className="hidden sm:inline max-w-[90px] truncate">
+                      <span className="hidden sm:inline max-w-22.5 truncate">
                         {(user?.full_name || user?.name || "User").split(" ")[0]}
                       </span>
                       <ChevronDown className="h-3 w-3 opacity-70" />
@@ -182,7 +179,6 @@ const Navbar = () => {
 
                     {dropdown && (
                       <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                        {/* Header */}
                         <div className="px-5 py-4 bg-[#f5eedc] dark:bg-gray-700 text-center border-b border-gray-200 dark:border-gray-600">
                           <div className="text-xl font-semibold text-gray-900 dark:text-white leading-tight">
                             {user?.full_name || user?.name || "Rahul Sharma"}
@@ -191,8 +187,6 @@ const Navbar = () => {
                             {user?.email || "you@company.com"}
                           </div>
                         </div>
-
-                        {/* Items */}
                         <div className="py-2">
                           <button
                             onClick={() => {
@@ -228,7 +222,7 @@ const Navbar = () => {
                               <span>Favourites</span>
                             </span>
 
-                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] flex items-center justify-center">
+                            <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] flex items-center justify-center">
                               {favouritesCount}
                             </span>
                           </button>
