@@ -8,7 +8,6 @@ const cartRoutes = require("./routes/cartRoutes");
 
 const app = express();
 
-// ONLY allow Gateway + Localhost
 const allowedOrigins = [
   "http://localhost:3000",
   "https://kavsawholesalehub.netlify.app",
@@ -31,11 +30,9 @@ app.use(
 
 app.use(express.json());
 
-// ROUTES
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 
-// HEALTH
 app.get("/", (req, res) => {
   res.send("Product Server Running ");
 });
