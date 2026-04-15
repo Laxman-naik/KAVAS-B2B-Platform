@@ -237,7 +237,7 @@ const Categories = () => {
     >
       <div
         style={{ top: navHeight }}
-        className={`fixed left-0 w-full z-40 h-9 py-2 bg-white dark:bg-gray-800 border-b shadow-sm transition-all duration-300 ${
+        className={`fixed left-0 w-full z-40 h-9 py-2 bg-white dark:bg-gray-800 cursor-pointer border-b shadow-sm transition-all duration-300 ${
           isScrolled
             ? "translate-y-0 opacity-100"
             : "-translate-y-full opacity-0"
