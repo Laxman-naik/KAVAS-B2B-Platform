@@ -5,8 +5,11 @@ export const getProducts = () =>
   productapi.get("/api/products/all");
 
 // Get single product
+// export const getSingleProduct = (id) =>
+//   productapi.get(`/${id}`);
+
 export const getSingleProduct = (id) =>
-  productapi.get(`/${id}`);
+  productapi.get(`/api/products/${id}`);
 
 // Create product (Protected)
 export const createProduct = (data) =>
