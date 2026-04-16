@@ -3,29 +3,34 @@ import React from "react";
 import { ShoppingCart, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
+
 import {
-  removeFromCart,
+  fetchCart,
+  removeCartItem,
   clearCart,
-  hydrateCart,
-  increaseQuantity,
-  decreaseQuantity,
-  updateQuantity,
+  updateCartItem,
 } from "@/store/slices/cartSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
   const [inputValues, setInputValues] = React.useState({});
 
+  /* ================= LOAD CART FROM API ================= */
   React.useEffect(() => {
-    dispatch(hydrateCart());
+    dispatch(fetchCart());
   }, [dispatch]);
 
-  const cartItems = useSelector((state) => state.cart?.items || []);
+  /* ================= GET CART FROM STORE ================= */
+  const carts = useSelector((state) => state.cart?.carts || []);
 
+  /* FLATTEN ITEMS (IMPORTANT FIX) */
+  const cartItems = carts.flatMap((cart) => cart.items || []);
+
+  /* ================= SYNC INPUTS ================= */
   React.useEffect(() => {
     const mappedValues = {};
     cartItems.forEach((item) => {
-      mappedValues[item._id] = String(item.quantity || item.moq || 1);
+      mappedValues[item.id] = String(item.quantity || 1);
     });
     setInputValues(mappedValues);
   }, [cartItems]);
@@ -33,7 +38,7 @@ const CartPage = () => {
   const cartCount = cartItems.length;
 
   const getTypedQty = (item) => {
-    const rawValue = inputValues[item._id];
+    const rawValue = inputValues[item.id];
     if (rawValue === "" || rawValue === undefined) return null;
 
     const parsed = Number(rawValue);
@@ -69,7 +74,7 @@ const CartPage = () => {
 
   const handleInputBlur = (item) => {
     const moq = item.moq || 1;
-    const rawValue = inputValues[item._id];
+    const rawValue = inputValues[item.id];
 
     let finalQty = Number(rawValue);
 
@@ -78,15 +83,15 @@ const CartPage = () => {
     }
 
     dispatch(
-      updateQuantity({
-        id: item._id,
+      updateCartItem({
+        itemId: item.id,
         quantity: finalQty,
       })
     );
 
     setInputValues((prev) => ({
       ...prev,
-      [item._id]: String(finalQty),
+      [item.id]: String(finalQty),
     }));
   };
 
@@ -129,7 +134,7 @@ const CartPage = () => {
                 const moq = item.moq || 1;
                 const typedQty = getTypedQty(item);
                 const displayQty =
-                  inputValues[item._id] ?? String(item.quantity || moq);
+                  inputValues[item.id] ?? String(item.quantity || moq);
 
                 const isBelowMoq =
                   typedQty !== null && typedQty < moq;
@@ -137,15 +142,16 @@ const CartPage = () => {
                 const qtyForTotal =
                   typedQty !== null ? typedQty : item.quantity || moq;
 
-                const itemTotal = qtyForTotal >= moq ? item.price * qtyForTotal : 0;
+                const itemTotal =
+                  qtyForTotal >= moq ? item.price * qtyForTotal : 0;
 
                 return (
                   <div
-                    key={item._id}
+                    key={item.id}
                     className="bg-white border rounded-xl p-4 flex items-center gap-4"
                   >
                     <img
-                      src={item.image}
+                      src={item.image_url || item.image}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -167,14 +173,20 @@ const CartPage = () => {
                         <div className="flex items-center border rounded-md overflow-hidden">
                           <button
                             type="button"
-                            onClick={() => dispatch(decreaseQuantity(item._id))}
+                            onClick={() =>
+                              dispatch(
+                                updateCartItem({
+                                  itemId: item.id,
+                                  quantity: Math.max(item.quantity - 1, moq),
+                                })
+                              )
+                            }
                             disabled={(item.quantity || moq) <= moq}
                             className={`px-2.5 py-1 bg-gray-100 ${
                               (item.quantity || moq) <= moq
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-200"
                             }`}
-                            aria-label="Decrease quantity"
                           >
                             -
                           </button>
@@ -184,7 +196,7 @@ const CartPage = () => {
                             inputMode="numeric"
                             value={displayQty}
                             onChange={(e) =>
-                              handleInputChange(item._id, e.target.value)
+                              handleInputChange(item.id, e.target.value)
                             }
                             onBlur={() => handleInputBlur(item)}
                             className={`w-20 px-2 py-1 text-sm text-center outline-none ${
@@ -194,9 +206,15 @@ const CartPage = () => {
 
                           <button
                             type="button"
-                            onClick={() => dispatch(increaseQuantity(item._id))}
+                            onClick={() =>
+                              dispatch(
+                                updateCartItem({
+                                  itemId: item.id,
+                                  quantity: item.quantity + 1,
+                                })
+                              )
+                            }
                             className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200"
-                            aria-label="Increase quantity"
                           >
                             +
                           </button>
@@ -209,7 +227,7 @@ const CartPage = () => {
                     </div>
 
                     <button
-                      onClick={() => dispatch(removeFromCart(item._id))}
+                      onClick={() => dispatch(removeCartItem(item.id))}
                       className="text-red-500"
                     >
                       <Trash2 size={16} />
@@ -238,6 +256,7 @@ const CartPage = () => {
           </div>
         </div>
 
+        {/* SUMMARY (UNCHANGED UI) */}
         <div className="bg-white border rounded-xl p-4 h-fit sticky top-20">
           <h3 className="text-base font-semibold mb-2">Order Summary</h3>
 

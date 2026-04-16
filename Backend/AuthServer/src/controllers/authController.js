@@ -242,18 +242,20 @@
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const {
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../utils/token");
+const { generateAccessToken, generateRefreshToken, } = require("../utils/token");
 const redis = require("../config/redis");
-
 const REFRESH_PREFIX = "refresh:user:";
 
 // ================== REGISTER ==================
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, phone, role } = req.body;
+    const { full_name, email, password, phone, role } = req.body || {};
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        message: "full_name, email and password are required",
+      });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -274,7 +276,13 @@ exports.register = async (req, res) => {
 // ================== LOGIN ==================
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+
+    if (!req.body) {
+      return res.status(400).json({
+        message: "Request body missing. Send JSON with Content-Type: application/json",
+      });
+    }
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email & password required" });
@@ -332,6 +340,7 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
+      accessToken,refreshToken
     });
   } catch (err) {
     console.error("LOGIN ERROR:", err);

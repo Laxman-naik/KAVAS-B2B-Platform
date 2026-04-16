@@ -1,233 +1,147 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {
+  getCartAPI,
+  addToCartAPI,
+  updateCartItemAPI,
+  removeCartItemAPI,
+  clearCartAPI,
+} from "@/services/cartService";
 
-const STORAGE_KEY = "cart";
-
-const readFromStorage = () => {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
-  }
-};
-
-const writeToStorage = (items) => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {}
-};
-
-const normalizeNumber = (value, fallback = 0) => {
-  if (typeof value === "number" && !Number.isNaN(value)) return value;
-  const parsed = Number(String(value || "").replace(/[^0-9.]/g, ""));
-  return Number.isNaN(parsed) ? fallback : parsed;
-};
-
-const normalizeMOQ = (payload) => {
-  const rawMin =
-    payload?.moq ??
-    payload?.minQty ??
-    payload?.minimumOrderQuantity ??
-    payload?.min;
-
-  if (typeof rawMin === "number" && !Number.isNaN(rawMin)) {
-    return Math.max(1, rawMin);
-  }
-
-  const parsed = Number(String(rawMin || "").replace(/[^0-9.]/g, ""));
-  return Math.max(1, parsed || 1);
-};
-
-const normalizeItem = (payload) => {
-  const id = payload?._id || payload?.id;
-  const price = normalizeNumber(payload?.price, 0);
-  const moq = normalizeMOQ(payload);
-
-  const quantity =
-    payload?.quantity != null
-      ? Math.max(moq, Math.floor(normalizeNumber(payload.quantity, moq)))
-      : moq;
-
-  return {
-    _id: id,
-    name: payload?.name || payload?.title || "",
-    image: payload?.image || "",
-    price,
-    min: `Min. ${moq} units`,
-    moq,
-    quantity,
-
-    size: payload?.size || null,
-    color: payload?.color || null,
-    deliveryDate: payload?.deliveryDate || null,
-
-    category: payload?.category || null,
-    specifications: payload?.specifications || null,
-  };
-};
-
-const normalizeStoredItems = (items) => {
-  const list = Array.isArray(items) ? items : [];
-
-  return list
-    .map((x) => {
-      const id = x?._id || x?.id;
-      const price = normalizeNumber(x?.price, 0);
-      const moq = normalizeMOQ(x);
-      const qty = normalizeNumber(x?.quantity, moq);
-
-      return {
-        _id: id,
-        name: x?.name || x?.title || "",
-        image: x?.image || "",
-        price,
-        min: x?.min || `Min. ${moq} units`,
-        moq,
-        quantity: qty < moq ? moq : Math.floor(qty),
-
-        size: x?.size || null,
-        color: x?.color || null,
-        deliveryDate: x?.deliveryDate || null,
-
-        category: x?.category || null,
-        specifications: x?.specifications || null,
-      };
-    })
-    .filter((x) => Boolean(x._id));
-};
-
-const isSameCartItem = (a, b) => {
-  return (
-    a._id === b._id &&
-    (a.size || null) === (b.size || null) &&
-    (a.color || null) === (b.color || null) &&
-    (a.deliveryDate || null) === (b.deliveryDate || null)
-  );
-};
-
+/* ================= INITIAL STATE ================= */
 const initialState = {
-  items: normalizeStoredItems(readFromStorage()),
+  carts: [], // grouped by organization
+  loading: false,
+  error: null,
 };
 
+/* ================= THUNKS ================= */
+
+/**
+ * GET CART
+ */
+export const fetchCart = createAsyncThunk(
+  "cart/fetchCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getCartAPI();
+      return res.data.carts;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+/**
+ * ADD TO CART
+ */
+export const addToCart = createAsyncThunk(
+  "cart/addToCart",
+  async ({ productId, quantity }, { rejectWithValue }) => {
+    try {
+      const res = await addToCartAPI({ productId, quantity });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+/**
+ * UPDATE ITEM QUANTITY
+ */
+export const updateCartItem = createAsyncThunk(
+  "cart/updateCartItem",
+  async ({ itemId, quantity }, { rejectWithValue }) => {
+    try {
+      const res = await updateCartItemAPI(itemId, { quantity });
+      return { itemId, quantity, message: res.data.message };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+/**
+ * REMOVE ITEM
+ */
+export const removeCartItem = createAsyncThunk(
+  "cart/removeCartItem",
+  async (itemId, { rejectWithValue }) => {
+    try {
+      const res = await removeCartItemAPI(itemId);
+      return { itemId, message: res.data.message };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+/**
+ * CLEAR CART
+ */
+export const clearCart = createAsyncThunk(
+  "cart/clearCart",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await clearCartAPI();
+      return res.data.message;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+/* ================= SLICE ================= */
 const cartSlice = createSlice({
   name: "cart",
   initialState,
-  reducers: {
-    hydrateCart: (state) => {
-      state.items = normalizeStoredItems(readFromStorage());
-      writeToStorage(state.items);
-    },
+  reducers: {},
 
-    addToCart: (state, action) => {
-      const item = normalizeItem(action.payload);
-      if (!item._id) return;
+  extraReducers: (builder) => {
+    builder
 
-      const existing = state.items.find((x) => isSameCartItem(x, item));
+      /* ===== FETCH CART ===== */
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.carts = action.payload;
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        state.items.push({
-          ...item,
-          quantity: item.moq,
+      /* ===== ADD TO CART ===== */
+      .addCase(addToCart.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      /* ===== UPDATE ITEM ===== */
+      .addCase(updateCartItem.fulfilled, (state, action) => {
+        const { itemId, quantity } = action.payload;
+
+        state.carts.forEach((cart) => {
+          const item = cart.items.find((i) => i.id === itemId);
+          if (item) item.quantity = quantity;
         });
-      }
+      })
 
-      writeToStorage(state.items);
-    },
+      /* ===== REMOVE ITEM ===== */
+      .addCase(removeCartItem.fulfilled, (state, action) => {
+        const { itemId } = action.payload;
 
-    removeFromCart: (state, action) => {
-      const payload = action.payload;
+        state.carts.forEach((cart) => {
+          cart.items = cart.items.filter((i) => i.id !== itemId);
+        });
+      })
 
-      state.items = state.items.filter((item) => {
-        if (typeof payload === "string") {
-          return item._id !== payload;
-        }
-        return !isSameCartItem(item, payload);
+      /* ===== CLEAR CART ===== */
+      .addCase(clearCart.fulfilled, (state) => {
+        state.carts = [];
       });
-
-      writeToStorage(state.items);
-    },
-
-    increaseQuantity: (state, action) => {
-      const payload = action.payload;
-
-      const item = state.items.find((x) => {
-        if (typeof payload === "string") {
-          return x._id === payload;
-        }
-        return isSameCartItem(x, payload);
-      });
-
-      if (item) {
-        item.quantity += 1;
-      }
-
-      writeToStorage(state.items);
-    },
-
-    decreaseQuantity: (state, action) => {
-      const payload = action.payload;
-
-      const item = state.items.find((x) => {
-        if (typeof payload === "string") {
-          return x._id === payload;
-        }
-        return isSameCartItem(x, payload);
-      });
-
-      if (item) {
-        const moq = item.moq || 1;
-        if (item.quantity > moq) {
-          item.quantity -= 1;
-        }
-      }
-
-      writeToStorage(state.items);
-    },
-
-    updateQuantity: (state, action) => {
-      const { id, size, color, deliveryDate, quantity } = action.payload;
-
-      const item = state.items.find(
-        (x) =>
-          x._id === id &&
-          (x.size || null) === (size || null) &&
-          (x.color || null) === (color || null) &&
-          (x.deliveryDate || null) === (deliveryDate || null)
-      );
-
-      if (item) {
-        const moq = item.moq || 1;
-        const parsedQty = Number(quantity);
-
-        if (Number.isNaN(parsedQty)) {
-          item.quantity = moq;
-        } else {
-          item.quantity = parsedQty < moq ? moq : Math.floor(parsedQty);
-        }
-      }
-
-      writeToStorage(state.items);
-    },
-
-    clearCart: (state) => {
-      state.items = [];
-      writeToStorage([]);
-    },
   },
 });
-
-export const {
-  hydrateCart,
-  addToCart,
-  removeFromCart,
-  increaseQuantity,
-  decreaseQuantity,
-  updateQuantity,
-  clearCart,
-} = cartSlice.actions;
 
 export default cartSlice.reducer;
