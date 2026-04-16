@@ -20,17 +20,14 @@ exports.createProduct = async (req, res) => {
       isFeatured,
       isTopProduct,
       parentProductId,
-
-      // 🔥 new fields
-      categories = [],        // [categoryId]
-      images = [],            // [{ image_url }]
-      specifications = [],    // [{ key, value }]
-      pricingTiers = [],      // [{ min_quantity, price, label }]
+      categories = [],
+      images = [],
+      specifications = [],
+      pricingTiers = [],
     } = req.body;
 
     await client.query("BEGIN");
 
-    // 1️⃣ Insert product
     const productResult = await client.query(
       `INSERT INTO products (
         name, slug, organization_id, price, mrp, moq, stock,
@@ -60,7 +57,6 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // 2️⃣ Insert categories
     for (const categoryId of categories) {
       await client.query(
         `INSERT INTO product_categories (product_id, category_id)
@@ -69,7 +65,6 @@ exports.createProduct = async (req, res) => {
       );
     }
 
-    // 3️⃣ Insert images
     for (const img of images) {
       await client.query(
         `INSERT INTO product_images (product_id, image_url)
@@ -78,7 +73,6 @@ exports.createProduct = async (req, res) => {
       );
     }
 
-    // 4️⃣ Insert specifications
     for (const spec of specifications) {
       await client.query(
         `INSERT INTO product_specifications (product_id, key, value)
@@ -87,7 +81,6 @@ exports.createProduct = async (req, res) => {
       );
     }
 
-    // 5️⃣ Insert pricing tiers
     for (const tier of pricingTiers) {
       await client.query(
         `INSERT INTO product_pricing_tiers (product_id, min_quantity, price, label)
@@ -102,10 +95,9 @@ exports.createProduct = async (req, res) => {
       message: "Product created successfully",
       product,
     });
-
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
+    console.error("createProduct error:", err);
 
     if (err.code === "23505") {
       return res.status(400).json({ message: "Duplicate entry" });
@@ -121,16 +113,61 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { name, slug, organizationId, isTopProduct, parentProductId, price,  mrp,
-      minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, } = req.body;
+    const {
+      name,
+      slug,
+      organizationId,
+      isTopProduct,
+      parentProductId,
+      price,
+      mrp,
+      minOrderQty,
+      stock,
+      unit,
+      weight,
+      dispatchTimeDays,
+      description,
+      isActive,
+      isFeatured,
+    } = req.body;
 
     const result = await pool.query(
-      `UPDATE products SET  name=$1, slug=$2, organization_id=$5, is_top_product=$6, parent_product_id=$7, price=$8,  mrp=$9,
-        min_order_qty=$10, stock=$11, unit=$12, weight=$13, dispatch_time_days=$14, description=$15, image_url=$16, is_active=$17, is_featured=$18, updated_at=CURRENT_TIMESTAMP
-      WHERE id=$19
-      RETURNING *`,
-      [name, slug, organizationId, isTopProduct, parentProductId, price,
-         mrp, minOrderQty, stock, unit, weight, dispatchTimeDays, description, imageUrl, isActive, isFeatured, id,]
+      `UPDATE products
+       SET name = $1,
+           slug = $2,
+           organization_id = $3,
+           is_top_product = $4,
+           parent_product_id = $5,
+           price = $6,
+           mrp = $7,
+           moq = $8,
+           stock = $9,
+           unit = $10,
+           weight = $11,
+           dispatch_time_days = $12,
+           description = $13,
+           is_active = $14,
+           is_featured = $15
+       WHERE id = $16
+       RETURNING *`,
+      [
+        name,
+        slug,
+        organizationId,
+        isTopProduct ?? false,
+        parentProductId || null,
+        price,
+        mrp,
+        minOrderQty,
+        stock,
+        unit,
+        weight,
+        dispatchTimeDays,
+        description,
+        isActive ?? true,
+        isFeatured ?? false,
+        id,
+      ]
     );
 
     if (!result.rows.length) {
@@ -139,6 +176,7 @@ exports.updateProduct = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
+    console.error("updateProduct error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -148,7 +186,7 @@ exports.deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      `UPDATE products SET is_active=false WHERE id=$1 RETURNING *`,
+      `UPDATE products SET is_active = false WHERE id = $1 RETURNING *`,
       [id]
     );
 
@@ -158,6 +196,7 @@ exports.deleteProduct = async (req, res) => {
 
     res.json({ message: "Product deactivated" });
   } catch (err) {
+    console.error("deleteProduct error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -166,18 +205,21 @@ exports.getProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
 
-    const offset = (page - 1) * limit;
+    const parsedPage = Number(page);
+    const parsedLimit = Number(limit);
+    const offset = (parsedPage - 1) * parsedLimit;
 
     const result = await pool.query(
       `SELECT * FROM products
        WHERE is_active = true
        ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      [parsedLimit, offset]
     );
 
     res.json(result.rows);
   } catch (err) {
+    console.error("getProducts error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -190,7 +232,6 @@ exports.getSingleProduct = async (req, res) => {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    // Get main product
     const productResult = await pool.query(
       `SELECT * FROM products 
        WHERE id = $1 AND is_active = true`,
@@ -203,19 +244,16 @@ exports.getSingleProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // Get images
     const imagesResult = await pool.query(
       `SELECT image_url FROM product_images WHERE product_id = $1`,
       [id]
     );
 
-    // Get specifications
     const specsResult = await pool.query(
       `SELECT key, value FROM product_specifications WHERE product_id = $1`,
       [id]
     );
 
-    // Get pricing tiers
     const pricingResult = await pool.query(
       `SELECT min_quantity, price, label 
        FROM product_pricing_tiers 
@@ -224,16 +262,14 @@ exports.getSingleProduct = async (req, res) => {
       [id]
     );
 
-    // Get categories
     const categoriesResult = await pool.query(
-      `SELECT c.id, c.name 
+      `SELECT c.id, c.name, c.slug, c.parent_id
        FROM product_categories pc
        JOIN categories c ON pc.category_id = c.id
        WHERE pc.product_id = $1`,
       [id]
     );
 
-    // Final response
     res.json({
       ...product,
       images: imagesResult.rows,
@@ -241,9 +277,99 @@ exports.getSingleProduct = async (req, res) => {
       pricingTiers: pricingResult.rows,
       categories: categoriesResult.rows,
     });
-
   } catch (err) {
-    console.error(err);
+    console.error("getSingleProduct error:", err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const { categorySlug } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT DISTINCT ON (p.id)
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.stock,
+        p.unit,
+        p.weight,
+        p.dispatch_time_days,
+        p.created_at,
+        c.id AS category_id,
+        c.slug AS category_slug,
+        NULL::text AS subcategory_slug,
+        pi.image_url
+      FROM products p
+      JOIN product_categories pc ON pc.product_id = p.id
+      JOIN categories c ON c.id = pc.category_id
+      LEFT JOIN product_images pi ON pi.product_id = p.id
+      WHERE c.slug = $1
+        AND p.is_active = true
+      ORDER BY p.id, p.created_at DESC;
+      `,
+      [categorySlug]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("getProductsByCategory error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getProductsByCategoryAndSubcategory = async (req, res) => {
+  try {
+    const { categorySlug, subcategorySlug } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT DISTINCT ON (p.id)
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.stock,
+        p.unit,
+        p.weight,
+        p.dispatch_time_days,
+        p.created_at,
+        parent.id AS category_id,
+        parent.slug AS category_slug,
+        sub.id AS subcategory_id,
+        sub.slug AS subcategory_slug,
+        pi.image_url
+      FROM products p
+      JOIN product_categories pc ON pc.product_id = p.id
+      JOIN categories sub ON sub.id = pc.category_id
+      JOIN categories parent ON parent.id = sub.parent_id
+      LEFT JOIN product_images pi ON pi.product_id = p.id
+      WHERE parent.slug = $1
+        AND sub.slug = $2
+        AND p.is_active = true
+      ORDER BY p.id, p.created_at DESC;
+      `,
+      [categorySlug, subcategorySlug]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("getProductsByCategoryAndSubcategory error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

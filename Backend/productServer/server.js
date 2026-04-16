@@ -5,14 +5,16 @@ const pool = require("./config/db");
 
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 const app = express();
 
-// ONLY allow Gateway + Localhost
 const allowedOrigins = [
   "http://localhost:3000",
   "https://kavsawholesalehub.netlify.app",
 ];
+
+app.use(express.json());
 
 app.use(
   cors({
@@ -29,15 +31,12 @@ app.use(
   })
 );
 
-app.use(express.json());
-
-// ROUTES
+app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 
-// HEALTH
 app.get("/", (req, res) => {
-  res.send("Product Server Running ");
+  res.send("Product Server Running");
 });
 
 pool
