@@ -26,11 +26,18 @@ export default function CategoryPage({ params }) {
       setCategory(cat);
 
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/products?category=${cat}&top=true`;
-        const res = await fetch(url, { cache: "no-store" });
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${cat}`; const res = await fetch(url, { cache: "no-store" });
         const data = await res.json();
 
-        setProducts(Array.isArray(data) ? data : []);
+        const mapped = (data.data || []).map((p) => ({
+          ...p,
+          imageUrl: p.image_url || "/placeholder.png",
+          minOrderQty: p.moq,
+          subcategorySlug: p.subcategory_slug || "",
+          createdAt: p.created_at,
+        }));
+
+        setProducts(mapped); 
         const uniqueSubs = [
           ...new Set((Array.isArray(data) ? data : []).map((p) => p.subcategorySlug).filter(Boolean)),
         ];
@@ -111,11 +118,10 @@ export default function CategoryPage({ params }) {
       <div className="bg-white px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto">
         <button
           onClick={() => setSelectedSubcategory("")}
-          className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
-            selectedSubcategory === ""
-              ? "bg-orange-600 text-white"
-              : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
-          }`}
+          className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${selectedSubcategory === ""
+            ? "bg-orange-600 text-white"
+            : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
+            }`}
         >
           All {slugLabel(category)}
         </button>
@@ -124,11 +130,10 @@ export default function CategoryPage({ params }) {
           <button
             key={sub}
             onClick={() => setSelectedSubcategory(sub)}
-            className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${
-              selectedSubcategory === sub
-                ? "bg-orange-600 text-white"
-                : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
-            }`}
+            className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${selectedSubcategory === sub
+              ? "bg-orange-600 text-white"
+              : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
+              }`}
           >
             {slugLabel(sub)}
           </button>
