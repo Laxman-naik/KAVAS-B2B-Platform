@@ -11,12 +11,14 @@ export const fetchProducts = createAsyncThunk(
       const res = await getProducts();
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
 
-// Get single product
+// FIXED: consistent naming
 export const fetchSingleProduct = createAsyncThunk(
   "products/fetchOne",
   async (id, thunkAPI) => {
@@ -24,7 +26,9 @@ export const fetchSingleProduct = createAsyncThunk(
       const res = await getSingleProduct(id);
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
@@ -37,7 +41,9 @@ export const addProduct = createAsyncThunk(
       const res = await createProduct(data);
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
@@ -50,7 +56,9 @@ export const editProduct = createAsyncThunk(
       const res = await updateProduct(id, data);
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
@@ -63,7 +71,9 @@ export const removeProduct = createAsyncThunk(
       await deleteProduct(id);
       return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
@@ -87,10 +97,13 @@ const productSlice = createSlice({
       /* FETCH ALL */
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload; // ✅ now always array
+
+        // ✅ safe handling (array OR object response)
+        state.products = action.payload?.products || action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
@@ -98,9 +111,17 @@ const productSlice = createSlice({
       })
 
       /* FETCH ONE */
+      .addCase(fetchSingleProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
-        // state.product = action.payload;
-        state.product = action.payload; // ✅ FIX (store single product correctly)
+        state.loading = false;
+        state.product = action.payload;
+      })
+      .addCase(fetchSingleProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       /* CREATE */
@@ -111,14 +132,14 @@ const productSlice = createSlice({
       /* UPDATE */
       .addCase(editProduct.fulfilled, (state, action) => {
         state.products = state.products.map((p) =>
-          p._id === action.payload._id ? action.payload : p
+          p.id === action.payload.id ? action.payload : p
         );
       })
 
       /* DELETE */
       .addCase(removeProduct.fulfilled, (state, action) => {
         state.products = state.products.filter(
-          (p) => p._id !== action.payload
+          (p) => p.id !== action.payload
         );
       });
   },

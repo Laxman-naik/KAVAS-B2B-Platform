@@ -939,38 +939,46 @@
 // export default ProductView;
 
 "use client";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { products } from "@/data/products";
 import { arrivalProducts } from "@/data/arrivalProducts";
-import { suppliers } from "@/data/suppliers";
 import { productsData } from "@/app/(buyer)/product/productData";
+
 import { useState, useEffect } from "react";
-
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { fetchSingleProduct } from "../../../services/productService"; // ✅ ADDED
 
-import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
+import { toggleFavourite } from "@/store/slices/favouritesSlice";
+import { fetchSingleProduct } from "@/store/slices/productSlice"; // ✅ FIXED
+
+import {
+  CreditCard,
+  PackageCheck,
+  RefreshCcw,
+  Star,
+  Truck,
+} from "lucide-react";
 
 const ProductView = () => {
   const params = useParams();
   const dispatch = useDispatch();
 
   const favouriteItems = useSelector((state) => state.favourites.items);
-
-  // ✅ API STATE ADDED
-  const { product: apiProduct, loading } = useSelector((state) => state.products);
+  const { product: apiProduct, loading } = useSelector(
+    (state) => state.products
+  );
 
   const id = params?.Id ?? params?.id;
 
-  // ✅ CALL API
+  // ✅ CORRECT DISPATCH
   useEffect(() => {
     if (id) {
       dispatch(fetchSingleProduct(id));
     }
   }, [id, dispatch]);
+
+  /* ================= NORMALIZE ================= */
 
   const normalizeProduct = (p) => {
     if (!p) return null;
@@ -985,7 +993,7 @@ const ProductView = () => {
     const company = p.company ?? p.supplier ?? "";
     const brand = p.brand ?? p.supplier ?? "";
 
-    const image = p.image ?? p.image_url ?? "";
+    const image = p.image_url ?? p.image ?? "/placeholder.png"; // ✅ FIXED
 
     const media = Array.isArray(p.media)
       ? p.media
@@ -995,7 +1003,7 @@ const ProductView = () => {
 
     return {
       ...p,
-      id: p._id || p.id,
+      id: p.id, // ✅ FIXED (no _id)
       title,
       price,
       min,
@@ -1006,22 +1014,27 @@ const ProductView = () => {
     };
   };
 
+  /* ================= LOCAL FALLBACK ================= */
+
   const catalogProducts = Object.values(productsData || {}).flat();
   const allProducts = [...products, ...arrivalProducts, ...catalogProducts];
 
-  const productRaw = allProducts.find((p) => String(p.id) === String(id));
+  const productRaw = allProducts.find(
+    (p) => String(p.id) === String(id)
+  );
 
-  // ✅ MERGE API + LOCAL
   const product = normalizeProduct(apiProduct || productRaw);
 
   const [qty, setQty] = useState(50);
   const [mounted, setMounted] = useState(false);
+  const [activeImage, setActiveImage] = useState(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ✅ LOADING STATE
+  /* ================= STATES ================= */
+
   if (loading) {
     return <div className="p-10 text-center">Loading product...</div>;
   }
@@ -1031,18 +1044,23 @@ const ProductView = () => {
   }
 
   const mediaItems =
-    product?.media && product.media.length > 0
+    product.media?.length > 0
       ? product.media
-      : [{ type: "image", src: product?.image }];
+      : [{ type: "image", src: product.image }];
 
-  const [activeImage, setActiveImage] = useState(null);
   const selectedMedia = activeImage || mediaItems[0];
 
-  const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
-  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  /* ================= REVIEWS ================= */
 
   const reviews = [
-    { id: 1, name: "Procurement Manager", rating: 5, date: "Mar 2026", title: "Good", comment: "Nice product" },
+    {
+      id: 1,
+      name: "Procurement Manager",
+      rating: 5,
+      date: "Mar 2026",
+      title: "Good",
+      comment: "Nice product",
+    },
   ];
 
   const averageRating =
@@ -1053,7 +1071,12 @@ const ProductView = () => {
     return (
       <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <span key={i} className={i < rounded ? "text-amber-500" : "text-gray-300"}>
+          <span
+            key={i}
+            className={
+              i < rounded ? "text-amber-500" : "text-gray-300"
+            }
+          >
             ★
           </span>
         ))}
@@ -1062,16 +1085,25 @@ const ProductView = () => {
   };
 
   const isWishlisted = mounted
-    ? favouriteItems.some((item) => String(item._id) === String(product.id))
+    ? favouriteItems.some(
+        (item) => String(item.id) === String(product.id) // ✅ FIXED
+      )
     : false;
+
+  /* ================= UI ================= */
 
   return (
     <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
       <div className="grid lg:grid-cols-2 gap-7 items-start">
-
+        
         {/* LEFT */}
         <div>
-          <img src={product.image} className="w-full h-96 object-contain bg-white rounded-xl" />
+          <img
+            src={selectedMedia?.src || "/placeholder.png"}
+            onError={(e) => (e.target.src = "/placeholder.png")}
+            className="w-full h-96 object-contain bg-white rounded-xl"
+            alt={product.title}
+          />
         </div>
 
         {/* RIGHT */}
@@ -1094,11 +1126,13 @@ const ProductView = () => {
             <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
               Buy
             </button>
+
             <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
               Add to Cart
             </button>
           </div>
 
+          {/* REVIEWS */}
           <div className="mt-6">
             <h3 className="font-semibold">Reviews</h3>
             <div className="flex items-center gap-2">

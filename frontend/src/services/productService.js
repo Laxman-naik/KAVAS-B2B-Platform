@@ -1,24 +1,11 @@
 import { productapi } from "../lib/axios";
 
-// Get all products
-export const getProducts = () =>
-  productapi.get("/api/products/all");
+export const getProducts = () => productapi.get("/api/products/all");
 
-// Get single product
-// export const getSingleProduct = (id) =>
-//   productapi.get(`/${id}`);
+export const getSingleProduct = (id) => productapi.get(`/api/products/${id}`);
 
-export const getSingleProduct = (id) =>
-  productapi.get(`/api/products/${id}`);
+export const createProduct = (data) => productapi.post("/api/products", data);
 
-// Create product (Protected)
-export const createProduct = (data) =>
-  productapi.post("/", data);
+export const updateProduct = (id, data) => productapi.put(`/api/products/${id}`, data);
 
-// Update product (Protected)
-export const updateProduct = (id, data) =>
-  productapi.put(`/${id}`, data);
-
-// Delete product (Protected)
-export const deleteProduct = (id) =>
-  productapi.delete(`/${id}`);
+export const deleteProduct = (id) => productapi.delete(`/api/products/${id}`);

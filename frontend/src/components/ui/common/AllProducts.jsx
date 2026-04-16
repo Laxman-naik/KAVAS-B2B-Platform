@@ -13,11 +13,7 @@ const AllProducts = () => {
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
-
-  useEffect(() => {
-  console.log("Products Data:", products);
-}, [products]);
-
+  
   const visibleProducts = Array.isArray(products) ? products : [];
 
   return (
