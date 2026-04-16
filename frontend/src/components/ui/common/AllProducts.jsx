@@ -13,7 +13,7 @@ const AllProducts = () => {
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
-  
+
   const visibleProducts = Array.isArray(products) ? products : [];
 
   return (
@@ -50,7 +50,7 @@ const AllProducts = () => {
                   {/* Image */}
                   <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
                     <img
-                      src={item.image_url || "/placeholder.png"} // ✅ FIX
+                      src={item.image_url} // ✅ FIX
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />

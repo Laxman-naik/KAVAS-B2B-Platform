@@ -1003,7 +1003,7 @@ const ProductView = () => {
 
     return {
       ...p,
-      id: p.id, // ✅ FIXED (no _id)
+      id: p.id, //  FIXED (no _id)
       title,
       price,
       min,

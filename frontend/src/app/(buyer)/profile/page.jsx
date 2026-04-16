@@ -1,60 +1,35 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSelector } from "react-redux";
-import {
-    User,
-    MapPin,
-    Building,
-    Shield,
-    Heart,
-    Package,
-    LogOut,
-    Edit,
-    Plus,
-} from "lucide-react";
-
+import { User, MapPin, Building, Shield, Heart, Package, LogOut, Edit, Plus, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, } from "@/components/ui/dialog";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAddresses, addAddress, editAddress, removeAddress, } from "../../../store/slices/addressSlice";
 
 const Page = () => {
     const authUser = useSelector((state) => state.auth.user);
-
     const [notifications, setNotifications] = useState(true);
     const [promo, setPromo] = useState(true);
-
-    const [user, setUser] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-    });
-
+    const [user, setUser] = useState({ firstName: "", lastName: "", email: "", phone: "", });
     const [isEditing, setIsEditing] = useState(false);
+    const dispatch = useDispatch();
+    const { addresses } = useSelector((state) => state.address);
+
+    useEffect(() => {
+        dispatch(fetchAddresses());
+    }, [dispatch]);
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
                 if (!authUser) return;
-
-                const fullName =
-                    authUser.full_name || authUser.fullName || authUser.name || "";
-                const [parsedFirstName = "", ...rest] = String(fullName)
-                    .trim()
-                    .split(/\s+/)
-                    .filter(Boolean);
+                const fullName = authUser.full_name || authUser.fullName || authUser.name || "";
+                const [parsedFirstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
                 const parsedLastName = rest.join(" ");
-
                 setUser({
                     firstName: authUser.firstName || parsedFirstName || "",
                     lastName: authUser.lastName || parsedLastName || "",
@@ -66,74 +41,84 @@ const Page = () => {
                 console.log("User not logged in");
             }
         };
-
         fetchUser();
     }, [authUser]);
 
-    const [addresses, setAddresses] = useState([
-        { id: 1, type: "Home", location: "Vijayawada, Andhra Pradesh" },
-        { id: 2, type: "Office", location: "Autonagar, Vijayawada" },
-    ]);
-
     const [newAddress, setNewAddress] = useState({
-        type: "",
-        location: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
         state: "",
         country: "",
-        zipcode: "",
+        postal_code: "",
     });
-
     const [editId, setEditId] = useState(null);
     const [open, setOpen] = useState(false);
 
-    const handleUserChange = (e) => {
-        setUser({ ...user, [e.target.name]: e.target.value });
-    };
+    const handleUserChange = (e) => { setUser({ ...user, [e.target.name]: e.target.value }); };
 
-    const handleAddAddress = () => {
-        if (
-            !newAddress.type ||
-            !newAddress.location ||
-            !newAddress.state ||
-            !newAddress.country ||
-            !newAddress.zipcode
-        )
-            return;
+    const handleAddAddress = async () => {
+    if (
+        !newAddress.address_line1 ||
+        !newAddress.city ||
+        !newAddress.state ||
+        !newAddress.country ||
+        !newAddress.postal_code
+    ) return;
 
-        setAddresses([...addresses, { id: Date.now(), ...newAddress }]);
+    try {
+        await dispatch(addAddress(newAddress)).unwrap();
+        dispatch(fetchAddresses());
         resetForm();
-    };
+    } catch (err) {
+        console.error("Add address failed:", err);
+    }
+};
 
-    const handleDelete = (id) => {
-        setAddresses(addresses.filter((a) => a.id !== id));
-    };
+    const handleDelete = async (id) => {
+    try {
+        await dispatch(removeAddress(id)).unwrap();
+        dispatch(fetchAddresses());
+    } catch (err) {
+        console.error("Delete failed:", err);
+    }
+};
 
     const handleEdit = (addr) => {
-        setEditId(addr.id);
-        setNewAddress(addr);
-        setOpen(true);
-    };
+    setEditId(addr.id);
+    setNewAddress({
+        address_line1: addr.address_line1 || "",
+        address_line2: addr.address_line2 || "",
+        city: addr.city || "",
+        state: addr.state || "",
+        country: addr.country || "",
+        postal_code: addr.postal_code || "",
+    });
+    setOpen(true);
+};
 
-    const handleUpdate = () => {
-        setAddresses(
-            addresses.map((a) =>
-                a.id === editId ? { ...a, ...newAddress } : a
-            )
-        );
+    const handleUpdate = async () => {
+    try {
+        await dispatch(editAddress({ id: editId, data: newAddress })).unwrap();
+        dispatch(fetchAddresses());
         resetForm();
-    };
+    } catch (err) {
+        console.error("Update failed:", err);
+    }
+};
 
     const resetForm = () => {
-        setNewAddress({
-            type: "",
-            location: "",
-            state: "",
-            country: "",
-            zipcode: "",
-        });
-        setEditId(null);
-        setOpen(false);
-    };
+    setNewAddress({
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        state: "",
+        country: "",
+        postal_code: "",
+    });
+    setEditId(null);
+    setOpen(false);
+};
 
     const handleEditToggle = () => {
         if (isEditing) {
@@ -224,9 +209,10 @@ const Page = () => {
                                     {addresses.map((addr) => (
                                         <div key={addr.id} className="border hover:border-orange-500 p-4 rounded-xl flex flex-col sm:flex-row justify-between gap-3">
                                             <div>
-                                                <p className="font-medium">{addr.type}</p>
+                                                <p className="font-medium">{addr.address_line1}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    {addr.location}, {addr.state}, {addr.country} - {addr.zipcode}
+                                                    {addr.address_line2 && `${addr.address_line2}, `}
+                                                    {addr.city}, {addr.state}, {addr.country} - {addr.postal_code}
                                                 </p>
                                             </div>
 
@@ -318,11 +304,53 @@ const Page = () => {
                             <DialogTitle>{editId ? "Edit Address" : "Add Address"}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-3">
-                            <Input placeholder="Type" value={newAddress.type} onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })} />
-                            <Input placeholder="Location" value={newAddress.location} onChange={(e) => setNewAddress({ ...newAddress, location: e.target.value })} />
-                            <Input placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} />
-                            <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} />
-                            <Input placeholder="Zip Code" value={newAddress.zipcode} onChange={(e) => setNewAddress({ ...newAddress, zipcode: e.target.value })} />
+                            <Input
+                                placeholder="Address Line 1"
+                                value={newAddress.address_line1}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, address_line1: e.target.value })
+                                }
+                            />
+
+                            <Input
+                                placeholder="Address Line 2"
+                                value={newAddress.address_line2}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, address_line2: e.target.value })
+                                }
+                            />
+
+                            <Input
+                                placeholder="City"
+                                value={newAddress.city}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, city: e.target.value })
+                                }
+                            />
+
+                            <Input
+                                placeholder="State"
+                                value={newAddress.state}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, state: e.target.value })
+                                }
+                            />
+
+                            <Input
+                                placeholder="Country"
+                                value={newAddress.country}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, country: e.target.value })
+                                }
+                            />
+
+                            <Input
+                                placeholder="Postal Code"
+                                value={newAddress.postal_code}
+                                onChange={(e) =>
+                                    setNewAddress({ ...newAddress, postal_code: e.target.value })
+                                }
+                            />
                         </div>
                         <DialogFooter className="flex flex-col sm:flex-row gap-2">
                             <Button variant="outline" className="w-full sm:w-auto" onClick={resetForm}>Cancel</Button>
