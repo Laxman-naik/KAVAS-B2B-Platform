@@ -1,24 +1,29 @@
-// import axios from "axios";
-
-// const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
-// const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
-
-// export const authapi = axios.create({ baseURL: AUTH_BASE_URL, withCredentials: true, });
-// export const productapi = axios.create({ baseURL: PRODUCT_BASE_URL, withCredentials: true, });
-
-
 import axios from "axios";
 
-const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com/api";
-const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com/api";
+const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
+const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
 
-export const authapi = axios.create({baseURL: AUTH_BASE_URL,});
+//  CREATE FIRST
+export const authapi = axios.create({
+  baseURL: AUTH_BASE_URL,
+  withCredentials: true,
+});
 
-export const productapi = axios.create({baseURL: PRODUCT_BASE_URL,});
+export const productapi = axios.create({
+  baseURL: PRODUCT_BASE_URL,
+  withCredentials: true,
+});
 
+//  THEN attach interceptor
 const attachToken = (config) => {
   const token = localStorage.getItem("token");
-  if (token) { config.headers.Authorization = `Bearer ${token}`;}
+
+//   console.log("TOKEN SENT:", token);  
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 };
 

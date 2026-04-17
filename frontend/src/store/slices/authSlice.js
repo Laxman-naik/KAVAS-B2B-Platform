@@ -33,6 +33,11 @@ export const loginUserThunk = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginUser(data);
+      // console.log("LOGIN RESPONSE:", res.data);
+      const token = res.data.token || res.data.accessToken;
+      if (token) {
+        localStorage.setItem("token", token);
+      }
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");

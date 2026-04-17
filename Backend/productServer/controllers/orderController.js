@@ -13,7 +13,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // ✅ 0. Check address
+    // 0. Check address
     const addressRes = await client.query(
       `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
       [userId]
@@ -28,7 +28,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const shippingAddressId = addressRes.rows[0].id;
 
-    // ✅ 1. Prevent duplicate
+    // 1. Prevent duplicate
     const existingOrder = await client.query(
       `SELECT * FROM orders WHERE idempotency_key = $1`,
       [idempotency_key]
@@ -42,7 +42,7 @@ exports.createOrderFromCart = async (req, res) => {
       });
     }
 
-    // ✅ 2. Get cart
+    // 2. Get cart
     const cartRes = await client.query(
       `SELECT id FROM carts WHERE user_id = $1`,
       [userId]
@@ -54,7 +54,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const cartId = cartRes.rows[0].id;
 
-    // ✅ 3. Get items with lock
+    // 3. Get items with lock
     const itemsRes = await client.query(
       `SELECT ci.*, p.stock 
        FROM cart_items ci
@@ -70,7 +70,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const items = itemsRes.rows;
 
-    // ✅ 4. Stock validation
+    // 4. Stock validation
     for (const item of items) {
       if (item.stock < item.quantity) {
         throw new Error(
@@ -79,7 +79,7 @@ exports.createOrderFromCart = async (req, res) => {
       }
     }
 
-    // ✅ 5. Group by supplier
+    //  5. Group by supplier
     const grouped = {};
     for (const item of items) {
       if (!grouped[item.organization_id]) {
@@ -90,7 +90,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const createdOrders = [];
 
-    // ✅ 6. Create orders
+    //  6. Create orders
     for (const supplierOrgId in grouped) {
       const supplierItems = grouped[supplierOrgId];
 
@@ -139,7 +139,7 @@ exports.createOrderFromCart = async (req, res) => {
       createdOrders.push(order);
     }
 
-    // ✅ 7. Clear cart
+    //  7. Clear cart
     await client.query(
       `DELETE FROM cart_items WHERE cart_id = $1`,
       [cartId]
