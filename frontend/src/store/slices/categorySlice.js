@@ -1,13 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  createCategory,
-  getAllCategories,
-  getMainCategories,
-  getSubcategoriesByParent,
-  getCategoryById,
-  updateCategory,
-  deleteCategory,
-} from "../../services/categoryService";
+import { createCategory, getAllCategories, getMainCategories, getSubcategoriesByParent, getCategoryById, updateCategory, deleteCategory, } from "../../services/categoryService";
 
 
 export const createCategoryThunk = createAsyncThunk(

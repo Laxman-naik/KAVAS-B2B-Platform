@@ -1,266 +1,479 @@
 const pool = require("../config/db");
-const { validate: isUUID } = require("uuid");
 
-exports.getCart = async (req, res) => {
+const calculateSummary = (items) => {
+  const subtotal = items.reduce(
+    (sum, item) => sum + Number(item.price) * Number(item.quantity),
+    0
+  );
+
+  const gst = subtotal * 0.18;
+  const shipping = 0;
+  const discount = 0;
+  const total = subtotal + gst + shipping - discount;
+
+  return {
+    subtotal: Number(subtotal.toFixed(2)),
+    gst: Number(gst.toFixed(2)),
+    shipping,
+    discount,
+    total: Number(total.toFixed(2)),
+  };
+};
+
+const getOrCreateCart = async (userId) => {
+  const existingCart = await pool.query(
+    `SELECT * FROM carts WHERE user_id = $1 LIMIT 1`,
+    [userId]
+  );
+
+  if (existingCart.rows.length > 0) {
+    return existingCart.rows[0];
+  }
+
+  const newCart = await pool.query(
+    `INSERT INTO carts (user_id, created_at, updated_at)
+     VALUES ($1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     RETURNING *`,
+    [userId]
+  );
+
+  return newCart.rows[0];
+};
+
+const getCartItems = async (cartId) => {
+  const result = await pool.query(
+    `SELECT
+      id,
+      cart_id,
+      product_id,
+      name,
+      image,
+      price,
+      moq,
+      quantity,
+      size,
+      color,
+      delivery_date,
+      created_at,
+      updated_at
+     FROM cart_items
+     WHERE cart_id = $1
+     ORDER BY id DESC`,
+    [cartId]
+  );
+
+  return result.rows;
+};
+
+const getCart = async (req, res) => {
   try {
-    const { id: userId } = req.user;
+    const cart = await getOrCreateCart(req.user.id);
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
 
-    const result = await pool.query(
-      `SELECT 
-          u.full_name AS user_name,
-          ci.id AS item_id,
-          ci.quantity,
-          ci.price,
-          ci.image_url,
-          ci.variant_id,
-          ci.moq,
-          p.id AS product_id,
-          p.name AS product_name
-       FROM carts c
-       JOIN users u ON c.user_id = u.id
-       LEFT JOIN cart_items ci ON ci.cart_id = c.id
-       LEFT JOIN products p ON ci.product_id = p.id
-       WHERE c.user_id = $1`,
-      [userId]
-    );
-
-    if (!result.rows.length) {
-      return res.json({ cart: null });
-    }
-
-    const cart = {
-      user: result.rows[0].user_name,
-      items: [],
-      totalAmount: 0,
-    };
-
-    for (const row of result.rows) {
-      if (row.item_id) {
-        const price = Number(row.price || 0);
-        const total = price * row.quantity;
-
-        cart.items.push({
-          id: row.item_id,
-          productId: row.product_id,
-          name: row.product_name,
-          quantity: row.quantity,
-          price,
-          total,
-        });
-
-        cart.totalAmount += total;
-      }
-    }
-
-    res.json({ cart });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    return res.status(200).json({
+      success: true,
+      cart: {
+        ...cart,
+        items,
+        summary,
+      },
+    });
+  } catch (error) {
+    console.error("getCart error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch cart",
+      error: error.message,
+    });
   }
 };
 
-exports.addToCart = async (req, res) => {
+const addToCart = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-    let { productId, quantity, variantId } = req.body;
+    const {
+      productId,
+      name,
+      image,
+      price,
+      moq = 1,
+      quantity,
+      size = null,
+      color = null,
+      deliveryDate = null,
+    } = req.body;
 
-    quantity = Number(quantity);
-
-    if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-      return res.status(400).json({ message: "Invalid input" });
+    if (!productId || !name) {
+      return res.status(400).json({
+        success: false,
+        message: "productId and name are required",
+      });
     }
 
-    const productResult = await pool.query(
-      `SELECT id, organization_id, price FROM products WHERE id = $1`,
-      [productId]
+    const cart = await getOrCreateCart(req.user.id);
+
+    const normalizedMoq = Math.max(1, Number(moq) || 1);
+    const normalizedQty = Math.max(
+      Number(quantity) || normalizedMoq,
+      normalizedMoq
     );
 
-    if (!productResult.rows.length) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    const product = productResult.rows[0];
-
-    let cartResult = await pool.query(
-      `SELECT * FROM carts WHERE user_id = $1`,
-      [userId]
+    const existingItemResult = await pool.query(
+      `SELECT *
+       FROM cart_items
+       WHERE cart_id = $1
+         AND product_id = $2
+         AND ((size = $3) OR (size IS NULL AND $3 IS NULL))
+         AND ((color = $4) OR (color IS NULL AND $4 IS NULL))
+         AND ((delivery_date = $5) OR (delivery_date IS NULL AND $5 IS NULL))
+       LIMIT 1`,
+      [cart.id, productId, size, color, deliveryDate]
     );
 
-    let cart;
+    let item;
 
-    if (!cartResult.rows.length) {
-      const newCart = await pool.query(
-        `INSERT INTO carts (user_id)
-         VALUES ($1)
-         RETURNING *`,
-        [userId]
-      );
-      cart = newCart.rows[0];
-    } else {
-      cart = cartResult.rows[0];
-    }
-
-    const existingItem = await pool.query(
-      `SELECT * FROM cart_items
-       WHERE cart_id = $1 
-       AND product_id = $2
-       AND (variant_id = $3 OR ($3 IS NULL AND variant_id IS NULL))`,
-      [cart.id, productId, variantId || null]
-    );
-
-    if (existingItem.rows.length) {
-      await pool.query(
+    if (existingItemResult.rows.length > 0) {
+      const updated = await pool.query(
         `UPDATE cart_items
-         SET quantity = quantity + $1,
-             price = COALESCE(price, $3)
-         WHERE id = $2`,
-        [quantity, existingItem.rows[0].id, product.price]
+         SET quantity = quantity + 1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1
+         RETURNING *`,
+        [existingItemResult.rows[0].id]
       );
+      item = updated.rows[0];
     } else {
-      await pool.query(
-        `INSERT INTO cart_items 
-        (cart_id, product_id, quantity, variant_id, price, organization_id)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+      const inserted = await pool.query(
+        `INSERT INTO cart_items
+          (cart_id, product_id, name, image, price, moq, quantity, size, color, delivery_date, created_at, updated_at)
+         VALUES
+          ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         RETURNING *`,
         [
           cart.id,
           productId,
-          quantity,
-          variantId || null,
-          product.price, 
-          product.organization_id 
+          name,
+          image || null,
+          price || 0,
+          normalizedMoq,
+          normalizedQty,
+          size,
+          color,
+          deliveryDate,
         ]
       );
+      item = inserted.rows[0];
     }
 
-    res.json({ message: "Added to cart" });
+    await pool.query(
+      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [cart.id]
+    );
 
-  } catch (err) {
-    console.error("AddToCart Error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
+
+    return res.status(200).json({
+      success: true,
+      message: "Item added to cart",
+      item,
+      cart: {
+        ...cart,
+        items,
+        summary,
+      },
+    });
+  } catch (error) {
+    console.error("addToCart error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add item to cart",
+      error: error.message,
+    });
   }
 };
 
-exports.updateCartItem = async (req, res) => {
+const updateCartItem = async (req, res) => {
   try {
-    const { id: userId } = req.user;
     const { itemId } = req.params;
-    let { quantity } = req.body;
+    const { quantity } = req.body;
 
-    if (!isUUID(itemId)) {
-      return res.status(400).json({ message: "Invalid itemId" });
-    }
-
-    quantity = Number(quantity);
-
-    if (!Number.isInteger(quantity) || quantity < 0) {
-      return res.status(400).json({ message: "Invalid quantity" });
-    }
+    const cart = await getOrCreateCart(req.user.id);
 
     const itemResult = await pool.query(
-      `SELECT ci.*, p.stock, p.price AS product_price
-       FROM cart_items ci
-       JOIN carts c ON ci.cart_id = c.id
-       LEFT JOIN products p ON ci.product_id = p.id
-       WHERE ci.id = $1 AND c.user_id = $2`,
-      [itemId, userId]
+      `SELECT * FROM cart_items WHERE id = $1 AND cart_id = $2 LIMIT 1`,
+      [itemId, cart.id]
     );
 
-    if (!itemResult.rows.length) {
+    if (itemResult.rows.length === 0) {
       return res.status(404).json({
-        message: "Item not found or not owned by user",
+        success: false,
+        message: "Cart item not found",
       });
     }
 
     const item = itemResult.rows[0];
+    const moq = Math.max(1, Number(item.moq) || 1);
+    const parsedQty = Number(quantity);
+    const finalQty = Number.isNaN(parsedQty)
+      ? moq
+      : Math.max(moq, Math.floor(parsedQty));
 
-    if (quantity === 0) {
-      await pool.query(
-        `DELETE FROM cart_items WHERE id = $1`,
-        [itemId]
-      );
-
-      return res.json({ message: "Item removed" });
-    }
-
-    if (item.stock !== null && quantity > item.stock) {
-      return res.status(400).json({
-        message: `Only ${item.stock} items available`,
-      });
-    }
-
-    const result = await pool.query(
+    const updated = await pool.query(
       `UPDATE cart_items
        SET quantity = $1,
-           price = COALESCE(price, $3)
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $2
-       RETURNING id, product_id, quantity, price`,
-      [quantity, itemId, item.product_price]
+       RETURNING *`,
+      [finalQty, itemId]
     );
 
-    res.json({
-      message: "Cart updated",
-      item: result.rows[0],
-    });
+    await pool.query(
+      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [cart.id]
+    );
 
-  } catch (err) {
-    console.error("UpdateCartItem Error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart item updated",
+      item: updated.rows[0],
+      cart: {
+        ...cart,
+        items,
+        summary,
+      },
+    });
+  } catch (error) {
+    console.error("updateCartItem error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update cart item",
+      error: error.message,
+    });
   }
 };
 
-exports.removeCartItem = async (req, res) => {
+const removeCartItem = async (req, res) => {
   try {
-    const { id: userId } = req.user;
     const { itemId } = req.params;
+    const cart = await getOrCreateCart(req.user.id);
 
-    if (!isUUID(itemId)) {
-      return res.status(400).json({ message: "Invalid itemId" });
-    }
-
-    const itemCheck = await pool.query(
-      `SELECT ci.id
-       FROM cart_items ci
-       JOIN carts c ON ci.cart_id = c.id
-       WHERE ci.id = $1 AND c.user_id = $2`,
-      [itemId, userId]
+    const deleted = await pool.query(
+      `DELETE FROM cart_items
+       WHERE id = $1 AND cart_id = $2
+       RETURNING *`,
+      [itemId, cart.id]
     );
 
-    if (!itemCheck.rows.length) {
+    if (deleted.rows.length === 0) {
       return res.status(404).json({
-        message: "Item not found or not owned by user",
+        success: false,
+        message: "Cart item not found",
       });
     }
 
     await pool.query(
-      `DELETE FROM cart_items WHERE id = $1`,
-      [itemId]
+      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [cart.id]
     );
 
-    res.json({ message: "Item removed" });
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
 
-  } catch (err) {
-    console.error("RemoveCartItem Error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(200).json({
+      success: true,
+      message: "Item removed from cart",
+      cart: {
+        ...cart,
+        items,
+        summary,
+      },
+    });
+  } catch (error) {
+    console.error("removeCartItem error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to remove cart item",
+      error: error.message,
+    });
   }
 };
 
-exports.clearCart = async (req, res) => {
+const clearCart = async (req, res) => {
   try {
-    const { id: userId } = req.user;
+    const cart = await getOrCreateCart(req.user.id);
+
+    await pool.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart.id]);
 
     await pool.query(
-      `DELETE FROM cart_items
-       WHERE cart_id IN (
-         SELECT id FROM carts WHERE user_id = $1
-       )`,
-      [userId]
+      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [cart.id]
     );
 
-    res.json({ message: "All carts cleared" });
-
-  } catch (err) {
-    console.error("ClearCart Error:", err);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(200).json({
+      success: true,
+      message: "Cart cleared successfully",
+    });
+  } catch (error) {
+    console.error("clearCart error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to clear cart",
+      error: error.message,
+    });
   }
+};
+
+const getCartCount = async (req, res) => {
+  try {
+    const cart = await getOrCreateCart(req.user.id);
+
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM cart_items
+       WHERE cart_id = $1`,
+      [cart.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: result.rows[0].count,
+    });
+  } catch (error) {
+    console.error("getCartCount error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get cart count",
+      error: error.message,
+    });
+  }
+};
+
+const getCartSummary = async (req, res) => {
+  try {
+    const cart = await getOrCreateCart(req.user.id);
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
+
+    return res.status(200).json({
+      success: true,
+      summary,
+    });
+  } catch (error) {
+    console.error("getCartSummary error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get cart summary",
+      error: error.message,
+    });
+  }
+};
+
+const mergeCart = async (req, res) => {
+  try {
+    const { items = [] } = req.body;
+    const cart = await getOrCreateCart(req.user.id);
+
+    for (const item of items) {
+      const {
+        productId,
+        name,
+        image = null,
+        price = 0,
+        moq = 1,
+        quantity,
+        size = null,
+        color = null,
+        deliveryDate = null,
+      } = item;
+
+      if (!productId || !name) continue;
+
+      const normalizedMoq = Math.max(1, Number(moq) || 1);
+      const normalizedQty = Math.max(
+        Number(quantity) || normalizedMoq,
+        normalizedMoq
+      );
+
+      const existingItemResult = await pool.query(
+        `SELECT *
+         FROM cart_items
+         WHERE cart_id = $1
+           AND product_id = $2
+           AND ((size = $3) OR (size IS NULL AND $3 IS NULL))
+           AND ((color = $4) OR (color IS NULL AND $4 IS NULL))
+           AND ((delivery_date = $5) OR (delivery_date IS NULL AND $5 IS NULL))
+         LIMIT 1`,
+        [cart.id, productId, size, color, deliveryDate]
+      );
+
+      if (existingItemResult.rows.length > 0) {
+        await pool.query(
+          `UPDATE cart_items
+           SET quantity = quantity + $1,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = $2`,
+          [normalizedQty, existingItemResult.rows[0].id]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO cart_items
+            (cart_id, product_id, name, image, price, moq, quantity, size, color, delivery_date, created_at, updated_at)
+           VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            cart.id,
+            productId,
+            name,
+            image,
+            price,
+            normalizedMoq,
+            normalizedQty,
+            size,
+            color,
+            deliveryDate,
+          ]
+        );
+      }
+    }
+
+    await pool.query(
+      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [cart.id]
+    );
+
+    const finalItems = await getCartItems(cart.id);
+    const summary = calculateSummary(finalItems);
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart merged successfully",
+      cart: {
+        ...cart,
+        items: finalItems,
+        summary,
+      },
+    });
+  } catch (error) {
+    console.error("mergeCart error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to merge cart",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeCartItem,
+  clearCart,
+  getCartCount,
+  getCartSummary,
+  mergeCart,
 };
