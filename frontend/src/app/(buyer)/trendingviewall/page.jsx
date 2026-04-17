@@ -32,16 +32,26 @@ const Page = () => {
   });
 
   const [sortOption, setSortOption] = useState("Most relevant");
+
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
-  const liked = favouriteItems.map((item) => item._id);
+
+  // FIX: safe id handling
+  const liked = favouriteItems.map((item) => item._id || item.id);
 
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
   };
 
+  // FIX: correct payload for backend thunk
   const onAddToCart = (product) => {
-    dispatch(addToCart(product));
+    dispatch(
+      addToCart({
+        productId: product?.id || product?.productId,
+        quantity: 1,
+        variantId: product?.variantId || product?.variant_id,
+      })
+    );
   };
 
   const [showFilters, setShowFilters] = useState(false);
@@ -110,7 +120,9 @@ const Page = () => {
               <span className="hover:text-orange-600">Home </span>
             </Link>
             <span className="mx-1">{">>"}</span>
-            <span className="text-black font-semibold">Trending Products</span>
+            <span className="text-black font-semibold">
+              Trending Products
+            </span>
           </p>
 
           <div className="flex items-center gap-2 mt-2">
@@ -174,9 +186,7 @@ const Page = () => {
                       <input
                         type="checkbox"
                         checked={filters.minQty.includes(item)}
-                        onChange={() =>
-                          handleFilterChange("minQty", item)
-                        }
+                        onChange={() => handleFilterChange("minQty", item)}
                         className="accent-orange-500"
                       />
                       {item}
@@ -193,9 +203,7 @@ const Page = () => {
                       <input
                         type="checkbox"
                         checked={filters.rating.includes(item)}
-                        onChange={() =>
-                          handleFilterChange("rating", item)
-                        }
+                        onChange={() => handleFilterChange("rating", item)}
                         className="accent-orange-500"
                       />
                       {item}★ & above
@@ -233,7 +241,7 @@ const Page = () => {
 
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
-              {filteredProducts.map((product, index) => (
+              {filteredProducts.map((product) => (
                 <Link
                   key={product.id}
                   href={`/product/${product.id}`}
@@ -263,6 +271,8 @@ const Page = () => {
                             className="flex-1 bg-orange-500 text-white text-xs"
                             onClick={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
+
                               onAddToCart(product);
                             }}
                           >
@@ -278,9 +288,7 @@ const Page = () => {
                               onToggleFavourite(product);
                             }}
                             className={`h-8 w-8 border-orange-200 ${
-                              liked.includes(product.id)
-                                ? "bg-red-100"
-                                : ""
+                              liked.includes(product.id) ? "bg-red-100" : ""
                             }`}
                           >
                             <Heart
@@ -291,9 +299,7 @@ const Page = () => {
                                   : "text-gray-600"
                               }
                               fill={
-                                liked.includes(product.id)
-                                  ? "red"
-                                  : "none"
+                                liked.includes(product.id) ? "red" : "none"
                               }
                             />
                           </Button>

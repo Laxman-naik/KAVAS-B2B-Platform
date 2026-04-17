@@ -3,7 +3,6 @@ import React from "react";
 import { ShoppingCart, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
-
 import {
   fetchCart,
   removeCartItem,
@@ -13,6 +12,8 @@ import {
 
 const CartPage = () => {
   const dispatch = useDispatch();
+
+  // keep input values (FIXED SAFE VERSION)
   const [inputValues, setInputValues] = React.useState({});
 
   /* ================= LOAD CART FROM API ================= */
@@ -21,18 +22,26 @@ const CartPage = () => {
   }, [dispatch]);
 
   /* ================= GET CART FROM STORE ================= */
-  const carts = useSelector((state) => state.cart?.carts || []);
+  const cart = useSelector((state) => state.cart?.cart);
+  const cartItems = cart?.items || [];
 
-  /* FLATTEN ITEMS (IMPORTANT FIX) */
-  const cartItems = carts.flatMap((cart) => cart.items || []);
-
-  /* ================= SYNC INPUTS ================= */
+  /* ================= FIX: PREVENT INFINITE LOOP ================= */
   React.useEffect(() => {
     const mappedValues = {};
+
     cartItems.forEach((item) => {
-      mappedValues[item.id] = String(item.quantity || 1);
+      mappedValues[item.id] = String(item.quantity || item.moq || 1);
     });
-    setInputValues(mappedValues);
+
+    setInputValues((prev) => {
+      const prevStr = JSON.stringify(prev);
+      const nextStr = JSON.stringify(mappedValues);
+
+      // ✅ prevents infinite re-render loop
+      if (prevStr === nextStr) return prev;
+
+      return mappedValues;
+    });
   }, [cartItems]);
 
   const cartCount = cartItems.length;
@@ -98,17 +107,21 @@ const CartPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* ================= LEFT CART ================= */}
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5" />
             <h2 className="text-lg sm:text-xl font-semibold">
               My Cart{" "}
-              <span className="text-gray-500 text-sm">({cartCount} items)</span>
+              <span className="text-gray-500 text-sm">
+                ({cartCount} items)
+              </span>
             </h2>
           </div>
 
           {cartItems.length === 0 ? (
-            <div className="bg-white border rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-75">
+            <div className="bg-white border rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[300px]">
               <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 text-gray-600 mb-4" />
               <h3 className="text-base sm:text-lg font-semibold mb-2">
                 Your cart is empty
@@ -124,6 +137,7 @@ const CartPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
+
               {hasInvalidMoq && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
                   Some items are below the minimum order quantity. Only MOQ quantity will be allowed.
@@ -170,14 +184,16 @@ const CartPage = () => {
                       )}
 
                       <div className="mt-2 flex items-center justify-between gap-3">
+
                         <div className="flex items-center border rounded-md overflow-hidden">
+
                           <button
                             type="button"
                             onClick={() =>
                               dispatch(
                                 updateCartItem({
                                   itemId: item.id,
-                                  quantity: Math.max(item.quantity - 1, moq),
+                                  quantity: Math.max((item.quantity || moq) - 1, moq),
                                 })
                               )
                             }
@@ -210,7 +226,7 @@ const CartPage = () => {
                               dispatch(
                                 updateCartItem({
                                   itemId: item.id,
-                                  quantity: item.quantity + 1,
+                                  quantity: (item.quantity || moq) + 1,
                                 })
                               )
                             }
@@ -218,11 +234,13 @@ const CartPage = () => {
                           >
                             +
                           </button>
+
                         </div>
 
                         <div className="text-sm font-semibold text-gray-900">
                           ₹{itemTotal.toFixed(0)}
                         </div>
+
                       </div>
                     </div>
 
@@ -238,6 +256,7 @@ const CartPage = () => {
             </div>
           )}
 
+          {/* buttons */}
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <Link href="/products">
               <button className="w-full sm:w-auto flex items-center justify-center gap-2 border border-gray-400 px-4 py-2 rounded-md text-sm hover:bg-gray-200">
@@ -256,7 +275,7 @@ const CartPage = () => {
           </div>
         </div>
 
-        {/* SUMMARY (UNCHANGED UI) */}
+        {/* ================= SUMMARY ================= */}
         <div className="bg-white border rounded-xl p-4 h-fit sticky top-20">
           <h3 className="text-base font-semibold mb-2">Order Summary</h3>
 
@@ -301,13 +320,8 @@ const CartPage = () => {
               Proceed to Checkout →
             </button>
           </Link>
-
-          <Link href="/products">
-            <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
-              Continue Shopping
-            </button>
-          </Link>
         </div>
+
       </div>
     </div>
   );

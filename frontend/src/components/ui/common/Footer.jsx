@@ -68,9 +68,15 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-3">
           <p className="text-white">© {new Date().getFullYear()} Kavas Technologies Pvt. Ltd.</p>
           <div className="flex gap-4">
+            <Link href="/privacy">
             <span className="text-white cursor-pointer">Privacy</span>
+            </Link>
+             <Link href="/privacy">
             <span className="text-white cursor-pointer">Terms</span>
+            </Link>
+            <Link href="/privacy">
             <span className="text-white cursor-pointer">Sitemap</span>
+            </Link>
           </div>
         </div>
       </div>

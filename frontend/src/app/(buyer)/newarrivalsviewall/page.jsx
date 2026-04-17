@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ const categories = [
 ];
 
 const Page = () => {
+  const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [filters, setFilters] = useState({
     minQty: [],
@@ -35,15 +36,25 @@ const Page = () => {
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const liked = favouriteItems.map((item) => item._id);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
   };
 
   const onAddToCart = (product) => {
-    dispatch(addToCart(product));
+    dispatch(
+      addToCart({
+        productId: product?.productId ?? product?.id,
+        quantity: 1,
+        variantId: product?.variantId ?? product?.variant_id,
+      })
+    );
   };
 
-  const [showFilters, setShowFilters] = useState(false);
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
       const exists = prev[type].includes(value);
@@ -97,13 +108,17 @@ const Page = () => {
       return 0;
     });
 
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <div className="bg-white min-h-screen max-w-350">
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
           <p className="text-xs text-gray-500 mb-1">
-            <Link href="/"><span className="hover:text-orange-600">
-              Home </span></Link><span className="mx-1">{">>"}</span>
+            <Link href="/">
+              <span className="hover:text-orange-600">Home</span>
+            </Link>
+            <span className="mx-1">{">>"}</span>
             <span className="text-black font-semibold">New Arrivals</span>
           </p>
           <div className="flex items-center gap-2 mt-2">
@@ -289,18 +304,18 @@ const Page = () => {
                               e.stopPropagation();
                               onToggleFavourite(product);
                             }}
-                            className={`h-8 w-8 border-orange-200 ${liked.includes(product.id) ? "bg-red-50" : ""
+                            className={`h-8 w-8 border-orange-200 ${mounted && liked.includes(product.id) ? "bg-red-50" : ""
                               }`}
                           >
                             <Heart
                               size={14}
                               className={
-                                liked.includes(product.id)
+                                mounted && liked.includes(product.id)
                                   ? "text-red-500"
                                   : "text-gray-600"
                               }
                               fill={
-                                liked.includes(product.id)
+                                mounted && liked.includes(product.id)
                                   ? "currentColor"
                                   : "none"
                               }

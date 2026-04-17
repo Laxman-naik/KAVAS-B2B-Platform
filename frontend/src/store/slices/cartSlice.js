@@ -7,38 +7,30 @@ import {
   clearCartAPI,
 } from "@/services/cartService";
 
-/* ================= INITIAL STATE ================= */
 const initialState = {
-  carts: [], // grouped by organization
+  cart: null,
   loading: false,
   error: null,
 };
 
-/* ================= THUNKS ================= */
-
-/**
- * GET CART
- */
 export const fetchCart = createAsyncThunk(
   "cart/fetchCart",
   async (_, { rejectWithValue }) => {
     try {
       const res = await getCartAPI();
-      return res.data.carts;
+      return res.data.cart;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
 
-/**
- * ADD TO CART
- */
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ productId, quantity }, { rejectWithValue }) => {
+  async ({ productId, quantity, variantId }, { rejectWithValue, dispatch }) => {
     try {
-      const res = await addToCartAPI({ productId, quantity });
+      const res = await addToCartAPI({ productId, quantity, variantId });
+      await dispatch(fetchCart());
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -46,14 +38,12 @@ export const addToCart = createAsyncThunk(
   }
 );
 
-/**
- * UPDATE ITEM QUANTITY
- */
 export const updateCartItem = createAsyncThunk(
   "cart/updateCartItem",
-  async ({ itemId, quantity }, { rejectWithValue }) => {
+  async ({ itemId, quantity }, { rejectWithValue, dispatch }) => {
     try {
       const res = await updateCartItemAPI(itemId, { quantity });
+      await dispatch(fetchCart());
       return { itemId, quantity, message: res.data.message };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -61,14 +51,12 @@ export const updateCartItem = createAsyncThunk(
   }
 );
 
-/**
- * REMOVE ITEM
- */
 export const removeCartItem = createAsyncThunk(
   "cart/removeCartItem",
-  async (itemId, { rejectWithValue }) => {
+  async (itemId, { rejectWithValue, dispatch }) => {
     try {
       const res = await removeCartItemAPI(itemId);
+      await dispatch(fetchCart());
       return { itemId, message: res.data.message };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -76,14 +64,13 @@ export const removeCartItem = createAsyncThunk(
   }
 );
 
-/**
- * CLEAR CART
- */
+
 export const clearCart = createAsyncThunk(
   "cart/clearCart",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
       const res = await clearCartAPI();
+      await dispatch(fetchCart());
       return res.data.message;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
@@ -91,7 +78,6 @@ export const clearCart = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
 const cartSlice = createSlice({
   name: "cart",
   initialState,
@@ -100,46 +86,31 @@ const cartSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ===== FETCH CART ===== */
       .addCase(fetchCart.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.carts = action.payload;
+        state.cart = action.payload;
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* ===== ADD TO CART ===== */
       .addCase(addToCart.fulfilled, (state) => {
         state.loading = false;
       })
 
-      /* ===== UPDATE ITEM ===== */
       .addCase(updateCartItem.fulfilled, (state, action) => {
-        const { itemId, quantity } = action.payload;
-
-        state.carts.forEach((cart) => {
-          const item = cart.items.find((i) => i.id === itemId);
-          if (item) item.quantity = quantity;
-        });
+        state.loading = false;
       })
-
-      /* ===== REMOVE ITEM ===== */
       .addCase(removeCartItem.fulfilled, (state, action) => {
-        const { itemId } = action.payload;
-
-        state.carts.forEach((cart) => {
-          cart.items = cart.items.filter((i) => i.id !== itemId);
-        });
+        state.loading = false;
       })
 
-      /* ===== CLEAR CART ===== */
       .addCase(clearCart.fulfilled, (state) => {
-        state.carts = [];
+        state.cart = null;
       });
   },
 });

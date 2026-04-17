@@ -1,9 +1,11 @@
-import React from 'react'
+import { productapi } from "../lib/axios";
 
-const productService = () => {
-  return (
-    <div>productService</div>
-  )
-}
+export const getProducts = () => productapi.get("/api/products/all");
 
-export default productService
+export const getSingleProduct = (id) => productapi.get(`/api/products/${id}`);
+
+export const createProduct = (data) => productapi.post("/api/products", data);
+
+export const updateProduct = (id, data) => productapi.put(`/api/products/${id}`, data);
+
+export const deleteProduct = (id) => productapi.delete(`/api/products/${id}`);

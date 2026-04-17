@@ -1,30 +1,17 @@
-import { authapi } from "../lib/axios";
+import { productapi } from "../lib/axios";
 
 export const getCartAPI = () =>
-  authapi.get("/api/cart");
+  productapi.get("/api/cart");
 
-/**
- * Add product to cart
- * body: { productId, quantity }
- */
 export const addToCartAPI = (data) =>
-  authapi.post("/api/cart", data);
+  productapi.post("/api/cart", data);
 
-/**
- * Update cart item quantity
- * body: { quantity }
- */
 export const updateCartItemAPI = (itemId, data) =>
-  authapi.put(`/api/cart/item/${itemId}`, data);
+  productapi.put(`/api/cart/${itemId}`, data);
 
-/**
- * Remove single cart item
- */
 export const removeCartItemAPI = (itemId) =>
-  authapi.delete(`/api/cart/item/${itemId}`);
+  productapi.delete(`/api/cart/${itemId}`);
 
-/**
- * Clear all carts
- */
+
 export const clearCartAPI = () =>
-  authapi.delete("/api/cart/clear");
+  productapi.delete("/api/cart/clear");

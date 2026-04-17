@@ -24,8 +24,7 @@ export default function SubCategoryPage({ params }) {
       setRoute({ category, subcategory });
 
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/products?category=${category}&subcategory=${subcategory}&top=true`;
-        const res = await fetch(url, { cache: "no-store" });
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${category}/${subcategory}`; const res = await fetch(url, { cache: "no-store" });
         const data = await res.json();
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -76,6 +75,14 @@ export default function SubCategoryPage({ params }) {
     return list;
   }, [products, minPrice, maxPrice, minQty, supplierType, sort]);
 
+  const mapped = (data.data || []).map((p) => ({
+    ...p,
+    imageUrl: p.image_url || "/placeholder.png",
+    minOrderQty: p.moq,
+    createdAt: p.created_at,
+  }));
+
+  setProducts(mapped);
   const resetFilters = () => {
     setSort("default");
     setMinPrice("");
