@@ -35,7 +35,7 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState({
     products: [],
     suppliers: [],
-    brands: [],
+    categories: [],
   });
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -85,7 +85,7 @@ const Navbar = () => {
         setSearchResults({
           products: [],
           suppliers: [],
-          brands: [],
+          categories: [],
         });
         setShowSearchDropdown(false);
         return;
@@ -95,7 +95,7 @@ const Navbar = () => {
         setSearchLoading(true);
 
         const res = await fetch(
-          `/api/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`
+          `http://localhost:5002/api/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`
         );
 
         const data = await res.json();
@@ -107,7 +107,7 @@ const Navbar = () => {
         setSearchResults({
           products: data.products || [],
           suppliers: data.suppliers || [],
-          brands: data.brands || [],
+          categories: data.categories || [],
         });
 
         setShowSearchDropdown(true);
@@ -116,7 +116,7 @@ const Navbar = () => {
         setSearchResults({
           products: [],
           suppliers: [],
-          brands: [],
+          categories: [],
         });
         setShowSearchDropdown(false);
       } finally {
@@ -140,19 +140,6 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-
-    if (newMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -225,7 +212,7 @@ const Navbar = () => {
                       onFocus={() => {
                         if (debouncedQuery) setShowSearchDropdown(true);
                       }}
-                      placeholder="Search Products, Suppliers, Brands......."
+                      placeholder="Search products, suppliers, categories..."
                       className="h-10 w-full border border-gray-300 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600 px-4 text-sm outline-none rounded-l-md"
                     />
                     <button
@@ -243,7 +230,7 @@ const Navbar = () => {
                         <p className="text-sm text-gray-500">Searching...</p>
                       ) : searchResults.products.length === 0 &&
                         searchResults.suppliers.length === 0 &&
-                        searchResults.brands.length === 0 ? (
+                        searchResults.categories.length === 0 ? (
                         <p className="text-sm text-gray-500">No results found.</p>
                       ) : (
                         <div className="space-y-4">
@@ -260,12 +247,15 @@ const Navbar = () => {
                                     }}
                                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                                   >
-                                    <div className="font-medium">
-                                      {item.name || item.product_name}
-                                    </div>
+                                    <div className="font-medium">{item.name}</div>
                                     <div className="text-xs text-gray-500 truncate">
-                                      {item.description || item.product_description}
+                                      {item.description}
                                     </div>
+                                    {item.organization_name && (
+                                      <div className="text-[11px] text-gray-400 truncate mt-1">
+                                        Supplier: {item.organization_name}
+                                      </div>
+                                    )}
                                   </button>
                                 ))}
                               </div>
@@ -285,11 +275,9 @@ const Navbar = () => {
                                     }}
                                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                                   >
-                                    <div className="font-medium">
-                                      {item.company_name || item.companyName || item.name}
-                                    </div>
+                                    <div className="font-medium">{item.name}</div>
                                     <div className="text-xs text-gray-500 truncate">
-                                      {item.location || item.address || ""}
+                                      {item.industry || item.description || ""}
                                     </div>
                                   </button>
                                 ))}
@@ -297,29 +285,21 @@ const Navbar = () => {
                             </div>
                           )}
 
-                          {searchResults.brands.length > 0 && (
+                          {searchResults.categories.length > 0 && (
                             <div>
-                              <h3 className="text-sm font-semibold mb-2">Brands</h3>
+                              <h3 className="text-sm font-semibold mb-2">Categories</h3>
                               <div className="space-y-2">
-                                {searchResults.brands.map((item) => (
+                                {searchResults.categories.map((item) => (
                                   <button
                                     key={item.id}
                                     onClick={() => {
-                                      const brandName = item.name || item.brand_name || "";
-                                      setSearchQuery(brandName);
+                                      setSearchQuery(item.name);
                                       setShowSearchDropdown(false);
-                                      router.push(
-                                        `/search?q=${encodeURIComponent(brandName)}`
-                                      );
+                                      router.push(`/search?q=${encodeURIComponent(item.name)}`);
                                     }}
                                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                                   >
-                                    <div className="font-medium">
-                                      {item.name || item.brand_name}
-                                    </div>
-                                    <div className="text-xs text-gray-500 truncate">
-                                      {item.description || item.brand_description || ""}
-                                    </div>
+                                    <div className="font-medium">{item.name}</div>
                                   </button>
                                 ))}
                               </div>
@@ -333,15 +313,6 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {/* <Button
-                  onClick={toggleDarkMode}
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 sm:h-9 sm:w-9"
-                >
-                  {darkMode ? "☀️" : "🌙"}
-                </Button> */}
-
                 {!isAuthenticated ? (
                   <Button
                     variant="outline"
@@ -517,7 +488,7 @@ const Navbar = () => {
                   onFocus={() => {
                     if (debouncedQuery) setShowSearchDropdown(true);
                   }}
-                  placeholder="Search products, suppliers, brands..."
+                  placeholder="Search products, suppliers, categories..."
                   className="h-10 w-full border border-gray-300 bg-white px-3 text-sm outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-l-md"
                 />
                 <button

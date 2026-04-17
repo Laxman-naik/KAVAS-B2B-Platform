@@ -8,38 +8,25 @@ const cartRoutes = require("./routes/cartRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 
 const app = express();
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://kavsawholesalehub.netlify.app",
-];
 
 app.use(express.json());
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: true,
     credentials: true,
   })
 );
-
-app.use(express.json());
 
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/", (req, res) => {
   res.send("Product Server Running");
