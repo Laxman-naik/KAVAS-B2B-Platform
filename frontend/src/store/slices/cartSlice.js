@@ -12,14 +12,35 @@ const normalizeCart = (res) =>
 
 /* ================= THUNKS ================= */
 
+// export const fetchCart = createAsyncThunk(
+//   "cart/fetchCart",
+//   async (_, thunkAPI) => {
+//     try {
+//       const res = await getCart();
+//       return normalizeCart(res);
+//     } catch {
+//       return thunkAPI.rejectWithValue("Failed to fetch cart");
+//     }
+//   }
+// );
+
 export const fetchCart = createAsyncThunk(
   "cart/fetchCart",
   async (_, thunkAPI) => {
     try {
       const res = await getCart();
       return normalizeCart(res);
-    } catch {
-      return thunkAPI.rejectWithValue("Failed to fetch cart");
+    } catch (error) {
+      console.error("FETCH CART ERROR:", error);
+
+      // Axios specific
+      if (error.response) {
+        console.error("RESPONSE ERROR:", error.response.data);
+        return thunkAPI.rejectWithValue(error.response.data);
+      }
+
+      // Network / unknown
+      return thunkAPI.rejectWithValue(error.message || "Unknown error");
     }
   }
 );
@@ -65,7 +86,7 @@ export const clearCart = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       await clearCartAPI();
-      return true;
+      return [];
     } catch {
       return thunkAPI.rejectWithValue("Failed to clear cart");
     }
@@ -150,7 +171,14 @@ const cartSlice = createSlice({
     /* CLEAR */
     builder.addCase(clearCart.fulfilled, (state) => {
       state.items = [];
-    });
+      state.loading.clear = false;
+    })
+    .addCase(clearCart.pending, (state) => {
+  state.loading.clear = true;
+})
+.addCase(clearCart.rejected, (state) => {
+  state.loading.clear = false;
+})
   },
 });
 

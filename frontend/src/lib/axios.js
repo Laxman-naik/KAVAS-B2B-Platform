@@ -18,7 +18,7 @@ export const productapi = axios.create({
 const attachToken = (config) => {
   const token = localStorage.getItem("token");
 
-//   console.log("TOKEN SENT:", token);  
+  console.log("TOKEN SENT:", token); 
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

@@ -48,9 +48,10 @@ const CartPage = () => {
     dispatch(removeCartItem(id));
   };
 
-  const handleClear = () => {
-    dispatch(clearCart());
-  };
+  const handleClear = async () => {
+  await dispatch(clearCart());
+  dispatch(fetchCart());
+};
 
   /* ---------------- TOTALS ---------------- */
 
@@ -198,7 +199,7 @@ const CartPage = () => {
             <button
               onClick={handleClear}
               disabled={loading.clear || cartItems.length === 0}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 border hover:border-red-800 border-red-500 px-4 py-2 rounded-md text-sm ${loading.clear || cartItems.length === 0
+              className={`w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500 px-4 py-2 rounded-md text-sm ${loading.clear || cartItems.length === 0
                   ? "text-red-300 cursor-not-allowed"
                   : "text-red-500 hover:bg-red-50"
                 }`}
