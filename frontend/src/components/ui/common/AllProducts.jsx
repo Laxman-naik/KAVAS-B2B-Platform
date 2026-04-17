@@ -44,7 +44,7 @@ const AllProducts = () => {
               {visibleProducts.map((item) => (
                 <Link
                   key={item.id} // ✅ FIX
-                  href={`/product/${item.id}`} // ✅ FIX
+                  href={`/product/${item._id}`} // ✅ FIX
                   className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 dark:border-gray-700"
                 >
                   {/* Image */}
