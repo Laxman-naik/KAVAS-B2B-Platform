@@ -7,7 +7,8 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
-} from "@/services/categoryService";
+} from "../../services/categoryService";
+
 
 export const createCategoryThunk = createAsyncThunk(
   "category/createCategory",

@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchCart,
-  removeCartItem,
-  clearCart,
-  updateCartItem,
+  syncUpdateCartItem,
+  syncRemoveCartItem,
+  syncClearCart,
 } from "@/store/slices/cartSlice";
 
 const CartPage = () => {
@@ -16,38 +16,27 @@ const CartPage = () => {
   // keep input values (FIXED SAFE VERSION)
   const [inputValues, setInputValues] = React.useState({});
 
-  /* ================= LOAD CART FROM API ================= */
+  const cartItems = useSelector((state) => state.cart?.items || []);
+  const loading = useSelector((state) => state.cart?.loading || false);
+  const error = useSelector((state) => state.cart?.error || null);
+
   React.useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
-
-  /* ================= GET CART FROM STORE ================= */
-  const cart = useSelector((state) => state.cart?.cart);
-  const cartItems = cart?.items || [];
 
   /* ================= FIX: PREVENT INFINITE LOOP ================= */
   React.useEffect(() => {
     const mappedValues = {};
 
     cartItems.forEach((item) => {
-      mappedValues[item.id] = String(item.quantity || item.moq || 1);
-    });
-
-    setInputValues((prev) => {
-      const prevStr = JSON.stringify(prev);
-      const nextStr = JSON.stringify(mappedValues);
-
-      // ✅ prevents infinite re-render loop
-      if (prevStr === nextStr) return prev;
-
-      return mappedValues;
+      mappedValues[item.cartItemId] = String(item.quantity || item.moq || 1);
     });
   }, [cartItems]);
 
   const cartCount = cartItems.length;
 
   const getTypedQty = (item) => {
-    const rawValue = inputValues[item.id];
+    const rawValue = inputValues[item.cartItemId];
     if (rawValue === "" || rawValue === undefined) return null;
 
     const parsed = Number(rawValue);
@@ -72,18 +61,18 @@ const CartPage = () => {
   const gst = subtotal * 0.18;
   const total = subtotal + gst;
 
-  const handleInputChange = (id, value) => {
+  const handleInputChange = (cartItemId, value) => {
     if (/^\d*$/.test(value)) {
       setInputValues((prev) => ({
         ...prev,
-        [id]: value,
+        [cartItemId]: value,
       }));
     }
   };
 
-  const handleInputBlur = (item) => {
+  const handleInputBlur = async (item) => {
     const moq = item.moq || 1;
-    const rawValue = inputValues[item.id];
+    const rawValue = inputValues[item.cartItemId];
 
     let finalQty = Number(rawValue);
 
@@ -91,17 +80,64 @@ const CartPage = () => {
       finalQty = moq;
     }
 
-    dispatch(
-      updateCartItem({
-        itemId: item.id,
+    await dispatch(
+      syncUpdateCartItem({
+        itemId: item.cartItemId,
         quantity: finalQty,
       })
     );
 
     setInputValues((prev) => ({
       ...prev,
-      [item.id]: String(finalQty),
+      [item.cartItemId]: String(finalQty),
     }));
+  };
+
+  const handleIncrease = async (item) => {
+    const currentQty = Number(
+      inputValues[item.cartItemId] ?? item.quantity ?? item.moq ?? 1
+    );
+    const finalQty = currentQty + 1;
+
+    setInputValues((prev) => ({
+      ...prev,
+      [item.cartItemId]: String(finalQty),
+    }));
+
+    await dispatch(
+      syncUpdateCartItem({
+        itemId: item.cartItemId,
+        quantity: finalQty,
+      })
+    );
+  };
+
+  const handleDecrease = async (item) => {
+    const moq = item.moq || 1;
+    const currentQty = Number(
+      inputValues[item.cartItemId] ?? item.quantity ?? moq
+    );
+    const finalQty = currentQty > moq ? currentQty - 1 : moq;
+
+    setInputValues((prev) => ({
+      ...prev,
+      [item.cartItemId]: String(finalQty),
+    }));
+
+    await dispatch(
+      syncUpdateCartItem({
+        itemId: item.cartItemId,
+        quantity: finalQty,
+      })
+    );
+  };
+
+  const handleRemove = async (cartItemId) => {
+    await dispatch(syncRemoveCartItem(cartItemId));
+  };
+
+  const handleClearCart = async () => {
+    await dispatch(syncClearCart());
   };
 
   return (
@@ -120,7 +156,19 @@ const CartPage = () => {
             </h2>
           </div>
 
-          {cartItems.length === 0 ? (
+          {loading && (
+            <div className="bg-white border rounded-xl p-4 text-sm text-gray-600 mb-4">
+              Loading cart...
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm mb-4">
+              {error}
+            </div>
+          )}
+
+          {!loading && cartItems.length === 0 ? (
             <div className="bg-white border rounded-xl p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[300px]">
               <ShoppingCart className="h-10 w-10 sm:h-12 sm:w-12 text-gray-600 mb-4" />
               <h3 className="text-base sm:text-lg font-semibold mb-2">
@@ -148,10 +196,9 @@ const CartPage = () => {
                 const moq = item.moq || 1;
                 const typedQty = getTypedQty(item);
                 const displayQty =
-                  inputValues[item.id] ?? String(item.quantity || moq);
+                  inputValues[item.cartItemId] ?? String(item.quantity || moq);
 
-                const isBelowMoq =
-                  typedQty !== null && typedQty < moq;
+                const isBelowMoq = typedQty !== null && typedQty < moq;
 
                 const qtyForTotal =
                   typedQty !== null ? typedQty : item.quantity || moq;
@@ -161,7 +208,7 @@ const CartPage = () => {
 
                 return (
                   <div
-                    key={item.id}
+                    key={item.cartItemId}
                     className="bg-white border rounded-xl p-4 flex items-center gap-4"
                   >
                     <img
@@ -189,17 +236,10 @@ const CartPage = () => {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              dispatch(
-                                updateCartItem({
-                                  itemId: item.id,
-                                  quantity: Math.max((item.quantity || moq) - 1, moq),
-                                })
-                              )
-                            }
-                            disabled={(item.quantity || moq) <= moq}
+                            onClick={() => handleDecrease(item)}
+                            disabled={(item.quantity || moq) <= moq || loading}
                             className={`px-2.5 py-1 bg-gray-100 ${
-                              (item.quantity || moq) <= moq
+                              (item.quantity || moq) <= moq || loading
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-200"
                             }`}
@@ -212,25 +252,25 @@ const CartPage = () => {
                             inputMode="numeric"
                             value={displayQty}
                             onChange={(e) =>
-                              handleInputChange(item.id, e.target.value)
+                              handleInputChange(item.cartItemId, e.target.value)
                             }
                             onBlur={() => handleInputBlur(item)}
                             className={`w-20 px-2 py-1 text-sm text-center outline-none ${
                               isBelowMoq ? "text-red-600" : ""
                             }`}
+                            disabled={loading}
                           />
 
                           <button
                             type="button"
-                            onClick={() =>
-                              dispatch(
-                                updateCartItem({
-                                  itemId: item.id,
-                                  quantity: (item.quantity || moq) + 1,
-                                })
-                              )
-                            }
-                            className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200"
+                            onClick={() => handleIncrease(item)}
+                            className={`px-2.5 py-1 bg-gray-100 ${
+                              loading
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-gray-200"
+                            }`}
+                            aria-label="Increase quantity"
+                            disabled={loading}
                           >
                             +
                           </button>
@@ -245,8 +285,9 @@ const CartPage = () => {
                     </div>
 
                     <button
-                      onClick={() => dispatch(removeCartItem(item.id))}
+                      onClick={() => handleRemove(item.cartItemId)}
                       className="text-red-500"
+                      disabled={loading}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -266,8 +307,13 @@ const CartPage = () => {
             </Link>
 
             <button
-              onClick={() => dispatch(clearCart())}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500 text-red-500 px-4 py-2 rounded-md text-sm hover:bg-red-50"
+              onClick={handleClearCart}
+              disabled={loading || cartItems.length === 0}
+              className={`w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500 px-4 py-2 rounded-md text-sm ${
+                loading || cartItems.length === 0
+                  ? "text-red-300 cursor-not-allowed"
+                  : "text-red-500 hover:bg-red-50"
+              }`}
             >
               <Trash2 size={16} />
               Clear Cart
@@ -310,9 +356,9 @@ const CartPage = () => {
 
           <Link href="/checkout">
             <button
-              disabled={hasInvalidMoq}
+              disabled={hasInvalidMoq || loading || cartItems.length === 0}
               className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${
-                hasInvalidMoq
+                hasInvalidMoq || loading || cartItems.length === 0
                   ? "bg-orange-300 text-white cursor-not-allowed"
                   : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}

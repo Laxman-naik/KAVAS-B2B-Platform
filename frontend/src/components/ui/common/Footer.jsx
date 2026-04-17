@@ -7,59 +7,79 @@ const Footer = () => {
     <footer className="bg-[#063149] dark:bg-gray-900 mt-10 text-gray-700 dark:text-gray-300">
       <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:flex lg:justify-between lg:gap-6 gap-8">
         <div className="md:col-span-2">
-          <img
-            src="/LOGOKAVAS.png"
-            alt="KAVAS Logo"
-            className="h-8 sm:h-10 md:h-11 w-auto object-contain cursor-pointer"
-          />
+          <Link href="/">
+            <img
+              src="/LOGOKAVAS.png"
+              alt="KAVAS Logo"
+              className="h-8 sm:h-10 md:h-11 w-auto object-contain cursor-pointer"
+            />
+          </Link>
           <p className="text-gray-400 mt-3 text-[14px] leading-relaxed">
             India's trusted B2B wholesale platform connecting verified vendors<br />
             with buyers across every industry.
           </p>
           <div className="flex gap-3 mt-4">
-            <Icon><FaLinkedin /></Icon>
-            <Icon><FaTwitter /></Icon>
-            <Icon><FaFacebook /></Icon>
-            <Icon><FaYoutube /></Icon>
+            <div className="p-2 bg-white rounded-sm hover:bg-[#D4AF37] transition group cursor-pointer shadow-sm">
+              <FaLinkedin className="text-[#0B1F3A] group-hover:text-white" />
+            </div>
+
+            <div className="p-2 bg-white rounded-sm hover:bg-[#D4AF37] transition group cursor-pointer shadow-sm">
+              <FaTwitter className="text-[#0B1F3A] group-hover:text-white" />
+            </div>
+
+            <div className="p-2 bg-white rounded-sm hover:bg-[#D4AF37] transition group cursor-pointer shadow-sm">
+              <FaFacebook className="text-[#0B1F3A] group-hover:text-white" />
+            </div>
+
+            <div className="p-2 bg-white rounded-sm hover:bg-[#D4AF37] transition group cursor-pointer shadow-sm">
+              <FaYoutube className="text-[#0B1F3A] group-hover:text-white" />
+            </div>
           </div>
         </div>
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">For Buyers</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Browse products</li>
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">My cart</li>
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Membership</li>
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Flash deals</li>
+            <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Browse products</li>
+            <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">My cart</li>
+            <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Membership</li>
+            <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Flash deals</li>
+            <Link href="/trackorder">
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Track Order</li>
+            </Link>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">For Vendors</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
             <Link href="/vendor">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Sell on Kavas</li>
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Sell on Kavas</li>
             </Link>
-             <Link
-            href="/suppliers/verified">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Supplier directory</li>
+            <Link
+              href="/suppliers/verified">
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Supplier directory</li>
             </Link>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">Company</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">About us</li>
+            <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">About us</li>
             <Link href="/help">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Help centre</li>
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Help centre</li>
             </Link>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-[14px] text-white dark:text-white mb-3">Legal</h3>
           <ul className="space-y-2 text-[14px] text-gray-400">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Privacy policy</li>
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Terms of use</li>
+            <Link href="/privacy">
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Privacy policy</li>
+            </Link>
+            <Link href="/termsandconditions">
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Terms of use</li>
+            </Link>
             <Link href="/shipinginfo">
-            <li className="hover:text-orange-500 dark:hover:text-orange-400 cursor-pointer">Shipping info</li>
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Shipping info</li>
             </Link>
           </ul>
         </div>
@@ -69,13 +89,13 @@ const Footer = () => {
           <p className="text-white">© {new Date().getFullYear()} Kavas Technologies Pvt. Ltd.</p>
           <div className="flex gap-4">
             <Link href="/privacy">
-            <span className="text-white cursor-pointer">Privacy</span>
+              <span className="text-white cursor-pointer hover:text-[#D4AF37]">Privacy</span>
             </Link>
-             <Link href="/privacy">
-            <span className="text-white cursor-pointer">Terms</span>
+            <Link href="/termsandconditions">
+              <span className="text-white cursor-pointer hover:text-[#D4AF37]">Terms</span>
             </Link>
             <Link href="/privacy">
-            <span className="text-white cursor-pointer">Sitemap</span>
+              <span className="text-white cursor-pointer hover:text-[#D4AF37]">Sitemap</span>
             </Link>
           </div>
         </div>
