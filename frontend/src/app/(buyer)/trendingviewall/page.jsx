@@ -24,36 +24,32 @@ const categories = [
 ];
 
 const Page = () => {
-    const [activeCategory, setActiveCategory] = useState("All Automotive");
+    const [activeCategory, setActiveCategory] = useState("All");
     const [showFilters, setShowFilters] = useState(false);
 
     const dispatch = useDispatch();
-    const products = useSelector((state) => state.products.products);
-    const loading = useSelector((state) => state.products.loading);
+    const { products, loading } = useSelector((state) => state.products);
     const favouriteItems = useSelector((state) => state.favourites.items);
     const liked = favouriteItems.map((item) => item._id);
 
-    const filteredProducts =
-  activeCategory === "All"
-    ? products
-    : products.filter((p) => p.category === activeCategory);
+    useEffect(() => {
+        dispatch(fetchProducts());
+    }, [dispatch]);
+
+    const filteredProducts = products;
+
+     const handleAddToCart = (product) => {
+        dispatch(
+            addToCart({
+                productId: product.id,
+                quantity: product.moq || 1,
+            })
+        );
+    };
 
     const onToggleFavourite = (product) => {
         dispatch(toggleFavourite(product));
     };
-
-    useEffect(() => {
-  dispatch(fetchProducts());
-}, [dispatch]);
-
-const handleAddToCart = (product) => {
-    dispatch(
-        addToCart({
-            productId: product.id,
-            quantity: product.moq || 1,
-        })
-    );
-};
 
     return (
         <div className="bg-gray-100 min-h-screen">
@@ -203,69 +199,69 @@ const handleAddToCart = (product) => {
 
                         {/* GRID */}
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
-                            {filteredProducts.map((product, index) => (
+                            {(filteredProducts || []).map((product, index) => (
                                 <Link key={product.id} href={`/product/${product.id}`} className="block">
                                     <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                                         <CardContent className="p-0! flex flex-col h-full">
 
-                                        <div className="relative h-40 sm:h-50 bg-gray-100 flex items-center justify-center">
-                                            <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full z-10">
-                                                {index % 2 === 0 ? "Trending" : "Hot Deal"}
-                                            </span>
+                                            <div className="relative h-40 sm:h-50 bg-gray-100 flex items-center justify-center">
+                                                <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full z-10">
+                                                    {index % 2 === 0 ? "Trending" : "Hot Deal"}
+                                                </span>
 
-                                            <img
-                                                src={product.image_url}
-                                                alt={product.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-
-                                        <div className="p-2 sm:p-3 flex flex-col flex-1">
-                                            <h3 className="text-xs sm:text-sm font-semibold line-clamp-2">
-                                                {product.name}
-                                            </h3>
-
-                                            <p className="text-[10px] text-orange-600 mt-1">
-                                                {product.category}
-                                            </p>
-
-                                            <p className="text-orange-600 font-bold text-sm sm:text-base mt-1">
-                                                {product.price}
-                                            </p>
-
-                                            <p className="text-[10px] text-gray-500">
-                                                {product.min}
-                                            </p>
-
-                                            <div className="flex items-center gap-2 mt-auto pt-2">
-                                                <Button
-                                                    className="flex-1 bg-orange-500 text-white text-xs h-8"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation(); handleAddToCart(product);
-                                                    }}
-                                                >
-                                                    <ShoppingCart size={12} />
-                                                </Button>
-
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        onToggleFavourite(product);
-                                                    }}
-                                                    className="h-8 w-8"
-                                                >
-                                                    <Heart
-                                                        size={12}
-                                                        className={liked.includes(product.id) ? "text-red-500" : "text-gray-700"}
-                                                        fill={liked.includes(product.id) ? "currentColor" : "none"}
-                                                    />
-                                                </Button>
+                                                <img
+                                                    src={product.image_url}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
-                                        </div>
+
+                                            <div className="p-2 sm:p-3 flex flex-col flex-1">
+                                                <h3 className="text-xs sm:text-sm font-semibold line-clamp-2">
+                                                    {product.name}
+                                                </h3>
+
+                                                <p className="text-[10px] text-orange-600 mt-1">
+                                                    {product.category}
+                                                </p>
+
+                                                <p className="text-orange-600 font-bold text-sm sm:text-base mt-1">
+                                                    {product.price}
+                                                </p>
+
+                                                <p className="text-[10px] text-gray-500">
+                                                    {product.min}
+                                                </p>
+
+                                                <div className="flex items-center gap-2 mt-auto pt-2">
+                                                    <Button
+                                                        className="flex-1 bg-orange-500 text-white text-xs h-8"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); handleAddToCart(product);
+                                                        }}
+                                                    >
+                                                        <ShoppingCart size={12} />
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            onToggleFavourite(product);
+                                                        }}
+                                                        className="h-8 w-8"
+                                                    >
+                                                        <Heart
+                                                            size={12}
+                                                            className={liked.includes(product.id) ? "text-red-500" : "text-gray-700"}
+                                                            fill={liked.includes(product.id) ? "currentColor" : "none"}
+                                                        />
+                                                    </Button>
+                                                </div>
+                                            </div>
 
                                         </CardContent>
                                     </Card>

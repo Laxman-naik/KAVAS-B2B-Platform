@@ -9,7 +9,7 @@ const CartPage = () => {
   const dispatch = useDispatch();
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
 
-  console.log("CART ITEMS:", cartItems);
+  // console.log("CART ITEMS:", cartItems);
 
   /* ---------------- FETCH CART ---------------- */
   useEffect(() => {
@@ -197,10 +197,10 @@ const CartPage = () => {
 
             <button
               onClick={handleClear}
-              disabled={loading || cartItems.length === 0}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500 px-4 py-2 rounded-md text-sm ${loading || cartItems.length === 0
-                ? "text-red-300 cursor-not-allowed"
-                : "text-red-500 hover:bg-red-50"
+              disabled={loading.clear || cartItems.length === 0}
+              className={`w-full sm:w-auto flex items-center justify-center gap-2 border hover:border-red-800 border-red-500 px-4 py-2 rounded-md text-sm ${loading.clear || cartItems.length === 0
+                  ? "text-red-300 cursor-not-allowed"
+                  : "text-red-500 hover:bg-red-50"
                 }`}
             >
               <Trash2 size={16} />

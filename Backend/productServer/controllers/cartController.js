@@ -303,6 +303,7 @@ const removeCartItem = async (req, res) => {
 };
 
 const clearCart = async (req, res) => {
+  console.log("CLEAR CART HIT");
   try {
     const cart = await getOrCreateCart(req.user.id);
 
