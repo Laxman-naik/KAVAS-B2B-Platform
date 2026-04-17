@@ -19,15 +19,33 @@ export default function SubCategoryPage({ params }) {
 
   useEffect(() => {
     const load = async () => {
-      const resolved = await params;
-      const { category, subcategory } = resolved;
-      setRoute({ category, subcategory });
-
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${category}/${subcategory}`; const res = await fetch(url, { cache: "no-store" });
+        const resolved = await params;
+        const { category, subcategory } = resolved;
+
+        setRoute({ category, subcategory });
+
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${category}/${subcategory}`;
+        const res = await fetch(url, { cache: "no-store" });
         const data = await res.json();
-        setProducts(Array.isArray(data) ? data : []);
+
+        const rawProducts = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        const mapped = rawProducts.map((p) => ({
+          ...p,
+          imageUrl: p.image_url || "/placeholder.png",
+          minOrderQty: p.moq,
+          createdAt: p.created_at,
+          supplierType: p.supplierType || p.supplier_type || "",
+        }));
+
+        setProducts(mapped);
       } catch (error) {
+        console.error("Failed to load products:", error);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -68,21 +86,15 @@ export default function SubCategoryPage({ params }) {
       list.sort((a, b) => Number(b.price) - Number(a.price));
     } else if (sort === "newest") {
       list.sort(
-        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        (a, b) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime()
       );
     }
 
     return list;
   }, [products, minPrice, maxPrice, minQty, supplierType, sort]);
 
-  const mapped = (data.data || []).map((p) => ({
-    ...p,
-    imageUrl: p.image_url || "/placeholder.png",
-    minOrderQty: p.moq,
-    createdAt: p.created_at,
-  }));
-
-  setProducts(mapped);
   const resetFilters = () => {
     setSort("default");
     setMinPrice("");
@@ -97,7 +109,9 @@ export default function SubCategoryPage({ params }) {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold capitalize">
           {slugLabel(route.subcategory)}
         </h1>
-        <p className="text-sm mt-1">{filteredProducts.length}+ top products available</p>
+        <p className="text-sm mt-1">
+          {filteredProducts.length}+ top products available
+        </p>
       </div>
 
       <div className="bg-white px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto">
@@ -141,17 +155,19 @@ export default function SubCategoryPage({ params }) {
           />
 
           <p className="text-sm mb-2">Supplier Type</p>
-          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((type) => (
-            <label key={type} className="block text-sm mb-1">
-              <input
-                type="checkbox"
-                checked={supplierType.includes(type)}
-                onChange={() => toggleSupplier(type)}
-                className="mr-2"
-              />
-              {type}
-            </label>
-          ))}
+          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map(
+            (type) => (
+              <label key={type} className="block text-sm mb-1">
+                <input
+                  type="checkbox"
+                  checked={supplierType.includes(type)}
+                  onChange={() => toggleSupplier(type)}
+                  className="mr-2"
+                />
+                {type}
+              </label>
+            )
+          )}
 
           <button
             onClick={resetFilters}

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  MapPin,
   Search,
   ShoppingCart,
   Heart,
@@ -30,6 +29,18 @@ const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState({
+    products: [],
+    suppliers: [],
+    brands: [],
+  });
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const searchRef = useRef(null);
 
   const router = useRouter();
   const dispatch = useDispatch();
@@ -60,6 +71,76 @@ const Navbar = () => {
     dispatch(hydrateFavourites());
   }, [dispatch]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!debouncedQuery) {
+        setSearchResults({
+          products: [],
+          suppliers: [],
+          brands: [],
+        });
+        setShowSearchDropdown(false);
+        return;
+      }
+
+      try {
+        setSearchLoading(true);
+
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Search failed");
+        }
+
+        setSearchResults({
+          products: data.products || [],
+          suppliers: data.suppliers || [],
+          brands: data.brands || [],
+        });
+
+        setShowSearchDropdown(true);
+      } catch (error) {
+        console.error("Navbar search error:", error);
+        setSearchResults({
+          products: [],
+          suppliers: [],
+          brands: [],
+        });
+        setShowSearchDropdown(false);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSearchDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
@@ -82,7 +163,23 @@ const Navbar = () => {
     } catch (err) {
       console.log(err);
     }
-};
+  };
+
+  const handleSearchSubmit = () => {
+    const query = searchQuery.trim();
+
+    if (!query) return;
+
+    setShowSearchDropdown(false);
+    setMobileMenu(false);
+    router.push(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearchSubmit();
+    }
+  };
 
   if (!mounted) return null;
 
@@ -117,18 +214,121 @@ const Navbar = () => {
                   />
                 </Link>
               </div>
+
               <div className="hidden lg:flex flex-1 justify-center min-w-0">
-                <div className="w-full max-w-3xl px-2">
+                <div ref={searchRef} className="w-full max-w-3xl px-2 relative">
                   <div className="flex items-center rounded-md shadow-lg overflow-hidden">
                     <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      onFocus={() => {
+                        if (debouncedQuery) setShowSearchDropdown(true);
+                      }}
                       placeholder="Search Products, Suppliers, Brands......."
                       className="h-10 w-full border border-gray-300 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600 px-4 text-sm outline-none rounded-l-md"
                     />
-                    <button className="h-10 px-5 flex justify-center items-center bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-r-md shrink-0">
+                    <button
+                      onClick={handleSearchSubmit}
+                      className="h-10 px-5 flex justify-center items-center bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-r-md shrink-0"
+                    >
                       <Search size={16} className="mr-2" />
                       <span>Search</span>
                     </button>
                   </div>
+
+                  {showSearchDropdown && (
+                    <div className="absolute left-2 right-2 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto">
+                      {searchLoading ? (
+                        <p className="text-sm text-gray-500">Searching...</p>
+                      ) : searchResults.products.length === 0 &&
+                        searchResults.suppliers.length === 0 &&
+                        searchResults.brands.length === 0 ? (
+                        <p className="text-sm text-gray-500">No results found.</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {searchResults.products.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-semibold mb-2">Products</h3>
+                              <div className="space-y-2">
+                                {searchResults.products.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    onClick={() => {
+                                      setShowSearchDropdown(false);
+                                      router.push(`/products/${item.id}`);
+                                    }}
+                                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  >
+                                    <div className="font-medium">
+                                      {item.name || item.product_name}
+                                    </div>
+                                    <div className="text-xs text-gray-500 truncate">
+                                      {item.description || item.product_description}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {searchResults.suppliers.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-semibold mb-2">Suppliers</h3>
+                              <div className="space-y-2">
+                                {searchResults.suppliers.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    onClick={() => {
+                                      setShowSearchDropdown(false);
+                                      router.push(`/suppliers/${item.id}`);
+                                    }}
+                                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  >
+                                    <div className="font-medium">
+                                      {item.company_name || item.companyName || item.name}
+                                    </div>
+                                    <div className="text-xs text-gray-500 truncate">
+                                      {item.location || item.address || ""}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {searchResults.brands.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-semibold mb-2">Brands</h3>
+                              <div className="space-y-2">
+                                {searchResults.brands.map((item) => (
+                                  <button
+                                    key={item.id}
+                                    onClick={() => {
+                                      const brandName = item.name || item.brand_name || "";
+                                      setSearchQuery(brandName);
+                                      setShowSearchDropdown(false);
+                                      router.push(
+                                        `/search?q=${encodeURIComponent(brandName)}`
+                                      );
+                                    }}
+                                    className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  >
+                                    <div className="font-medium">
+                                      {item.name || item.brand_name}
+                                    </div>
+                                    <div className="text-xs text-gray-500 truncate">
+                                      {item.description || item.brand_description || ""}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -308,20 +508,27 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* MOBILE/TABLET SEARCH */}
             <div className="mt-3 w-full lg:hidden">
               <div className="flex w-full items-center rounded-md shadow-lg overflow-hidden">
                 <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  onFocus={() => {
+                    if (debouncedQuery) setShowSearchDropdown(true);
+                  }}
                   placeholder="Search products, suppliers, brands..."
                   className="h-10 w-full border border-gray-300 bg-white px-3 text-sm outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-l-md"
                 />
-                <button className="flex h-10 items-center justify-center bg-orange-500 px-4 text-white hover:bg-orange-600 rounded-r-md">
+                <button
+                  onClick={handleSearchSubmit}
+                  className="flex h-10 items-center justify-center bg-orange-500 px-4 text-white hover:bg-orange-600 rounded-r-md"
+                >
                   <Search size={16} />
                 </button>
               </div>
             </div>
 
-            {/* MOBILE MENU */}
             {mobileMenu && (
               <div className="mt-3 w-full space-y-3 rounded-lg bg-white p-4 text-black shadow-md dark:bg-gray-800 dark:text-white lg:hidden">
                 {!isAuthenticated ? (
