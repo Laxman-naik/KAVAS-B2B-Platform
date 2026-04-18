@@ -2,14 +2,79 @@
 import React, { useState } from "react";
 import { CreditCard, Banknote, Smartphone, ShoppingCart, } from "lucide-react";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { createCheckout, verifyPayment } from "../../../store/slices/paymentSlice";
+import { loadRazorpay } from "@/lib/razorpay";
 
 const CheckOut = () => {
   const [paymentMethod, setPaymentMethod] = useState("bank");
+  const dispatch = useDispatch();
+  const { cart } = useSelector((state) => state.cart);
+  const handlePlaceOrder = async () => {
+  const res = await fetch("/api/orders/create", {
+    method: "POST",
+    credentials: "include",
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    console.log("Order created", data.order);
+    // NEXT: trigger payment
+  }
+};
   const paymentMethods = [
     { id: "bank", name: "Bank Transfer", icon: <Banknote size={16} /> },
     { id: "card", name: "Card", icon: <CreditCard size={16} /> },
     { id: "upi", name: "UPI", icon: <Smartphone size={16} /> },
   ];
+
+  const handlePayment = async () => {
+  const isLoaded = await loadRazorpay();
+
+  if (!isLoaded) {
+    alert("Razorpay SDK failed to load");
+    return;
+  }
+
+  try {
+    const data = await dispatch(createCheckout()).unwrap();
+
+    const options = {
+      key: data.key,
+      amount: data.amount,
+      currency: "INR",
+      name: "Your Store",
+      description: "Order Payment",
+      order_id: data.orderId,
+
+      handler: async function (response) {
+        try {
+          await dispatch(
+            verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            })
+          ).unwrap();
+
+          alert("Payment Successful");
+        } catch (err) {
+          alert("Payment verification failed");
+        }
+      },
+
+      theme: {
+        color: "#f97316",
+      },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (err) {
+    alert(err.message || "Checkout failed");
+  }
+};
 
   const inputClass ="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-md focus:ring-1 focus:ring-orange-400 focus:border-orange-400 outline-none";
 
@@ -79,8 +144,8 @@ const CheckOut = () => {
 
           <div className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm">
             <h3 className="text-base sm:text-lg font-semibold mb-4">Review & Place Order</h3>
-            <button className="w-full bg-orange-500 text-white py-2.5 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-orange-600">
-              <ShoppingCart size={16} /> Place Order — Pay ₹0
+            <button onClick={handlePayment} className="w-full bg-orange-500 text-white py-2.5 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-orange-600">
+              <ShoppingCart size={16} /> Place Order — Pay ₹{cart?.summary?.total || 0}
             </button>
           </div>
         </div>
@@ -90,11 +155,11 @@ const CheckOut = () => {
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>₹0</span>
+                <span>₹{cart?.summary?.subtotal || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>GST</span>
-                <span>₹0</span>
+                <span>₹{cart?.summary?.gst || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
@@ -103,7 +168,7 @@ const CheckOut = () => {
             </div>
             <div className="border-t mt-4 pt-3 flex justify-between font-semibold">
               <span>Total</span>
-              <span>₹0</span>
+              <span>₹{cart?.summary?.total || 0}</span>
             </div>
           </div>
         </div>

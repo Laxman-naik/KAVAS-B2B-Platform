@@ -242,3 +242,51 @@ exports.updateOrderStatus = async (req, res) => {
     client.release();
   }
 };
+
+const createOrder = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const cart = await getOrCreateCart(userId);
+    const items = await getCartItems(cart.id);
+    const summary = calculateSummary(items);
+
+    if (!items.length) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    // 1. Create order
+    const orderRes = await pool.query(
+      `INSERT INTO orders (supplier_org_id, total_amount, status)
+       VALUES ($1, $2, 'pending')
+       RETURNING *`,
+      [userId, summary.total]
+    );
+
+    const order = orderRes.rows[0];
+
+    // 2. Insert order items
+    for (let item of items) {
+      await pool.query(
+        `INSERT INTO order_items (order_id, product_id, quantity, price)
+         VALUES ($1, $2, $3, $4)`,
+        [order.id, item.product_id, item.quantity, item.price]
+      );
+    }
+
+    // 3. Add status history
+    await pool.query(
+      `INSERT INTO order_status_history (order_id, status)
+       VALUES ($1, 'pending')`,
+      [order.id]
+    );
+
+    res.json({
+      success: true,
+      order,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};

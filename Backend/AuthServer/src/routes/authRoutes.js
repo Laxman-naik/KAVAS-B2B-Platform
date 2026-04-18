@@ -22,21 +22,10 @@ const loginLimiter = rateLimit({
 });
 
 /* ================== AUTH ROUTES ================== */
-
-// register
 router.post("/register", register);
-
-// login (rate limited)
 router.post("/login", loginLimiter, login);
-
-// refresh token (cookie based)
 router.post("/refresh", refreshTokenHandler);
-
-// logout
 router.post("/logout", logout);
-
-// get current user (MUST be cookie based OR access token based consistently)
-router.get("/me", getMe); 
-// ⚠️ removed authMiddleware intentionally (explained below)
+router.get("/me", authMiddleware, getMe); 
 
 module.exports = router;

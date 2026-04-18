@@ -3,10 +3,10 @@ const router = express.Router();
 
 const { createCheckout, verifyPayment, handleWebhook, } = require("../controllers/paymentController");
 
-const isAuthenticated = require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
-router.post("/checkout", isAuthenticated, createCheckout);
-router.post("/verify",  verifyPayment);
+router.post("/checkout", authMiddleware, createCheckout);
+router.post("/verify", verifyPayment);
 router.post("/webhook", handleWebhook);
 
 module.exports = router;
