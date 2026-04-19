@@ -90,12 +90,13 @@ export const productapi = axios.create({
   baseURL: PRODUCT_BASE_URL,
 });
 
-productapi.interceptors.request.use((config) => {
+const attachToken = (config) => {
   const token = localStorage.getItem("accessToken");
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) { config.headers.Authorization = `Bearer ${token}`;}
 
   return config;
-});
+};
+
+authapi.interceptors.request.use(attachToken);
+productapi.interceptors.request.use(attachToken);

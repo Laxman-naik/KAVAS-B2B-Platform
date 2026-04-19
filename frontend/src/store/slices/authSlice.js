@@ -213,19 +213,8 @@
 
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  registerUserAPI,
-  loginUser,
-  logoutUser,
-  getMe,
-} from "@/services/authService";
-
-import {
-  loginAdminAPI,
-  logoutAdminAPI,
-  getAdminMe,
-} from "@/services/adminServer";
-
+import { registerUserAPI, loginUser, logoutUser, getMe, } from "@/services/authService";
+import { loginAdminAPI, logoutAdminAPI, getAdminMe, } from "@/services/adminServer";
 import { resetCart } from "./cartSlice";
 
 /* ================= USER ================= */

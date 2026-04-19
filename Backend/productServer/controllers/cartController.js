@@ -474,23 +474,19 @@ exports.removeCartItem = async (req, res) => {
 };
 
 /* ================= CLEAR CART ================= */
-exports.clearCart = async (req, res) => {
+const clearCart = async (req, res) => {
   try {
-    const userId = req.user?.id;
-
-    if (!userId) {
+    if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const cart = await getOrCreateCart(userId);
+    await Cart.deleteMany({ userId: req.user.id });
 
-    await pool.query(
-      `DELETE FROM cart_items WHERE cart_id=$1`,
-      [cart.id]
-    );
-
-    res.json({ success: true, message: "Cart cleared" });
+    return res.status(200).json({
+      message: "Cart cleared successfully",
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("CLEAR CART ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };

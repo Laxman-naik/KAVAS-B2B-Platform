@@ -8,13 +8,16 @@ import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/s
 const CartPage = () => {
   const dispatch = useDispatch();
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
-
+   const { isAuthenticated } = useSelector((state) => state.auth);
   console.log("CART ITEMS:", cartItems);
 
   /* ---------------- FETCH CART ---------------- */
-  useEffect(() => {
-    dispatch(fetchCart());
-  }, [dispatch]);
+   useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCart());
+    }
+  }, [dispatch, isAuthenticated]);
+
 
   const isUpdating = (id) => loading.update === id;
   const isRemoving = (id) => loading.remove === id;
