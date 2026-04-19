@@ -258,14 +258,6 @@
 
 const pool = require("../config/db");
 
-/* ================= AUTH GUARD ================= */
-const requireUser = (req) => {
-  if (!req.user || !req.user.id) {
-    throw new Error("Unauthorized");
-  }
-  return req.user.id;
-};
-
 /* ================= SUMMARY ================= */
 const calculateSummary = (items) => {
   const subtotal = items.reduce(
@@ -284,10 +276,10 @@ const calculateSummary = (items) => {
   };
 };
 
-/* ================= CART ================= */
+/* ================= CART HELPERS ================= */
 const getOrCreateCart = async (userId) => {
   const existing = await pool.query(
-    `SELECT * FROM carts WHERE user_id = $1 LIMIT 1`,
+    `SELECT * FROM carts WHERE user_id=$1`,
     [userId]
   );
 
@@ -303,7 +295,6 @@ const getOrCreateCart = async (userId) => {
   return created.rows[0];
 };
 
-/* ================= ITEMS ================= */
 const getCartItems = async (cartId) => {
   const result = await pool.query(
     `SELECT
@@ -319,7 +310,7 @@ const getCartItems = async (cartId) => {
       p.price
      FROM cart_items ci
      JOIN products p ON ci.product_id = p.id
-     WHERE ci.cart_id = $1
+     WHERE ci.cart_id=$1
      ORDER BY ci.added_at DESC`,
     [cartId]
   );
@@ -328,31 +319,38 @@ const getCartItems = async (cartId) => {
 };
 
 /* ================= GET CART ================= */
-const getCart = async (req, res) => {
+exports.getCart = async (req, res) => {
   try {
-    const userId = requireUser(req);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const cart = await getOrCreateCart(userId);
     const items = await getCartItems(cart.id);
 
-    const summary = calculateSummary(items);
-
     res.json({
       success: true,
-      cart: { ...cart, items, summary },
+      cart: {
+        ...cart,
+        items,
+        summary: calculateSummary(items),
+      },
     });
   } catch (err) {
-    res.status(401).json({
-      success: false,
-      message: err.message || "Unauthorized",
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* ================= ADD TO CART ================= */
-const addToCart = async (req, res) => {
+exports.addToCart = async (req, res) => {
   try {
-    const userId = requireUser(req);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const {
       productId,
@@ -372,58 +370,52 @@ const addToCart = async (req, res) => {
     const normalizedQty = Math.max(Number(quantity), Number(moq) || 1);
 
     const existing = await pool.query(
-      `SELECT * FROM cart_items WHERE cart_id = $1 AND product_id = $2`,
+      `SELECT * FROM cart_items
+       WHERE cart_id=$1 AND product_id=$2`,
       [cart.id, productId]
     );
 
-    let item;
-
     if (existing.rows.length) {
-      const updated = await pool.query(
+      await pool.query(
         `UPDATE cart_items
          SET quantity = quantity + $1
-         WHERE id = $2
-         RETURNING *`,
+         WHERE id=$2`,
         [normalizedQty, existing.rows[0].id]
       );
-      item = updated.rows[0];
     } else {
-      const inserted = await pool.query(
+      await pool.query(
         `INSERT INTO cart_items
         (cart_id, product_id, variant_id, quantity, price, moq, image_url, added_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)
-        RETURNING *`,
+        VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)`,
         [cart.id, productId, variantId, normalizedQty, price, moq, image_url]
       );
-      item = inserted.rows[0];
     }
 
-    await pool.query(
-      `UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      [cart.id]
-    );
-
     const items = await getCartItems(cart.id);
-    const summary = calculateSummary(items);
 
     res.json({
       success: true,
-      message: "Item added",
-      item,
-      cart: { ...cart, items, summary },
+      message: "Added to cart",
+      cart: {
+        ...cart,
+        items,
+        summary: calculateSummary(items),
+      },
     });
   } catch (err) {
-    res.status(401).json({
-      success: false,
-      message: err.message || "Unauthorized",
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* ================= UPDATE ITEM ================= */
-const updateCartItem = async (req, res) => {
+exports.updateCartItem = async (req, res) => {
   try {
-    const userId = requireUser(req);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const { itemId } = req.params;
     const { quantity } = req.body;
 
@@ -431,8 +423,8 @@ const updateCartItem = async (req, res) => {
 
     const updated = await pool.query(
       `UPDATE cart_items
-       SET quantity = $1
-       WHERE id = $2 AND cart_id = $3
+       SET quantity=$1
+       WHERE id=$2 AND cart_id=$3
        RETURNING *`,
       [Math.max(1, Number(quantity)), itemId, cart.id]
     );
@@ -442,71 +434,63 @@ const updateCartItem = async (req, res) => {
     }
 
     const items = await getCartItems(cart.id);
-    const summary = calculateSummary(items);
 
     res.json({
       success: true,
-      cart: { ...cart, items, summary },
+      cart: {
+        ...cart,
+        items,
+        summary: calculateSummary(items),
+      },
     });
   } catch (err) {
-    res.status(401).json({
-      success: false,
-      message: err.message || "Unauthorized",
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* ================= REMOVE ITEM ================= */
-const removeCartItem = async (req, res) => {
+exports.removeCartItem = async (req, res) => {
   try {
-    const userId = requireUser(req);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const { itemId } = req.params;
 
     const cart = await getOrCreateCart(userId);
 
-    const deleted = await pool.query(
+    await pool.query(
       `DELETE FROM cart_items
-       WHERE id = $1 AND cart_id = $2
-       RETURNING *`,
+       WHERE id=$1 AND cart_id=$2`,
       [itemId, cart.id]
     );
 
-    if (!deleted.rows.length) {
-      return res.status(404).json({ message: "Item not found" });
-    }
-
     res.json({ success: true, message: "Item removed" });
   } catch (err) {
-    res.status(401).json({
-      success: false,
-      message: err.message || "Unauthorized",
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* ================= CLEAR CART ================= */
-const clearCart = async (req, res) => {
+exports.clearCart = async (req, res) => {
   try {
-    const userId = requireUser(req);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const cart = await getOrCreateCart(userId);
 
-    await pool.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cart.id]);
+    await pool.query(
+      `DELETE FROM cart_items WHERE cart_id=$1`,
+      [cart.id]
+    );
 
     res.json({ success: true, message: "Cart cleared" });
   } catch (err) {
-    res.status(401).json({
-      success: false,
-      message: err.message || "Unauthorized",
-    });
+    res.status(500).json({ message: err.message });
   }
-};
-
-/* ================= EXPORT ================= */
-module.exports = {
-  getCart,
-  addToCart,
-  updateCartItem,
-  removeCartItem,
-  clearCart,
 };
