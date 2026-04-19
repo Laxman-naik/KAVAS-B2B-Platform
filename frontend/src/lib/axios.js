@@ -28,61 +28,120 @@
 // authapi.interceptors.request.use(attachToken);
 // productapi.interceptors.request.use(attachToken);
 
+// import axios from "axios";
+
+// const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
+// const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
+
+// /* ================== INSTANCES ================== */
+
+// export const authapi = axios.create({
+//   baseURL: AUTH_BASE_URL,
+//   withCredentials: true,
+// });
+
+// export const productapi = axios.create({
+//   baseURL: PRODUCT_BASE_URL,
+//   withCredentials: true,
+// });
+
+// /* ================== RESPONSE INTERCEPTOR ================== */
+
+// const handleResponseError = async (err, apiInstance) => {
+//   const originalRequest = err.config;
+
+//   if (err.response?.status === 401 && !originalRequest._retry) {
+//     originalRequest._retry = true;
+
+//     try {
+//       await authapi.post("/api/auth/refresh");
+//       return apiInstance(originalRequest);
+//     } catch (refreshError) {
+//       console.error("Refresh failed:", refreshError);
+
+//       // ❌ DON'T redirect to API route
+//       window.location.href = "components/ui/auth/login";
+
+//       return Promise.reject(refreshError);
+//     }
+//   }
+
+//   return Promise.reject(err);
+// };
+
+// /* ================== ATTACH INTERCEPTORS ================== */
+
+// authapi.interceptors.response.use(
+//   (res) => res,
+//   (err) => handleResponseError(err, authapi)
+// );
+
+// productapi.interceptors.response.use(
+//   (res) => res,
+//   (err) => handleResponseError(err, productapi)
+// );
+
 import axios from "axios";
 
 const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
 
-/* ================== INSTANCES ================== */
-
 export const authapi = axios.create({
   baseURL: AUTH_BASE_URL,
-  withCredentials: true, // ✅ IMPORTANT (cookies)
+  withCredentials: true,
 });
 
 export const productapi = axios.create({
   baseURL: PRODUCT_BASE_URL,
-  withCredentials: true, // ✅ IMPORTANT (cookies)
+  withCredentials: true,
 });
 
-/* ================== RESPONSE INTERCEPTOR ================== */
+const setupInterceptors = (apiInstance) => {
+  apiInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
 
-const handleResponseError = async (err, apiInstance) => {
-  const originalRequest = err.config;
+    console.log("TOKEN:", token);
+  console.log("HEADERS:", config.headers);
 
-  // prevent infinite loop
-  if (err.response?.status === 401 && !originalRequest._retry) {
-    originalRequest._retry = true;
-
-    try {
-      // ✅ call refresh using authapi (cookie-based)
-      await authapi.post("/auth/refresh", {}, { withCredentials: true });
-
-      // ✅ retry original request using SAME instance
-      return apiInstance(originalRequest);
-    } catch (refreshError) {
-      console.error("Refresh failed:", refreshError);
-
-      // 🔥 force logout (session expired)
-      window.location.href = "/login";
-
-      return Promise.reject(refreshError);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  }
 
-  return Promise.reject(err);
+    return config;
+  });
+
+  apiInstance.interceptors.response.use(
+    (res) => res,
+    async (err) => {
+      const originalRequest = err.config;
+
+      if (
+        err.response?.status === 401 &&
+        !originalRequest._retry &&
+        !originalRequest.url.includes("/auth/refresh")
+      ) {
+        originalRequest._retry = true;
+
+        try {
+          const res = await authapi.post("/api/auth/refresh");
+          const newToken = res.data?.accessToken;
+
+          if (newToken) {
+            localStorage.setItem("token", newToken);
+          }
+
+          return apiInstance(originalRequest);
+        } catch (refreshError) {
+          localStorage.removeItem("token");
+          window.location.href = "/login";
+          return Promise.reject(refreshError);
+        }
+      }
+
+      return Promise.reject(err);
+    }
+  );
 };
 
-/* ================== ATTACH INTERCEPTORS ================== */
-
-// for auth APIs
-authapi.interceptors.response.use(
-  (res) => res,
-  (err) => handleResponseError(err, authapi)
-);
-
-// for product APIs
-productapi.interceptors.response.use(
-  (res) => res,
-  (err) => handleResponseError(err, productapi)
-);
+setupInterceptors(authapi);
+setupInterceptors(productapi);

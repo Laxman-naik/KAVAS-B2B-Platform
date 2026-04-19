@@ -226,68 +226,57 @@ import {
   getAdminMe,
 } from "@/services/adminServer";
 
-import { resetCart } from "../slices/cartSlice"; // 👈 IMPORTANT
+import { resetCart } from "./cartSlice";
 
 /* ================= USER ================= */
 
-// Register user
+// REGISTER
 export const registerUserThunk = createAsyncThunk(
   "auth/registerUser",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await registerUserAPI(data);
-      return res.data;
+      return await registerUserAPI(data);
     } catch (err) {
       return rejectWithValue(err.response?.data || "Register failed");
     }
   }
 );
 
-// Login user
+// LOGIN
 export const loginUserThunk = createAsyncThunk(
   "auth/loginUser",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await loginUser(data);
-      const token = res.data.token || res.data.accessToken;
-
-      if (token) {
-        localStorage.setItem("token", token);
-      }
-
-      return res.data;
+      return await loginUser(data); // ✅ already res.data
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");
     }
   }
 );
 
-// Load user
+// LOAD USER
 export const loadUserThunk = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await getMe();
-      return res.data;
+      return await getMe();
     } catch (err) {
       return rejectWithValue(err.response?.data || "Not authenticated");
     }
   }
 );
 
-// Logout user
+// LOGOUT
 export const logoutUserThunk = createAsyncThunk(
   "auth/logoutUser",
   async (_, { dispatch }) => {
     try {
       await logoutUser();
     } catch (err) {
-      console.error("Logout API error:", err);
+      console.error(err);
     }
 
-    // 🔥 CRITICAL FIXES
-    localStorage.removeItem("token");
-    dispatch(resetCart()); // instant UI cleanup
+    dispatch(resetCart());
   }
 );
 
@@ -326,7 +315,6 @@ export const logoutAdminThunk = createAsyncThunk(
       console.error(err);
     }
 
-    localStorage.removeItem("token");
     dispatch(resetCart());
   }
 );
@@ -347,7 +335,6 @@ const initialState = {
 const authSlice = createSlice({
   name: "auth",
   initialState,
-
   reducers: {
     clearAuth: (state) => {
       state.user = null;
@@ -359,65 +346,64 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* USER LOGIN */
+      /* LOGIN */
       .addCase(loginUserThunk.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(loginUserThunk.fulfilled, (state, action) => {
-        state.user = action.payload.user;
+        state.user = action.payload?.user || null;
         state.role = "user";
-        state.isAuthenticated = true;
+        state.isAuthenticated = !!action.payload?.user;
         state.loading = false;
       })
       .addCase(loginUserThunk.rejected, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = false;
         state.error = action.payload;
+        state.isAuthenticated = false;
       })
 
       /* LOAD USER */
       .addCase(loadUserThunk.fulfilled, (state, action) => {
-        state.user = action.payload.user;
+        state.user = action.payload?.user || null;
         state.role = "user";
-        state.isAuthenticated = true;
+        state.isAuthenticated = !!action.payload?.user;
+        state.initialized = true;
       })
       .addCase(loadUserThunk.rejected, (state) => {
         state.user = null;
-        state.role = null;
         state.isAuthenticated = false;
+        state.initialized = true;
       })
 
       /* LOGOUT */
       .addCase(logoutUserThunk.fulfilled, (state) => {
         state.user = null;
-        state.role = null;
         state.isAuthenticated = false;
       })
 
       /* ADMIN */
       .addCase(loginAdminThunk.fulfilled, (state, action) => {
-        state.user = action.payload.user;
+        state.user = action.payload?.user || null;
         state.role = "admin";
         state.isAuthenticated = true;
-        state.loading = false;
       })
 
       .addCase(loadAdminThunk.fulfilled, (state, action) => {
-        state.user = action.payload.user;
+        state.user = action.payload?.user || null;
         state.role = "admin";
         state.isAuthenticated = true;
         state.initialized = true;
       })
+
       .addCase(loadAdminThunk.rejected, (state) => {
         state.user = null;
-        state.role = null;
         state.isAuthenticated = false;
         state.initialized = true;
       })
 
       .addCase(logoutAdminThunk.fulfilled, (state) => {
         state.user = null;
-        state.role = null;
         state.isAuthenticated = false;
       });
   },
