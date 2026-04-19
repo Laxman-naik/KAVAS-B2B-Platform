@@ -100,8 +100,8 @@ const setupInterceptors = (apiInstance) => {
   apiInstance.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
 
-    console.log("TOKEN:", token);
-  console.log("HEADERS:", config.headers);
+  //   console.log("TOKEN:", token);
+  // console.log("HEADERS:", config.headers);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

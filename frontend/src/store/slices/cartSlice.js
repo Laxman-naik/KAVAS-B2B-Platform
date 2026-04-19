@@ -160,15 +160,37 @@ const normalizeError = (error) =>
 
 /* ================= THUNKS ================= */
 
+// export const fetchCart = createAsyncThunk(
+//   "cart/fetchCart",
+//   async (_, thunkAPI) => {
+//     try {
+//       const res = await getCart();
+//       return normalizeCart(res);
+//     } catch (error) {
+//       console.error("FETCH CART ERROR:", error);
+//       return thunkAPI.rejectWithValue(normalizeError(error));
+//     }
+//   }
+// );
+
 export const fetchCart = createAsyncThunk(
   "cart/fetchCart",
   async (_, thunkAPI) => {
+    const token = localStorage.getItem("token");
+
+    console.log(token)
+
+    if (!token) {
+      return thunkAPI.rejectWithValue("No token");
+    }
+
     try {
       const res = await getCart();
-      return normalizeCart(res);
+      return res.data.cart.items;
     } catch (error) {
-      console.error("FETCH CART ERROR:", error);
-      return thunkAPI.rejectWithValue(normalizeError(error));
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
