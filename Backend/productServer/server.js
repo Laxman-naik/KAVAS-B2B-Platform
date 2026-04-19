@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const pool = require("./config/db");
+const cookieParser = require("cookie-parser");
 
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
@@ -12,6 +13,7 @@ const searchRoutes = require("./routes/searchRoutes");
 
 const app = express();
 
+app.use(cookieParser());
 app.use(express.json());
 
 app.use(
