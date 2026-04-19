@@ -474,24 +474,23 @@ exports.removeCartItem = async (req, res) => {
 };
 
 /* ================= CLEAR CART ================= */
-exports.clearCart = async (req, res) => {
+ exports.clearCart = async (req, res) => {
   try {
-    const userId = req.user?.id || req.user?.user_id || req.user?._id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log("CLEAR CART FOR USER:", userId);
-
-    const result = await Cart.destroy({
-      where: { user_id: userId },
-    });
+    await pool.query(
+      "DELETE FROM carts WHERE user_id = $1",
+      [userId]
+    );
 
     return res.status(200).json({
       message: "Cart cleared successfully",
-      deleted: result,
     });
+
   } catch (err) {
     console.error("CLEAR CART ERROR:", err);
 
