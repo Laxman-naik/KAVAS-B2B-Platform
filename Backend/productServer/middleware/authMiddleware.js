@@ -71,11 +71,11 @@
 
 // module.exports = authMiddleware;
 
-const jwt = require("jsonwebtoken");
-
 const authMiddleware = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
+
+    console.log("AUTH HEADER:", authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token" });
@@ -83,13 +83,17 @@ const authMiddleware = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
+    console.log("TOKEN RECEIVED:", token);
+
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+
+    console.log("DECODED:", decoded);
 
     req.user = decoded;
     next();
   } catch (err) {
-    console.log("AUTH ERROR:", err.message);
-    return res.status(401).json({ message: "Invalid token" });
+    console.log("AUTH ERROR FULL:", err);
+    return res.status(401).json({ message: err.message });
   }
 };
 
