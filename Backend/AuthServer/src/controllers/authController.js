@@ -217,7 +217,7 @@ const redis = require("../config/redis");
 
 const REFRESH_PREFIX = "refresh:user:";
 
-// ================== REGISTER ==================
+/* ================= REGISTER ================= */
 exports.register = async (req, res) => {
   try {
     const { full_name, email, password, phone, role } = req.body;
@@ -226,19 +226,18 @@ exports.register = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO users (full_name, email, password_hash, phone, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, full_name, email, phone, role`,
+       VALUES ($1,$2,$3,$4,$5)
+       RETURNING id, full_name, email, role`,
       [full_name, email, hashed, phone, role || "buyer"]
     );
 
-    res.json({ user: result.rows[0] });
+    return res.json({ user: result.rows[0] });
   } catch (err) {
-    console.error("REGISTER ERROR:", err);
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// ================== LOGIN ==================
+/* ================= LOGIN ================= */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -250,15 +249,10 @@ exports.login = async (req, res) => {
 
     const user = result.rows[0];
 
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password_hash);
-
-    if (!match) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
@@ -270,24 +264,6 @@ exports.login = async (req, res) => {
       7 * 24 * 60 * 60
     );
 
-    // 🔥 FORCE cookie settings (critical fix)
-    const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    };
-
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     return res.json({
       user: {
         id: user.id,
@@ -295,64 +271,54 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
+      accessToken,
+      refreshToken,
     });
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
-// ================== REFRESH TOKEN ==================
+/* ================= REFRESH ================= */
 exports.refreshTokenHandler = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const { refreshToken } = req.body;
 
-    if (!token) {
+    if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token" });
     }
 
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-    } catch (err) {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+    } catch {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
     const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
 
-    if (!stored || stored !== token) {
-      return res.status(403).json({ message: "Invalid session" });
+    if (!stored || stored !== refreshToken) {
+      return res.status(403).json({ message: "Session expired" });
     }
 
     const newAccessToken = generateAccessToken({ id: decoded.id });
 
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    return res.json({ message: "Token refreshed" });
+    return res.json({ accessToken: newAccessToken });
   } catch (err) {
-    console.error("REFRESH ERROR:", err);
-
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
-
-    return res.status(403).json({ message: "Session expired" });
+    return res.status(500).json({ message: "Refresh failed" });
   }
 };
 
-// ================== GET ME ==================
+/* ================= GET ME (JWT HEADER ONLY) ================= */
 exports.getMe = async (req, res) => {
   try {
-    const token = req.cookies?.accessToken;
+    const authHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!authHeader) {
       return res.status(401).json({ user: null });
     }
+
+    const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
@@ -361,42 +327,26 @@ exports.getMe = async (req, res) => {
       [decoded.id]
     );
 
-    const user = result.rows[0];
-
-    return res.json({ user });
-  } catch (err) {
+    return res.json({ user: result.rows[0] });
+  } catch {
     return res.status(401).json({ user: null });
   }
 };
 
-// ================== LOGOUT ==================
+/* ================= LOGOUT ================= */
 exports.logout = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const { refreshToken } = req.body;
 
-    if (token) {
-      const decoded = jwt.decode(token);
+    if (refreshToken) {
+      const decoded = jwt.decode(refreshToken);
       if (decoded?.id) {
         await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
       }
     }
 
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    });
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-    });
-
-    res.json({ message: "Logged out" });
-  } catch (err) {
-    res.status(500).json({ message: "Logout failed" });
+    return res.json({ message: "Logged out" });
+  } catch {
+    return res.status(500).json({ message: "Logout failed" });
   }
 };

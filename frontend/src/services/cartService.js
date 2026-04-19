@@ -1,8 +1,8 @@
 import { productapi } from "../lib/axios";
 
 /* CART */
-export const getCart = () =>
-  productapi.get("/api/cart");
+// export const getCart = () =>
+//   productapi.get("/api/cart");
 
 export const getCartCount = () =>
   productapi.get("/api/cart/count");
@@ -24,3 +24,15 @@ export const clearCartAPI = () =>
 
 export const mergeCartAPI = (items) =>
   productapi.post("/api/cart/merge", { items });
+
+export const getCart = async () => {
+  const token = localStorage.getItem("accessToken");
+
+  const res = await productapi.get("/api/cart", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};
