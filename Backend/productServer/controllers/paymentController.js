@@ -104,88 +104,54 @@ exports.createCheckout = async (req, res) => {
 /* ================= VERIFY PAYMENT ================= */
 
 exports.verifyPayment = async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  } = req.body;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RZP_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest("hex");
+
+  if (expectedSignature !== razorpay_signature) {
+    return res.status(400).json({ message: "Invalid payment" });
+  }
+
   const client = await pool.connect();
 
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-    } = req.body;
-
-    const isValid = razorpayService.verifyPayment({
-      order_id: razorpay_order_id,
-      payment_id: razorpay_payment_id,
-      signature: razorpay_signature,
-    });
-
-    if (!isValid) {
-      return res.status(400).json({ message: "Invalid payment" });
-    }
-
     await client.query("BEGIN");
 
-    // lock transaction
-    const txnRes = await client.query(
-      `SELECT * FROM transactions
-       WHERE razorpay_order_id = $1
-       FOR UPDATE`,
+    // 1. update order status
+    const orderRes = await client.query(
+      `UPDATE orders 
+       SET status = 'paid'
+       WHERE id = $1
+       RETURNING id`,
       [razorpay_order_id]
     );
 
-    if (!txnRes.rows.length) {
-      throw new Error("Transaction not found");
-    }
+    const orderId = orderRes.rows[0].id;
 
-    const txn = txnRes.rows[0];
-
-    if (txn.status === "paid") {
-      await client.query("ROLLBACK");
-      return res.json({ message: "Already processed" });
-    }
-
-    // 1. Mark transaction paid
-    await client.query(
-      `UPDATE transactions
-       SET status = 'paid',
-           razorpay_payment_id = $1
-       WHERE id = $2`,
-      [razorpay_payment_id, txn.id]
-    );
-
-    // 2. Update order status
-    await client.query(
-      `UPDATE orders
-       SET status = 'paid'
-       WHERE id = $1`,
-      [txn.order_id]
-    );
-
+    // 2. insert status history
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
        VALUES ($1, 'paid')`,
-      [txn.order_id]
-    );
-
-    // 3. Clear cart
-    await client.query(
-      `DELETE FROM cart_items
-       WHERE cart_id = (
-         SELECT id FROM carts WHERE user_id = $1
-       )`,
-      [txn.user_id]
+      [orderId]
     );
 
     await client.query("COMMIT");
 
-    res.json({
+    return res.json({
       success: true,
-      message: "Payment verified",
+      message: "Payment verified, order confirmed",
     });
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("verifyPayment error:", err);
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Payment update failed" });
   } finally {
     client.release();
   }

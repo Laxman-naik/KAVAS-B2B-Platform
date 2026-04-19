@@ -4,20 +4,22 @@ import { useDispatch, useSelector } from "react-redux";
 import { ShoppingCart, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/slices/cartSlice";
+import { useRouter } from "next/navigation";
+import { createOrderFromCart } from "@/store/slices/orderSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
-   const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth);
   console.log("CART ITEMS:", cartItems);
+  const router = useRouter();
 
   /* ---------------- FETCH CART ---------------- */
-   useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchCart());
     }
   }, [dispatch, isAuthenticated]);
-
 
   const isUpdating = (id) => loading.update === id;
   const isRemoving = (id) => loading.remove === id;
@@ -52,9 +54,9 @@ const CartPage = () => {
   };
 
   const handleClear = async () => {
-  await dispatch(clearCart());
-  dispatch(fetchCart());
-};
+    await dispatch(clearCart());
+    dispatch(fetchCart());
+  };
 
   /* ---------------- TOTALS ---------------- */
 
@@ -76,6 +78,13 @@ const CartPage = () => {
     (item) => item.quantity < (item.moq || 1)
   );
 
+  const canCheckout =
+    isAuthenticated &&
+    !loading.fetch &&
+    !loading.clear &&
+    cartItems.length > 0 &&
+    !hasInvalidMoq;
+
   /* ---------------- BUTTON STATES ---------------- */
 
   const getQty = (item) => item.quantity || item.moq || 1;
@@ -83,6 +92,45 @@ const CartPage = () => {
   const isIncreaseDisabled = () => loading;
 
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
+
+  const handleCheckout = async () => {
+  if (!isAuthenticated) {
+    alert("Login required");
+    return;
+  }
+
+  if (cartItems.length === 0) {
+    alert("Cart is empty");
+    return;
+  }
+
+  if (hasInvalidMoq) {
+    alert("Fix MOQ first");
+    return;
+  }
+
+  try {
+    const idempotencyKey = crypto.randomUUID();
+
+    const res = await dispatch(
+      createOrderFromCart({
+        idempotency_key: idempotencyKey,
+      })
+    ).unwrap();
+
+    const orderId = res?.orders?.[0]?.id;
+
+    if (!orderId) {
+      alert("Order created but ID missing");
+      return;
+    }
+
+    router.push(`/checkout/${orderId}`);
+  } catch (err) {
+    console.error("Checkout error:", err);
+    alert(err || "Order creation failed");
+  }
+};
 
 
   return (
@@ -203,8 +251,8 @@ const CartPage = () => {
               onClick={handleClear}
               disabled={loading.clear || cartItems.length === 0}
               className={`w-full sm:w-auto flex items-center justify-center gap-2 border border-red-500 px-4 py-2 rounded-md text-sm ${loading.clear || cartItems.length === 0
-                  ? "text-red-300 cursor-not-allowed"
-                  : "text-red-500 hover:bg-red-50"
+                ? "text-red-300 cursor-not-allowed"
+                : "text-red-500 hover:bg-red-50"
                 }`}
             >
               <Trash2 size={16} />
@@ -245,7 +293,7 @@ const CartPage = () => {
             <span>₹{totals.total.toFixed(2)}</span>
           </div>
 
-          <Link href="/checkout">
+          {/* <Link href="/checkout">
             <button
               disabled={hasInvalidMoq || loading || cartItems.length === 0}
               className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${hasInvalidMoq || loading || cartItems.length === 0
@@ -255,7 +303,18 @@ const CartPage = () => {
             >
               Proceed to Checkout →
             </button>
-          </Link>
+          </Link> */}
+
+          <button
+            onClick={handleCheckout}
+            disabled={!canCheckout}
+            className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${!canCheckout
+                ? "bg-orange-300 text-white cursor-not-allowed"
+                : "bg-orange-500 hover:bg-orange-600 text-white"
+              }`}
+          >
+            Proceed to Checkout →
+          </button>
 
           <Link href="/products">
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">

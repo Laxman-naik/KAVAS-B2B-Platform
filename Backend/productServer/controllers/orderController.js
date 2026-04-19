@@ -243,50 +243,61 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
-const createOrder = async (req, res) => {
+exports.createOrder = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const userId = req.user.id;
 
-    const cart = await getOrCreateCart(userId);
-    const items = await getCartItems(cart.id);
-    const summary = calculateSummary(items);
+    const {
+      items,
+      total_amount,
+      shipping_address_id,
+      supplier_org_id,
+      idempotency_key,
+    } = req.body;
 
-    if (!items.length) {
-      return res.status(400).json({ message: "Cart is empty" });
-    }
+    await client.query("BEGIN");
 
-    // 1. Create order
-    const orderRes = await pool.query(
-      `INSERT INTO orders (supplier_org_id, total_amount, status)
-       VALUES ($1, $2, 'pending')
-       RETURNING *`,
-      [userId, summary.total]
+    // 1. create order
+    const orderRes = await client.query(
+      `INSERT INTO orders 
+      (supplier_org_id, total_amount, status, shipping_address_id, idempotency_key)
+      VALUES ($1, $2, 'pending', $3, $4)
+      RETURNING *`,
+      [supplier_org_id, total_amount, shipping_address_id, idempotency_key]
     );
 
     const order = orderRes.rows[0];
 
-    // 2. Insert order items
-    for (let item of items) {
-      await pool.query(
-        `INSERT INTO order_items (order_id, product_id, quantity, price)
-         VALUES ($1, $2, $3, $4)`,
+    // 2. insert order items
+    for (const item of items) {
+      await client.query(
+        `INSERT INTO order_items 
+        (order_id, product_id, quantity, price)
+        VALUES ($1, $2, $3, $4)`,
         [order.id, item.product_id, item.quantity, item.price]
       );
     }
 
-    // 3. Add status history
-    await pool.query(
+    // 3. status history
+    await client.query(
       `INSERT INTO order_status_history (order_id, status)
        VALUES ($1, 'pending')`,
       [order.id]
     );
 
-    res.json({
+    await client.query("COMMIT");
+
+    return res.json({
       success: true,
       order,
     });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Order creation failed" });
+  } finally {
+    client.release();
   }
 };
