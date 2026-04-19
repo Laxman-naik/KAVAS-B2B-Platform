@@ -152,7 +152,7 @@ import {
 /* ================= HELPERS ================= */
 
 const normalizeCart = (data) => {
-  return data?.cart?.items || data?.items || [];
+  return data?.cart?.items || [];
 };
 
 const normalizeError = (error) =>
@@ -222,6 +222,7 @@ export const clearCart = createAsyncThunk(
       await clearCartAPI();
       return [];
     } catch (error) {
+      console.log("CLEAR CART ERROR:", error);
       return thunkAPI.rejectWithValue(normalizeError(error));
     }
   }
