@@ -96,6 +96,50 @@ exports.login = async (req, res) => {
 };
 
 // ================== REFRESH TOKEN ==================
+// exports.refreshTokenHandler = async (req, res) => {
+//   try {
+//     const token = req.cookies?.refreshToken;
+
+//     if (!token) {
+//       return res.status(401).json({ message: "No refresh token" });
+//     }
+
+//     let decoded;
+//     try {
+//       decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+//     } catch (err) {
+//       return res.status(403).json({ message: "Invalid refresh token" });
+//     }
+
+//     const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
+
+//     if (!stored || stored !== token) {
+//       return res.status(403).json({ message: "Invalid session" });
+//     }
+
+//     const newAccessToken = generateAccessToken({ id: decoded.id });
+
+//     const isProd = process.env.NODE_ENV === "production";
+
+//     res.cookie("accessToken", newAccessToken, {
+//       httpOnly: true,
+//       secure: isProd,
+//       sameSite: isProd ? "none" : "lax",
+//       path: "/",
+//       maxAge: 15 * 60 * 1000,
+//     });
+
+//     res.json({ message: "Token refreshed" });
+//   } catch (err) {
+//     console.error("REFRESH ERROR:", err);
+
+//     res.clearCookie("accessToken");
+//     res.clearCookie("refreshToken");
+
+//     res.status(403).json({ message: "Session expired" });
+//   }
+// };
+
 exports.refreshTokenHandler = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
@@ -129,14 +173,14 @@ exports.refreshTokenHandler = async (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    res.json({ message: "Token refreshed" });
+    return res.json({ message: "Token refreshed" });
   } catch (err) {
     console.error("REFRESH ERROR:", err);
 
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
-    res.status(403).json({ message: "Session expired" });
+    return res.status(403).json({ message: "Session expired" });
   }
 };
 
