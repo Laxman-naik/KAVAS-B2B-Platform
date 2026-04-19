@@ -474,7 +474,7 @@ exports.removeCartItem = async (req, res) => {
 };
 
 /* ================= CLEAR CART ================= */
-const clearCart = async (req, res) => {
+exports.clearCart = async (req, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
