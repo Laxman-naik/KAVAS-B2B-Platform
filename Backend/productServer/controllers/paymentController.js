@@ -1,36 +1,45 @@
 const pool = require("../config/db");
 const razorpayService = require("../services/razorpayService");
-const { createOrderFromCartInternal } = require("../services/orderService");
 const crypto = require("crypto");
 
 exports.createCheckout = async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const { amount } = req.body;
+    const { orderId } = req.body;
 
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ message: "Invalid amount" });
+    // 1. Get order
+    const orderRes = await pool.query(
+      `SELECT * FROM orders WHERE id = $1`,
+      [orderId]
+    );
+
+    if (!orderRes.rows.length) {
+      return res.status(404).json({ message: "Order not found" });
     }
 
-    // 🔴 1. Create Razorpay order ONLY
-    const razorpayOrder = await razorpayService.createOrder(amount);
+    const order = orderRes.rows[0];
 
-    // 🔴 2. Store transaction (no DB order creation here)
+    // 2. Create Razorpay order (use DB amount)
+    const razorpayOrder = await razorpayService.createOrder(
+      order.total_amount * 100 // convert to paise
+    );
+
+    // 3. Store transaction with orderId
     await pool.query(
       `INSERT INTO transactions 
-       (user_id, razorpay_order_id, amount, status)
-       VALUES ($1, $2, $3, $4)`,
-      [userId, razorpayOrder.id, amount, "created"]
+       (user_id, order_id, razorpay_order_id, amount, status)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, order.id, razorpayOrder.id, razorpayOrder.amount, "created"]
     );
 
     res.json({
       key: process.env.RAZORPAY_KEY_ID,
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
+      dbOrderId: order.id,
     });
 
   } catch (err) {
-    console.error("createCheckout error:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -47,9 +56,7 @@ exports.verifyPayment = async (req, res) => {
       razorpay_signature,
     } = req.body;
 
-    const { id: userId } = req.user;
-
-    // 🔴 1. Verify signature
+    // 1. Verify signature
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RZP_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -61,7 +68,7 @@ exports.verifyPayment = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 🔴 2. Find transaction
+    // 2. Get transaction
     const txRes = await client.query(
       `SELECT * FROM transactions WHERE razorpay_order_id = $1`,
       [razorpay_order_id]
@@ -73,7 +80,7 @@ exports.verifyPayment = async (req, res) => {
 
     const tx = txRes.rows[0];
 
-    // 🔴 3. Mark transaction paid
+    // 3. Mark transaction paid
     await client.query(
       `UPDATE transactions 
        SET status = 'paid', razorpay_payment_id = $1
@@ -81,42 +88,36 @@ exports.verifyPayment = async (req, res) => {
       [razorpay_payment_id, razorpay_order_id]
     );
 
-    // 🔴 4. Mark ALL user pending orders as confirmed
+    // 4. Update ONLY this order
     await client.query(
       `UPDATE orders 
        SET status = 'confirmed'
-       WHERE status = 'pending'
-       AND shipping_address_id IN (
-         SELECT id FROM addresses WHERE user_id = $1
-       )`,
-      [userId]
+       WHERE id = $1`,
+      [tx.order_id]
     );
 
-    // 🔴 5. Insert history
+    // 5. Insert history
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
-       SELECT id, 'confirmed' FROM orders WHERE status = 'confirmed'`
+       VALUES ($1, 'confirmed')`,
+      [tx.order_id]
     );
 
-    // 🔴 6. Clear cart
+    // 6. Clear cart
     await client.query(
       `DELETE FROM cart_items 
        WHERE cart_id IN (
          SELECT id FROM carts WHERE user_id = $1
        )`,
-      [userId]
+      [tx.user_id]
     );
 
     await client.query("COMMIT");
 
-    res.json({
-      success: true,
-      message: "Payment verified and order confirmed",
-    });
+    res.json({ success: true });
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("verifyPayment error:", err);
     res.status(500).json({ message: err.message });
   } finally {
     client.release();

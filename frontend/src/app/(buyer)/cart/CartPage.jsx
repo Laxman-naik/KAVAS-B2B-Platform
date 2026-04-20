@@ -7,6 +7,7 @@ import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/s
 import { useRouter } from "next/navigation";
 import { createOrderFromCart } from "@/store/slices/orderSlice";
 import { loadRazorpay } from "@/lib/razorpay";
+import { createCheckout, verifyPayment } from "@/store/slices/paymentSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -150,7 +151,6 @@ const handleCheckout = async () => {
   }
 
   try {
-    // 🔴 ensure Razorpay script loaded
     const isLoaded = await loadRazorpay();
     if (!isLoaded) {
       alert("Razorpay failed to load");
@@ -159,24 +159,24 @@ const handleCheckout = async () => {
 
     const idempotencyKey = crypto.randomUUID();
 
-    // 🔴 1. Create order
+    // ✅ 1. Create order
     const res = await dispatch(
       createOrderFromCart({ idempotency_key: idempotencyKey })
     ).unwrap();
 
-    const totalAmount = res?.totalAmount;
+    const orderId = res?.orders?.[0]?.id;
 
-    if (!totalAmount) {
-      alert("Total amount missing");
+    if (!orderId) {
+      alert("Order ID missing");
       return;
     }
 
-    // 🔴 2. Create Razorpay order
+    // ✅ 2. Create payment using orderId (NOT amount)
     const paymentRes = await dispatch(
-      createCheckout({ amount: totalAmount })
+      createCheckout({ orderId })
     ).unwrap();
 
-    // 🔴 3. OPEN IMMEDIATELY
+    // ✅ 3. Open Razorpay
     const rzp = new window.Razorpay({
       key: paymentRes.key,
       amount: paymentRes.amount,
@@ -188,12 +188,6 @@ const handleCheckout = async () => {
 
         alert("Payment successful");
         router.push("/order-success");
-      },
-
-      modal: {
-        ondismiss: function () {
-          console.log("Payment popup closed");
-        },
       },
     });
 
