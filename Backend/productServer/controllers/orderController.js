@@ -4,7 +4,7 @@ exports.createOrderFromCart = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    // 🔴 1. HARD AUTH GUARD
+    /* 1. AUTH GUARD */
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -18,7 +18,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 🔴 2. ADDRESS CHECK
+    /* 2. ADDRESS CHECK */
     const addressRes = await client.query(
       `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
       [userId]
@@ -33,7 +33,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const shippingAddressId = addressRes.rows[0].id;
 
-    // 🔴 3. IDEMPOTENCY CHECK
+    /* 3. IDEMPOTENCY CHECK */
     const existingOrder = await client.query(
       `SELECT * FROM orders WHERE idempotency_key = $1`,
       [idempotency_key]
@@ -47,7 +47,7 @@ exports.createOrderFromCart = async (req, res) => {
       });
     }
 
-    // 🔴 4. GET CART
+    /* 4. GET CART */
     const cartRes = await client.query(
       `SELECT id FROM carts WHERE user_id = $1`,
       [userId]
@@ -59,7 +59,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const cartId = cartRes.rows[0].id;
 
-    // 🔴 5. GET CART ITEMS (FIXED QUERY ✅)
+    /* 5. GET CART ITEMS */
     const itemsRes = await client.query(
       `SELECT 
          ci.*, 
@@ -78,7 +78,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const items = itemsRes.rows;
 
-    // 🔴 6. VALIDATE ITEMS (CRITICAL)
+    /* 6. VALIDATION */
     for (const item of items) {
       if (!item.product_id) {
         throw new Error("Invalid product in cart");
@@ -103,7 +103,7 @@ exports.createOrderFromCart = async (req, res) => {
       }
     }
 
-    // 🔴 7. GROUP BY SUPPLIER
+    /* 7. GROUP BY SUPPLIER */
     const grouped = {};
 
     for (const item of items) {
@@ -116,16 +116,20 @@ exports.createOrderFromCart = async (req, res) => {
       grouped[orgId].push(item);
     }
 
+    /* 8. CREATE ORDERS */
     const createdOrders = [];
+    let grandTotal = 0;
 
-    // 🔴 8. CREATE ORDERS
     for (const supplierOrgId of Object.keys(grouped)) {
       const supplierItems = grouped[supplierOrgId];
 
       const totalAmount = supplierItems.reduce(
-        (sum, item) => sum + Number(item.price) * Number(item.quantity),
+        (sum, item) =>
+          sum + Number(item.price) * Number(item.quantity),
         0
       );
+
+      grandTotal += totalAmount;
 
       const orderRes = await client.query(
         `INSERT INTO orders 
@@ -133,7 +137,7 @@ exports.createOrderFromCart = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *`,
         [
-          supplierOrgId, // ✅ guaranteed valid now
+          supplierOrgId,
           totalAmount,
           "pending",
           idempotency_key,
@@ -143,10 +147,11 @@ exports.createOrderFromCart = async (req, res) => {
 
       const order = orderRes.rows[0];
 
-      // 🔴 9. INSERT ORDER ITEMS + UPDATE STOCK
+      /* 9. ORDER ITEMS + STOCK UPDATE */
       for (const item of supplierItems) {
         await client.query(
-          `INSERT INTO order_items (order_id, product_id, quantity, price)
+          `INSERT INTO order_items 
+           (order_id, product_id, quantity, price)
            VALUES ($1, $2, $3, $4)`,
           [order.id, item.product_id, item.quantity, item.price]
         );
@@ -159,7 +164,7 @@ exports.createOrderFromCart = async (req, res) => {
         );
       }
 
-      // 🔴 10. ORDER HISTORY
+      /* 10. STATUS HISTORY */
       await client.query(
         `INSERT INTO order_status_history (order_id, status)
          VALUES ($1, $2)`,
@@ -169,17 +174,13 @@ exports.createOrderFromCart = async (req, res) => {
       createdOrders.push(order);
     }
 
-    // // 🔴 11. CLEAR CART
-    // await client.query(
-    //   `DELETE FROM cart_items WHERE cart_id = $1`,
-    //   [cartId]
-    // );
-
     await client.query("COMMIT");
 
+    /* 11. RESPONSE */
     return res.status(201).json({
       message: "Orders created successfully",
       orders: createdOrders,
+      totalAmount: grandTotal, 
     });
 
   } catch (err) {

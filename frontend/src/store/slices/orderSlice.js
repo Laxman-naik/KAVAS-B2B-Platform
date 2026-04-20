@@ -23,10 +23,13 @@ export const createOrderFromCart = createAsyncThunk(
       const res = await createOrderFromCartAPI(data);
       return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err?.response?.data?.message || err.message
-      );
-    }
+  console.error("THUNK ERROR:", err);
+  console.error("SERVER ERROR:", err?.response?.data);
+
+  return thunkAPI.rejectWithValue(
+    err?.response?.data?.message || err.message
+  );
+}
   }
 );
 

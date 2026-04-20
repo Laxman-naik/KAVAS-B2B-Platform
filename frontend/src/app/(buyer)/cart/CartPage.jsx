@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/slices/cartSlice";
 import { useRouter } from "next/navigation";
 import { createOrderFromCart } from "@/store/slices/orderSlice";
+import { loadRazorpay } from "@/lib/razorpay";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -93,7 +94,46 @@ const CartPage = () => {
 
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
 
-  const handleCheckout = async () => {
+//   const handleCheckout = async () => {
+//   if (!isAuthenticated) {
+//     alert("Login required");
+//     return;
+//   }
+
+//   if (cartItems.length === 0) {
+//     alert("Cart is empty");
+//     return;
+//   }
+
+//   if (hasInvalidMoq) {
+//     alert("Fix MOQ first");
+//     return;
+//   }
+
+//   try {
+//     const idempotencyKey = crypto.randomUUID();
+
+//     const res = await dispatch(
+//       createOrderFromCart({
+//         idempotency_key: idempotencyKey,
+//       })
+//     ).unwrap();
+
+//     const orderId = res?.orders?.[0]?.id;
+
+//     if (!orderId) {
+//       alert("Order created but ID missing");
+//       return;
+//     }
+
+//     router.push(`/checkout}`);
+//   } catch (err) {
+//     console.error("Checkout error:", err);
+//     alert(err || "Order creation failed");
+//   }
+// };
+
+const handleCheckout = async () => {
   if (!isAuthenticated) {
     alert("Login required");
     return;
@@ -110,25 +150,58 @@ const CartPage = () => {
   }
 
   try {
-    const idempotencyKey = crypto.randomUUID();
-
-    const res = await dispatch(
-      createOrderFromCart({
-        idempotency_key: idempotencyKey,
-      })
-    ).unwrap();
-
-    const orderId = res?.orders?.[0]?.id;
-
-    if (!orderId) {
-      alert("Order created but ID missing");
+    // 🔴 ensure Razorpay script loaded
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) {
+      alert("Razorpay failed to load");
       return;
     }
 
-    router.push(`/checkout/${orderId}`);
+    const idempotencyKey = crypto.randomUUID();
+
+    // 🔴 1. Create order
+    const res = await dispatch(
+      createOrderFromCart({ idempotency_key: idempotencyKey })
+    ).unwrap();
+
+    const totalAmount = res?.totalAmount;
+
+    if (!totalAmount) {
+      alert("Total amount missing");
+      return;
+    }
+
+    // 🔴 2. Create Razorpay order
+    const paymentRes = await dispatch(
+      createCheckout({ amount: totalAmount })
+    ).unwrap();
+
+    // 🔴 3. OPEN IMMEDIATELY
+    const rzp = new window.Razorpay({
+      key: paymentRes.key,
+      amount: paymentRes.amount,
+      currency: "INR",
+      order_id: paymentRes.orderId,
+
+      handler: async function (response) {
+        await dispatch(verifyPayment(response));
+
+        alert("Payment successful");
+        router.push("/order-success");
+      },
+
+      modal: {
+        ondismiss: function () {
+          console.log("Payment popup closed");
+        },
+      },
+    });
+
+    rzp.open();
+
   } catch (err) {
     console.error("Checkout error:", err);
-    alert(err || "Order creation failed");
+    alert(err?.message || "Checkout failed");
   }
 };
 
@@ -293,18 +366,6 @@ const CartPage = () => {
             <span>₹{totals.total.toFixed(2)}</span>
           </div>
 
-          {/* <Link href="/checkout">
-            <button
-              disabled={hasInvalidMoq || loading || cartItems.length === 0}
-              className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${hasInvalidMoq || loading || cartItems.length === 0
-                ? "bg-orange-300 text-white cursor-not-allowed"
-                : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}
-            >
-              Proceed to Checkout →
-            </button>
-          </Link> */}
-
           <button
             onClick={handleCheckout}
             disabled={!canCheckout}
@@ -312,9 +373,7 @@ const CartPage = () => {
                 ? "bg-orange-300 text-white cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}
-          >
-            Proceed to Checkout →
-          </button>
+          > Proceed to Checkout →</button>
 
           <Link href="/products">
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
