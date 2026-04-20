@@ -98,9 +98,11 @@ exports.verifyPayment = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 2. Get transaction
+    // 2. Lock transaction row (IMPORTANT)
     const txRes = await client.query(
-      `SELECT * FROM transactions WHERE razorpay_order_id = $1`,
+      `SELECT * FROM transactions 
+       WHERE razorpay_order_id = $1
+       FOR UPDATE`,
       [razorpay_order_id]
     );
 
@@ -110,36 +112,49 @@ exports.verifyPayment = async (req, res) => {
 
     const tx = txRes.rows[0];
 
-    // 3. Mark transaction paid
+    // 3. IDEMPOTENCY CHECK (critical)
+    if (tx.status === "paid") {
+      await client.query("ROLLBACK");
+      return res.json({ success: true, message: "Already processed" });
+    }
+
+    // 4. Update transaction
     await client.query(
-      `UPDATE transactions 
-       SET status = 'paid', razorpay_payment_id = $1
+      `UPDATE transactions
+       SET status = 'paid',
+           razorpay_payment_id = $1
        WHERE razorpay_order_id = $2`,
       [razorpay_payment_id, razorpay_order_id]
     );
 
-    // 4. Update ONLY this order
+    // 5. Update order safely
     await client.query(
-      `UPDATE orders 
-       SET status = 'confirmed'
-       WHERE id = $1`,
+      `UPDATE orders
+       SET status = 'confirmed',
+           payment_status = 'paid'
+       WHERE id = $1 AND status != 'confirmed'`,
       [tx.order_id]
     );
 
-    // 5. Insert history
+    // 6. Insert history (avoid duplicates)
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
-       VALUES ($1, 'confirmed')`,
+       SELECT $1, 'confirmed'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM order_status_history 
+         WHERE order_id = $1 AND status = 'confirmed'
+       )`,
       [tx.order_id]
     );
 
-    // 6. Clear cart
+    // 7. Cart cleanup (safer version)
     await client.query(
-      `DELETE FROM cart_items 
-       WHERE cart_id IN (
-         SELECT id FROM carts WHERE user_id = $1
-       )`,
-      [tx.user_id]
+      `DELETE FROM cart_items ci
+       USING carts c, orders o
+       WHERE ci.cart_id = c.id
+       AND o.shipping_address_id = c.user_id
+       AND o.id = $1`,
+      [tx.order_id]
     );
 
     await client.query("COMMIT");
@@ -157,6 +172,8 @@ exports.verifyPayment = async (req, res) => {
 /* ================= WEBHOOK ================= */
 
 exports.handleWebhook = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const signature = req.headers["x-razorpay-signature"];
 
@@ -172,14 +189,51 @@ exports.handleWebhook = async (req, res) => {
     const event = req.body;
 
     if (event.event === "payment.captured") {
-      const paymentEntity = event.payload.payment.entity;
+      const payment = event.payload.payment.entity;
 
-      console.log("Webhook payment captured:", paymentEntity.id);
+      await client.query("BEGIN");
+
+      // find transaction
+      const txRes = await client.query(
+        `SELECT * FROM transactions
+         WHERE razorpay_payment_id = $1`,
+        [payment.id]
+      );
+
+      if (!txRes.rows.length) {
+        await client.query("ROLLBACK");
+        return res.json({ status: "ignored" });
+      }
+
+      const tx = txRes.rows[0];
+
+      if (tx.status === "paid") {
+        await client.query("ROLLBACK");
+        return res.json({ status: "already processed" });
+      }
+
+      // update everything (source of truth)
+      await client.query(
+        `UPDATE transactions SET status = 'paid'
+         WHERE id = $1`,
+        [tx.id]
+      );
+
+      await client.query(
+        `UPDATE orders SET status = 'confirmed'
+         WHERE id = $1`,
+        [tx.order_id]
+      );
+
+      await client.query("COMMIT");
     }
 
     res.json({ status: "ok" });
 
   } catch (err) {
+    await client.query("ROLLBACK");
     res.status(500).json({ message: err.message });
+  } finally {
+    client.release();
   }
 };

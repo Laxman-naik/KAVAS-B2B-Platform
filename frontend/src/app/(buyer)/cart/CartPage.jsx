@@ -95,44 +95,6 @@ const CartPage = () => {
 
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
 
-//   const handleCheckout = async () => {
-//   if (!isAuthenticated) {
-//     alert("Login required");
-//     return;
-//   }
-
-//   if (cartItems.length === 0) {
-//     alert("Cart is empty");
-//     return;
-//   }
-
-//   if (hasInvalidMoq) {
-//     alert("Fix MOQ first");
-//     return;
-//   }
-
-//   try {
-//     const idempotencyKey = crypto.randomUUID();
-
-//     const res = await dispatch(
-//       createOrderFromCart({
-//         idempotency_key: idempotencyKey,
-//       })
-//     ).unwrap();
-
-//     const orderId = res?.orders?.[0]?.id;
-
-//     if (!orderId) {
-//       alert("Order created but ID missing");
-//       return;
-//     }
-
-//     router.push(`/checkout}`);
-//   } catch (err) {
-//     console.error("Checkout error:", err);
-//     alert(err || "Order creation failed");
-//   }
-// };
 
 const handleCheckout = async () => {
   if (!isAuthenticated) {
@@ -187,7 +149,7 @@ const handleCheckout = async () => {
         await dispatch(verifyPayment(response));
 
         alert("Payment successful");
-        router.push("/order-success");
+        router.push("/checkout");
       },
     });
 
@@ -362,9 +324,9 @@ const handleCheckout = async () => {
 
           <button
             onClick={handleCheckout}
-            disabled={!canCheckout}
+            // disabled={!canCheckout}
             className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${!canCheckout
-                ? "bg-orange-300 text-white cursor-not-allowed"
+                ? "bg-orange-500 text-white cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}
           > Proceed to Checkout →</button>
