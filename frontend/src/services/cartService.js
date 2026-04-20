@@ -1,8 +1,10 @@
 import { productapi } from "../lib/axios";
 
-/* CART */
-export const getCart = () =>
-  productapi.get("/api/cart");
+
+export const getCart = async () => {
+  const res = await productapi.get("/api/cart");
+  return res.data;
+};
 
 export const getCartCount = () =>
   productapi.get("/api/cart/count");

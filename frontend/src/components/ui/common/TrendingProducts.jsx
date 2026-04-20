@@ -4,15 +4,15 @@ import { products } from "@/data/products";
 export default function TrendingProducts() {
   return (
 
-    <div className="dark:bg-gray-900">
+    <div className="bg-white">
       {/* <div className="bg-red-100 rounded-xl "> */}
         <div className="max-w-350 mx-auto sm:px-6 py-6 space-y-6">
 
           <div className="flex justify-between">
-            <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">
+            <h2 className="text-xl font-semibold border-l-4 border-[#D4AF37] text-[#0B1F3A] pl-2">
               Trending Products
             </h2>
-            <Link href="/trendingviewall" className="text-orange-500 text-sm cursor-pointer hover:underline">
+            <Link href="/trendingviewall" className="text-[#D4AF37] text-sm cursor-pointer hover:underline font-medium">
               View all →
             </Link>
           </div>
@@ -22,7 +22,7 @@ export default function TrendingProducts() {
               <Link
                 key={item.id}
                 href={`/product/${item.id}`}
-                className="bg-white rounded-xl shadow hover:shadow-xl transition group overflow-hidden"
+                className="bg-white border border-[#E5E5E5] rounded-xl shadow-sm hover:shadow-xl transition group overflow-hidden"
               >
                 <div className="h-56 overflow-hidden">
                   <img
@@ -32,24 +32,28 @@ export default function TrendingProducts() {
                   />
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-semibold">{item.title}</h3>
-                  <p className="text-orange-600 font-semibold">
+                  <h3 className="text-sm font-semibold text-[#1A1A1A]">
+                    {item.title}
+                  </h3>
+                  <p className="text-[#D4AF37] font-semibold">
                     {item.price}
                   </p>
                   <p className="text-xs text-gray-500">{item.min}</p>
-                  <div className="flex items-center text-xs gap-1 mt-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <div className="flex items-center text-xs gap-1 mt-1 text-gray-600">
+                    <span className="w-2 h-2 bg-[#D4AF37] rounded-full"></span>
                     <span>{item.brand}</span>
                   </div>
                 </div>
               </Link>
             ))}
           </div>
-          <Link href="/trendingviewall" className="text-orange-500 text-sm cursor-pointer flex justify-center hover:underline">
+
+          <Link href="/trendingviewall" className="text-[#D4AF37] text-sm cursor-pointer flex justify-center hover:underline font-medium">
             {/* <div className="w-35 h-5 flex justify-center bg-[#063149]"> */}
             View More →
             {/* </div> */}
           </Link>
+
         </div>
       {/* </div> */}
     </div>

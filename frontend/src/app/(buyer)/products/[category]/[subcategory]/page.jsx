@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-const slugLabel = (value = "") =>
-  value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const slugLabel = (value = "") => value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function SubCategoryPage({ params }) {
   const [route, setRoute] = useState({ category: "", subcategory: "" });

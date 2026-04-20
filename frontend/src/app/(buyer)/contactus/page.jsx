@@ -285,12 +285,10 @@ export default function ContactPage() {
                 ].map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-3 border border-white/10 rounded-sm p-4 hover:bg-white/5 transition cursor-pointer"
+                    className="flex items-start gap-3 py-3 border-b border-white/20 last:border-b-0 hover:bg-white/5 transition cursor-pointer"
                   >
-                    {/* ICON BOX */}
                     <div className="bg-white/10 p-2 rounded-lg">{item.icon}</div>
 
-                    {/* TEXT */}
                     <div>
                       <p className="font-semibold text-sm">{item.title}</p>
                       <p className="text-xs text-gray-300">{item.desc}</p>

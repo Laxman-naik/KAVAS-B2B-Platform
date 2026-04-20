@@ -1,3 +1,24 @@
+// const express = require("express");
+// const router = express.Router();
+
+// const {
+//   getCart,
+//   addToCart,
+//   updateCartItem,
+//   removeCartItem,
+//   clearCart,
+// } = require("../controllers/cartController");
+
+// const authMiddleware = require("../middleware/authMiddleware");
+
+// router.get("/", authMiddleware, getCart);
+// router.post("/", authMiddleware, addToCart);
+// router.put("/:itemId", authMiddleware, updateCartItem);
+// router.delete("/:itemId", authMiddleware, removeCartItem);
+// router.delete("/clear", authMiddleware, clearCart);
+
+// module.exports = router;
+
 const express = require("express");
 const router = express.Router();
 
@@ -7,22 +28,19 @@ const {
   updateCartItem,
   removeCartItem,
   clearCart,
-  getCartCount,
-  getCartSummary,
-  mergeCart,
 } = require("../controllers/cartController");
 
 const authMiddleware = require("../middleware/authMiddleware");
 
 router.get("/", authMiddleware, getCart);
-router.get("/count", authMiddleware, getCartCount);
-router.get("/summary", authMiddleware, getCartSummary);
-
 router.post("/", authMiddleware, addToCart);
-router.post("/merge", authMiddleware, mergeCart);
-
-router.delete("/clear", authMiddleware, clearCart);
+router.delete("/clear", authMiddleware, clearCart); 
 router.put("/:itemId", authMiddleware, updateCartItem);
 router.delete("/:itemId", authMiddleware, removeCartItem);
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+
+module.exports = router;
+>>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
