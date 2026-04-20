@@ -4,7 +4,12 @@ exports.createOrderFromCart = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { id: userId } = req.user;
+    // 🔴 1. HARD AUTH GUARD
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const userId = req.user.id;
     const { idempotency_key } = req.body;
 
     if (!idempotency_key) {
@@ -13,7 +18,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 0. Check address
+    // 🔴 2. ADDRESS CHECK
     const addressRes = await client.query(
       `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
       [userId]
@@ -28,7 +33,7 @@ exports.createOrderFromCart = async (req, res) => {
 
     const shippingAddressId = addressRes.rows[0].id;
 
-    // 1. Prevent duplicate
+    // 🔴 3. IDEMPOTENCY CHECK
     const existingOrder = await client.query(
       `SELECT * FROM orders WHERE idempotency_key = $1`,
       [idempotency_key]
@@ -42,7 +47,7 @@ exports.createOrderFromCart = async (req, res) => {
       });
     }
 
-    // 2. Get cart
+    // 🔴 4. GET CART
     const cartRes = await client.query(
       `SELECT id FROM carts WHERE user_id = $1`,
       [userId]
@@ -54,9 +59,12 @@ exports.createOrderFromCart = async (req, res) => {
 
     const cartId = cartRes.rows[0].id;
 
-    // 3. Get items with lock
+    // 🔴 5. GET CART ITEMS (FIXED QUERY ✅)
     const itemsRes = await client.query(
-      `SELECT ci.*, p.stock 
+      `SELECT 
+         ci.*, 
+         p.stock,
+         p.organization_id
        FROM cart_items ci
        JOIN products p ON p.id = ci.product_id
        WHERE ci.cart_id = $1
@@ -70,8 +78,24 @@ exports.createOrderFromCart = async (req, res) => {
 
     const items = itemsRes.rows;
 
-    // 4. Stock validation
+    // 🔴 6. VALIDATE ITEMS (CRITICAL)
     for (const item of items) {
+      if (!item.product_id) {
+        throw new Error("Invalid product in cart");
+      }
+
+      if (!item.organization_id) {
+        throw new Error(
+          `Product ${item.product_id} missing organization_id`
+        );
+      }
+
+      if (!item.price || item.price <= 0) {
+        throw new Error(
+          `Invalid price for product ${item.product_id}`
+        );
+      }
+
       if (item.stock < item.quantity) {
         throw new Error(
           `Insufficient stock for product ${item.product_id}`
@@ -79,23 +103,27 @@ exports.createOrderFromCart = async (req, res) => {
       }
     }
 
-    //  5. Group by supplier
+    // 🔴 7. GROUP BY SUPPLIER
     const grouped = {};
+
     for (const item of items) {
-      if (!grouped[item.organization_id]) {
-        grouped[item.organization_id] = [];
+      const orgId = item.organization_id;
+
+      if (!grouped[orgId]) {
+        grouped[orgId] = [];
       }
-      grouped[item.organization_id].push(item);
+
+      grouped[orgId].push(item);
     }
 
     const createdOrders = [];
 
-    //  6. Create orders
-    for (const supplierOrgId in grouped) {
+    // 🔴 8. CREATE ORDERS
+    for (const supplierOrgId of Object.keys(grouped)) {
       const supplierItems = grouped[supplierOrgId];
 
       const totalAmount = supplierItems.reduce(
-        (sum, item) => sum + item.price * item.quantity,
+        (sum, item) => sum + Number(item.price) * Number(item.quantity),
         0
       );
 
@@ -105,7 +133,7 @@ exports.createOrderFromCart = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *`,
         [
-          supplierOrgId,
+          supplierOrgId, // ✅ guaranteed valid now
           totalAmount,
           "pending",
           idempotency_key,
@@ -115,7 +143,7 @@ exports.createOrderFromCart = async (req, res) => {
 
       const order = orderRes.rows[0];
 
-      // items + stock
+      // 🔴 9. INSERT ORDER ITEMS + UPDATE STOCK
       for (const item of supplierItems) {
         await client.query(
           `INSERT INTO order_items (order_id, product_id, quantity, price)
@@ -124,12 +152,14 @@ exports.createOrderFromCart = async (req, res) => {
         );
 
         await client.query(
-          `UPDATE products SET stock = stock - $1 WHERE id = $2`,
+          `UPDATE products 
+           SET stock = stock - $1 
+           WHERE id = $2`,
           [item.quantity, item.product_id]
         );
       }
 
-      // history
+      // 🔴 10. ORDER HISTORY
       await client.query(
         `INSERT INTO order_status_history (order_id, status)
          VALUES ($1, $2)`,
@@ -139,7 +169,7 @@ exports.createOrderFromCart = async (req, res) => {
       createdOrders.push(order);
     }
 
-    //  7. Clear cart
+    // 🔴 11. CLEAR CART
     await client.query(
       `DELETE FROM cart_items WHERE cart_id = $1`,
       [cartId]
@@ -147,14 +177,19 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("COMMIT");
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Orders created successfully",
       orders: createdOrders,
     });
 
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ message: err.message });
+
+    console.error("Checkout error:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   } finally {
     client.release();
   }
