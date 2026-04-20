@@ -169,11 +169,11 @@ exports.createOrderFromCart = async (req, res) => {
       createdOrders.push(order);
     }
 
-    // 🔴 11. CLEAR CART
-    await client.query(
-      `DELETE FROM cart_items WHERE cart_id = $1`,
-      [cartId]
-    );
+    // // 🔴 11. CLEAR CART
+    // await client.query(
+    //   `DELETE FROM cart_items WHERE cart_id = $1`,
+    //   [cartId]
+    // );
 
     await client.query("COMMIT");
 
@@ -335,4 +335,20 @@ exports.createOrder = async (req, res) => {
   } finally {
     client.release();
   }
+};
+
+exports.clearCartAfterOrder = async (userId, client) => {
+  const cartRes = await client.query(
+    `SELECT id FROM carts WHERE user_id = $1`,
+    [userId]
+  );
+
+  if (!cartRes.rows.length) return;
+
+  const cartId = cartRes.rows[0].id;
+
+  await client.query(
+    `DELETE FROM cart_items WHERE cart_id = $1`,
+    [cartId]
+  );
 };
