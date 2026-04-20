@@ -38,9 +38,5 @@ router.delete("/clear", authMiddleware, clearCart);
 router.put("/:itemId", authMiddleware, updateCartItem);
 router.delete("/:itemId", authMiddleware, removeCartItem);
 
-<<<<<<< HEAD
-module.exports = router;
-=======
 
 module.exports = router;
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3

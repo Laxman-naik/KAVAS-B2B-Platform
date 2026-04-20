@@ -182,7 +182,7 @@ const TrendingViewAllV1 = () => {
               {filteredProducts
                 .filter((p) => activeCategory === "All" || p.category === activeCategory)
                 .map((product, index) => (
-                  <Link key={product.id} href={`/product/${product.id}`} className="block">
+                  <Link key={product._id ?? product.id} href={`/product/${product._id ?? product.id}`} className="block">
                     <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                       <CardContent className="p-0! flex flex-col h-full">
                         <div className="relative h-40 sm:h-50 bg-gray-100 flex items-center justify-center">

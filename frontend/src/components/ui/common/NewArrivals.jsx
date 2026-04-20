@@ -148,7 +148,7 @@ export default function NewArrivals() {
             className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar flex-1"
           >
             {newProducts.map((item) => (
-              <Link key={item.id} href={`/product/${item.id}`}>
+              <Link key={item._id ?? item.id} href={`/product/${item._id ?? item.id}`}>
                 <div className="min-w-55 bg-white border border-[#E5E5E5] rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col">
 
                   <div className="relative h-56 overflow-hidden">

@@ -245,7 +245,7 @@ const Page = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
               {filteredProducts.map((product, index) => (
-                <Link key={product.id} href={`/product/${product.id}`} className="block">
+                <Link key={product._id ?? product.id} href={`/product/${product._id ?? product.id}`} className="block">
                   <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                     <CardContent className="p-0! py-0! flex flex-col h-full">
 
