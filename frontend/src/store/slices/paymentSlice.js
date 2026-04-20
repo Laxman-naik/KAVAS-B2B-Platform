@@ -10,9 +10,9 @@ const normalizeError = (err) =>
 /* ================= CREATE CHECKOUT ================= */
 export const createCheckout = createAsyncThunk(
   "payment/createCheckout",
-  async (_, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-      const res = await createCheckoutAPI();
+      const res = await createCheckoutAPI(data);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
