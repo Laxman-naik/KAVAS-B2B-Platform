@@ -96,21 +96,53 @@ exports.addToCart = async (req, res) => {
 
     const {
       productId,
-      variantId,
-      price,
-      moq,
-      quantity,
-      image_url,
+      variantId = null,
+      quantity = 1,
+      image_url = null,
     } = req.body;
 
     if (!productId) {
       return res.status(400).json({ message: "productId required" });
     }
 
+    // 🔴 1. FETCH PRODUCT (SOURCE OF TRUTH)
+    const productRes = await pool.query(
+      `SELECT 
+        id,
+        name,
+        price,
+        mrp,
+        moq,
+        organization_id,
+        image_url,
+        unit
+       FROM products
+       WHERE id = $1 AND is_active = true`,
+      [productId]
+    );
+
+    if (!productRes.rows.length) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const product = productRes.rows[0];
+
+    // 🔴 2. VALIDATE PRODUCT DATA
+    if (!product.price || product.price <= 0) {
+      throw new Error("Invalid product price in DB");
+    }
+
+    if (!product.organization_id) {
+      throw new Error("Product missing organization_id");
+    }
+
+    const price = Number(product.price);
+    const moq = Number(product.moq) || 1;
+    const normalizedQty = Math.max(Number(quantity), moq);
+
     const cart = await getOrCreateCart(userId);
 
-    const normalizedQty = Math.max(Number(quantity), Number(moq) || 1);
-
+    // 🔴 3. CHECK EXISTING ITEM
     const existing = await pool.query(
       `SELECT * FROM cart_items
        WHERE cart_id=$1 AND product_id=$2`,
@@ -125,11 +157,26 @@ exports.addToCart = async (req, res) => {
         [normalizedQty, existing.rows[0].id]
       );
     } else {
+      // 🔴 4. INSERT SNAPSHOT (THIS IS THE KEY FIX)
       await pool.query(
         `INSERT INTO cart_items
-        (cart_id, product_id, variant_id, quantity, price, moq, image_url, added_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)`,
-        [cart.id, productId, variantId, normalizedQty, price, moq, image_url]
+        (cart_id, product_id, variant_id, quantity,
+         price, mrp, moq, image_url,
+         organization_id, product_name, unit, added_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CURRENT_TIMESTAMP)`,
+        [
+          cart.id,
+          productId,
+          variantId,
+          normalizedQty,
+          price,                        // ✅ DB price
+          product.mrp,                 // ✅ snapshot
+          moq,
+          image_url || product.image_url,
+          product.organization_id,     // ✅ critical
+          product.name,
+          product.unit,
+        ]
       );
     }
 
@@ -144,7 +191,9 @@ exports.addToCart = async (req, res) => {
         summary: calculateSummary(items),
       },
     });
+
   } catch (err) {
+    console.error("Add to cart error:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
