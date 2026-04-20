@@ -9,16 +9,10 @@ import { createOrderFromCart } from "@/store/slices/orderSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
-<<<<<<< HEAD
-
-  // keep input values (FIXED SAFE VERSION)
-  const [inputValues, setInputValues] = React.useState({});
-=======
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
   console.log("CART ITEMS:", cartItems);
   const router = useRouter();
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
 
   /* ---------------- FETCH CART ---------------- */
   useEffect(() => {
@@ -64,15 +58,6 @@ const CartPage = () => {
     dispatch(fetchCart());
   };
 
-<<<<<<< HEAD
-  /* ================= FIX: PREVENT INFINITE LOOP ================= */
-  React.useEffect(() => {
-    const mappedValues = {};
-
-    cartItems.forEach((item) => {
-      mappedValues[item.cartItemId] = String(item.quantity || item.moq || 1);
-    });
-=======
   /* ---------------- TOTALS ---------------- */
 
   const totals = useMemo(() => {
@@ -85,7 +70,6 @@ const CartPage = () => {
     const total = subtotal + gst;
 
     return { subtotal, gst, total };
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
   }, [cartItems]);
 
   const cartCount = cartItems.length;
@@ -231,17 +215,8 @@ const CartPage = () => {
 
                           <button
                             onClick={() => handleDecrease(item)}
-<<<<<<< HEAD
-                            disabled={(item.quantity || moq) <= moq || loading}
-                            className={`px-2.5 py-1 bg-gray-100 ${
-                              (item.quantity || moq) <= moq || loading
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:bg-gray-200"
-                            }`}
-=======
                             disabled={updating || item.quantity <= moq}
                             className="px-2 bg-gray-200"
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
                           >
                             -
                           </button>
@@ -256,14 +231,7 @@ const CartPage = () => {
 
                         </div>
 
-<<<<<<< HEAD
-                        <div className="text-sm font-semibold text-gray-900">
-                          ₹{itemTotal.toFixed(0)}
-                        </div>
-
-=======
                         <div className="text-sm font-semibold text-gray-900"> ₹{itemTotal.toFixed(0)}</div>
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
                       </div>
                     </div>
                     <button
@@ -345,8 +313,6 @@ const CartPage = () => {
             >
               Proceed to Checkout →
             </button>
-<<<<<<< HEAD
-=======
           </Link> */}
 
           <button
@@ -364,7 +330,6 @@ const CartPage = () => {
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
               Continue Shopping
             </button>
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
           </Link>
         </div>
 
