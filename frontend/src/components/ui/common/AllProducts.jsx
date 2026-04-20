@@ -13,13 +13,13 @@ const AllProducts = () => {
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
-  
+
   const visibleProducts = Array.isArray(products) ? products : [];
 
   return (
     <div className="dark:bg-gray-900">
       <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-lg sm:text-xl font-semibold border-l-4 border-orange-500 pl-2">
@@ -50,8 +50,11 @@ const AllProducts = () => {
                   {/* Image */}
                   <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
                     <img
-                      src={item.image_url || "/placeholder.png"} // ✅ FIX
+                      src={item.image_url || "https://placehold.co/400x400"}
                       alt={item.name}
+                      onError={(e) => {
+                        e.currentTarget.src = "https://placehold.co/400x400";
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   </div>
