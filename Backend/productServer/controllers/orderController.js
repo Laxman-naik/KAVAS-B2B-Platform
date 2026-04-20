@@ -133,10 +133,11 @@ exports.createOrderFromCart = async (req, res) => {
 
       const orderRes = await client.query(
         `INSERT INTO orders 
-        (supplier_org_id, total_amount, status, idempotency_key, shipping_address_id)
-        VALUES ($1, $2, $3, $4, $5)
+        (user_id, supplier_org_id, total_amount, status, idempotency_key, shipping_address_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *`,
         [
+          userId,
           supplierOrgId,
           totalAmount,
           "pending",
