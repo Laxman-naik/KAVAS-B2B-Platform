@@ -7,10 +7,18 @@ exports.createCheckout = async (req, res) => {
     const { id: userId } = req.user;
     const { orderId } = req.body;
 
-    // 1. Get order
+    // 🔴 1. Validate input
+    if (!orderId) {
+      return res.status(400).json({ message: "OrderId is required" });
+    }
+
+    // 🔴 2. Fetch order (WITH ownership check)
     const orderRes = await pool.query(
-      `SELECT * FROM orders WHERE id = $1`,
-      [orderId]
+      `SELECT o.* 
+       FROM orders o
+       JOIN addresses a ON o.shipping_address_id = a.id
+       WHERE o.id = $1 AND a.user_id = $2`,
+      [orderId, userId]
     );
 
     if (!orderRes.rows.length) {
@@ -19,27 +27,49 @@ exports.createCheckout = async (req, res) => {
 
     const order = orderRes.rows[0];
 
-    // 2. Create Razorpay order (use DB amount)
-    const razorpayOrder = await razorpayService.createOrder(
-      order.total_amount * 100 // convert to paise
+    // 🔴 3. Prevent duplicate payment attempts
+    const existingTx = await pool.query(
+      `SELECT * FROM transactions 
+       WHERE order_id = $1 AND status = 'created'`,
+      [orderId]
     );
 
-    // 3. Store transaction with orderId
+    if (existingTx.rows.length > 0) {
+      return res.json({
+        key: process.env.RAZORPAY_KEY_ID,
+        orderId: existingTx.rows[0].razorpay_order_id,
+        amount: existingTx.rows[0].amount,
+        dbOrderId: order.id,
+      });
+    }
+
+    // 🔴 4. Convert safely to paise
+    const amount = Math.round(Number(order.total_amount) * 100);
+
+    if (amount <= 0) {
+      return res.status(400).json({ message: "Invalid order amount" });
+    }
+
+    // 🔴 5. Create Razorpay order
+    const razorpayOrder = await razorpayService.createOrder(amount);
+
+    // 🔴 6. Store transaction
     await pool.query(
       `INSERT INTO transactions 
        (user_id, order_id, razorpay_order_id, amount, status)
        VALUES ($1, $2, $3, $4, $5)`,
-      [userId, order.id, razorpayOrder.id, razorpayOrder.amount, "created"]
+      [userId, order.id, razorpayOrder.id, amount, "created"]
     );
 
     res.json({
       key: process.env.RAZORPAY_KEY_ID,
       orderId: razorpayOrder.id,
-      amount: razorpayOrder.amount,
+      amount: amount,
       dbOrderId: order.id,
     });
 
   } catch (err) {
+    console.error("createCheckout error:", err);
     res.status(500).json({ message: err.message });
   }
 };

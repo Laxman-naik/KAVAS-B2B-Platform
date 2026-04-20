@@ -159,7 +159,7 @@ const handleCheckout = async () => {
 
     const idempotencyKey = crypto.randomUUID();
 
-    // ✅ 1. Create order
+    // 1. Create order
     const res = await dispatch(
       createOrderFromCart({ idempotency_key: idempotencyKey })
     ).unwrap();
@@ -171,12 +171,12 @@ const handleCheckout = async () => {
       return;
     }
 
-    // ✅ 2. Create payment using orderId (NOT amount)
+    // 2. Create payment using orderId (NOT amount)
     const paymentRes = await dispatch(
       createCheckout({ orderId })
     ).unwrap();
 
-    // ✅ 3. Open Razorpay
+    //  3. Open Razorpay
     const rzp = new window.Razorpay({
       key: paymentRes.key,
       amount: paymentRes.amount,
