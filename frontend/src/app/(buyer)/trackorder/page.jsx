@@ -98,7 +98,7 @@ const Page = () => {
   return (
      <div className="min-h-screen bg-[#FFF8EC]">
       <div className="bg-[#FFF8EC]">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 pb-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-10">
           <p className="text-xs text-gray-500">
             <Link href="/">
               <span className="hover:text-[#D4AF37]">Home</span>
@@ -170,7 +170,7 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 bg-white lg:px-8 py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 bg-white lg:px-8 py-10">
         <p className="text-[11px] font-bold tracking-widest text-[#D4AF37]">HOW TO TRACK YOUR ORDER</p>
         <h2 className="mt-2 text-2xl font-extrabold text-[#0B1F3A]">Simple Steps to Track</h2>
 

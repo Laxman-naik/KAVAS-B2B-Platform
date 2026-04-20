@@ -67,6 +67,9 @@ const Footer = () => {
             <Link href="/help">
               <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Help centre</li>
             </Link>
+            <Link href="/contactus">
+              <li className="hover:text-[#D4AF37] dark:hover:text-orange-400 cursor-pointer">Contact Us</li>
+            </Link>
           </ul>
         </div>
         <div>
