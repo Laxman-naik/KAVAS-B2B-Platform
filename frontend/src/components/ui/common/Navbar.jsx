@@ -19,7 +19,7 @@ import Register from "../auth/Register";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
-import { hydrateFavourites } from "@/store/slices/favouritesSlice";
+import { fetchFavourites } from "@/store/slices/favouritesSlice";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
@@ -64,7 +64,7 @@ const Navbar = () => {
     }
   }, []);
   useEffect(() => {
-    dispatch(hydrateFavourites());
+    dispatch(fetchFavourites());
   }, [dispatch]);
 
   useEffect(() => {

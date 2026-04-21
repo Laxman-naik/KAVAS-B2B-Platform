@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, LayoutGrid, Rows3, ShoppingCart } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
+// import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchProducts } from "@/store/slices/productSlice";
 
