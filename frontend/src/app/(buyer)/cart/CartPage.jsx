@@ -264,10 +264,7 @@ const handleCheckout = async () => {
 
                         </div>
 
-                        <div className="text-sm font-semibold text-gray-900">
-                          ₹{itemTotal.toFixed(0)}
-                        </div>
-
+                        <div className="text-sm font-semibold text-gray-900"> ₹{itemTotal.toFixed(0)}</div>
                       </div>
                     </div>
                     <button

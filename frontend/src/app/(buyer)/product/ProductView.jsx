@@ -1,34 +1,28 @@
 "use client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { products } from "@/data/products";
-import { arrivalProducts } from "@/data/arrivalProducts";
 import { suppliers } from "@/data/suppliers";
-import { productsData } from "@/app/(buyer)/product/productData";
 import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
-
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
-import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
+import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 
 const ProductView = () => { 
   const params = useParams();
- 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
 
   const productId = typeof id === "string" ? id : Array.isArray(id) ? id[0] : "";
-  const isValidProductId = /^[a-fA-F0-9]{24}$/.test(productId);
 
   const { product: apiProduct, loading, error } = useSelector((state) => state.products);
 
   useEffect(() => {
-    if (isValidProductId) dispatch(fetchSingleProduct(productId));
-  }, [productId, isValidProductId, dispatch]);
+    if (productId) dispatch(fetchSingleProduct(productId));
+  }, [productId, dispatch]);
+
 
   const normalizeProduct = (p) => {
     if (!p) return null;
@@ -55,12 +49,8 @@ const ProductView = () => {
     };
   };
 
-  const catalogProducts = Object.values(productsData || {}).flat();
-  const allProducts = [...products, ...arrivalProducts, ...catalogProducts];
-  const localProductRaw = allProducts.find((p) => String(p._id ?? p.id) === String(productId));
-  const localProduct = normalizeProduct(localProductRaw);
+  const product = normalizeProduct(apiProduct);
 
-  const product = normalizeProduct(apiProduct) || localProduct;
 
   const [qty, setQty] = useState(50);
   const [mounted, setMounted] = useState(false);
@@ -152,15 +142,7 @@ const ProductView = () => {
       comment:
         "Pricing is competitive at higher quantities. Support was responsive and helped confirm specifications before dispatch.",
     },
-    {
-      id: 3,
-      name: "Retail Distributor",
-      rating: 5,
-      date: "Jan 2026",
-      title: "Great supplier communication",
-      comment:
-        "Clear updates from order confirmation to delivery. Would reorder for regular stocking.",
-    },
+
   ];
 
   const averageRating =
@@ -208,9 +190,8 @@ const ProductView = () => {
                       aria-label={`Rate ${value} stars`}
                     >
                       <Star
-                        className={`h-6 w-6 ${
-                          active ? "fill-amber-500 text-amber-500" : "text-gray-300"
-                        }`}
+                        className={`h-6 w-6 ${active ? "fill-amber-500 text-amber-500" : "text-gray-300"
+                          }`}
                       />
                     </button>
                   );
@@ -312,11 +293,10 @@ const ProductView = () => {
                 type="button"
                 disabled={isSubmitDisabled}
                 onClick={submitReview}
-                className={`w-1/2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
-                  isSubmitDisabled
+                className={`w-1/2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${isSubmitDisabled
                     ? "bg-gray-300 cursor-not-allowed"
                     : "bg-gray-900 hover:bg-gray-800"
-                }`}
+                  }`}
               >
                 Submit
               </button>
@@ -462,11 +442,15 @@ const ProductView = () => {
 
   const activeTier = tiers.find((t) => qty >= t.min && qty <= t.max);
 
-  if (isValidProductId && loading) {
+  if (!productId) {
+    return <div className="p-10 text-center">Product Not Found</div>;
+  }
+
+  if (loading) {
     return <div className="p-10 text-center">Loading product...</div>;
   }
 
-  if (isValidProductId && error && !product) {
+  if (error && !product) {
     return <div className="p-10 text-center">Failed to load product.</div>;
   }
 
@@ -514,9 +498,14 @@ const ProductView = () => {
             <button
               type="button"
               onClick={() => dispatch(toggleFavourite(product))}
-              className="absolute top-3 right-3 text-xl bg-white rounded-full p-2 shadow hover:scale-110 transition"
+              className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:scale-110 transition"
             >
-              {isWishlisted ? "❤️" : "🤍"}
+              <Heart
+                className={`w-5 h-5 transition ${isWishlisted
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-400"
+                  }`}
+              />
             </button>
 
             <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105">
@@ -545,9 +534,8 @@ const ProductView = () => {
                     key={idx}
                     type="button"
                     onClick={() => setActiveImage(item)}
-                    className={`rounded-lg border p-1 overflow-hidden transition ${
-                      isActive ? "border-orange-500" : "border-gray-200"
-                    }`}
+                    className={`rounded-lg border p-1 overflow-hidden transition ${isActive ? "border-orange-500" : "border-gray-200"
+                      }`}
                   >
                     {item.type === "image" ? (
                       <img
@@ -647,11 +635,10 @@ const ProductView = () => {
                   <div
                     key={i}
                     onClick={() => setQty(tier.min)}
-                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${
-                      isActive
+                    className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${isActive
                         ? "border-2 border-orange-500 bg-white"
                         : "bg-gray-100 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     <p className="text-[10px] sm:text-xs text-gray-500">
                       {tier.max === Infinity
@@ -748,7 +735,7 @@ const ProductView = () => {
                 `Built for bulk procurement, this ${product.title} is designed for consistent performance and reliable quality. Suitable for regular stocking, distribution, and business use.`}
             </p>
 
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            {/* <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               {[
                 ["Brand", product.brand || "—"],
                 ["Supplier", product.company || "—"],
@@ -763,7 +750,7 @@ const ProductView = () => {
                   <span className="font-medium text-gray-900">{item[1]}</span>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-4 bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
@@ -826,7 +813,7 @@ const ProductView = () => {
                 <span className="text-xl">💳</span>
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                     All Orders must be prepaid. 
+                    All Orders must be prepaid.
                   </p>
                   <p className="text-xs text-gray-500">Cash on Delivery (COD) is not available</p>
                 </div>
@@ -870,79 +857,26 @@ const ProductView = () => {
               </div>
             </div>
 
-           
-
-{supplier ? (
-  <Link href={`/suppliers/${supplier.id}`}>
-    <button
-      type="button"
-      className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
-    >
-      View Profile →
-    </button>
-  </Link>
-) : (
-  <button
-    disabled
-    className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
-  >
-    View Profile →
-  </button>
-)}
+            {supplier ? (
+              <Link href={`/suppliers/${supplier.id}`}>
+                <button
+                  type="button"
+                  className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
+                >
+                  View Profile →
+                </button>
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
+              >
+                View Profile →
+              </button>
+            )}
           </div>
         </div>
       </div>
-
-      {/* ✅ SIMILAR PRODUCTS (UNCHANGED) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <div className="flex justify-between">
-          <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2">
-            Similar Products
-          </h2>
-          <Link
-            href="/trendingviewall"
-            className="text-orange-500 text-sm cursor-pointer hover:underline"
-          >
-            View all →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-          {products.map((item) => (
-            <Link
-              key={item.id}
-              href={`/product/${item.id}`}
-              className="bg-white rounded-xl shadow hover:shadow-xl transition group overflow-hidden"
-            >
-              <div className="h-56 overflow-hidden">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="p-3">
-                <h3 className="text-sm font-semibold">{item.title}</h3>
-                <p className="text-orange-600 font-semibold">{item.price}</p>
-                <p className="text-xs text-gray-500">{item.min}</p>
-
-                <div className="flex items-center text-xs gap-1 mt-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>{item.brand}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      <Link
-        href="/trendingviewall"
-        className="text-orange-500 flex justify-center text-xl cursor-pointer hover:underline"
-      >
-        View all →
-      </Link>
 
       <MoreInfoDrawer />
       <WriteReviewDialog
