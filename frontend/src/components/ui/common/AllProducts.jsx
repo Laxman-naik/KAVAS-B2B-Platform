@@ -149,9 +149,7 @@ const AllProducts = () => {
   const { products, loading } = useSelector((state) => state.products);
 
   useEffect(() => {
-    // 🔥 ensure session exists (for tracking)
     getSessionId();
-
     dispatch(fetchProducts());
   }, [dispatch]);
 
@@ -175,99 +173,75 @@ const AllProducts = () => {
           </Link>
         </div>
 
-
         {loading ? (
           <p className="text-center py-10">Loading products...</p>
         ) : (
           <>
             {/* Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-<<<<<<< HEAD
-              {visibleProducts.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/product/${item.id}`} 
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 dark:border-gray-700"
-                >
-                  {/* Image */}
-                  <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
-                    <img
-                      src={item.image_url || "https://placehold.co/400x400"}
-                      alt={item.name}
-                      onError={(e) => {
-                        e.currentTarget.src = "https://placehold.co/400x400";
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-=======
               {visibleProducts.map((item) => {
                 const itemId = item?._id ?? item?.id ?? item?.productId;
+
                 return (
                   <Link
                     key={itemId}
                     href={`/product/${itemId}`}
-                    className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-[#E5E5E5]"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 dark:border-gray-700"
                   >
                     <div className="flex flex-col h-full">
+
                       {/* Image */}
-                      <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-[#FFF8EC]">
+                      <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
                         <img
-                          src={item.image_url} // 
+                          src={item.image_url || "https://placehold.co/400x400"}
                           alt={item.name}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/400x400";
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                         />
                       </div>
->>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
 
-                  {/* Content */}
-                  <div className="p-3 sm:p-4 flex-1">
-                    <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-10">
-                      {item.name}
-                    </h3>
+                      {/* Content */}
+                      <div className="p-3 sm:p-4 flex-1">
+                        <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-10">
+                          {item.name}
+                        </h3>
 
-<<<<<<< HEAD
-                    <p className="text-orange-600 font-semibold text-sm sm:text-base mt-1">
-                      ₹{item.price}/unit
-                    </p>
-=======
+                        {/* price (kept both since you had both) */}
+                        <p className="text-orange-600 font-semibold text-sm sm:text-base mt-1">
+                          ₹{item.price}/unit
+                        </p>
+
                         <p className="text-[#D4AF37] font-semibold text-sm sm:text-base mt-1">
                           ₹{item.price}/unit
                         </p>
->>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
 
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Min. {item.moq} units
-                    </p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                          Min. {item.moq} units
+                        </p>
 
-<<<<<<< HEAD
-                    {/* 🔥 RATING UI (NEW) */}
-                    <div className="flex items-center gap-1 mt-2 text-xs">
-                      <span className="text-yellow-500">
-                        ⭐ {Number(item.avg_rating || 0).toFixed(1)}
-                      </span>
-                      <span className="text-gray-500">
-                        ({item.total_reviews || 0})
-                      </span>
-=======
-                        <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700">
-                          <span className="w-2 h-2 bg-[#D4AF37] rounded-full"></span>
-                          <span className="truncate">
-                            Supplier
+                        {/* Rating */}
+                        <div className="flex items-center gap-1 mt-2 text-xs">
+                          <span className="text-yellow-500">
+                            ⭐ {Number(item.avg_rating || 0).toFixed(1)}
+                          </span>
+                          <span className="text-gray-500">
+                            ({item.total_reviews || 0})
                           </span>
                         </div>
-                      </div>
->>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
-                    </div>
 
-                    {/* Supplier */}
-                    <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700 dark:text-gray-300">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="truncate">Supplier</span>
+                        {/* Supplier */}
+                        <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700 dark:text-gray-300">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="truncate">Supplier</span>
+                        </div>
+                      </div>
+
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Empty State */}
@@ -280,11 +254,7 @@ const AllProducts = () => {
         )}
 
         {/* Bottom Stats */}
-<<<<<<< HEAD
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 border border-amber-400 bg-yellow-50 p-4 sm:p-5 rounded-xl shadow text-center">
-=======
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 border border-[#D4AF37] bg-[#0B1F3A] p-4 sm:p-5 rounded-xl shadow text-center">
->>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
           <div>
             <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">500+</h3>
             <p className="text-sm sm:text-base text-white/85">Verified Vendors</p>
@@ -306,6 +276,7 @@ const AllProducts = () => {
             <p className="text-sm sm:text-base text-white/85">GMV Processed</p>
           </div>
         </div>
+
       </div>
     </div>
   );
