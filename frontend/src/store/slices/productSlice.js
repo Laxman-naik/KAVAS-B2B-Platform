@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI } from "../../services/productService";
+import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI, getTrendingProductsAPI } from "../../services/productService";
 
 /* ================= THUNKS ================= */
 
@@ -84,11 +84,22 @@ export const fetchNewArrivals = createAsyncThunk(
     try {
       const res = await getNewArrivalsAPI();
       return res.data?.data || [];
-      console.log("🔥 API FULL RESPONSE:", res);
-      console.log("🔥 API DATA:", res.data);
-      console.log("🔥 NEW ARRIVALS:", res.data?.data);
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
+export const fetchTrendingProducts = createAsyncThunk(
+  "products/trending",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getTrendingProductsAPI();
+      return res.data?.data || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
@@ -100,6 +111,7 @@ const productSlice = createSlice({
   initialState: {
     products: [],
     newArrivals: [],
+    trending: [], 
     product: null,
     loading: false,
     error: null,
@@ -170,7 +182,20 @@ const productSlice = createSlice({
       .addCase(fetchNewArrivals.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      /* TRENDING */
+      .addCase(fetchTrendingProducts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTrendingProducts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.trending = action.payload;
+      })
+      .addCase(fetchTrendingProducts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   },
 });
 
