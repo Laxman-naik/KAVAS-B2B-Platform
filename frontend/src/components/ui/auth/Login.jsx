@@ -45,19 +45,19 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-md bg-white relative rounded-2xl shadow-lg max-h-[90vh] overflow-y-auto dark:bg-gray-900"
+        className="w-full max-w-md bg-[#FFFFFF] relative rounded-2xl shadow-lg max-h-[90vh] overflow-y-auto border border-[#E5E5E5]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* CLOSE BUTTON */}
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
+          className="absolute top-4 right-4 text-gray-400 hover:text-[#1A1A1A] z-10"
         >
           <X size={18} />
         </button>
 
-        {/* ✅ FULL WIDTH HEADER */}
-        <div className="w-full bg-[#063149] py-3 px-4 flex justify-center sm:justify-start rounded-t-2xl">
+        {/* HEADER */}
+        <div className="w-full bg-[#0B1F3A] py-3 px-4 flex justify-center sm:justify-start rounded-t-2xl">
           <Image
             src="/LOGOKAVAS.png"
             alt="Kavas Logo"
@@ -67,16 +67,18 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
           />
         </div>
 
-        {/* ✅ CONTENT WITH PADDING */}
-        <div className="p-4 sm:p-5 md:p-6">
-          <h3 className="text-base sm:text-lg font-semibold">Welcome back</h3>
-          <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+        {/* CONTENT */}
+        <div className="p-4 sm:p-5 md:p-6 bg-[#FFF8EC]">
+          <h3 className="text-base sm:text-lg font-semibold text-[#1A1A1A]">
+            Welcome back
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
             Sign in to your Kavas account
           </p>
 
           <form className="space-y-2" onSubmit={handleSubmit}>
             <div>
-              <label className="text-xs sm:text-sm font-medium">
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                 Email / Vendor ID
               </label>
               <input
@@ -85,12 +87,12 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="you@company.com"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-medium">
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                 Password
               </label>
               <input
@@ -99,7 +101,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="Enter password"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
               />
             </div>
 
@@ -112,7 +114,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
             )}
 
             <div className="text-right">
-              <span className="text-xs sm:text-sm text-orange-500 hover:underline cursor-pointer">
+              <span className="text-xs sm:text-sm text-[#D4AF37] hover:underline cursor-pointer">
                 Forgot password?
               </span>
             </div>
@@ -120,27 +122,27 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600 disabled:opacity-60"
+              className="w-full py-1.5 sm:py-2 text-sm font-semibold text-white rounded-md bg-[#D4AF37] hover:opacity-90 disabled:opacity-60"
             >
               {loading ? "Signing in..." : "Sign in to Kavas"}
             </button>
           </form>
 
           <div className="flex items-center my-3 sm:my-4">
-            <div className="flex grow h-px bg-gray-200" />
+            <div className="flex grow h-px bg-[#E5E5E5]" />
             <span className="mx-2 text-xs sm:text-sm text-gray-400">or</span>
-            <div className="flex grow h-px bg-gray-200" />
+            <div className="flex grow h-px bg-[#E5E5E5]" />
           </div>
 
-          <button className="w-full border py-1.5 sm:py-2 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-gray-50">
+          <button className="w-full border border-[#E5E5E5] py-1.5 sm:py-2 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-white">
             Continue with Google
           </button>
 
-          <p className="text-xs sm:text-sm text-center mt-3 sm:mt-4 text-gray-500">
+          <p className="text-xs sm:text-sm text-center mt-3 sm:mt-4 text-gray-600">
             New?{" "}
             <span
               onClick={() => setMode("register")}
-              className="text-orange-500 font-medium hover:underline cursor-pointer"
+              className="text-[#D4AF37] font-medium hover:underline cursor-pointer"
             >
               Create your account →
             </span>
