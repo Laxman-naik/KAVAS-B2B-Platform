@@ -1,13 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, LayoutGrid, Rows3, ShoppingCart } from "lucide-react";
-import { productsData } from "@/app/(buyer)/product/productData";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+import { fetchProducts } from "@/store/slices/productSlice";
 
 const categories = [
   "All",
@@ -26,6 +26,7 @@ const Page = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [filters, setFilters] = useState({
     minQty: [],
+
     rating: [],
     supplier: [],
   });
@@ -39,6 +40,11 @@ const Page = () => {
 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
+  const { products: dbProducts, loading } = useSelector((state) => state.products);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
@@ -46,6 +52,24 @@ const Page = () => {
 
   const onAddToCart = (product) => {
     dispatch(addToCart(product));
+  };
+
+  const normalizeDbProduct = (p) => {
+    if (!p) return null;
+    const id = p._id ?? p.id ?? p.productId;
+    const name = p.name ?? p.title ?? "";
+    const category = p.category ?? "";
+    const supplier = p.supplier ?? p.company ?? p.supplierType ?? "";
+    const price = typeof p.price === "number" ? p.price : Number(p.priceValue ?? p.price ?? 0);
+    const minQty =
+      typeof p.minQty === "number"
+        ? p.minQty
+        : typeof p.moq === "number"
+          ? p.moq
+          : Number(String(p.min ?? "").match(/\d+/)?.[0] ?? 0);
+    const image = p.image ?? p.image_url ?? null;
+
+    return { ...p, _id: id, id, name, category, supplier, price, minQty, image };
   };
 
   const handleFilterChange = (type, value) => {
@@ -60,7 +84,9 @@ const Page = () => {
     });
   };
 
-  const allProducts = Object.values(productsData).flat();
+  const allProducts = (Array.isArray(dbProducts) ? dbProducts : [])
+    .map(normalizeDbProduct)
+    .filter(Boolean);
 
   const categoryCounts = allProducts.reduce((acc, p) => {
     const key = p?.category || "";
@@ -78,7 +104,7 @@ const Page = () => {
     .filter((product) => {
       if (
         activeCategory !== "All" &&
-        product.category.toLowerCase() !== activeCategory.toLowerCase()
+        String(product.category || "").toLowerCase() !== activeCategory.toLowerCase()
       ) {
         return false;
       }
@@ -299,145 +325,166 @@ const Page = () => {
                 </div>
               </div>
 
-              <div
-                className={
-                  viewMode === "grid"
-                    ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-                    : "grid grid-cols-1 gap-4"
-                }
-              >
-                {paginatedProducts.map((product, index) => {
-                  const productId = product?._id ?? product?.id ?? product?.productId;
-                  const isLiked = favouriteItems.some(
-                    (i) => String(i._id ?? i.id) === String(productId)
-                  );
-                  const discount = index % 2 === 0 ? 25 : 30;
-                  const originalPrice =
-                    typeof product?.price === "number"
-                      ? Math.round(product.price * (1 + discount / 100))
-                      : null;
+              {loading ? (
+                <div className="py-10 text-center text-sm text-gray-600">Loading products...</div>
+              ) : (
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                      : "grid grid-cols-1 gap-4"
+                  }
+                >
+                  {paginatedProducts.map((product, index) => {
+                    const productId = product?._id ?? product?.id ?? product?.productId;
+                    const isLiked = favouriteItems.some(
+                      (i) => String(i._id ?? i.id) === String(productId)
+                    );
+                    const discount = index % 2 === 0 ? 25 : 30;
+                    const originalPrice =
+                      typeof product?.price === "number"
+                        ? Math.round(product.price * (1 + discount / 100))
+                        : null;
 
-                  return (
-                    <Link key={productId} href={`/product/${productId}`} className="block">
-                      <Card className="rounded-2xl border border-[#E9DDC9] bg-white hover:shadow-md transition overflow-hidden">
-                        <CardContent className={viewMode === "grid" ? "p-0" : "p-0"}>
-                          <div className={viewMode === "grid" ? "" : "flex gap-4"}>
-                            <div
-                              className={
-                                viewMode === "grid"
-                                  ? "relative h-40 sm:h-44 w-full overflow-hidden"
-                                  : "relative h-28 w-28 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-xl m-3"
-                              }
-                            >
-                              <div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#0B1F3A]">
-                                -{discount}%
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  onToggleFavourite({ ...product, _id: productId });
-                                }}
-                                className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
-                                aria-label="Toggle favourite"
+                    return (
+                      <Link key={productId} href={`/product/${productId}`} className="block">
+                        <Card className="rounded-2xl border border-[#E9DDC9] bg-white hover:shadow-md transition overflow-hidden">
+                          <CardContent className={viewMode === "grid" ? "p-0" : "p-0"}>
+                            <div className={viewMode === "grid" ? "" : "flex gap-4"}>
+                              <div
+                                className={
+                                  viewMode === "grid"
+                                    ? "relative h-40 sm:h-44 w-full overflow-hidden"
+                                    : "relative h-28 w-28 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-xl m-3"
+                                }
                               >
-                                <Heart
-                                  size={16}
-                                  className={isLiked ? "text-red-500" : "text-gray-600"}
-                                  fill={isLiked ? "currentColor" : "none"}
-                                />
-                              </button>
+                                <div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#0B1F3A]">
+                                  -{discount}%
+                                </div>
 
-                              <img
-                                src={product.image}
-                                alt={product.name}
-                                className={viewMode === "grid" ? "w-full h-full object-contain p-2" : "w-full h-full object-contain p-2"}
-                              />
-                            </div>
-
-                            <div className={viewMode === "grid" ? "p-3" : "flex-1 py-4 pr-4"}>
-                              <h3 className={viewMode === "grid" ? "text-sm font-semibold text-[#0B1F3A] line-clamp-2 min-h-10" : "text-sm sm:text-base font-semibold text-[#0B1F3A] line-clamp-2"}>
-                                {product.name}
-                              </h3>
-
-                              <div className="mt-1">
-                                <span className="text-sm font-extrabold text-[#0B1F3A]">₹{product.price}</span>
-                                {originalPrice ? (
-                                  <span className="ml-2 text-xs text-gray-500 line-through">₹{originalPrice}</span>
-                                ) : null}
-                              </div>
-
-                              <p className="mt-1 text-xs text-gray-600">
-                                Min. Order: <span className="font-semibold">{product.minQty}</span> Units
-                              </p>
-
-                              <div className={viewMode === "grid" ? "" : "mt-3 flex gap-2"}>
-                                <Button
-                                  className={viewMode === "grid" ? "mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]" : "bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] px-4"}
+                                <button
+                                  type="button"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    onAddToCart({ ...product, productId });
+                                    onToggleFavourite({ ...product, _id: productId });
                                   }}
+                                  className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
+                                  aria-label="Toggle favourite"
                                 >
-                                  <ShoppingCart size={14} className="mr-2" />
-                                  Add to Cart
-                                </Button>
+                                  <Heart
+                                    size={16}
+                                    className={isLiked ? "text-red-500" : "text-gray-600"}
+                                    fill={isLiked ? "currentColor" : "none"}
+                                  />
+                                </button>
+
+                                <img
+                                  src={product.image || "/placeholder.png"}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              <div className={viewMode === "grid" ? "p-3" : "flex-1 py-4 pr-4"}>
+                                <h3 className={viewMode === "grid" ? "text-sm font-semibold text-[#0B1F3A] line-clamp-2 min-h-10" : "text-sm sm:text-base font-semibold text-[#0B1F3A] line-clamp-2"}>
+                                  {product.name}
+                                </h3>
+
+                                <div className="mt-1">
+                                  <span className="text-sm font-extrabold text-[#0B1F3A]">₹{product.price}</span>
+                                  {originalPrice ? (
+                                    <span className="ml-2 text-xs text-gray-500 line-through">₹{originalPrice}</span>
+                                  ) : null}
+                                </div>
+
+                                <p className="mt-1 text-xs text-gray-600">
+                                  Min. Order: <span className="font-semibold">{product.minQty}</span> Units
+                                </p>
+
+                                <div className={viewMode === "grid" ? "" : "mt-3 flex gap-2"}>
+                                  <Button
+                                    className={viewMode === "grid" ? "mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]" : "bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] px-4"}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      onAddToCart({ ...product, productId });
+                                    }}
+                                  >
+                                    <ShoppingCart size={14} className="mr-2" />
+                                    Add to Cart
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
               <div className="mt-6 flex items-center justify-center gap-2">
-                <Button
-                  variant="outline"
-                  className="border-[#E9DDC9] bg-white"
+                <button
+                  type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
+                  className="h-8 w-8 rounded-md border border-[#E9DDC9] bg-white text-[#0B1F3A] disabled:opacity-50"
+                  aria-label="Previous page"
                 >
                   ‹
-                </Button>
+                </button>
 
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                  const pageNum =
-                    totalPages <= 5
-                      ? i + 1
-                      : safePage <= 3
-                        ? i + 1
-                        : safePage >= totalPages - 2
-                          ? totalPages - 4 + i
-                          : safePage - 2 + i;
-
-                  const isActive = pageNum === safePage;
+                {(() => {
+                  const groupStart = Math.floor((safePage - 1) / 5) * 5 + 1;
+                  const groupPages = Array.from({ length: 5 })
+                    .map((_, i) => groupStart + i)
+                    .filter((n) => n <= totalPages);
+                  const showLast = totalPages > 5 && groupPages[groupPages.length - 1] < totalPages;
 
                   return (
-                    <button
-                      key={pageNum}
-                      type="button"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`h-9 w-9 rounded-lg text-sm font-semibold border ${isActive
-                          ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                          : "bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]"
-                        }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                    <>
+                      {groupPages.map((pageNum) => {
+                        const isActive = pageNum === safePage;
+                        return (
+                          <button
+                            key={pageNum}
+                            type="button"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`h-8 w-8 rounded-md text-sm font-semibold border ${
+                              isActive
+                                ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                                : "bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
 
-                <Button
-                  variant="outline"
-                  className="border-[#E9DDC9] bg-white"
+                      {showLast ? (
+                        <>
+                          <span className="px-1 text-sm text-gray-500">…</span>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(totalPages)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm font-semibold border bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]`}
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      ) : null}
+                    </>
+                  );
+                })()}
+
+                <button
+                  type="button"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
+                  className="h-8 w-8 rounded-md border border-[#E9DDC9] bg-white text-[#0B1F3A] disabled:opacity-50"
+                  aria-label="Next page"
                 >
                   ›
-                </Button>
+                </button>
               </div>
             </main>
           </div>
