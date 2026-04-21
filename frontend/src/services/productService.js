@@ -10,4 +10,4 @@ export const updateProduct = (id, data) => productapi.put(`/api/products/${id}`,
 
 export const deleteProduct = (id) => productapi.delete(`/api/products/${id}`);
 
-export const getNewArrivalsAPI = () => productapi.get("/api/products/new-arrivals");
+export const getNewArrivalsAPI = () =>  productapi.get("/api/products/new-arrivals?limit=50");

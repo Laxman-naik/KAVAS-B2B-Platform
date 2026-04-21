@@ -446,13 +446,15 @@ exports.getTrendingProducts = async (req, res) => {
 
 exports.getNewArrivals = async (req, res) => {
   try {
-    const { limit = 10, days = 30 } = req.query;
+    // sanitize inputs
+    const limit = Math.min(parseInt(req.query.limit) || 30, 50); // max 50
+    const days = parseInt(req.query.days) || 30;
 
+    // query (SAFE + NO SYNTAX ISSUES)
     const result = await pool.query(
       `SELECT p.*, pi.image_url
        FROM products p
 
-        avoid duplicate rows
        LEFT JOIN LATERAL (
          SELECT image_url
          FROM product_images
@@ -461,20 +463,26 @@ exports.getNewArrivals = async (req, res) => {
        ) pi ON true
 
        WHERE p.is_active = true
-       AND p.created_at >= NOW() - INTERVAL '${days} days'
+       AND p.created_at >= NOW() - ($1 * INTERVAL '1 day')
 
        ORDER BY p.created_at DESC
-       LIMIT $1`,
-      [limit]
+       LIMIT $2`,
+      [days, limit]
     );
 
-    res.json({
+    return res.json({
       success: true,
+      count: result.rows.length,
       data: result.rows,
     });
 
   } catch (err) {
-    console.error("getNewArrivals error:", err);
-    res.status(500).json({ message: err.message });
+    console.error("❌ getNewArrivals error:", err.message);
+    console.error(err.stack);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch new arrivals",
+    });
   }
 };

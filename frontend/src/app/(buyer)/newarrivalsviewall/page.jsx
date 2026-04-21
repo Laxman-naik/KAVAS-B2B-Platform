@@ -41,6 +41,9 @@ const Page = () => {
   const { newArrivals, loading } = useSelector((state) => state.products);
   const liked = favouriteItems.map((item) => item.id || item._id);
 
+  console.log("🧠 Redux newArrivals:", newArrivals);
+  console.log("⏳ Loading:", loading);
+
   const onToggleFavourite = (product) => {
     const productId = product.id || product._id;
     const isLiked = liked.includes(productId);
