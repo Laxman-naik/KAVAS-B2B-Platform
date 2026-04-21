@@ -1,25 +1,34 @@
 // "use client";
 // import Link from "next/link";
 // import { useParams } from "next/navigation";
-// import { products } from "@/data/products";
-// import { arrivalProducts } from "@/data/arrivalProducts";
-// import { suppliers } from "@/data/suppliers";
-// import { productsData } from "@/app/(buyer)/product/productData";
+// // import { products } from "@/data/products";
+// // import { arrivalProducts } from "@/data/arrivalProducts";
+// // import { suppliers } from "@/data/suppliers";
+// // import { productsData } from "@/app/(buyer)/product/productData";
 // import { useState, useEffect } from "react";
-// import { fetchSingleProduct } from "../../../services/productService";
+// import { getSingleProduct } from "@/services/productService";
 
 // import { useDispatch, useSelector } from "react-redux";
 // import { toggleFavourite } from "@/store/slices/favouritesSlice";
 // import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-// import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
+// import {
+//   CreditCard,
+//   PackageCheck,
+//   RefreshCcw,
+//   Star,
+//   Truck,
+//   XIcon,
+// } from "lucide-react";
 
 // const ProductView = () => {
 //   const params = useParams();
- 
+
 //   const dispatch = useDispatch();
 //   const favouriteItems = useSelector((state) => state.favourites.items);
-//   const id = params?.Id ?? params?.id;
+//   const id = params?.id;
+
+//   /* ================= NORMALIZE ================= */
 
 //   const normalizeProduct = (p) => {
 //     if (!p) return null;
@@ -30,7 +39,11 @@
 //     const company = p.company ?? p.supplier ?? "";
 //     const brand = p.brand ?? p.supplier ?? "";
 //     const image = p.image ?? "";
-//     const media = Array.isArray(p.media) ? p.media : image ? [{ type: "image", src: image }] : [];
+//     const media = Array.isArray(p.media)
+//       ? p.media
+//       : image
+//         ? [{ type: "image", src: image }]
+//         : [];
 
 //     return {
 //       ...p,
@@ -44,24 +57,47 @@
 //     };
 //   };
 
-//   const catalogProducts = Object.values(productsData || {}).flat();
-//   const allProducts = [...products, ...arrivalProducts, ...catalogProducts];
-//   const productRaw = allProducts.find((p) => String(p.id) === String(id));
-//   const product = normalizeProduct(productRaw);
+//   const [product, setProduct] = useState(null);
 
 //   const [qty, setQty] = useState(50);
 //   const [mounted, setMounted] = useState(false);
+//   const [activeImage, setActiveImage] = useState(null);
+
+//   useEffect(() => {
+//     if (!id) return;
+
+//     const fetchProduct = async () => {
+//       try {
+//         const res = await getSingleProduct(id);
+
+//         // adjust based on your API response structure
+//         const data = res?.data || res;
+
+//         const normalized = normalizeProduct(data);
+//         setProduct(normalized);
+
+//         // set default image
+//         if (normalized?.media?.length > 0) {
+//           setActiveImage(normalized.media[0]);
+//         }
+//       } catch (err) {
+//         console.error("Error fetching product:", err);
+//         setProduct(null);
+//       }
+//     };
+
+//     fetchProduct();
+//   }, [id]);
 
 //   useEffect(() => {
 //     setMounted(true);
 //   }, []);
 
 //   const mediaItems =
-//     product?.media && product.media.length > 0
+//     product.media?.length > 0
 //       ? product.media
-//       : [{ type: "image", src: product?.image }];
+//       : [{ type: "image", src: product.image }];
 
-//   const [activeImage, setActiveImage] = useState(null);
 //   const selectedMedia = activeImage || mediaItems[0];
 
 //   const [isMoreInfoOpen, setIsMoreInfoOpen] = useState(false);
@@ -146,8 +182,18 @@
 
 //   const renderStars = (rating) => {
 //     const rounded = Math.round(rating);
+//     if (loading) {
+//       return <div className="p-10 text-center">Loading...</div>;
+//     }
+
+//     if (!product) {
+//       return <div className="p-10 text-center">Product Not Found</div>;
+//     }
 //     return (
-//       <div className="flex items-center gap-0.5" aria-label={`Rating ${rounded} out of 5`}>
+//       <div
+//         className="flex items-center gap-0.5"
+//         aria-label={`Rating ${rounded} out of 5`}
+//       >
 //         {Array.from({ length: 5 }).map((_, i) => (
 //           <span
 //             key={i}
@@ -187,7 +233,9 @@
 //                     >
 //                       <Star
 //                         className={`h-6 w-6 ${
-//                           active ? "fill-amber-500 text-amber-500" : "text-gray-300"
+//                           active
+//                             ? "fill-amber-500 text-amber-500"
+//                             : "text-gray-300"
 //                         }`}
 //                       />
 //                     </button>
@@ -216,7 +264,9 @@
 //             </div>
 
 //             <div>
-//               <label className="text-sm font-medium text-gray-900">Review</label>
+//               <label className="text-sm font-medium text-gray-900">
+//                 Review
+//               </label>
 //               <textarea
 //                 value={reviewComment}
 //                 onChange={(e) => setReviewComment(e.target.value)}
@@ -387,7 +437,9 @@
 //           showCloseButton={false}
 //           className="top-0! right-0! left-auto! translate-x-0! translate-y-0! h-dvh w-full sm:max-w-md rounded-none sm:rounded-l-xl p-0 data-open:slide-in-from-right-8 data-closed:slide-out-to-right-8"
 //         >
-//           <DialogTitle className="sr-only">Easy Exchange &amp; Return</DialogTitle>
+//           <DialogTitle className="sr-only">
+//             Easy Exchange &amp; Return
+//           </DialogTitle>
 //           <div className="h-dvh bg-white flex flex-col">
 //             <div className="sticky top-0 z-10 border-b bg-white">
 //               <div className="px-4 py-3 flex items-center justify-between">
@@ -420,8 +472,8 @@
 //               <div className="mt-8 border-t pt-4">
 //                 <p className="text-sm font-semibold text-gray-800">Note:</p>
 //                 <p className="mt-1 text-sm text-gray-600 leading-relaxed">
-//                   The product should not be damaged and the price tags should be intact.
-//                   T&C applicable.
+//                   The product should not be damaged and the price tags should be
+//                   intact. T&C applicable.
 //                 </p>
 //               </div>
 //             </div>
@@ -447,10 +499,10 @@
 //   if (!mounted) return null;
 
 //   const isWishlisted = mounted
-//   ? favouriteItems.some(
-//       (item) => String(item._id) === String(product.id),
-//     )
-//   : false;
+//     ? favouriteItems.some(
+//         (item) => String(item.id) === String(product.id) // ✅ FIXED
+//       )
+//     : false;
 
 //   const normalizeName = (value) =>
 //     String(value || "")
@@ -496,7 +548,7 @@
 //             <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105">
 //               {selectedMedia.type === "image" ? (
 //                 <img
-//                   src={selectedMedia.src}
+//                   src={selectedMedia.src || "/placeholder.png"}
 //                   className="w-full h-full object-contain transition duration-300 "
 //                 />
 //               ) : (
@@ -565,7 +617,10 @@
 
 //             <div className="mt-4 space-y-4">
 //               {reviews.slice(0, 3).map((review) => (
-//                 <div key={review.id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+//                 <div
+//                   key={review.id}
+//                   className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+//                 >
 //                   <div className="flex items-start justify-between gap-3">
 //                     <div>
 //                       <p className="text-sm font-medium text-gray-900">
@@ -573,7 +628,9 @@
 //                       </p>
 //                       <div className="mt-1 flex items-center gap-2">
 //                         {renderStars(review.rating)}
-//                         <span className="text-xs text-gray-500">{review.date}</span>
+//                         <span className="text-xs text-gray-500">
+//                           {review.date}
+//                         </span>
 //                       </div>
 //                     </div>
 //                   </div>
@@ -758,7 +815,9 @@
 //                   className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 mb-2 last:mb-0"
 //                 >
 //                   <span className="text-gray-500">{item[0]}</span>
-//                   <span className="font-medium text-gray-900">{item[1] || "—"}</span>
+//                   <span className="font-medium text-gray-900">
+//                     {item[1] || "—"}
+//                   </span>
 //                 </div>
 //               ))}
 //             </div>
@@ -766,14 +825,18 @@
 
 //           <div className="mt-4 bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
 //             <div className="flex items-center justify-between">
-//               <h3 className="font-semibold text-sm sm:text-md">Delivery Options</h3>
+//               <h3 className="font-semibold text-sm sm:text-md">
+//                 Delivery Options
+//               </h3>
 //               <span className="text-lg">🚚</span>
 //             </div>
 
 //             <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-3">
 //               <div className="flex items-center gap-2 min-w-0">
 //                 <span className="font-semibold text-gray-900">500072</span>
-//                 <span className="text-sm text-gray-600 truncate">(Sai Krishna)</span>
+//                 <span className="text-sm text-gray-600 truncate">
+//                   (Sai Krishna)
+//                 </span>
 //                 <span className="text-green-600 text-sm">✔</span>
 //               </div>
 //               <button
@@ -791,7 +854,9 @@
 //                   <p className="text-sm font-medium text-gray-900">
 //                     Get it by <span className="font-semibold">Sat, Apr 11</span>
 //                   </p>
-//                   <p className="text-xs text-gray-500">Free delivery on eligible orders</p>
+//                   <p className="text-xs text-gray-500">
+//                     Free delivery on eligible orders
+//                   </p>
 //                 </div>
 //               </div>
 
@@ -799,9 +864,8 @@
 //                 <span className="text-xl">💳</span>
 //                 <div>
 //                   <p className="text-sm font-medium text-gray-900">
-//                      All Orders must be prepaid. 
+//                   <p className="text-xs text-gray-500">
 //                   </p>
-//                   <p className="text-xs text-gray-500">Cash on Delivery (COD) is not available</p>
 //                 </div>
 //               </div>
 
@@ -811,20 +875,7 @@
 //                   <div>
 //                     <p className="text-sm font-medium text-gray-900">
 //                       Easy 14 days return & exchange available
-//                     </p>
-//                     <p className="text-xs text-gray-500">Conditions apply</p>
-//                   </div>
-//                 </div>
-//                 <button
-//                   type="button"
-//                   onClick={() => setIsMoreInfoOpen(true)}
-//                   className="text-sm font-semibold text-orange-500 hover:underline whitespace-nowrap"
-//                 >
-//                   MORE INFO →
-//                 </button>
-//               </div>
-
-//               <p className="pt-2 text-sm text-gray-700">100% Original Products</p>
+//                 100% Original Products
 //             </div>
 //           </div>
 
@@ -843,25 +894,23 @@
 //               </div>
 //             </div>
 
-           
-
-// {supplier ? (
-//   <Link href={`/suppliers/${supplier.id}`}>
-//     <button
-//       type="button"
-//       className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
-//     >
-//       View Profile →
-//     </button>
-//   </Link>
-// ) : (
-//   <button
-//     disabled
-//     className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
-//   >
-//     View Profile →
-//   </button>
-// )}
+//             {supplier ? (
+//               <Link href={`/suppliers/${supplier.id}`}>
+//                 <button
+//                   type="button"
+//                   className="border px-4 py-2 rounded-lg border-orange-400 transition cursor-pointer text-orange-500 hover:bg-orange-50 hover:scale-105"
+//                 >
+//                   View Profile →
+//                 </button>
+//               </Link>
+//             ) : (
+//               <button
+//                 disabled
+//                 className="border px-4 py-2 rounded-lg text-gray-400 border-gray-300 cursor-not-allowed"
+//               >
+//                 View Profile →
+//               </button>
+//             )}
 //           </div>
 //         </div>
 //       </div>
@@ -937,213 +986,3 @@
 // };
 
 // export default ProductView;
-
-"use client";
-
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { products } from "@/data/products";
-import { arrivalProducts } from "@/data/arrivalProducts";
-import { productsData } from "@/app/(buyer)/product/productData";
-
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
-import { fetchSingleProduct } from "@/store/slices/productSlice"; // ✅ FIXED
-
-import {
-  CreditCard,
-  PackageCheck,
-  RefreshCcw,
-  Star,
-  Truck,
-} from "lucide-react";
-
-const ProductView = () => {
-  const params = useParams();
-  const dispatch = useDispatch();
-
-  const favouriteItems = useSelector((state) => state.favourites.items);
-  const { product: apiProduct, loading } = useSelector(
-    (state) => state.products
-  );
-
-  const id = params?.Id ?? params?.id;
-
-  // ✅ CORRECT DISPATCH
-  useEffect(() => {
-    if (id) {
-      dispatch(fetchSingleProduct(id));
-    }
-  }, [id, dispatch]);
-
-  /* ================= NORMALIZE ================= */
-
-  const normalizeProduct = (p) => {
-    if (!p) return null;
-
-    const title = p.title ?? p.name ?? "";
-    const price = p.price ?? "";
-    const min =
-      p.min ??
-      (p.moq ? `${p.moq} units` : "") ??
-      (p.minQty ? `${p.minQty} units` : "");
-
-    const company = p.company ?? p.supplier ?? "";
-    const brand = p.brand ?? p.supplier ?? "";
-
-    const image = p.image_url ?? p.image ?? "/placeholder.png"; // ✅ FIXED
-
-    const media = Array.isArray(p.media)
-      ? p.media
-      : image
-      ? [{ type: "image", src: image }]
-      : [];
-
-    return {
-      ...p,
-      id: p.id, // ✅ FIXED (no _id)
-      title,
-      price,
-      min,
-      company,
-      brand,
-      image,
-      media,
-    };
-  };
-
-  /* ================= LOCAL FALLBACK ================= */
-
-  const catalogProducts = Object.values(productsData || {}).flat();
-  const allProducts = [...products, ...arrivalProducts, ...catalogProducts];
-
-  const productRaw = allProducts.find(
-    (p) => String(p.id) === String(id)
-  );
-
-  const product = normalizeProduct(apiProduct || productRaw);
-
-  const [qty, setQty] = useState(50);
-  const [mounted, setMounted] = useState(false);
-  const [activeImage, setActiveImage] = useState(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  /* ================= STATES ================= */
-
-  if (loading) {
-    return <div className="p-10 text-center">Loading product...</div>;
-  }
-
-  if (!product) {
-    return <div className="p-10 text-center">Product Not Found</div>;
-  }
-
-  const mediaItems =
-    product.media?.length > 0
-      ? product.media
-      : [{ type: "image", src: product.image }];
-
-  const selectedMedia = activeImage || mediaItems[0];
-
-  /* ================= REVIEWS ================= */
-
-  const reviews = [
-    {
-      id: 1,
-      name: "Procurement Manager",
-      rating: 5,
-      date: "Mar 2026",
-      title: "Good",
-      comment: "Nice product",
-    },
-  ];
-
-  const averageRating =
-    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-  const renderStars = (rating) => {
-    const rounded = Math.round(rating);
-    return (
-      <div className="flex items-center gap-0.5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <span
-            key={i}
-            className={
-              i < rounded ? "text-amber-500" : "text-gray-300"
-            }
-          >
-            ★
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  const isWishlisted = mounted
-    ? favouriteItems.some(
-        (item) => String(item.id) === String(product.id) // ✅ FIXED
-      )
-    : false;
-
-  /* ================= UI ================= */
-
-  return (
-    <div className="bg-gray-100 min-h-screen p-4 sm:p-6 lg:px-24">
-      <div className="grid lg:grid-cols-2 gap-7 items-start">
-        
-        {/* LEFT */}
-        <div>
-          <img
-            src={selectedMedia?.src || "/placeholder.png"}
-            onError={(e) => (e.target.src = "/placeholder.png")}
-            className="w-full h-96 object-contain bg-white rounded-xl"
-            alt={product.title}
-          />
-        </div>
-
-        {/* RIGHT */}
-        <div>
-          <h1 className="text-2xl font-bold">{product.title}</h1>
-
-          <p className="text-gray-500 mt-1">
-            {product.company}
-          </p>
-
-          <div className="mt-3 text-orange-600 text-xl font-bold">
-            ₹{product.price}
-          </div>
-
-          <p className="text-sm text-gray-500 mt-1">
-            Min. {product.min}
-          </p>
-
-          <div className="mt-4 flex gap-2">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
-              Buy
-            </button>
-
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg">
-              Add to Cart
-            </button>
-          </div>
-
-          {/* REVIEWS */}
-          <div className="mt-6">
-            <h3 className="font-semibold">Reviews</h3>
-            <div className="flex items-center gap-2">
-              {renderStars(averageRating)}
-              <span>{averageRating.toFixed(1)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default ProductView;

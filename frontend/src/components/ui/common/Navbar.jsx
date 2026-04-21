@@ -19,7 +19,7 @@ import Register from "../auth/Register";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
-import { hydrateFavourites } from "@/store/slices/favouritesSlice";
+import { fetchFavourites } from "@/store/slices/favouritesSlice";
 import { useRouter } from "next/navigation";
 
 const Navbar = () => {
@@ -68,7 +68,7 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    dispatch(hydrateFavourites());
+    dispatch(fetchFavourites());
   }, [dispatch]);
 
   useEffect(() => {
@@ -371,7 +371,7 @@ const Navbar = () => {
 
                           <button
                             onClick={() => {
-                              router.push("/orders");
+                              router.push("/buyerorders");
                               setDropdown(false);
                             }}
                             className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"

@@ -1,86 +1,149 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {
+  getFavouritesAPI,
+  addToFavouritesAPI,
+  removeFromFavouritesAPI,
+  clearFavouritesAPI,
+} from "@/services/favouritesService";
 
-const STORAGE_KEY = "favourites";
+/* ================= ERROR HELPER ================= */
+const normalizeError = (err) =>
+  err?.response?.data?.message ||
+  err?.message ||
+  "Something went wrong";
 
-const readFromStorage = () => {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
+/* ================= THUNKS ================= */
+
+export const fetchFavourites = createAsyncThunk(
+  "favourites/fetchAll",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getFavouritesAPI();
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
   }
-};
+);
 
-const writeToStorage = (items) => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // ignore
+export const addToFavourites = createAsyncThunk(
+  "favourites/add",
+  async (productId, thunkAPI) => {
+    try {
+      const res = await addToFavouritesAPI(productId);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
   }
-};
+);
 
-const normalizeItem = (payload) => {
-  const id = payload?._id || payload?.id;
-  return {
-    _id: id,
-    name: payload?.name || payload?.title || "",
-    image: payload?.image || "",
-    price: payload?.price || "",
-  };
-};
+export const removeFromFavourites = createAsyncThunk(
+  "favourites/remove",
+  async (productId, thunkAPI) => {
+    try {
+      const res = await removeFromFavouritesAPI(productId);
+      return { productId, data: res.data };
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
+export const clearFavourites = createAsyncThunk(
+  "favourites/clear",
+  async (_, thunkAPI) => {
+    try {
+      const res = await clearFavouritesAPI();
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
+/* ================= STATE ================= */
 
 const initialState = {
-  items: readFromStorage(),
+  items: [],
+  loading: false,
+  error: null,
+  success: false,
 };
+
+/* ================= SLICE ================= */
 
 const favouritesSlice = createSlice({
   name: "favourites",
   initialState,
+
   reducers: {
-    hydrateFavourites: (state) => {
-      state.items = readFromStorage();
+    clearFavouritesState: (state) => {
+      state.loading = false;
+      state.error = null;
+      state.success = false;
     },
+  },
 
-    addFavourite: (state, action) => {
-      const item = normalizeItem(action.payload);
-      if (!item._id) return;
-      const exists = state.items.some((x) => x._id === item._id);
-      if (exists) return;
-      state.items = [...state.items, item];
-      writeToStorage(state.items);
-    },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchFavourites.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFavourites.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload?.favourites || [];
+      })
+      .addCase(fetchFavourites.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-    removeFavourite: (state, action) => {
-      const id = action.payload;
-      state.items = state.items.filter((x) => x._id !== id);
-      writeToStorage(state.items);
-    },
+      .addCase(addToFavourites.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(addToFavourites.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.items = action.payload?.favourites || [];
+      })
+      .addCase(addToFavourites.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-    toggleFavourite: (state, action) => {
-      const item = normalizeItem(action.payload);
-      if (!item._id) return;
-      const exists = state.items.some((x) => x._id === item._id);
-      state.items = exists
-        ? state.items.filter((x) => x._id !== item._id)
-        : [...state.items, item];
-      writeToStorage(state.items);
-    },
+      .addCase(removeFromFavourites.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeFromFavourites.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.items = action.payload?.data?.favourites || [];
+      })
+      .addCase(removeFromFavourites.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-    clearFavourites: (state) => {
-      state.items = [];
-      writeToStorage([]);
-    },
+      .addCase(clearFavourites.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(clearFavourites.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.items = action.payload?.favourites || [];
+      })
+      .addCase(clearFavourites.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
-export const {
-  hydrateFavourites,
-  addFavourite,
-  removeFavourite,
-  toggleFavourite,
-  clearFavourites,
-} = favouritesSlice.actions;
-
+export const { clearFavouritesState } = favouritesSlice.actions;
 export default favouritesSlice.reducer;

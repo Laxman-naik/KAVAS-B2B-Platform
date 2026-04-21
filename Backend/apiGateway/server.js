@@ -8,7 +8,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   process.env.FRONTEND_URL,
-];
+].filter(Boolean);
 
 app.use(
   cors({
@@ -27,12 +27,15 @@ app.use(
   createProxyMiddleware({
     target: process.env.AUTH_SERVICE_URL,
     changeOrigin: true,
-    secure: true,
+    secure: false,
     cookieDomainRewrite: "",
 
     onProxyReq: (proxyReq, req) => {
       if (req.headers.cookie) {
         proxyReq.setHeader("cookie", req.headers.cookie);
+      }
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
       }
     },
 
@@ -53,8 +56,17 @@ app.use(
   createProxyMiddleware({
     target: process.env.AUTH_SERVICE_URL,
     changeOrigin: true,
-    secure: true,
+    secure: false,
     cookieDomainRewrite: "",
+
+    onProxyReq: (proxyReq, req) => {
+      if (req.headers.cookie) {
+        proxyReq.setHeader("cookie", req.headers.cookie);
+      }
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
   })
 );
 
@@ -64,8 +76,31 @@ app.use(
   createProxyMiddleware({
     target: process.env.PRODUCT_SERVICE_URL,
     changeOrigin: true,
-    secure: true,
+    secure: false,
+
     onProxyReq: (proxyReq, req) => {
+      if (req.headers.cookie) {
+        proxyReq.setHeader("cookie", req.headers.cookie);
+      }
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
+  })
+);
+
+// FAVOURITES
+app.use(
+  "/api/favourites",
+  createProxyMiddleware({
+    target: process.env.PRODUCT_SERVICE_URL,
+    changeOrigin: true,
+    secure: false,
+
+    onProxyReq: (proxyReq, req) => {
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
       if (req.headers.cookie) {
         proxyReq.setHeader("cookie", req.headers.cookie);
       }
