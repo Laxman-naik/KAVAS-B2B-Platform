@@ -1,19 +1,5 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import {
-  ShoppingCart,
-  Grid,
-  Shirt,
-  Wrench,
-  Settings,
-  Wheat,
-  FlaskConical,
-  Sofa,
-  Car,
-  Pill,
-  Package,
-  Construction,
-} from "lucide-react";
 import Link from "next/link";
 
 const slugify = (text) =>
@@ -21,6 +7,20 @@ const slugify = (text) =>
 
 const Categories = () => {
   const categories = [
+    
+    {
+      name: "Electronics",
+      image: "https://images.pexels.com/photos/18304033/pexels-photo-18304033.jpeg",
+      subcategories: [
+        "Mobile Phones & Accessories",
+        "Computers & Laptops",
+        "TV & Home Entertainment",
+        "Cameras & Photography",
+        "Audio Devices",
+        "Wearable Technology",
+        "Gaming Consoles & Accessories",
+      ],
+    },
     {
       name: "Home Appliances",
       image: "https://images.pexels.com/photos/26793170/pexels-photo-26793170.jpeg",
@@ -40,19 +40,6 @@ const Categories = () => {
         "Heating & Cooling1",
         "Laundry Appliances1",
         "Smart Home Devices1",
-      ],
-    },
-    {
-      name: "Electronics",
-      image: "https://images.pexels.com/photos/18304033/pexels-photo-18304033.jpeg",
-      subcategories: [
-        "Mobile Phones & Accessories",
-        "Computers & Laptops",
-        "TV & Home Entertainment",
-        "Cameras & Photography",
-        "Audio Devices",
-        "Wearable Technology",
-        "Gaming Consoles & Accessories",
       ],
     },
     {
@@ -369,7 +356,7 @@ const Categories = () => {
           }`}
         >
           {activeCategory && (
-            <div className="bg-white dark:bg-gray-800 shadow-xl border-t p-2 sm:p-5 pt-10 mt-9 sm:pt-8 w-175">
+            <div className="bg-white dark:bg-gray-800 shadow-xl border-t p-2 sm:p-5 pt-10 mt-5 sm:pt-8 w-175">
               <h2 className="text-sm sm:text-lg font-semibold mb-4 text-left">
                 {activeCategory.name}
               </h2>

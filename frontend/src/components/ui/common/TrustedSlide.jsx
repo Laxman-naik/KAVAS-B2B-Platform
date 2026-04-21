@@ -55,13 +55,9 @@ const TrustedSlide = () => {
   return (
     <div className="dark:bg-gray-900">
       <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-
         <h1 className="text-xl md:text-2xl font-semibold border-l-4 pl-2 border-orange-500 mb-6">
           Our Services
         </h1>
-
-        {/* Responsive Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
 
           {items.map((item, index) => (

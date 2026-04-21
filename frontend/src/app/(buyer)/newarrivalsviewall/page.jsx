@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ const categories = [
 ];
 
 const Page = () => {
+  const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [filters, setFilters] = useState({
     minQty: [],
@@ -35,15 +36,25 @@ const Page = () => {
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const liked = favouriteItems.map((item) => item._id);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
   };
 
   const onAddToCart = (product) => {
-    dispatch(addToCart(product));
+    dispatch(
+      addToCart({
+        productId: product?.productId ?? product?.id,
+        quantity: 1,
+        variantId: product?.variantId ?? product?.variant_id,
+      })
+    );
   };
 
-  const [showFilters, setShowFilters] = useState(false);
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
       const exists = prev[type].includes(value);
@@ -97,15 +108,19 @@ const Page = () => {
       return 0;
     });
 
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <div className="bg-white min-h-screen max-w-350">
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
-           <p className="text-xs text-gray-500 mb-1">
-            <Link href="/"><span className="hover:text-orange-600">
-      Home </span></Link><span className="mx-1">{">>"}</span> 
-      <span className="text-black font-medium">New Arrivals</span>
-    </p>
+          <p className="text-xs text-gray-500 mb-1">
+            <Link href="/">
+              <span className="hover:text-orange-600">Home</span>
+            </Link>
+            <span className="mx-1">{">>"}</span>
+            <span className="text-black font-semibold">New Arrivals</span>
+          </p>
           <div className="flex items-center gap-2 mt-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
               New Arrivals
@@ -114,9 +129,9 @@ const Page = () => {
           <p className="text-xs sm:text-sm text-black mt-1">
             Best-selling wholesale products across all categories
           </p>
-          <p className="text-xs text-black mt-2">
+          {/* <p className="text-xs text-black mt-2">
             Showing <span className="font-semibold">{filteredProducts.length} </span> of <span className="font-semibold"> {arrivalProducts.length}</span> products
-          </p>
+          </p> */}
         </div>
       </div>
       <div className="bg-white px-3 sm:px-4 py-3 sticky top-20 z-10">
@@ -126,11 +141,10 @@ const Page = () => {
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition flex items-center gap-1
-              ${
-                activeCategory === cat
+              ${activeCategory === cat
                   ? "bg-orange-500 text-white border-orange-500"
                   : "bg-gray-100 text-gray-700 hover:bg-orange-50"
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -155,7 +169,7 @@ const Page = () => {
               <div className="mt-4 mb-4">
                 <h3 className="font-medium mb-2 text-sm">Min. Order Qty</h3>
                 <div className="space-y-1 text-sm">
-                  {["Under 50 units","50–200 units","200–500 units","500+ units"].map((item)=>(
+                  {["Under 50 units", "50–200 units", "200–500 units", "500+ units"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -171,7 +185,7 @@ const Page = () => {
               <div className="mb-4">
                 <h3 className="font-medium mb-2 text-sm">Rating</h3>
                 <div className="space-y-1 text-sm">
-                  {["4.5","4.0"].map((item)=>(
+                  {["4.5", "4.0"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -187,7 +201,7 @@ const Page = () => {
               <div className="mb-4">
                 <h3 className="font-medium mb-2 text-sm">Supplier Type</h3>
                 <div className="space-y-1 text-sm">
-                  {["Verified only","Manufacturer","Distributor"].map((item)=>(
+                  {["Verified only", "Manufacturer", "Distributor"].map((item) => (
                     <label key={item} className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -231,7 +245,7 @@ const Page = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
               {filteredProducts.map((product, index) => (
-                <Link key={product.id} href={`/product/${product.id}`} className="block">
+                <Link key={product._id ?? product.id} href={`/product/${product._id ?? product.id}`} className="block">
                   <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                     <CardContent className="p-0! py-0! flex flex-col h-full">
 
@@ -256,7 +270,7 @@ const Page = () => {
                           {product.category}
                         </p>
 
-                        <p className="text-black font-bold text-base mt-1">
+                        <p className="text-orange-500 font-bold text-base mt-1">
                           {product.price}
                         </p>
 
@@ -290,19 +304,18 @@ const Page = () => {
                               e.stopPropagation();
                               onToggleFavourite(product);
                             }}
-                            className={`h-8 w-8 border-orange-200 ${
-                              liked.includes(product.id) ? "bg-red-50" : ""
-                            }`}
+                            className={`h-8 w-8 border-orange-200 ${mounted && liked.includes(product.id) ? "bg-red-50" : ""
+                              }`}
                           >
                             <Heart
                               size={14}
                               className={
-                                liked.includes(product.id)
+                                mounted && liked.includes(product.id)
                                   ? "text-red-500"
                                   : "text-gray-600"
                               }
                               fill={
-                                liked.includes(product.id)
+                                mounted && liked.includes(product.id)
                                   ? "currentColor"
                                   : "none"
                               }

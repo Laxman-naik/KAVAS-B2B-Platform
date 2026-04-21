@@ -9,7 +9,13 @@ const REFRESH_PREFIX = "refresh:user:";
 /* ================= REGISTER ================= */
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, phone, role } = req.body;
+    const { full_name, email, password, phone, role } = req.body || {};
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        message: "full_name, email and password are required",
+      });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -29,7 +35,13 @@ exports.register = async (req, res) => {
 /* ================= LOGIN ================= */
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+
+    if (!req.body) {
+      return res.status(400).json({
+        message: "Request body missing. Send JSON with Content-Type: application/json",
+      });
+    }
 
     const result = await pool.query(
       "SELECT * FROM users WHERE email=$1",

@@ -66,10 +66,8 @@ const contactOptions = [
 const page = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* HERO */}
       <section className="px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 text-center">
-        <Handshake className="mx-auto mb-4 h-8 w-8 md:h-10 md:w-10 text-violet-600" />
+        <Handshake className="mx-auto mb-4 h-8 w-8 md:h-10 md:w-10 text-orange-500" />
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 text-gray-900">
           Dedicated Account Support
@@ -79,12 +77,10 @@ const page = () => {
           You're not a ticket number here. Every Pro+ buyer gets a named account manager.
         </p>
 
-        <Button className="bg-violet-600 hover:bg-violet-700 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
+        <Button className="bg-orange-500 hover:bg-orange-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl w-full sm:w-auto">
           Get Your Account Manager →
         </Button>
       </section>
-
-      {/* PLANS */}
       <section className="px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
         <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
@@ -104,12 +100,12 @@ const page = () => {
                 key={i}
                 className={`relative rounded-2xl p-4 sm:p-5 md:p-6 h-full transition ${
                   plan.highlight
-                    ? "border-2 border-violet-500 bg-violet-50 shadow-md"
+                    ? "border-2 border-orange-500 bg-orange-50 shadow-md"
                     : "border border-gray-200 bg-white hover:shadow-sm"
                 }`}
               >
                 {plan.badge && (
-                  <Badge className="absolute -top-3 left-4 text-xs bg-violet-600">
+                  <Badge className="absolute -top-3 left-4 text-xs bg-orange-600">
                     {plan.badge}
                   </Badge>
                 )}
@@ -120,7 +116,7 @@ const page = () => {
                   </p>
 
                   <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 text-violet-600" />
+                    <Icon className="h-5 w-5 text-orange-600" />
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                       {plan.name}
                     </h3>
@@ -146,8 +142,6 @@ const page = () => {
           })}
         </div>
       </section>
-
-      {/* CONTACT */}
       <section className="px-4 sm:px-6 lg:px-8 pb-10 sm:pb-12 md:pb-14">
         <div className="max-w-6xl mx-auto bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 md:p-8 shadow-sm">
           <h3 className="font-semibold mb-5 flex items-center gap-2 text-gray-900 text-base sm:text-lg">
@@ -162,9 +156,9 @@ const page = () => {
               return (
                 <div
                   key={i}
-                  className="bg-violet-50 border border-violet-100 rounded-xl p-4 text-center hover:shadow-sm transition"
+                  className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center hover:shadow-sm transition"
                 >
-                  <Icon className="mx-auto mb-2 text-violet-600 h-5 w-5" />
+                  <Icon className="mx-auto mb-2 text-orange-500 h-5 w-5" />
                   <p className="font-medium text-sm text-gray-900">
                     {item.title}
                   </p>

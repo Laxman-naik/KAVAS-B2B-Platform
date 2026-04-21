@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon } from "lucide-react";
 
-const ProductView = () => {
+const ProductView = () => { 
   const params = useParams();
  
   const dispatch = useDispatch();

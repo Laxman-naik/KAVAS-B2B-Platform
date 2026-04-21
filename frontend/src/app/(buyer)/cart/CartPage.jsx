@@ -165,12 +165,16 @@ const handleCheckout = async () => {
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* ================= LEFT CART ================= */}
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5" />
             <h2 className="text-lg sm:text-xl font-semibold">
               My Cart{" "}
-              <span className="text-gray-500 text-sm">({cartCount} items)</span>
+              <span className="text-gray-500 text-sm">
+                ({cartCount} items)
+              </span>
             </h2>
           </div>
 
@@ -198,6 +202,7 @@ const handleCheckout = async () => {
             </div>
           ) : (
             <div className="space-y-4">
+
               {hasInvalidMoq && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
                   Some items are below the minimum order quantity. Only MOQ quantity will be allowed.
@@ -215,7 +220,7 @@ const handleCheckout = async () => {
                     className="bg-white border rounded-xl p-4 flex items-center gap-4"
                   >
                     <img
-                      src={item.image}
+                      src={item.image_url || item.image}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -234,11 +239,17 @@ const handleCheckout = async () => {
                       )} */}
 
                       <div className="mt-2 flex items-center justify-between gap-3">
+
                         <div className="flex items-center border rounded-md overflow-hidden">
+
                           <button
                             onClick={() => handleDecrease(item)}
-                            disabled={updating || item.quantity <= moq}
-                            className="px-2 bg-gray-200"
+                            disabled={(item.quantity || moq) <= moq || loading}
+                            className={`px-2.5 py-1 bg-gray-100 ${
+                              (item.quantity || moq) <= moq || loading
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-gray-200"
+                            }`}
                           >
                             -
                           </button>
@@ -250,9 +261,13 @@ const handleCheckout = async () => {
                           >
                             +
                           </button>
+
                         </div>
 
-                        <div className="text-sm font-semibold text-gray-900"> ₹{itemTotal.toFixed(0)}</div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          ₹{itemTotal.toFixed(0)}
+                        </div>
+
                       </div>
                     </div>
                     <button
@@ -268,6 +283,7 @@ const handleCheckout = async () => {
             </div>
           )}
 
+          {/* buttons */}
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <Link href="/products">
               <button className="w-full sm:w-auto flex items-center justify-center gap-2 border border-gray-400 px-4 py-2 rounded-md text-sm hover:bg-gray-200">
@@ -290,6 +306,7 @@ const handleCheckout = async () => {
           </div>
         </div>
 
+        {/* ================= SUMMARY ================= */}
         <div className="bg-white border rounded-xl p-4 h-fit sticky top-20">
           <h3 className="text-base font-semibold mb-2">Order Summary</h3>
 
@@ -337,6 +354,7 @@ const handleCheckout = async () => {
             </button>
           </Link>
         </div>
+
       </div>
     </div>
   );
