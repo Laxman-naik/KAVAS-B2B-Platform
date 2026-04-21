@@ -1,8 +1,8 @@
 import { productapi } from "../lib/axios";
 
-export const getProducts = () => productapi.get("/api/products/all");
+export const getProducts = () => productapi.get("/api/products/all", { skipAuth: true });
 
-export const getSingleProduct = (id) => productapi.get(`/api/products/${id}`);
+export const getSingleProduct = (id) => productapi.get(`/api/products/${id}`, { skipAuth: true });
 
 export const createProduct = (data) => productapi.post("/api/products", data);
 

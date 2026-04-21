@@ -1,13 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, ShoppingCart } from "lucide-react";
-import { productsData } from "@/app/(buyer)/product/productData";
+import { Heart, LayoutGrid, Rows3, ShoppingCart } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
+// import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+import { fetchProducts } from "@/store/slices/productSlice";
 
 const categories = [
   "All",
@@ -26,15 +26,25 @@ const Page = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [filters, setFilters] = useState({
     minQty: [],
+
     rating: [],
     supplier: [],
   });
 
   const [sortOption, setSortOption] = useState("Most relevant");
   const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const [viewMode, setViewMode] = useState("grid");
 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
+  const { products: dbProducts, loading } = useSelector((state) => state.products);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
   const onToggleFavourite = (product) => {
     dispatch(toggleFavourite(product));
@@ -42,6 +52,24 @@ const Page = () => {
 
   const onAddToCart = (product) => {
     dispatch(addToCart(product));
+  };
+
+  const normalizeDbProduct = (p) => {
+    if (!p) return null;
+    const id = p._id ?? p.id ?? p.productId;
+    const name = p.name ?? p.title ?? "";
+    const category = p.category ?? "";
+    const supplier = p.supplier ?? p.company ?? p.supplierType ?? "";
+    const price = typeof p.price === "number" ? p.price : Number(p.priceValue ?? p.price ?? 0);
+    const minQty =
+      typeof p.minQty === "number"
+        ? p.minQty
+        : typeof p.moq === "number"
+          ? p.moq
+          : Number(String(p.min ?? "").match(/\d+/)?.[0] ?? 0);
+    const image = p.image ?? p.image_url ?? null;
+
+    return { ...p, _id: id, id, name, category, supplier, price, minQty, image };
   };
 
   const handleFilterChange = (type, value) => {
@@ -56,16 +84,36 @@ const Page = () => {
     });
   };
 
-  const allProducts = Object.values(productsData).flat();
+  const allProducts = (Array.isArray(dbProducts) ? dbProducts : [])
+    .map(normalizeDbProduct)
+    .filter(Boolean);
+
+  const categoryCounts = allProducts.reduce((acc, p) => {
+    const key = p?.category || "";
+    if (!key) return acc;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const maxCatalogPrice = allProducts.reduce(
+    (max, p) => (typeof p?.price === "number" ? Math.max(max, p.price) : max),
+    50000
+  );
 
   const filteredProducts = allProducts
     .filter((product) => {
       if (
         activeCategory !== "All" &&
-        product.category.toLowerCase() !== activeCategory.toLowerCase()
+        String(product.category || "").toLowerCase() !== activeCategory.toLowerCase()
       ) {
         return false;
       }
+
+      if (typeof product?.price === "number") {
+        if (product.price < priceRange.min) return false;
+        if (product.price > priceRange.max) return false;
+      }
+
       if (filters.minQty.length > 0) {
         const qty = product.minQty;
 
@@ -101,145 +149,344 @@ const Page = () => {
       return 0;
     });
 
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / itemsPerPage));
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (safePage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalProducts);
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const onClearFilters = () => {
+    setFilters({ minQty: [], rating: [], supplier: [] });
+    setActiveCategory("All");
+    setPriceRange({ min: 0, max: maxCatalogPrice });
+    setCurrentPage(1);
+  };
+
   return (
-    <div className="bg-white min-h-screen max-w-350">
-      <div className="bg-white px-4 py-3">
-        <p className="text-xs text-gray-500">
-          <Link href="/">Home</Link> {" >> "} <b>All Products</b>
-        </p>
+    <div className="min-h-screen bg-[#FFF8EC]">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 py-6">
+        <div className="mb-5">
+          <p className="text-xs text-gray-600">
+            <Link href="/" className="hover:underline">Home</Link>
+            <span className="mx-2">››</span>
+            <span className="font-semibold text-gray-900">Products</span>
+          </p>
 
-        <h1 className="text-2xl font-bold mt-2">All Products</h1>
-        <p className="text-sm text-gray-600">
-          Best-selling wholesale products across all categories
-        </p>
-      </div>
-
-      {/* CATEGORY BAR */}
-      <div className="px-4 py-3 sticky top-20 bg-white z-10 overflow-x-auto flex gap-2">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-1.5 rounded-full text-sm border ${
-              activeCategory === cat
-                ? "bg-orange-500 text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div className="px-4 py-6 grid md:grid-cols-[220px_1fr] gap-6">
-        <div className={`${showFilters ? "block" : "hidden"} md:block`}>
-          <div className="border rounded-xl p-4 sticky top-28">
-            <h3 className="font-semibold mb-3">Filters</h3>
-            <div className="mb-4">
-              <p className="text-sm font-medium">Min Qty</p>
-              {["Under 50 units", "50–200 units", "200–500 units", "500+ units"].map(
-                (item) => (
-                  <label key={item} className="flex gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      onChange={() => handleFilterChange("minQty", item)}
-                    />
-                    {item}
-                  </label>
-                )
-              )}
-            </div>
-            <div className="mb-4">
-              <p className="text-sm font-medium">Rating</p>
-              {["4.5", "4.0"].map((item) => (
-                <label key={item} className="flex gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    onChange={() => handleFilterChange("rating", item)}
-                  />
-                  {item}★+
-                </label>
-              ))}
-            </div>
-          </div>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
+            All Products
+          </h1>
+          <p className="mt-1 text-sm text-gray-700 max-w-2xl">
+            Discover our wide range of premium quality products at unbeatable wholesale prices.
+          </p>
         </div>
-        <div>
-          <div className="flex justify-between mb-4">
-            <p>
-              Showing <b>{filteredProducts.length}</b> products
-            </p>
-
-            <select
-              onChange={(e) => setSortOption(e.target.value)}
-              className="border px-2 py-1"
+        <div className="rounded-sm bg-white border border-[#E9DDC9] p-4 sm:p-5">
+          <div className="md:hidden mb-4">
+            <Button
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => setShowFilters((s) => !s)}
             >
-              <option>Most relevant</option>
-              <option>Price low to high</option>
-              <option>Price high to low</option>
-            </select>
+              Filters
+              <span className="text-xs">{showFilters ? "▲" : "▼"}</span>
+            </Button>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredProducts.map((product, index) => (
-              <Link key={product.id} href={`/product/${product.id}`}>
-                <Card className="rounded-xl overflow-hidden hover:shadow-md">
-                  <CardContent className="p-0 flex flex-col h-full">
-                    <div className="relative h-40 bg-gray-100">
-                      <span className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-1 rounded">
-                        {index % 2 === 0 ? "Trending" : "Hot"}
-                      </span>
+          <div className="grid md:grid-cols-[260px_minmax(0,1fr)] gap-6 items-start">
+            <aside className={`${showFilters ? "block" : "hidden"} md:block`}>
+              <div className="rounded-2xl border border-[#E9DDC9] bg-white p-4 sticky top-24">
+                <div className="pb-3 border-b border-[#F0E6D6]">
+                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">CATEGORIES</h3>
+                </div>
 
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
+                <div className="mt-3 space-y-1">
+                  {categories.map((cat) => {
+                    const count =
+                      cat === "All"
+                        ? allProducts.length
+                        : categoryCounts[cat] || 0;
+
+                    const isActive = activeCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setActiveCategory(cat);
+                          setCurrentPage(1);
+                        }}
+                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition border ${isActive
+                            ? "bg-[#FFF3D6] border-[#D4AF37] text-[#0B1F3A]"
+                            : "bg-white border-transparent hover:bg-[#FFF3D6]/60 text-gray-700"
+                          }`}
+                      >
+                        <span className="font-medium">{cat === "All" ? "All Categories" : cat}</span>
+                        <span className="text-xs text-gray-600">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-[#F0E6D6]">
+                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">PRICE RANGE</h3>
+
+                  <div className="mt-3 space-y-3">
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxCatalogPrice}
+                      value={priceRange.min}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setPriceRange((prev) => ({ ...prev, min: Math.min(value, prev.max) }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full accent-[#0B1F3A]"
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxCatalogPrice}
+                      value={priceRange.max}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setPriceRange((prev) => ({ ...prev, max: Math.max(value, prev.min) }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full accent-[#0B1F3A]"
+                    />
+
+                    <div className="flex items-center justify-between text-xs text-gray-700">
+                      <span>₹{priceRange.min}</span>
+                      <span>₹{priceRange.max}</span>
                     </div>
+                  </div>
 
-                    <div className="p-3 flex flex-col flex-1">
-                      <h3 className="text-sm font-semibold line-clamp-2">
-                        {product.name}
-                      </h3>
+                  <div className="mt-4 grid grid-cols-1 gap-2">
+                    <Button
+                      className="w-full bg-[#0B1F3A] hover:bg-[#07162A] text-white"
+                      onClick={() => setCurrentPage(1)}
+                    >
+                      Apply Filters
+                    </Button>
 
-                      <p className="text-xs text-orange-600">
-                        {product.category}
-                      </p>
+                    <button
+                      type="button"
+                      onClick={onClearFilters}
+                      className="text-xs text-gray-600 hover:underline text-left"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
 
-                      <p className="font-bold text-orange-500">
-                        ₹{product.price}
-                      </p>
+                <div className="mt-5 rounded-xl bg-[#0B1F3A]  p-4 text-white">
+                  <p className="text-xs font-extrabold tracking-wide opacity-90">BULK ORDER?</p>
+                  <p className="mt-1 text-sm font-semibold">Get Special Wholesale Pricing!</p>
+                  <Button className="mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]">
+                    Enquire Now
+                  </Button>
+                </div>
+              </div>
+            </aside>
 
-                      <p className="text-xs text-gray-500">
-                        Min Qty: {product.minQty}
-                      </p>
+            <main>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-semibold">{startIndex + 1}</span>–
+                  <span className="font-semibold">{endIndex}</span> of <span className="font-semibold">{totalProducts}</span> Products
+                </p>
 
-                      <div className="flex gap-2 mt-auto pt-2">
-                        <Button
-                          className="flex-1 bg-orange-500 text-white text-xs"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onAddToCart(product);
-                          }}
-                        >
-                          <ShoppingCart size={14} /> Add
-                        </Button>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={sortOption}
+                    onChange={(e) => {
+                      setSortOption(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="rounded-lg border border-[#E9DDC9] bg-white px-3 py-2 text-sm"
+                  >
+                    <option>Most relevant</option>
+                    <option>Price low to high</option>
+                    <option>Price high to low</option>
+                  </select>
 
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            onToggleFavourite(product);
-                          }}
-                        >
-                          <Heart size={14} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => setViewMode((m) => (m === "grid" ? "list" : "grid"))}
+                    className="h-10 w-10 rounded-lg border border-[#E9DDC9] bg-white flex items-center justify-center text-[#0B1F3A] hover:bg-[#FFF3D6] transition"
+                    aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                  >
+                    {viewMode === "grid" ? (
+                      <LayoutGrid className="h-4 w-4" />
+                    ) : (
+                      <Rows3 className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="py-10 text-center text-sm text-gray-600">Loading products...</div>
+              ) : (
+                <div
+                  className={
+                    viewMode === "grid"
+                      ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                      : "grid grid-cols-1 gap-4"
+                  }
+                >
+                  {paginatedProducts.map((product, index) => {
+                    const productId = product?._id ?? product?.id ?? product?.productId;
+                    const isLiked = favouriteItems.some(
+                      (i) => String(i._id ?? i.id) === String(productId)
+                    );
+                    const discount = index % 2 === 0 ? 25 : 30;
+                    const originalPrice =
+                      typeof product?.price === "number"
+                        ? Math.round(product.price * (1 + discount / 100))
+                        : null;
+
+                    return (
+                      <Link key={productId} href={`/product/${productId}`} className="block">
+                        <Card className="rounded-2xl border border-[#E9DDC9] bg-white hover:shadow-md transition overflow-hidden">
+                          <CardContent className={viewMode === "grid" ? "p-0" : "p-0"}>
+                            <div className={viewMode === "grid" ? "" : "flex gap-4"}>
+                              <div
+                                className={
+                                  viewMode === "grid"
+                                    ? "relative h-40 sm:h-44 w-full overflow-hidden"
+                                    : "relative h-28 w-28 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-xl m-3"
+                                }
+                              >
+                                <div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-bold text-[#0B1F3A]">
+                                  -{discount}%
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    onToggleFavourite({ ...product, _id: productId });
+                                  }}
+                                  className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
+                                  aria-label="Toggle favourite"
+                                >
+                                  <Heart
+                                    size={16}
+                                    className={isLiked ? "text-red-500" : "text-gray-600"}
+                                    fill={isLiked ? "currentColor" : "none"}
+                                  />
+                                </button>
+
+                                <img
+                                  src={product.image || "/placeholder.png"}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+
+                              <div className={viewMode === "grid" ? "p-3" : "flex-1 py-4 pr-4"}>
+                                <h3 className={viewMode === "grid" ? "text-sm font-semibold text-[#0B1F3A] line-clamp-2 min-h-10" : "text-sm sm:text-base font-semibold text-[#0B1F3A] line-clamp-2"}>
+                                  {product.name}
+                                </h3>
+
+                                <div className="mt-1">
+                                  <span className="text-sm font-extrabold text-[#0B1F3A]">₹{product.price}</span>
+                                  {originalPrice ? (
+                                    <span className="ml-2 text-xs text-gray-500 line-through">₹{originalPrice}</span>
+                                  ) : null}
+                                </div>
+
+                                <p className="mt-1 text-xs text-gray-600">
+                                  Min. Order: <span className="font-semibold">{product.minQty}</span> Units
+                                </p>
+
+                                <div className={viewMode === "grid" ? "" : "mt-3 flex gap-2"}>
+                                  <Button
+                                    className={viewMode === "grid" ? "mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]" : "bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] px-4"}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      onAddToCart({ ...product, productId });
+                                    }}
+                                  >
+                                    <ShoppingCart size={14} className="mr-2" />
+                                    Add to Cart
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="h-8 w-8 rounded-md border border-[#E9DDC9] bg-white text-[#0B1F3A] disabled:opacity-50"
+                  aria-label="Previous page"
+                >
+                  ‹
+                </button>
+
+                {(() => {
+                  const groupStart = Math.floor((safePage - 1) / 5) * 5 + 1;
+                  const groupPages = Array.from({ length: 5 })
+                    .map((_, i) => groupStart + i)
+                    .filter((n) => n <= totalPages);
+                  const showLast = totalPages > 5 && groupPages[groupPages.length - 1] < totalPages;
+
+                  return (
+                    <>
+                      {groupPages.map((pageNum) => {
+                        const isActive = pageNum === safePage;
+                        return (
+                          <button
+                            key={pageNum}
+                            type="button"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`h-8 w-8 rounded-md text-sm font-semibold border ${
+                              isActive
+                                ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                                : "bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                      {showLast ? (
+                        <>
+                          <span className="px-1 text-sm text-gray-500">…</span>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentPage(totalPages)}
+                            className={`h-8 min-w-8 px-2 rounded-md text-sm font-semibold border bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]`}
+                          >
+                            {totalPages}
+                          </button>
+                        </>
+                      ) : null}
+                    </>
+                  );
+                })()}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  className="h-8 w-8 rounded-md border border-[#E9DDC9] bg-white text-[#0B1F3A] disabled:opacity-50"
+                  aria-label="Next page"
+                >
+                  ›
+                </button>
+              </div>
+            </main>
           </div>
         </div>
       </div>

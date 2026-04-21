@@ -1,9 +1,11 @@
 import React from 'react'
+import VendorSidebar from "../../components/vendor/VendorSidebar"
 
-const Layout = () => {
+const layout = () => {
   return (
-    <div>Layout</div>
+    <VendorSidebar/>
+    
   )
 }
 
-export default Layout
+export default layout

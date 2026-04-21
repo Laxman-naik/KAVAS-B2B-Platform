@@ -1,157 +1,199 @@
 const pool = require("../config/db");
 const razorpayService = require("../services/razorpayService");
-const { createOrderFromCartInternal } = require("../services/orderService");
 const crypto = require("crypto");
-/* ================= CREATE CHECKOUT ================= */
 
 exports.createCheckout = async (req, res) => {
-  const client = await pool.connect();
-
   try {
     const { id: userId } = req.user;
+    const { orderId } = req.body;
 
-    await client.query("BEGIN");
-
-    // 1. Get cart + items (SERVER-SIDE SAFE)
-    const cartRes = await client.query(
-      `SELECT id FROM carts WHERE user_id = $1`,
-      [userId]
-    );
-
-    if (!cartRes.rows.length) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ message: "Cart not found" });
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const cartId = cartRes.rows[0].id;
-
-    const itemsRes = await client.query(
-      `SELECT 
-         ci.product_id,
-         ci.quantity,
-         p.price
-       FROM cart_items ci
-       JOIN products p ON p.id = ci.product_id
-       WHERE ci.cart_id = $1`,
-      [cartId]
-    );
-
-    const items = itemsRes.rows;
-
-    if (!items.length) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({ message: "Cart is empty" });
+    //  1. Validate input
+    if (!orderId) {
+      return res.status(400).json({ message: "OrderId is required" });
     }
 
-    // 2. Calculate total (SERVER TRUTH)
-    const subtotal = items.reduce(
-      (acc, item) => acc + Number(item.price) * Number(item.quantity),
-      0
+    //  2. Fetch order (WITH ownership check)
+    const orderRes = await pool.query(
+      `SELECT o.* 
+       FROM orders o
+       JOIN addresses a ON o.shipping_address_id = a.id
+       WHERE o.id = $1 AND a.user_id = $2`,
+      [orderId, userId]
     );
 
-    const gst = subtotal * 0.18;
-    const total = Math.round((subtotal + gst) * 100); // paise
-
-    // 3. Create order FIRST (PENDING)
-    const orderRes = await client.query(
-      `INSERT INTO orders (supplier_org_id, total_amount, status)
-       VALUES ($1, $2, 'pending')
-       RETURNING *`,
-      [userId, total / 100]
-    );
+    if (!orderRes.rows.length) {
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     const order = orderRes.rows[0];
 
-    // 4. Snapshot order items
-    for (let item of items) {
-      await client.query(
-        `INSERT INTO order_items (order_id, product_id, quantity, price)
-         VALUES ($1, $2, $3, $4)`,
-        [order.id, item.product_id, item.quantity, item.price]
-      );
-    }
-
-    // 5. Create Razorpay order
-    const razorpayOrder = await razorpayService.createOrder(total);
-
-    // 6. Store transaction (idempotent)
-    await client.query(
-      `INSERT INTO transactions 
-       (user_id, razorpay_order_id, amount, status, order_id)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (razorpay_order_id)
-       DO UPDATE SET status = EXCLUDED.status`,
-      [userId, razorpayOrder.id, total, "created", order.id]
+    //  3. Prevent duplicate payment attempts
+    const existingTx = await pool.query(
+      `SELECT * FROM transactions 
+       WHERE order_id = $1 AND status = 'created'`,
+      [orderId]
     );
 
-    await client.query("COMMIT");
+    if (existingTx.rows.length > 0) {
+      return res.json({
+        key: process.env.RAZORPAY_KEY_ID,
+        orderId: existingTx.rows[0].razorpay_order_id,
+        amount: existingTx.rows[0].amount,
+        dbOrderId: order.id,
+      });
+    }
+
+    //  4. Convert safely to paise
+    const amount = Math.round(Number(order.total_amount) * 100);
+
+    if (amount <= 0) {
+      return res.status(400).json({ message: "Invalid order amount" });
+    }
+
+    //  5. Create Razorpay order
+    const razorpayOrder = await razorpayService.createOrder(amount);
+
+    //  6. Store transaction
+    await pool.query(
+      `INSERT INTO transactions 
+       (user_id, order_id, razorpay_order_id, amount, status)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, order.id, razorpayOrder.id, amount, "created"]
+    );
 
     res.json({
       key: process.env.RAZORPAY_KEY_ID,
       orderId: razorpayOrder.id,
-      amount: total,
+      amount: amount,
       dbOrderId: order.id,
     });
+
   } catch (err) {
-    await client.query("ROLLBACK");
     console.error("createCheckout error:", err);
     res.status(500).json({ message: err.message });
-  } finally {
-    client.release();
   }
 };
 
 /* ================= VERIFY PAYMENT ================= */
 
 exports.verifyPayment = async (req, res) => {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-  } = req.body;
-
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RZP_SECRET)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest("hex");
-
-  if (expectedSignature !== razorpay_signature) {
-    return res.status(400).json({ message: "Invalid payment" });
-  }
-
   const client = await pool.connect();
 
   try {
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    } = req.body;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RZP_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid payment" });
+    }
+
     await client.query("BEGIN");
 
-    // 1. update order status
-    const orderRes = await client.query(
-      `UPDATE orders 
-       SET status = 'paid'
-       WHERE id = $1
-       RETURNING id`,
+    const txRes = await client.query(
+      `SELECT * FROM transactions 
+       WHERE razorpay_order_id = $1
+       FOR UPDATE`,
       [razorpay_order_id]
     );
 
-    const orderId = orderRes.rows[0].id;
+    if (!txRes.rows.length) throw new Error("Transaction not found");
 
-    // 2. insert status history
+    const tx = txRes.rows[0];
+
+    // idempotency
+    if (tx.status === "paid") {
+      await client.query("ROLLBACK");
+      return res.json({ success: true, message: "Already processed" });
+    }
+
+    await client.query(
+      `UPDATE transactions
+       SET status = 'paid',
+           razorpay_payment_id = $1
+       WHERE id = $2`,
+      [razorpay_payment_id, tx.id]
+    );
+
+    await client.query(
+      `UPDATE orders
+       SET status = 'confirmed',
+           payment_status = 'paid'
+       WHERE id = $1`,
+      [tx.order_id]
+    );
+
+    // fetch items
+    const itemsRes = await client.query(
+      `SELECT product_id, quantity
+       FROM order_items
+       WHERE order_id = $1`,
+      [tx.order_id]
+    );
+
+    // update sales + events
+    // inside verifyPayment after fetching order items
+
+for (const item of itemsRes.rows) {
+  await client.query(
+    `UPDATE products
+     SET sales_count = sales_count + $1,
+         sales_last_7_days = sales_last_7_days + $1
+     WHERE id = $2`,
+    [item.quantity, item.product_id]
+  );
+
+  // ✅ FIX: include quantity always
+  await client.query(
+    `INSERT INTO product_events 
+     (product_id, event_type, quantity)
+     VALUES ($1, 'purchase', $2)`,
+    [item.product_id, item.quantity]
+  );
+}
+
+    // history
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
-       VALUES ($1, 'paid')`,
-      [orderId]
+       SELECT $1, 'confirmed'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM order_status_history
+         WHERE order_id = $1 AND status = 'confirmed'
+       )`,
+      [tx.order_id]
+    );
+
+    // FIXED cart cleanup (only purchased items)
+    await client.query(
+      `DELETE FROM cart_items
+       WHERE product_id IN (
+         SELECT product_id FROM order_items WHERE order_id = $1
+       )
+       AND cart_id = (
+         SELECT id FROM carts
+         WHERE user_id = (SELECT user_id FROM orders WHERE id = $1)
+       )`,
+      [tx.order_id]
     );
 
     await client.query("COMMIT");
 
-    return res.json({
-      success: true,
-      message: "Payment verified, order confirmed",
-    });
+    res.json({ success: true });
+
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ message: "Payment update failed" });
+    res.status(500).json({ message: err.message });
   } finally {
     client.release();
   }
@@ -160,6 +202,8 @@ exports.verifyPayment = async (req, res) => {
 /* ================= WEBHOOK ================= */
 
 exports.handleWebhook = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const signature = req.headers["x-razorpay-signature"];
 
@@ -175,14 +219,77 @@ exports.handleWebhook = async (req, res) => {
     const event = req.body;
 
     if (event.event === "payment.captured") {
-      const paymentEntity = event.payload.payment.entity;
+      const payment = event.payload.payment.entity;
 
-      console.log("Webhook payment captured:", paymentEntity.id);
+      await client.query("BEGIN");
+
+      const txRes = await client.query(
+        `SELECT * FROM transactions
+         WHERE razorpay_payment_id = $1
+         FOR UPDATE`,
+        [payment.id]
+      );
+
+      if (!txRes.rows.length) {
+        await client.query("ROLLBACK");
+        return res.json({ status: "ignored" });
+      }
+
+      const tx = txRes.rows[0];
+
+      // idempotency
+      if (tx.status === "paid") {
+        await client.query("ROLLBACK");
+        return res.json({ status: "already processed" });
+      }
+
+      await client.query(
+        `UPDATE transactions SET status = 'paid'
+         WHERE id = $1`,
+        [tx.id]
+      );
+
+      await client.query(
+        `UPDATE orders
+         SET status = 'confirmed',
+             payment_status = 'paid'
+         WHERE id = $1`,
+        [tx.order_id]
+      );
+
+      // SAME sales logic
+      const itemsRes = await client.query(
+        `SELECT product_id, quantity
+         FROM order_items
+         WHERE order_id = $1`,
+        [tx.order_id]
+      );
+
+      for (const item of itemsRes.rows) {
+        await client.query(
+          `UPDATE products
+           SET sales_count = sales_count + $1,
+               sales_last_7_days = sales_last_7_days + $1
+           WHERE id = $2`,
+          [item.quantity, item.product_id]
+        );
+
+        await client.query(
+          `INSERT INTO product_events (product_id, event_type, quantity)
+           VALUES ($1, 'purchase', $2)`,
+          [item.product_id, item.quantity]
+        );
+      }
+
+      await client.query("COMMIT");
     }
 
     res.json({ status: "ok" });
 
   } catch (err) {
+    await client.query("ROLLBACK");
     res.status(500).json({ message: err.message });
+  } finally {
+    client.release();
   }
 };

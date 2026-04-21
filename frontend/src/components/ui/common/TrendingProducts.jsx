@@ -20,8 +20,8 @@ export default function TrendingProducts() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {products.map((item) => (
               <Link
-                key={item.id}
-                href={`/product/${item.id}`}
+                key={item._id ?? item.id}
+                href={`/product/${item._id ?? item.id}`}
                 className="bg-white border border-[#E5E5E5] rounded-xl shadow-sm hover:shadow-xl transition group overflow-hidden"
               >
                 <div className="h-56 overflow-hidden">

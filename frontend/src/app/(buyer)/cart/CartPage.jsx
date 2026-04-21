@@ -6,19 +6,15 @@ import Link from "next/link";
 import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/slices/cartSlice";
 import { useRouter } from "next/navigation";
 import { createOrderFromCart } from "@/store/slices/orderSlice";
+import { loadRazorpay } from "@/lib/razorpay";
+import { createCheckout, verifyPayment } from "@/store/slices/paymentSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
-<<<<<<< HEAD
-
-  // keep input values (FIXED SAFE VERSION)
-  const [inputValues, setInputValues] = React.useState({});
-=======
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
   console.log("CART ITEMS:", cartItems);
   const router = useRouter();
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
 
   /* ---------------- FETCH CART ---------------- */
   useEffect(() => {
@@ -64,15 +60,6 @@ const CartPage = () => {
     dispatch(fetchCart());
   };
 
-<<<<<<< HEAD
-  /* ================= FIX: PREVENT INFINITE LOOP ================= */
-  React.useEffect(() => {
-    const mappedValues = {};
-
-    cartItems.forEach((item) => {
-      mappedValues[item.cartItemId] = String(item.quantity || item.moq || 1);
-    });
-=======
   /* ---------------- TOTALS ---------------- */
 
   const totals = useMemo(() => {
@@ -85,7 +72,6 @@ const CartPage = () => {
     const total = subtotal + gst;
 
     return { subtotal, gst, total };
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
   }, [cartItems]);
 
   const cartCount = cartItems.length;
@@ -109,7 +95,8 @@ const CartPage = () => {
 
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
 
-  const handleCheckout = async () => {
+
+const handleCheckout = async () => {
   if (!isAuthenticated) {
     alert("Login required");
     return;
@@ -126,25 +113,51 @@ const CartPage = () => {
   }
 
   try {
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) {
+      alert("Razorpay failed to load");
+      return;
+    }
+
     const idempotencyKey = crypto.randomUUID();
 
+    // 1. Create order
     const res = await dispatch(
-      createOrderFromCart({
-        idempotency_key: idempotencyKey,
-      })
+      createOrderFromCart({ idempotency_key: idempotencyKey })
     ).unwrap();
 
     const orderId = res?.orders?.[0]?.id;
 
     if (!orderId) {
-      alert("Order created but ID missing");
+      alert("Order ID missing");
       return;
     }
 
-    router.push(`/checkout/${orderId}`);
+    // 2. Create payment using orderId (NOT amount)
+    const paymentRes = await dispatch(
+      createCheckout({ orderId })
+    ).unwrap();
+
+    //  3. Open Razorpay
+    const rzp = new window.Razorpay({
+      key: paymentRes.key,
+      amount: paymentRes.amount,
+      currency: "INR",
+      order_id: paymentRes.orderId,
+
+      handler: async function (response) {
+        await dispatch(verifyPayment(response));
+
+        alert("Payment successful");
+        router.push("/checkout");
+      },
+    });
+
+    rzp.open();
+
   } catch (err) {
     console.error("Checkout error:", err);
-    alert(err || "Order creation failed");
+    alert(err?.message || "Checkout failed");
   }
 };
 
@@ -231,17 +244,12 @@ const CartPage = () => {
 
                           <button
                             onClick={() => handleDecrease(item)}
-<<<<<<< HEAD
                             disabled={(item.quantity || moq) <= moq || loading}
                             className={`px-2.5 py-1 bg-gray-100 ${
                               (item.quantity || moq) <= moq || loading
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-200"
                             }`}
-=======
-                            disabled={updating || item.quantity <= moq}
-                            className="px-2 bg-gray-200"
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
                           >
                             -
                           </button>
@@ -256,14 +264,7 @@ const CartPage = () => {
 
                         </div>
 
-<<<<<<< HEAD
-                        <div className="text-sm font-semibold text-gray-900">
-                          ₹{itemTotal.toFixed(0)}
-                        </div>
-
-=======
                         <div className="text-sm font-semibold text-gray-900"> ₹{itemTotal.toFixed(0)}</div>
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
                       </div>
                     </div>
                     <button
@@ -335,36 +336,19 @@ const CartPage = () => {
             <span>₹{totals.total.toFixed(2)}</span>
           </div>
 
-          {/* <Link href="/checkout">
-            <button
-              disabled={hasInvalidMoq || loading || cartItems.length === 0}
-              className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${hasInvalidMoq || loading || cartItems.length === 0
-                ? "bg-orange-300 text-white cursor-not-allowed"
-                : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}
-            >
-              Proceed to Checkout →
-            </button>
-<<<<<<< HEAD
-=======
-          </Link> */}
-
           <button
             onClick={handleCheckout}
-            disabled={!canCheckout}
+            // disabled={!canCheckout}
             className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${!canCheckout
-                ? "bg-orange-300 text-white cursor-not-allowed"
+                ? "bg-orange-500 text-white cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}
-          >
-            Proceed to Checkout →
-          </button>
+          > Proceed to Checkout →</button>
 
           <Link href="/products">
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
               Continue Shopping
             </button>
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
           </Link>
         </div>
 
