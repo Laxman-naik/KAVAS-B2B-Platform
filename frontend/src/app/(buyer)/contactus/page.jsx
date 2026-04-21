@@ -1,20 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Calendar,
-  Clock,
-  Handshake,
-  HelpCircle,
-  Mail,
-  MapPin,
-  MessageCircle,
-  Phone,
-  ShieldCheck,
-  Tag,
-  Truck,
-  Wrench,
-} from "lucide-react";
+import { Calendar, Clock, Handshake, HelpCircle, Mail, MapPin, MessageCircle, Phone, ShieldCheck, Tag, Truck, Wrench, } from "lucide-react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, } from "react-icons/fa";
 
 export default function ContactPage() {
@@ -134,8 +121,8 @@ export default function ContactPage() {
                   <div className="mt-auto pt-4 flex justify-center">
                     <button
                       className={`rounded-sm px-7 py-2 text-xs font-bold flex items-center justify-center transition ${item.title === "WhatsApp Support"
-                          ? "bg-[#16A34A] text-white hover:bg-[#15803D]"
-                          : "bg-[#D4AF37] text-[#0B1F3A] hover:opacity-95"
+                        ? "bg-[#16A34A] text-white hover:bg-[#15803D]"
+                        : "bg-[#D4AF37] text-[#0B1F3A] hover:opacity-95"
                         }`}
                     >
                       {item.btn}
@@ -303,38 +290,95 @@ export default function ContactPage() {
 
       <div className="bg-[#FFF8EC] py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* MAP CARD */}
+
           <div className="bg-white rounded-sm shadow-sm p-4 hover:shadow-xl hover:-translate-y-1 transition h-full">
+
+            {/* MAP */}
             <div className="relative rounded-lg overflow-hidden">
-              <img
-                src="https://maps.googleapis.com/maps/api/staticmap?center=Hyderabad&zoom=12&size=600x300&markers=color:red%7CHyderabad"
-                alt="map"
-                className="w-full h-32 object-cover"
-              />
-              <button className="absolute bottom-2 left-2 bg-black text-white text-xs px-3 py-1 rounded flex items-center gap-1 hover:bg-gray-800 transition">
+              <iframe
+                src="https://www.google.com/maps?q=Hyderabad&z=12&output=embed"
+                className="w-full h-32 border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+
+              {/* VIEW MAP BUTTON */}
+              <a
+                href="https://www.google.com/maps?q=Hyderabad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-2 left-2 bg-black text-white text-xs px-3 py-1 rounded flex items-center gap-1 hover:bg-gray-800 transition"
+              >
                 <MapPin size={14} /> View Larger Map
-              </button>
+              </a>
+            </div>
+
+            <div className="mt-3">
+              <h3 className="text-sm font-semibold text-[#1A1A1A]">
+                Hyderabad Office
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">
+                Hyderabad, Telangana, India
+              </p>
             </div>
           </div>
-
-          {/* SOCIAL CARD */}
           <div className="bg-white rounded-sm shadow-sm p-4 hover:shadow-xl hover:-translate-y-1 transition h-full">
-            <h3 className="font-semibold text-gray-800 mb-1">
-              Connect With Us
-            </h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Stay updated with our latest offers and announcements
-            </p>
+  <h3 className="font-semibold text-gray-800 mb-1">
+    Connect With Us
+  </h3>
 
-            <div className="flex flex-wrap gap-2">
-              <SocialBtn icon={<FaLinkedinIn size={14} />} label="LinkedIn" />
-              <SocialBtn icon={<FaFacebookF size={14} />} label="Facebook" />
-              <SocialBtn icon={<FaTwitter size={14} />} label="Twitter (X)" />
-              <SocialBtn icon={<FaInstagram size={14} />} label="Instagram" />
-            </div>
-          </div>
+  <p className="text-sm text-gray-500 mb-3">
+    Stay updated with our latest offers and announcements
+  </p>
 
-          {/* MEETING CARD */}
+  <div className="flex flex-wrap gap-2">
+
+    {/* LinkedIn */}
+    <a
+      href="https://www.linkedin.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#0A66C2] hover:bg-[#EAF4FF] transition"
+    >
+      <FaLinkedinIn size={14} />
+      LinkedIn
+    </a>
+
+    {/* Facebook */}
+    <a
+      href="https://www.facebook.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#1877F2] hover:bg-[#EAF2FF] transition"
+    >
+      <FaFacebookF size={14} />
+      Facebook
+    </a>
+
+    {/* Twitter (X) */}
+    <a
+      href="https://twitter.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-black hover:bg-gray-100 transition"
+    >
+      <FaTwitter size={14} />
+      Twitter (X)
+    </a>
+
+    {/* Instagram */}
+    <a
+      href="https://www.instagram.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#E4405F] hover:bg-pink-50 transition"
+    >
+      <FaInstagram size={14} />
+      Instagram
+    </a>
+
+  </div>
+</div>
           <div className="bg-[#0B1F3A] text-white rounded-sm shadow-sm p-5 hover:shadow-xl hover:-translate-y-1 transition flex flex-col justify-between h-full">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -352,8 +396,6 @@ export default function ContactPage() {
               Book an Appointment
             </button>
           </div>
-
-          {/* FAQ CARD */}
           <div className="bg-white rounded-sm shadow-sm p-5 hover:shadow-xl hover:-translate-y-1 transition flex flex-col justify-between h-full">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -368,17 +410,19 @@ export default function ContactPage() {
                 orders, payments, shipping, and returns.
               </p>
             </div>
-
-            <button className="border border-yellow-400 text-yellow-500 cursor-pointer text-sm font-medium px-4 py-2 rounded hover:bg-yellow-50 transition">
+            <Link
+              href="/help"
+              className="inline-block border border-[#D4AF37] text-[#D4AF37] text-sm font-medium px-4 py-2 rounded hover:bg-[#FFF8EC] transition"
+            >
               View FAQs →
-            </button>
+            </Link>
           </div>
         </div>
       </div>
     </div>
   );
 }
-/* Reusable Social Button */
+
 function SocialBtn({ icon, label }) {
   return (
     <button className="flex items-center gap-2 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 transition">

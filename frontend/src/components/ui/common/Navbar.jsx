@@ -168,8 +168,8 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="w-full sticky top-0 z-50 shadow-sm border-b bg-white dark:bg-gray-900 text-black dark:text-white">
-        <div className="bg-amber-200 text-black text-[11px] py-1 overflow-hidden hidden sm:block">
+      <div className="w-full sticky top-0 z-50 shadow-sm border-b border-[#E5E5E5] bg-[#0B1F3A] text-[#FFF8EC]">
+        <div className="bg-[#FFF8EC] text-[#1A1A1A] text-[11px] py-1 overflow-hidden hidden sm:block border-b border-[#E5E5E5]">
           <div className="whitespace-nowrap animate-marquee flex gap-8 px-4">
             <span>Pro Membership — 14 days free trial, no credit card needed</span>
             <span>Sell on Kavas — List your products FREE for 6 months</span>
@@ -177,7 +177,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="w-full bg-[#063149]">
+        <div className="w-full bg-[#0B1F3A]">
           <div className="px-4 sm:px-6 lg:px-10 py-2">
             <div className="flex items-center justify-between gap-3 lg:gap-6">
               <div className="flex items-center shrink-0 h-12 sm:h-14">
@@ -209,11 +209,11 @@ const Navbar = () => {
                         if (debouncedQuery) setShowSearchDropdown(true);
                       }}
                       placeholder="Search products, suppliers, categories..."
-                      className="h-10 w-full border border-gray-300 bg-white dark:bg-gray-800 dark:text-white dark:border-gray-600 px-4 text-sm outline-none rounded-l-md"
+                      className="h-10 w-full border border-[#E5E5E5] bg-white text-[#1A1A1A] px-4 text-sm outline-none rounded-l-md"
                     />
                     <button
                       onClick={handleSearchSubmit}
-                      className="h-10 px-5 flex justify-center items-center bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-r-md shrink-0"
+                      className="h-10 px-5 flex justify-center items-center bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] text-sm rounded-r-md shrink-0 font-semibold"
                     >
                       <Search size={16} className="mr-2" />
                       <span>Search</span>
@@ -312,7 +312,7 @@ const Navbar = () => {
                 {!isAuthenticated ? (
                   <Button
                     variant="outline"
-                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 cursor-pointer"
+                    className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 cursor-pointer bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
                     onClick={() => {
                       setMode("login");
                       setInitialEmail("");
@@ -325,7 +325,7 @@ const Navbar = () => {
                   <div className="relative">
                     <Button
                       variant="outline"
-                      className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex items-center gap-1 bg-white text-black hover:bg-gray-100"
+                      className="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm flex items-center gap-1 bg-white text-[#0B1F3A] hover:bg-[#FFF8EC] border-[#E5E5E5]"
                       onClick={() => setDropdown(!dropdown)}
                     >
                       <div className="h-6 w-6 rounded-full bg-orange-400 text-white flex items-center justify-center text-[11px] font-semibold">
@@ -344,12 +344,12 @@ const Navbar = () => {
                     </Button>
 
                     {dropdown && (
-                      <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden">
-                        <div className="px-5 py-4 bg-orange-500 dark:bg-gray-700 text-center border-b border-gray-200 dark:border-gray-600">
-                          <div className="text-xl font-semibold text-gray-900 dark:text-white leading-tight">
+                      <div className="absolute right-0 mt-3 w-72 bg-white border border-[#E5E5E5] rounded-2xl shadow-2xl z-50 overflow-hidden">
+                        <div className="px-5 py-4 bg-[#0B1F3A] text-center border-b border-[#E5E5E5]">
+                          <div className="text-xl font-semibold text-[#FFF8EC] leading-tight">
                             {user?.full_name || user?.name || "Rahul Sharma"}
                           </div>
-                          <div className="text-sm text-black mt-1 truncate">
+                          <div className="text-sm text-[#FFF8EC]/80 mt-1 truncate">
                             {user?.email || "you@company.com"}
                           </div>
                         </div>
@@ -359,7 +359,7 @@ const Navbar = () => {
                               router.push("/profile");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-gray-700 hover:text-orange-500 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                           >
                             <User className="h-5 w-5" />
                             <span>My Profile</span>
@@ -370,7 +370,7 @@ const Navbar = () => {
                               router.push("/buyerorders");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                           >
                             <Package className="h-5 w-5" />
                             <span>My Orders</span>
@@ -381,7 +381,7 @@ const Navbar = () => {
                               router.push("/favourites");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center justify-between px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center justify-between px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                           >
                             <span className="flex items-center gap-3">
                               <Heart className="h-5 w-5 text-red-500" />
@@ -398,18 +398,18 @@ const Navbar = () => {
                               router.push("/help");
                               setDropdown(false);
                             }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] hover:text-orange-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                           >
                             <CircleHelp className="h-5 w-5" />
                             <span>Help Centre</span>
                           </button>
                         </div>
 
-                        <div className="border-t border-gray-200 dark:border-gray-700" />
+                        <div className="border-t border-[#E5E5E5]" />
 
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-red-600 hover:bg-[#FFF8EC]"
                         >
                           <LogOut className="h-5 w-5" />
                           <span>Sign out</span>
@@ -423,7 +423,7 @@ const Navbar = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex"
+                    className="h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex bg-white hover:bg-[#FFF8EC] border-[#E5E5E5]"
                     onClick={() => {
                       if (!isAuthenticated) {
                         setMode("login");
@@ -446,7 +446,7 @@ const Navbar = () => {
                 <div className="relative inline-block">
                   <Button
                     variant="outline"
-                    className="h-8 sm:h-9 gap-1 sm:gap-2 px-2 sm:px-3"
+                    className="h-8 sm:h-9 gap-1 sm:gap-2 px-2 sm:px-3 bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
                     onClick={() => {
                       if (!isAuthenticated) {
                         setMode("login");
@@ -471,7 +471,7 @@ const Navbar = () => {
                 <div className="flex items-center gap-2 lg:hidden">
                   <button
                     onClick={() => setMobileMenu(!mobileMenu)}
-                    className="rounded-md border border-white/20 p-2 text-white"
+                    className="rounded-md border border-white/20 p-2 text-white hover:bg-white/5"
                   >
                     {mobileMenu ? (
                       <X className="h-5 w-5" />
@@ -493,11 +493,11 @@ const Navbar = () => {
                     if (debouncedQuery) setShowSearchDropdown(true);
                   }}
                   placeholder="Search products, suppliers, categories..."
-                  className="h-10 w-full border border-gray-300 bg-white px-3 text-sm outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-l-md"
+                  className="h-10 w-full border border-[#E5E5E5] bg-white px-3 text-sm outline-none text-[#1A1A1A] rounded-l-md"
                 />
                 <button
                   onClick={handleSearchSubmit}
-                  className="flex h-10 items-center justify-center bg-orange-500 px-4 text-white hover:bg-orange-600 rounded-r-md"
+                  className="flex h-10 items-center justify-center bg-[#D4AF37] px-4 text-[#0B1F3A] hover:bg-[#caa734] rounded-r-md"
                 >
                   <Search size={16} />
                 </button>
@@ -509,7 +509,7 @@ const Navbar = () => {
                 {!isAuthenticated ? (
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className="w-full bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
                     onClick={() => {
                       setMode("login");
                       setInitialEmail("");
@@ -567,13 +567,13 @@ const Navbar = () => {
 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
                   onClick={() => {
                     router.push("/cart");
                     setMobileMenu(false);
                   }}
                 >
-                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  <ShoppingCart className="mr-2 h-4 w-4 text-[#0B1F3A]" />
                   Cart
                   {cartCount > 0 && (
                     <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
