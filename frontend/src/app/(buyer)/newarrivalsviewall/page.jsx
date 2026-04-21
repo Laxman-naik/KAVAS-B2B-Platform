@@ -5,13 +5,11 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart } from "lucide-react";
-import { arrivalProducts } from "@/data/arrivalProducts";
+// import { arrivalProducts } from "@/data/arrivalProducts";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  addToFavourites,
-  removeFromFavourites,
-} from "@/store/slices/favouritesSlice";
+import { addToFavourites, removeFromFavourites,} from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+import { fetchNewArrivals } from "@/store/slices/productSlice";
 
 const categories = [
   "All",
@@ -40,7 +38,7 @@ const Page = () => {
 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
-
+  const { newArrivals, loading } = useSelector((state) => state.products);
   const liked = favouriteItems.map((item) => item.id || item._id);
 
   const onToggleFavourite = (product) => {
@@ -76,7 +74,12 @@ const Page = () => {
     });
   };
 
-  const filteredProducts = arrivalProducts
+  useEffect(() => {
+  setMounted(true);
+  dispatch(fetchNewArrivals());
+}, [dispatch]);
+
+  const filteredProducts = (newArrivals || [])
     .filter((product) => {
       if (activeCategory !== "All" && product.category !== activeCategory) {
         return false;
@@ -145,7 +148,7 @@ const Page = () => {
           <p className="text-xs text-black mt-2">
             Showing{" "}
             <span className="font-semibold">{filteredProducts.length}</span> of{" "}
-            <span className="font-semibold">{arrivalProducts.length}</span>{" "}
+            <span className="font-semibold">{fetchNewArrivals.length}</span>{" "}
             products
           </p>
         </div>

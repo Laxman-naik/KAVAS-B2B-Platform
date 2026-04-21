@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, } from "../../services/productService";
+import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI } from "../../services/productService";
 
 /* ================= THUNKS ================= */
 
@@ -78,12 +78,28 @@ export const removeProduct = createAsyncThunk(
   }
 );
 
+export const fetchNewArrivals = createAsyncThunk(
+  "products/newArrivals",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getNewArrivalsAPI();
+      return res.data?.data || [];
+      console.log("🔥 API FULL RESPONSE:", res);
+      console.log("🔥 API DATA:", res.data);
+      console.log("🔥 NEW ARRIVALS:", res.data?.data);
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
 /* ================= SLICE ================= */
 
 const productSlice = createSlice({
   name: "products",
   initialState: {
     products: [],
+    newArrivals: [],
     product: null,
     loading: false,
     error: null,
@@ -141,6 +157,19 @@ const productSlice = createSlice({
         state.products = state.products.filter(
           (p) => p.id !== action.payload
         );
+      })
+
+       .addCase(fetchNewArrivals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchNewArrivals.fulfilled, (state, action) => {
+        state.loading = false;
+        state.newArrivals = action.payload;
+      })
+      .addCase(fetchNewArrivals.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

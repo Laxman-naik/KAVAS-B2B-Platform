@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart } from "lucide-react";
 import { fetchProducts } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
+// import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 
 const categories = [

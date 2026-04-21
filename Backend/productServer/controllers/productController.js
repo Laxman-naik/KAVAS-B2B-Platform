@@ -443,3 +443,38 @@ exports.getTrendingProducts = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.getNewArrivals = async (req, res) => {
+  try {
+    const { limit = 10, days = 30 } = req.query;
+
+    const result = await pool.query(
+      `SELECT p.*, pi.image_url
+       FROM products p
+
+        avoid duplicate rows
+       LEFT JOIN LATERAL (
+         SELECT image_url
+         FROM product_images
+         WHERE product_id = p.id
+         LIMIT 1
+       ) pi ON true
+
+       WHERE p.is_active = true
+       AND p.created_at >= NOW() - INTERVAL '${days} days'
+
+       ORDER BY p.created_at DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+    });
+
+  } catch (err) {
+    console.error("getNewArrivals error:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
