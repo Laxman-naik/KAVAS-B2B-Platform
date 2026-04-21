@@ -4,6 +4,7 @@ import { X, Eye } from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUserThunk } from "../../../store/slices/authSlice";
+import Link from "next/link";
 
 const Register = ({ open, setOpen, setMode, onRegistered }) => {
   const [show, setShow] = useState(false);
@@ -60,17 +61,18 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
       onClick={() => setOpen(false)}
     >
       <div
-        className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg bg-white rounded-xl sm:rounded-2xl shadow-lg max-h-[92vh] overflow-y-auto dark:bg-gray-900"
+        className="relative w-full max-w-[95vw] sm:max-w-md md:max-w-lg bg-[#FFFFFF] rounded-xl sm:rounded-2xl shadow-lg max-h-[92vh] overflow-y-auto border border-[#E5E5E5]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={() => setOpen(false)}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-black z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-[#1A1A1A] z-10"
         >
           <X size={18} />
         </button>
 
-        <div className="w-full bg-[#063149] py-3 px-4 flex justify-start rounded-t-2xl">
+        {/* HEADER */}
+        <div className="w-full bg-[#0B1F3A] py-3 px-4 flex justify-start rounded-t-2xl">
           <Image
             src="/KAVASlogo.png"
             alt="KAVAS Logo"
@@ -79,19 +81,21 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
             className="h-12 sm:h-14 md:h-16 w-auto object-contain"
           />
         </div>
-        <div className="p-4 sm:p-5 md:p-6">
-          <h2 className="text-base sm:text-lg md:text-xl font-semibold">
+
+        {/* CONTENT */}
+        <div className="p-4 sm:p-5 md:p-6 bg-[#FFF8EC]">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold text-[#1A1A1A]">
             Create your account
           </h2>
 
-          <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
             Join 50,000+ businesses on Kavas
           </p>
 
           <form className="space-y-2 sm:space-y-2" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div>
-                <label className="text-xs sm:text-sm font-medium">
+                <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                   First name *
                 </label>
                 <input
@@ -99,12 +103,12 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                   name="firstName"
                   onChange={handleChange}
                   placeholder="Rahul"
-                  className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 />
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm font-medium">
+                <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                   Last name *
                 </label>
                 <input
@@ -112,24 +116,26 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                   name="lastName"
                   onChange={handleChange}
                   placeholder="Sharma"
-                  className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-medium">Email *</label>
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
+                Email *
+              </label>
               <input
                 type="email"
                 name="email"
                 onChange={handleChange}
                 placeholder="you@company.com"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none"
               />
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-medium">
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                 Phone number *
               </label>
               <input
@@ -137,12 +143,12 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                 name="phone"
                 onChange={handleChange}
                 placeholder="+91 98765 43210"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none"
               />
             </div>
 
             <div className="relative">
-              <label className="text-xs sm:text-sm font-medium">
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                 Create password *
               </label>
               <input
@@ -150,7 +156,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                 name="password"
                 onChange={handleChange}
                 placeholder="Min. 6 characters"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm pr-10 focus:ring-1 focus:ring-orange-500 outline-none"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm pr-10 focus:ring-1 focus:ring-[#D4AF37] outline-none"
               />
               <Eye
                 onClick={() => setShow(!show)}
@@ -160,7 +166,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-medium">
+              <label className="text-xs sm:text-sm font-medium text-[#1A1A1A]">
                 Confirm password *
               </label>
               <input
@@ -168,14 +174,14 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                 name="confirmPassword"
                 onChange={handleChange}
                 placeholder="Re-enter password"
-                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border rounded-md text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                className="w-full mt-0.5 px-3 py-1.5 sm:py-2 border border-[#E5E5E5] rounded-md text-sm focus:ring-1 focus:ring-[#D4AF37] outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2 sm:py-2.5 text-sm font-semibold text-white rounded-md bg-orange-500 hover:bg-orange-600"
+              className="w-full py-2 sm:py-2.5 text-sm font-semibold text-white rounded-md bg-[#D4AF37] hover:opacity-90"
             >
               {loading ? "Registering..." : "Create your account →"}
             </button>
@@ -185,13 +191,15 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
             )}
           </form>
 
-          <p className="text-[11px] sm:text-xs text-gray-500 text-center mt-3 sm:mt-4">
+          <p className="text-[11px] sm:text-xs text-gray-600 text-center mt-3 sm:mt-4">
             By joining you agree to our{" "}
-            <span className="text-orange-500 cursor-pointer">Terms</span>.
+            <Link href="\termsandconditions">
+            <span className="text-[#D4AF37] cursor-pointer hover:underline">Terms</span>.
+            </Link>
             Already have an account?{" "}
             <span
               onClick={() => setMode("login")}
-              className="text-orange-500 font-medium cursor-pointer"
+              className="text-[#D4AF37] font-medium cursor-pointer"
             >
               Sign in →
             </span>

@@ -11,7 +11,6 @@ import { getSingleProduct } from "@/services/productService";
 
 import { useDispatch, useSelector } from "react-redux";
 import { toggleFavourite } from "@/store/slices/favouritesSlice";
-=======
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 

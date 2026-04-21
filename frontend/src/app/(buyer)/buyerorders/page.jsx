@@ -61,9 +61,9 @@ const Page = () => {
   const [tab, setTab] = useState("All Orders");
   const [timeFilter, setTimeFilter] = useState("All time");
 
-  // ✅ SINGLE FILTER (tab + time)
+  
   const filteredOrders = ordersData.filter((order) => {
-    // TAB FILTER
+
     const tabMatch =
       tab === "All Orders" || order.status === tab;
 
@@ -96,8 +96,8 @@ const Page = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-white">
-        <div className="w-full bg-orange-500 text-white flex items-center justify-center text-center px-4 py-8">
+      <div className="min-h-screen bg-[#FFF8EC]">
+        <div className="w-full bg-[#0B1F3A] text-[#FFF8EC] flex items-center justify-center text-center px-4 py-8">
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center justify-center gap-2">
               <Package size={24} /> My Orders
@@ -108,7 +108,7 @@ const Page = () => {
           </div>
         </div>
         <div className="px-4 sm:px-6 lg:px-10 py-6">
-          <div className="flex flex-wrap gap-4 sm:gap-6 border-b mb-6 text-xs sm:text-sm font-medium">
+          <div className="flex flex-wrap gap-4 sm:gap-6 border-b border-[#E5E5E5] mb-6 text-xs sm:text-sm font-medium">
             {["All Orders", "Processing", "Shipped", "Delivered", "Cancelled"].map(
               (t) => (
                 <button
@@ -116,8 +116,8 @@ const Page = () => {
                   onClick={() => setTab(t)}
                   className={`pb-2 border-b-2 ${
                     tab === t
-                      ? "border-orange-500 text-orange-600"
-                      : "border-transparent text-gray-500"
+                      ? "border-[#D4AF37] text-[#0B1F3A]"
+                      : "border-transparent text-[#1A1A1A]/60"
                   }`}
                 >
                   {t}
@@ -126,7 +126,7 @@ const Page = () => {
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
+            <Card className="border border-[#E5E5E5]">
               <CardContent className="flex items-center gap-4 p-4">
                 <Package className="text-blue-500" />
                 <div>
@@ -135,7 +135,7 @@ const Page = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-[#E5E5E5]">
               <CardContent className="flex items-center gap-4 p-4">
                 <CheckCircle className="text-green-500" />
                 <div>
@@ -144,7 +144,7 @@ const Page = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-[#E5E5E5]">
               <CardContent className="flex items-center gap-4 p-4">
                 <Hourglass className="text-yellow-500" />
                 <div>
@@ -153,9 +153,9 @@ const Page = () => {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-[#E5E5E5]">
               <CardContent className="flex items-center gap-4 p-4">
-                <IndianRupee className="text-orange-500" />
+                <IndianRupee className="text-[#D4AF37]" />
                 <div>
                   <p className="text-lg sm:text-xl font-bold">₹1,37,768</p>
                   <p className="text-xs sm:text-sm text-gray-500">Total Spent</p>
@@ -169,13 +169,13 @@ const Page = () => {
               <input
                 type="text"
                 placeholder="Search by order ID or product name..."
-                className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-300 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 hover:border-orange-500 transition"
+                className="w-full h-10 pl-9 pr-3 rounded-md border border-[#E5E5E5] bg-white outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 hover:border-[#D4AF37] transition"
               />
             </div>
             <select
               value={timeFilter}
               onChange={(e) => setTimeFilter(e.target.value)}
-              className="border rounded-md px-3 py-2 text-sm w-full sm:w-auto"
+              className="border border-[#E5E5E5] bg-white rounded-md px-3 py-2 text-sm w-full sm:w-auto"
             >
               <option>All time</option>
               <option>Last 30 days</option>
@@ -185,7 +185,7 @@ const Page = () => {
           </div>
           <div className="space-y-6">
             {filteredOrders.map((order, index) => (
-              <Card key={index}>
+              <Card key={index} className="border border-[#E5E5E5]">
                 <CardContent className="p-4">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                     <div>
@@ -205,7 +205,7 @@ const Page = () => {
                       >
                         {order.status}
                       </Badge>
-                      <p className="font-semibold text-orange-600">
+                      <p className="font-semibold text-[#0B1F3A]">
                         ₹{order.total.toLocaleString()}
                       </p>
                     </div>
@@ -215,7 +215,7 @@ const Page = () => {
                     {order.items.map((item, i) => (
                       <div
                         key={i}
-                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border rounded-md p-3"
+                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border border-[#E5E5E5] rounded-md p-3 bg-white"
                       >
                         <div className="flex items-center gap-3">
                           <img
@@ -232,7 +232,7 @@ const Page = () => {
                           </div>
                         </div>
 
-                        <p className="text-orange-600 font-semibold">
+                        <p className="text-[#0B1F3A] font-semibold">
                           ₹{item.price.toLocaleString()}
                         </p>
                       </div>
@@ -240,19 +240,19 @@ const Page = () => {
                   </div>
 
                   <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
-                    <Button className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto">
+                    <Button className="bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] w-full sm:w-auto font-semibold">
                       <Truck size={16} className="mr-1" /> Track Order
                     </Button>
 
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                       <FileText size={16} className="mr-1" /> Invoice
                     </Button>
 
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                       <RotateCcw size={16} className="mr-1" /> Return
                     </Button>
 
-                    <Button variant="outline" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                       <Repeat size={16} className="mr-1" /> Reorder
                     </Button>
                   </div>

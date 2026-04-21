@@ -158,30 +158,31 @@ const AllProducts = () => {
   const visibleProducts = Array.isArray(products) ? products : [];
 
   return (
-    <div className="dark:bg-gray-900">
+    <div className="bg-white">
       <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg sm:text-xl font-semibold border-l-4 border-orange-500 pl-2">
+          <h2 className="text-lg sm:text-xl font-semibold border-l-4 border-[#D4AF37] pl-2 text-[#0B1F3A]">
             All Products
           </h2>
 
           <Link
             href="/allproducts"
-            className="text-orange-500 text-sm font-medium hover:underline"
+            className="text-[#0B1F3A] text-sm font-medium hover:underline"
           >
             View all →
           </Link>
         </div>
 
-        {/* Loading */}
+
         {loading ? (
           <p className="text-center py-10">Loading products...</p>
         ) : (
           <>
             {/* Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+<<<<<<< HEAD
               {visibleProducts.map((item) => (
                 <Link
                   key={item.id}
@@ -199,6 +200,25 @@ const AllProducts = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   </div>
+=======
+              {visibleProducts.map((item) => {
+                const itemId = item?._id ?? item?.id ?? item?.productId;
+                return (
+                  <Link
+                    key={itemId}
+                    href={`/product/${itemId}`}
+                    className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-[#E5E5E5]"
+                  >
+                    <div className="flex flex-col h-full">
+                      {/* Image */}
+                      <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-[#FFF8EC]">
+                        <img
+                          src={item.image_url} // 
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      </div>
+>>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
 
                   {/* Content */}
                   <div className="p-3 sm:p-4 flex-1">
@@ -206,14 +226,21 @@ const AllProducts = () => {
                       {item.name}
                     </h3>
 
+<<<<<<< HEAD
                     <p className="text-orange-600 font-semibold text-sm sm:text-base mt-1">
                       ₹{item.price}/unit
                     </p>
+=======
+                        <p className="text-[#D4AF37] font-semibold text-sm sm:text-base mt-1">
+                          ₹{item.price}/unit
+                        </p>
+>>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
 
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       Min. {item.moq} units
                     </p>
 
+<<<<<<< HEAD
                     {/* 🔥 RATING UI (NEW) */}
                     <div className="flex items-center gap-1 mt-2 text-xs">
                       <span className="text-yellow-500">
@@ -222,6 +249,15 @@ const AllProducts = () => {
                       <span className="text-gray-500">
                         ({item.total_reviews || 0})
                       </span>
+=======
+                        <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700">
+                          <span className="w-2 h-2 bg-[#D4AF37] rounded-full"></span>
+                          <span className="truncate">
+                            Supplier
+                          </span>
+                        </div>
+                      </div>
+>>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
                     </div>
 
                     {/* Supplier */}
@@ -244,26 +280,30 @@ const AllProducts = () => {
         )}
 
         {/* Bottom Stats */}
+<<<<<<< HEAD
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 border border-amber-400 bg-yellow-50 p-4 sm:p-5 rounded-xl shadow text-center">
+=======
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 border border-[#D4AF37] bg-[#0B1F3A] p-4 sm:p-5 rounded-xl shadow text-center">
+>>>>>>> f61c88af946587321b380ad566254ce8fb3f2cc6
           <div>
-            <h3 className="font-bold text-lg sm:text-xl text-orange-500">500+</h3>
-            <p className="text-sm sm:text-base">Verified Vendors</p>
+            <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">500+</h3>
+            <p className="text-sm sm:text-base text-white/85">Verified Vendors</p>
           </div>
           <div>
-            <h3 className="font-bold text-lg sm:text-xl text-orange-500">12,000+</h3>
-            <p className="text-sm sm:text-base">Products Listed</p>
+            <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">12,000+</h3>
+            <p className="text-sm sm:text-base text-white/85">Products Listed</p>
           </div>
           <div>
-            <h3 className="font-bold text-lg sm:text-xl text-orange-500">50,000+</h3>
-            <p className="text-sm sm:text-base">Active Buyers</p>
+            <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">50,000+</h3>
+            <p className="text-sm sm:text-base text-white/85">Active Buyers</p>
           </div>
           <div>
-            <h3 className="font-bold text-lg sm:text-xl text-orange-500">98%</h3>
-            <p className="text-sm sm:text-base">Order Accuracy</p>
+            <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">98%</h3>
+            <p className="text-sm sm:text-base text-white/85">Order Accuracy</p>
           </div>
           <div className="col-span-2 md:col-span-1">
-            <h3 className="font-bold text-lg sm:text-xl text-orange-500">₹200Cr+</h3>
-            <p className="text-sm sm:text-base">GMV Processed</p>
+            <h3 className="font-bold text-lg sm:text-xl text-[#D4AF37]">₹200Cr+</h3>
+            <p className="text-sm sm:text-base text-white/85">GMV Processed</p>
           </div>
         </div>
       </div>
