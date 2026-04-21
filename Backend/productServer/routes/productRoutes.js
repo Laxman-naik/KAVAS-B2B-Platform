@@ -28,23 +28,9 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/", authMiddleware, productController.createProduct);
 router.get("/", productController.getProducts);
-<<<<<<< HEAD
-
-router.get(
-  "/category/:categorySlug/:subcategorySlug",
-  productController.getProductsByCategoryAndSubcategory
-);
-router.get(
-  "/category/:categorySlug",
-  productController.getProductsByCategory
-);
-
-router.get("/all", productController.getProducts);
-=======
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug", productController.getProductsByCategoryAndSubcategory);
 router.get("/category/:categorySlug", productController.getProductsByCategory);
->>>>>>> 5ff02b31b03c74e2adc4e331a635a51be58981b3
 router.get("/:id", productController.getSingleProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);

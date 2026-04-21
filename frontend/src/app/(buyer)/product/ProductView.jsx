@@ -997,7 +997,7 @@ import { useParams } from "next/navigation";
 // };
 
 // export default ProductView;
-<<<<<<< HEAD
+// <<<<<<< HEAD
 
 "use client";
 
