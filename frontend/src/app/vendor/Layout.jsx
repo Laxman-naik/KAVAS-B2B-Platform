@@ -1,11 +1,18 @@
-import React from 'react'
-import VendorSidebar from "../../components/vendor/VendorSidebar"
+import React from "react";
+import VendorSidebar from "../../components/vendor/VendorSidebar";
+import VendorHeader from "../../components/vendor/VendorHeader";
 
-const layout = () => {
+const layout = ({ children }) => {
   return (
-    <VendorSidebar/>
-    
-  )
-}
+    <div className="flex">
+      <VendorSidebar />
 
-export default layout
+      <div className="flex-1 ml-64">
+        <VendorHeader />
+        <main className="pt-16 ">{children}</main>
+      </div>
+    </div>
+  );
+};
+
+export default layout;

@@ -5,13 +5,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart } from "lucide-react";
-import { arrivalProducts } from "@/data/arrivalProducts";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  addToFavourites,
-  removeFromFavourites,
-} from "@/store/slices/favouritesSlice";
+import { addToFavourites, removeFromFavourites, } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+import { fetchNewArrivals } from "@/store/slices/productSlice";
 
 const categories = [
   "All",
@@ -29,24 +26,22 @@ const categories = [
 const Page = () => {
   const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
+  const [sortOption, setSortOption] = useState("Most relevant");
   const [filters, setFilters] = useState({
     minQty: [],
     rating: [],
     supplier: [],
   });
 
-  const [sortOption, setSortOption] = useState("Most relevant");
-  const [showFilters, setShowFilters] = useState(false);
-
   const dispatch = useDispatch();
+  const [showFilters, setShowFilters] = useState(false);
   const favouriteItems = useSelector((state) => state.favourites.items);
-
+  const { newArrivals, loading } = useSelector((state) => state.products);
   const liked = favouriteItems.map((item) => item.id || item._id);
 
   const onToggleFavourite = (product) => {
-    const productId = product.id || product._id;
+    const productId = product.id;
     const isLiked = liked.includes(productId);
-
     if (isLiked) {
       dispatch(removeFromFavourites(productId));
     } else {
@@ -57,7 +52,7 @@ const Page = () => {
   const onAddToCart = (product) => {
     dispatch(
       addToCart({
-        productId: product?.productId ?? product?.id,
+        productId: product.id,
         quantity: 1,
         variantId: product?.variantId ?? product?.variant_id,
       })
@@ -76,7 +71,12 @@ const Page = () => {
     });
   };
 
-  const filteredProducts = arrivalProducts
+  useEffect(() => {
+    setMounted(true);
+    dispatch(fetchNewArrivals());
+  }, [dispatch]);
+
+  const filteredProducts = (newArrivals || [])
     .filter((product) => {
       if (activeCategory !== "All" && product.category !== activeCategory) {
         return false;
@@ -145,7 +145,7 @@ const Page = () => {
           <p className="text-xs text-black mt-2">
             Showing{" "}
             <span className="font-semibold">{filteredProducts.length}</span> of{" "}
-            <span className="font-semibold">{arrivalProducts.length}</span>{" "}
+            <span className="font-semibold">{newArrivals.length}</span>{" "}
             products
           </p>
         </div>
@@ -157,8 +157,7 @@ const Page = () => {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition flex items-center gap-1 ${
-                activeCategory === cat
+              className={`whitespace-nowrap px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition flex items-center gap-1 ${activeCategory === cat
                   ? "bg-orange-500 text-white border-orange-500"
                   : "bg-gray-100 text-gray-700 hover:bg-orange-50"
                 }`}
@@ -274,7 +273,7 @@ const Page = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-5">
               {filteredProducts.map((product, index) => {
                 const productId = product.id || product._id;
                 const isLiked = liked.includes(productId);
@@ -288,40 +287,21 @@ const Page = () => {
                     <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
                       <CardContent className="p-0! py-0! flex flex-col h-full">
                         <div className="relative h-45 sm:h-50 bg-gray-100 flex items-center justify-center">
-                          <span className="absolute top-3 left-3 bg-[#063149] text-white text-xs px-2 py-1 rounded-full z-10">
+                          <span className="absolute top-3 right-3 bg-[#063149] text-white text-xs px-2 py-1 rounded-full z-10">
                             {index % 2 === 0 ? "Trending" : "Hot Deal"}
                           </span>
-
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover"/>
                         </div>
 
                         <div className="p-3 flex flex-col flex-1">
-                          <h3 className="text-sm font-semibold line-clamp-2 leading-snug min-h-9">
-                            {product.title}
-                          </h3>
-
-                          <p className="text-[11px] text-orange-600 mt-1">
-                            {product.category}
-                          </p>
-
-                          <p className="text-black font-bold text-base mt-1">
-                            {product.price}
-                          </p>
-
-                          <p className="text-[11px] text-gray-500">
-                            {product.min}
-                          </p>
-
+                          <h3 className="text-sm font-semibold line-clamp-2 leading-snug">{product.name}</h3>
+                          <p className="text-black font-bold text-base mt-1">₹{product.price}/unit</p>
+                          <p className="text-[11px] text-gray-500">Min. {product.moq} units</p>
                           <p className="text-[11px] text-gray-600 flex items-center gap-1 mt-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                            {product.company}
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>{product.stock}
                           </p>
 
-                          <div className="flex items-center gap-2 mt-auto pt-3 border-t">
+                          <div className="flex items-center gap-2 mt-1 pt-3 border-t">
                             <Button
                               className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-xs h-8 rounded-md"
                               onClick={(e) => {
@@ -342,9 +322,8 @@ const Page = () => {
                                 e.stopPropagation();
                                 onToggleFavourite(product);
                               }}
-                              className={`h-8 w-8 border-orange-200 ${
-                                isLiked ? "bg-red-50" : ""
-                              }`}
+                              className={`h-8 w-8 border-orange-200 ${isLiked ? "bg-red-50" : ""
+                                }`}
                             >
                               <Heart
                                 size={14}
