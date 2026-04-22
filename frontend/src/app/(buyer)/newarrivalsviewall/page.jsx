@@ -39,6 +39,10 @@ const Page = () => {
   const { newArrivals, loading } = useSelector((state) => state.products);
   const liked = favouriteItems.map((item) => item.id || item._id);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const onToggleFavourite = (product) => {
     const productId = product.id;
     const isLiked = liked.includes(productId);

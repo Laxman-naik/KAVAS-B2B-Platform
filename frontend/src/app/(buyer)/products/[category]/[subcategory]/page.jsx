@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { productapi, authapi } from "@/lib/axios";
 
 const COLORS = {
   primary: "#0B1F3A",
@@ -11,10 +12,6 @@ const COLORS = {
   text: "#1A1A1A",
   border: "#E5E5E5",
 };
-
-// Put the exact backend URL here that you already confirmed works in browser/Postman
-const API_BASE = "http://localhost:5002";
-// const API_BASE = "https://kavas-b2b-platform-3.onrender.com";
 
 export default function SubCategoryPage({ params }) {
   const [route, setRoute] = useState({ category: "", subcategory: "" });
@@ -33,52 +30,25 @@ export default function SubCategoryPage({ params }) {
       setLoading(true);
 
       try {
-        const resolved = await params;
-        const { category, subcategory } = resolved;
+        const { category, subcategory } = params;
+
         setRoute({ category, subcategory });
 
-        const metaUrl = `${API_BASE}/api/categories/slug/${category}`;
-        const productsUrl = `${API_BASE}/api/products/category/${category}/${subcategory}`;
-
-        console.log("Category API URL:", metaUrl);
-        console.log("Products API URL:", productsUrl);
-
         const [metaRes, productsRes] = await Promise.all([
-          fetch(metaUrl, { cache: "no-store" }),
-          fetch(productsUrl, { cache: "no-store" }),
+          authapi.get(`/api/categories/slug/${category}`),
+          productapi.get(`/api/products/category/${category}/${subcategory}`),
         ]);
 
-        console.log("Category API status:", metaRes.status, metaRes.url);
-        console.log("Products API status:", productsRes.status, productsRes.url);
+        setCategoryMeta(metaRes?.data?.data || null);
 
-        const metaJson = metaRes.ok ? await metaRes.json() : { data: null };
-        const productsJson = productsRes.ok ? await productsRes.json() : { data: [] };
+        const rawProducts = Array.isArray(productsRes?.data?.data)
+          ? productsRes.data.data
+          : [];
 
-        setCategoryMeta(metaJson?.data || null);
+        setProducts(rawProducts);
 
-        const rawProducts = Array.isArray(productsJson?.data)
-          ? productsJson.data
-          : Array.isArray(productsJson)
-            ? productsJson
-            : [];
-
-        const mappedProducts = rawProducts.map((p) => ({
-          ...p,
-          id: p.id,
-          slug: p.slug,
-          name: p.name,
-          price: p.price,
-          imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
-          minOrderQty: p.moq ?? p.minOrderQty ?? 0,
-          supplierType: p.supplier_type || p.supplierType || "",
-          createdAt: p.created_at || p.createdAt,
-        }));
-
-        setProducts(mappedProducts);
       } catch (error) {
         console.error("Failed to load subcategory page:", error);
-        setCategoryMeta(null);
-        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -96,10 +66,21 @@ export default function SubCategoryPage({ params }) {
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    if (minPrice !== "") list = list.filter((p) => Number(p.price) >= Number(minPrice));
-    if (maxPrice !== "") list = list.filter((p) => Number(p.price) <= Number(maxPrice));
-    if (minQty !== "") list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
-    if (supplierType.length) list = list.filter((p) => supplierType.includes(p.supplierType));
+    if (minPrice !== "") {
+      list = list.filter((p) => Number(p.price) >= Number(minPrice));
+    }
+
+    if (maxPrice !== "") {
+      list = list.filter((p) => Number(p.price) <= Number(maxPrice));
+    }
+
+    if (minQty !== "") {
+      list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
+    }
+
+    if (supplierType.length) {
+      list = list.filter((p) => supplierType.includes(p.supplierType));
+    }
 
     if (sort === "price_asc") {
       list.sort((a, b) => Number(a.price) - Number(b.price));
@@ -130,17 +111,32 @@ export default function SubCategoryPage({ params }) {
   const subcategories = categoryMeta?.subcategories || [];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: COLORS.cream, color: COLORS.text }}>
-      <div className="px-4 sm:px-6 py-5 sm:py-6 text-white" style={{ backgroundColor: COLORS.primary }}>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{categoryName}</h1>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
+    >
+      <div
+        className="px-4 sm:px-6 py-5 sm:py-6 text-white"
+        style={{ backgroundColor: COLORS.primary }}
+      >
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+          {categoryName}
+        </h1>
         <p className="text-sm mt-1">{filteredProducts.length} products available</p>
       </div>
 
-      <div className="px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto bg-white" style={{ borderColor: COLORS.border }}>
+      <div
+        className="px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto bg-white"
+        style={{ borderColor: COLORS.border }}
+      >
         <Link
           href={`/products/${categorySlug}`}
           className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
-          style={{ backgroundColor: COLORS.white, color: COLORS.text, borderColor: COLORS.border }}
+          style={{
+            backgroundColor: COLORS.white,
+            color: COLORS.text,
+            borderColor: COLORS.border,
+          }}
         >
           All {categoryName}
         </Link>
@@ -151,9 +147,12 @@ export default function SubCategoryPage({ params }) {
             href={`/products/${categorySlug}/${sub.slug}`}
             className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
             style={{
-              backgroundColor: subcategorySlug === sub.slug ? COLORS.accent : COLORS.white,
-              color: subcategorySlug === sub.slug ? COLORS.primary : COLORS.text,
-              borderColor: subcategorySlug === sub.slug ? COLORS.accent : COLORS.border,
+              backgroundColor:
+                subcategorySlug === sub.slug ? COLORS.accent : COLORS.white,
+              color:
+                subcategorySlug === sub.slug ? COLORS.primary : COLORS.text,
+              borderColor:
+                subcategorySlug === sub.slug ? COLORS.accent : COLORS.border,
             }}
           >
             {sub.name}
@@ -162,8 +161,13 @@ export default function SubCategoryPage({ params }) {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 px-4 sm:px-6 py-5">
-        <div className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit" style={{ borderColor: COLORS.border }}>
-          <h3 className="font-semibold mb-3" style={{ color: COLORS.primary }}>Filters</h3>
+        <div
+          className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit"
+          style={{ borderColor: COLORS.border }}
+        >
+          <h3 className="font-semibold mb-3" style={{ color: COLORS.primary }}>
+            Filters
+          </h3>
 
           <p className="text-sm mb-2">Price</p>
           <div className="space-y-2 mb-4">
@@ -196,17 +200,19 @@ export default function SubCategoryPage({ params }) {
           />
 
           <p className="text-sm mb-2">Supplier Type</p>
-          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((type) => (
-            <label key={type} className="block text-sm mb-1">
-              <input
-                type="checkbox"
-                checked={supplierType.includes(type)}
-                onChange={() => toggleSupplier(type)}
-                className="mr-2"
-              />
-              {type}
-            </label>
-          ))}
+          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map(
+            (type) => (
+              <label key={type} className="block text-sm mb-1">
+                <input
+                  type="checkbox"
+                  checked={supplierType.includes(type)}
+                  onChange={() => toggleSupplier(type)}
+                  className="mr-2"
+                />
+                {type}
+              </label>
+            )
+          )}
 
           <button
             onClick={resetFilters}
@@ -235,11 +241,17 @@ export default function SubCategoryPage({ params }) {
           </div>
 
           {loading ? (
-            <div className="bg-white border rounded-lg p-6 text-center" style={{ borderColor: COLORS.border }}>
+            <div
+              className="bg-white border rounded-lg p-6 text-center"
+              style={{ borderColor: COLORS.border }}
+            >
               Loading...
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-white border rounded-lg p-6 text-center" style={{ borderColor: COLORS.border }}>
+            <div
+              className="bg-white border rounded-lg p-6 text-center"
+              style={{ borderColor: COLORS.border }}
+            >
               No top products found.
             </div>
           ) : (
@@ -249,18 +261,28 @@ export default function SubCategoryPage({ params }) {
                   key={item.id}
                   href={`/products/${categorySlug}/${subcategorySlug}/${item.slug}`}
                 >
-                  <div className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition" style={{ borderColor: COLORS.border }}>
+                  <div
+                    className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition"
+                    style={{ borderColor: COLORS.border }}
+                  >
                     <img
                       src={item.imageUrl}
                       alt={item.name}
                       className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
                     />
                     <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
-                    <p className="mt-1 font-semibold" style={{ color: COLORS.accent }}>
+                    <p
+                      className="mt-1 font-semibold"
+                      style={{ color: COLORS.accent }}
+                    >
                       ₹{item.price}
                     </p>
-                    <p className="text-xs mt-1 text-gray-500">Min. {item.minOrderQty} units</p>
-                    <p className="text-xs mt-1 text-gray-500">{item.supplierType}</p>
+                    <p className="text-xs mt-1 text-gray-500">
+                      Min. {item.minOrderQty} units
+                    </p>
+                    <p className="text-xs mt-1 text-gray-500">
+                      {item.supplierType}
+                    </p>
                   </div>
                 </Link>
               ))}

@@ -15,6 +15,9 @@ export const getSubcategoriesByParent = (parentId) =>
 export const getCategoryById = (id) =>
   productapi.get(`/api/categories/${id}`);
 
+export const getCategoryBySlug = (slug) =>
+  productapi.get(`/api/categories/slug/${slug}`);
+
 export const updateCategory = (id, data) =>
   productapi.put(`/api/categories/${id}`, data);
 
