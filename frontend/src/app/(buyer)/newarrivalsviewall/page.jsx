@@ -17,7 +17,7 @@ const categories = [
   "Agriculture",
   "Healthcare",
   "Furniture",
-  "Apprael",
+  "Apparel",
   "Chemicals",
   "Hardware",
   "FMCG",
@@ -83,7 +83,7 @@ const Page = () => {
       }
 
       if (filters.minQty.length > 0) {
-        const qty = parseInt(product.min?.match(/\d+/)?.[0] || 0);
+        const qty = parseInt(product.min?.match(/\d+/)?.[0] || 0, 10);
 
         const matchQty = filters.minQty.some((range) => {
           if (range === "Under 50 units") return qty < 50;
@@ -98,7 +98,7 @@ const Page = () => {
 
       if (filters.rating.length > 0) {
         const matchRating = filters.rating.some(
-          (r) => product.rating >= parseFloat(r)
+          (r) => Number(product.rating) >= parseFloat(r)
         );
         if (!matchRating) return false;
       }
@@ -112,16 +112,16 @@ const Page = () => {
     })
     .sort((a, b) => {
       if (sortOption === "Price low to high") {
-        return a.priceValue - b.priceValue;
+        return (a.priceValue ?? 0) - (b.priceValue ?? 0);
       }
       if (sortOption === "Price high to low") {
-        return b.priceValue - a.priceValue;
+        return (b.priceValue ?? 0) - (a.priceValue ?? 0);
       }
       return 0;
     });
 
   return (
-    <div className="bg-white min-h-screen max-w-350">
+    <div className="bg-white min-h-screen max-w-[1400px] mx-auto">
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
           <p className="text-xs text-gray-500 mb-1">
@@ -160,7 +160,7 @@ const Page = () => {
               className={`whitespace-nowrap px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm border transition flex items-center gap-1 ${activeCategory === cat
                   ? "bg-orange-500 text-white border-orange-500"
                   : "bg-gray-100 text-gray-700 hover:bg-orange-50"
-                }`}
+              }`}
             >
               {cat}
             </button>
@@ -175,7 +175,7 @@ const Page = () => {
             className="w-full bg-white border rounded-lg py-2 text-sm font-medium shadow"
           >
             Filters {showFilters ? "▲" : "▼"}
-          </button>
+          </button> 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">
@@ -245,7 +245,10 @@ const Page = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition font-medium">
+              <button
+                type="button"
+                className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition font-medium"
+              >
                 Apply Filters
               </button>
             </div>
@@ -285,7 +288,7 @@ const Page = () => {
                     className="block"
                   >
                     <Card className="rounded-2xl bg-white shadow-sm hover:shadow-md transition flex flex-col overflow-hidden cursor-pointer">
-                      <CardContent className="p-0! py-0! flex flex-col h-full">
+                      <CardContent className="p-0 flex flex-col h-full">
                         <div className="relative h-45 sm:h-50 bg-gray-100 flex items-center justify-center">
                           <span className="absolute top-3 right-3 bg-[#063149] text-white text-xs px-2 py-1 rounded-full z-10">
                             {index % 2 === 0 ? "Trending" : "Hot Deal"}
@@ -341,6 +344,12 @@ const Page = () => {
                 );
               })}
             </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No products found for the selected filters.
+              </div>
+            )}
           </div>
         </div>
       </div>

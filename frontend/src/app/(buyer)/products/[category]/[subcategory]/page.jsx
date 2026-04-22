@@ -3,10 +3,22 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-const slugLabel = (value = "") => value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const COLORS = {
+  primary: "#0B1F3A",
+  accent: "#D4AF37",
+  cream: "#FFF8EC",
+  white: "#FFFFFF",
+  text: "#1A1A1A",
+  border: "#E5E5E5",
+};
+
+// Put the exact backend URL here that you already confirmed works in browser/Postman
+const API_BASE = "http://localhost:5002";
+// const API_BASE = "https://kavas-b2b-platform-3.onrender.com";
 
 export default function SubCategoryPage({ params }) {
   const [route, setRoute] = useState({ category: "", subcategory: "" });
+  const [categoryMeta, setCategoryMeta] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,33 +30,54 @@ export default function SubCategoryPage({ params }) {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
+
       try {
         const resolved = await params;
         const { category, subcategory } = resolved;
-
         setRoute({ category, subcategory });
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${category}/${subcategory}`;
-        const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json();
+        const metaUrl = `${API_BASE}/api/categories/slug/${category}`;
+        const productsUrl = `${API_BASE}/api/products/category/${category}/${subcategory}`;
 
-        const rawProducts = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.data)
-          ? data.data
-          : [];
+        console.log("Category API URL:", metaUrl);
+        console.log("Products API URL:", productsUrl);
 
-        const mapped = rawProducts.map((p) => ({
+        const [metaRes, productsRes] = await Promise.all([
+          fetch(metaUrl, { cache: "no-store" }),
+          fetch(productsUrl, { cache: "no-store" }),
+        ]);
+
+        console.log("Category API status:", metaRes.status, metaRes.url);
+        console.log("Products API status:", productsRes.status, productsRes.url);
+
+        const metaJson = metaRes.ok ? await metaRes.json() : { data: null };
+        const productsJson = productsRes.ok ? await productsRes.json() : { data: [] };
+
+        setCategoryMeta(metaJson?.data || null);
+
+        const rawProducts = Array.isArray(productsJson?.data)
+          ? productsJson.data
+          : Array.isArray(productsJson)
+            ? productsJson
+            : [];
+
+        const mappedProducts = rawProducts.map((p) => ({
           ...p,
-          imageUrl: p.image_url || "/placeholder.png",
-          minOrderQty: p.moq,
-          createdAt: p.created_at,
-          supplierType: p.supplierType || p.supplier_type || "",
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
+          minOrderQty: p.moq ?? p.minOrderQty ?? 0,
+          supplierType: p.supplier_type || p.supplierType || "",
+          createdAt: p.created_at || p.createdAt,
         }));
 
-        setProducts(mapped);
+        setProducts(mappedProducts);
       } catch (error) {
-        console.error("Failed to load products:", error);
+        console.error("Failed to load subcategory page:", error);
+        setCategoryMeta(null);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -63,21 +96,10 @@ export default function SubCategoryPage({ params }) {
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    if (minPrice !== "") {
-      list = list.filter((p) => Number(p.price) >= Number(minPrice));
-    }
-
-    if (maxPrice !== "") {
-      list = list.filter((p) => Number(p.price) <= Number(maxPrice));
-    }
-
-    if (minQty !== "") {
-      list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
-    }
-
-    if (supplierType.length) {
-      list = list.filter((p) => supplierType.includes(p.supplierType));
-    }
+    if (minPrice !== "") list = list.filter((p) => Number(p.price) >= Number(minPrice));
+    if (maxPrice !== "") list = list.filter((p) => Number(p.price) <= Number(maxPrice));
+    if (minQty !== "") list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
+    if (supplierType.length) list = list.filter((p) => supplierType.includes(p.supplierType));
 
     if (sort === "price_asc") {
       list.sort((a, b) => Number(a.price) - Number(b.price));
@@ -102,29 +124,46 @@ export default function SubCategoryPage({ params }) {
     setMinQty("");
   };
 
+  const categorySlug = route.category;
+  const subcategorySlug = route.subcategory;
+  const categoryName = categoryMeta?.name || "Category";
+  const subcategories = categoryMeta?.subcategories || [];
+
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="bg-orange-500 px-4 sm:px-6 py-5 sm:py-6 text-white">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold capitalize">
-          {slugLabel(route.subcategory)}
-        </h1>
-        <p className="text-sm mt-1">
-          {filteredProducts.length}+ top products available
-        </p>
+    <div className="min-h-screen" style={{ backgroundColor: COLORS.cream, color: COLORS.text }}>
+      <div className="px-4 sm:px-6 py-5 sm:py-6 text-white" style={{ backgroundColor: COLORS.primary }}>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{categoryName}</h1>
+        <p className="text-sm mt-1">{filteredProducts.length} products available</p>
       </div>
 
-      <div className="bg-white px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto">
+      <div className="px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto bg-white" style={{ borderColor: COLORS.border }}>
         <Link
-          href={`/products/${route.category}`}
-          className="px-4 py-1.5 bg-orange-600 text-white rounded-full text-sm whitespace-nowrap"
+          href={`/products/${categorySlug}`}
+          className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
+          style={{ backgroundColor: COLORS.white, color: COLORS.text, borderColor: COLORS.border }}
         >
-          All {slugLabel(route.category)}
+          All {categoryName}
         </Link>
+
+        {subcategories.map((sub) => (
+          <Link
+            key={sub.id || sub.slug}
+            href={`/products/${categorySlug}/${sub.slug}`}
+            className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
+            style={{
+              backgroundColor: subcategorySlug === sub.slug ? COLORS.accent : COLORS.white,
+              color: subcategorySlug === sub.slug ? COLORS.primary : COLORS.text,
+              borderColor: subcategorySlug === sub.slug ? COLORS.accent : COLORS.border,
+            }}
+          >
+            {sub.name}
+          </Link>
+        ))}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 px-4 sm:px-6 py-5">
-        <div className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit">
-          <h3 className="font-semibold mb-3">Filters</h3>
+        <div className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit" style={{ borderColor: COLORS.border }}>
+          <h3 className="font-semibold mb-3" style={{ color: COLORS.primary }}>Filters</h3>
 
           <p className="text-sm mb-2">Price</p>
           <div className="space-y-2 mb-4">
@@ -134,6 +173,7 @@ export default function SubCategoryPage({ params }) {
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
+              style={{ borderColor: COLORS.border }}
             />
             <input
               type="number"
@@ -141,6 +181,7 @@ export default function SubCategoryPage({ params }) {
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
+              style={{ borderColor: COLORS.border }}
             />
           </div>
 
@@ -151,26 +192,26 @@ export default function SubCategoryPage({ params }) {
             value={minQty}
             onChange={(e) => setMinQty(e.target.value)}
             className="w-full border rounded px-3 py-2 text-sm mb-4"
+            style={{ borderColor: COLORS.border }}
           />
 
           <p className="text-sm mb-2">Supplier Type</p>
-          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map(
-            (type) => (
-              <label key={type} className="block text-sm mb-1">
-                <input
-                  type="checkbox"
-                  checked={supplierType.includes(type)}
-                  onChange={() => toggleSupplier(type)}
-                  className="mr-2"
-                />
-                {type}
-              </label>
-            )
-          )}
+          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((type) => (
+            <label key={type} className="block text-sm mb-1">
+              <input
+                type="checkbox"
+                checked={supplierType.includes(type)}
+                onChange={() => toggleSupplier(type)}
+                className="mr-2"
+              />
+              {type}
+            </label>
+          ))}
 
           <button
             onClick={resetFilters}
-            className="mt-4 w-full border py-2 rounded hover:border-orange-500 hover:text-orange-500 transition"
+            className="mt-4 w-full border py-2 rounded"
+            style={{ borderColor: COLORS.border, color: COLORS.primary }}
           >
             Reset Filters
           </button>
@@ -183,7 +224,8 @@ export default function SubCategoryPage({ params }) {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="border rounded px-3 py-2 text-sm"
+              className="border rounded px-3 py-2 text-sm bg-white"
+              style={{ borderColor: COLORS.border }}
             >
               <option value="default">Sort</option>
               <option value="price_asc">Low → High</option>
@@ -193,11 +235,11 @@ export default function SubCategoryPage({ params }) {
           </div>
 
           {loading ? (
-            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+            <div className="bg-white border rounded-lg p-6 text-center" style={{ borderColor: COLORS.border }}>
               Loading...
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+            <div className="bg-white border rounded-lg p-6 text-center" style={{ borderColor: COLORS.border }}>
               No top products found.
             </div>
           ) : (
@@ -205,22 +247,20 @@ export default function SubCategoryPage({ params }) {
               {filteredProducts.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/products/${route.category}/${route.subcategory}/${item.slug}`}
+                  href={`/products/${categorySlug}/${subcategorySlug}/${item.slug}`}
                 >
-                  <div className="bg-white p-3 border rounded">
+                  <div className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition" style={{ borderColor: COLORS.border }}>
                     <img
                       src={item.imageUrl}
                       alt={item.name}
                       className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
                     />
                     <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
-                    <p className="text-blue-600">₹{item.price}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Min. {item.minOrderQty} units
+                    <p className="mt-1 font-semibold" style={{ color: COLORS.accent }}>
+                      ₹{item.price}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {item.supplierType}
-                    </p>
+                    <p className="text-xs mt-1 text-gray-500">Min. {item.minOrderQty} units</p>
+                    <p className="text-xs mt-1 text-gray-500">{item.supplierType}</p>
                   </div>
                 </Link>
               ))}

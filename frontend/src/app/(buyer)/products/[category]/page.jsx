@@ -3,16 +3,24 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-const slugLabel = (value = "") =>
-  value.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const COLORS = {
+  primary: "#0B1F3A",
+  accent: "#D4AF37",
+  cream: "#FFF8EC",
+  white: "#FFFFFF",
+  text: "#1A1A1A",
+  border: "#E5E5E5",
+};
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "https://kavas-b2b-platform-3.onrender.com";
 
 export default function CategoryPage({ params }) {
-  const [category, setCategory] = useState("");
+  const [categoryMeta, setCategoryMeta] = useState(null);
+  const [route, setRoute] = useState({ category: "" });
   const [products, setProducts] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [sort, setSort] = useState("default");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -21,30 +29,65 @@ export default function CategoryPage({ params }) {
 
   useEffect(() => {
     const load = async () => {
-      const resolved = await params;
-      const cat = resolved.category;
-      setCategory(cat);
+      setLoading(true);
 
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/products/category/${cat}`; const res = await fetch(url, { cache: "no-store" });
-        const data = await res.json();
+        const resolved = await params;
+        const { category } = resolved;
+        setRoute({ category });
+        const API_BASE = "http://localhost:5002";
+        // const API_BASE = "https://kavas-b2b-platform-3.onrender.com";
 
-        const mapped = (data.data || []).map((p) => ({
+        const [metaRes, productsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/categories/slug/${category}`, {
+            cache: "no-store",
+          }),
+          fetch(`${API_BASE}/api/products/category/${category}`, {
+            cache: "no-store",
+          }),
+        ]);
+
+        if (!metaRes.ok) {
+          throw new Error(`Category API failed: ${metaRes.status}`);
+        }
+
+        if (!productsRes.ok) {
+          throw new Error(`Products API failed: ${productsRes.status}`);
+        }
+
+        const metaJson = await metaRes.json();
+        const productsJson = await productsRes.json();
+
+        setCategoryMeta(metaJson?.data || null);
+
+        const rawProducts = Array.isArray(productsJson?.data)
+          ? productsJson.data
+          : Array.isArray(productsJson)
+            ? productsJson
+            : [];
+
+        const mappedProducts = rawProducts.map((p) => ({
           ...p,
-          imageUrl: p.image_url || "/placeholder.png",
-          minOrderQty: p.moq,
-          subcategorySlug: p.subcategory_slug || "",
-          createdAt: p.created_at,
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
+          minOrderQty: p.moq ?? p.minOrderQty ?? 0,
+          subcategorySlug:
+            p.subcategory_slug ||
+            p.subcategorySlug ||
+            p.sub_category_slug ||
+            "",
+          supplierType: p.supplier_type || p.supplierType || "",
+          createdAt: p.created_at || p.createdAt,
         }));
 
-        setProducts(mapped); 
-        const uniqueSubs = [
-          ...new Set((Array.isArray(data) ? data : []).map((p) => p.subcategorySlug).filter(Boolean)),
-        ];
-        setSubcategories(uniqueSubs);
+        setProducts(mappedProducts);
       } catch (error) {
+        console.error("Failed to load category page:", error);
+        setCategoryMeta(null);
         setProducts([]);
-        setSubcategories([]);
       } finally {
         setLoading(false);
       }
@@ -61,10 +104,6 @@ export default function CategoryPage({ params }) {
 
   const filteredProducts = useMemo(() => {
     let list = [...products];
-
-    if (selectedSubcategory) {
-      list = list.filter((p) => p.subcategorySlug === selectedSubcategory);
-    }
 
     if (minPrice !== "") {
       list = list.filter((p) => Number(p.price) >= Number(minPrice));
@@ -88,15 +127,16 @@ export default function CategoryPage({ params }) {
       list.sort((a, b) => Number(b.price) - Number(a.price));
     } else if (sort === "newest") {
       list.sort(
-        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        (a, b) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime()
       );
     }
 
     return list;
-  }, [products, selectedSubcategory, minPrice, maxPrice, minQty, supplierType, sort]);
+  }, [products, minPrice, maxPrice, minQty, supplierType, sort]);
 
   const resetFilters = () => {
-    setSelectedSubcategory("");
     setSort("default");
     setMinPrice("");
     setMaxPrice("");
@@ -104,45 +144,64 @@ export default function CategoryPage({ params }) {
     setMinQty("");
   };
 
+  const categorySlug = route.category;
+  const categoryName = categoryMeta?.name || "Category";
+  const subcategories = categoryMeta?.subcategories || [];
+
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="bg-orange-500 px-4 sm:px-6 py-5 sm:py-6 text-white">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold capitalize">
-          {slugLabel(category)}
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
+    >
+      <div
+        className="px-4 sm:px-6 py-5 sm:py-6 text-white"
+        style={{ backgroundColor: COLORS.primary }}
+      >
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
+          {categoryName}
         </h1>
-        <p className="text-sm mt-1">
-          {filteredProducts.length}+ top products available
-        </p>
+        <p className="text-sm mt-1">{filteredProducts.length} products available</p>
       </div>
 
-      <div className="bg-white px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto">
+      <div
+        className="px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto bg-white"
+        style={{ borderColor: COLORS.border }}
+      >
         <button
-          onClick={() => setSelectedSubcategory("")}
-          className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${selectedSubcategory === ""
-            ? "bg-orange-600 text-white"
-            : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
-            }`}
+          className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
+          style={{
+            backgroundColor: COLORS.accent,
+            color: COLORS.primary,
+            borderColor: COLORS.accent,
+          }}
         >
-          All {slugLabel(category)}
+          All {categoryName}
         </button>
 
         {subcategories.map((sub) => (
-          <button
-            key={sub}
-            onClick={() => setSelectedSubcategory(sub)}
-            className={`px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition ${selectedSubcategory === sub
-              ? "bg-orange-600 text-white"
-              : "bg-gray-100 hover:bg-orange-100 hover:text-orange-600"
-              }`}
+          <Link
+            key={sub.id || sub.slug}
+            href={`/products/${categorySlug}/${sub.slug}`}
+            className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border transition"
+            style={{
+              backgroundColor: COLORS.white,
+              color: COLORS.text,
+              borderColor: COLORS.border,
+            }}
           >
-            {slugLabel(sub)}
-          </button>
+            {sub.name}
+          </Link>
         ))}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 px-4 sm:px-6 py-5">
-        <div className="w-full lg:w-64 bg-white border rounded-lg p-4 h-fit">
-          <h3 className="font-semibold mb-3">Filters</h3>
+        <div
+          className="w-full lg:w-64 border rounded-lg p-4 h-fit bg-white"
+          style={{ borderColor: COLORS.border }}
+        >
+          <h3 className="font-semibold mb-3" style={{ color: COLORS.primary }}>
+            Filters
+          </h3>
 
           <p className="text-sm mb-2">Price</p>
           <div className="space-y-2 mb-4">
@@ -152,6 +211,7 @@ export default function CategoryPage({ params }) {
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
+              style={{ borderColor: COLORS.border }}
             />
             <input
               type="number"
@@ -159,6 +219,7 @@ export default function CategoryPage({ params }) {
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm"
+              style={{ borderColor: COLORS.border }}
             />
           </div>
 
@@ -169,24 +230,28 @@ export default function CategoryPage({ params }) {
             value={minQty}
             onChange={(e) => setMinQty(e.target.value)}
             className="w-full border rounded px-3 py-2 text-sm mb-4"
+            style={{ borderColor: COLORS.border }}
           />
 
           <p className="text-sm mb-2">Supplier Type</p>
-          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map((type) => (
-            <label key={type} className="block text-sm mb-1">
-              <input
-                type="checkbox"
-                checked={supplierType.includes(type)}
-                onChange={() => toggleSupplier(type)}
-                className="mr-2"
-              />
-              {type}
-            </label>
-          ))}
+          {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map(
+            (type) => (
+              <label key={type} className="block text-sm mb-1">
+                <input
+                  type="checkbox"
+                  checked={supplierType.includes(type)}
+                  onChange={() => toggleSupplier(type)}
+                  className="mr-2"
+                />
+                {type}
+              </label>
+            )
+          )}
 
           <button
             onClick={resetFilters}
-            className="mt-4 w-full border py-2 rounded hover:border-orange-500 hover:text-orange-500 transition"
+            className="mt-4 w-full border py-2 rounded"
+            style={{ borderColor: COLORS.border, color: COLORS.primary }}
           >
             Reset Filters
           </button>
@@ -199,7 +264,8 @@ export default function CategoryPage({ params }) {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="border rounded px-3 py-2 text-sm"
+              className="border rounded px-3 py-2 text-sm bg-white"
+              style={{ borderColor: COLORS.border }}
             >
               <option value="default">Sort</option>
               <option value="price_asc">Low → High</option>
@@ -209,11 +275,17 @@ export default function CategoryPage({ params }) {
           </div>
 
           {loading ? (
-            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+            <div
+              className="border rounded-lg p-6 text-center bg-white"
+              style={{ borderColor: COLORS.border }}
+            >
               Loading...
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+            <div
+              className="border rounded-lg p-6 text-center bg-white"
+              style={{ borderColor: COLORS.border }}
+            >
               No products found.
             </div>
           ) : (
@@ -221,20 +293,28 @@ export default function CategoryPage({ params }) {
               {filteredProducts.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/products/${category}/${item.subcategorySlug}/${item.slug}`}
+                  href={`/products/${categorySlug}/${item.subcategorySlug}/${item.slug}`}
                 >
-                  <div className="bg-white p-3 border rounded shadow hover:shadow-md transition">
+                  <div
+                    className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition"
+                    style={{ borderColor: COLORS.border }}
+                  >
                     <img
                       src={item.imageUrl}
                       alt={item.name}
                       className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
                     />
                     <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
-                    <p className="text-blue-600">₹{item.price}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p
+                      className="mt-1 font-semibold"
+                      style={{ color: COLORS.accent }}
+                    >
+                      ₹{item.price}
+                    </p>
+                    <p className="text-xs mt-1 text-gray-500">
                       Min. {item.minOrderQty} units
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs mt-1 text-gray-500">
                       {item.supplierType}
                     </p>
                   </div>
