@@ -127,8 +127,8 @@ const Page = () => {
         setIsEditing(!isEditing);
     };
     return (
-        <div className="bg-gray-100 min-h-screen">
-            <div className="bg-orange-500 text-white px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-[#FFF8EC] min-h-screen">
+            <div className="bg-[#0B1F3A] text-[#FFF8EC] px-4 sm:px-6 lg:px-8 py-6">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
                         <div className="h-16 w-16 rounded-xl bg-white/20 flex items-center justify-center text-2xl font-bold">
@@ -139,7 +139,7 @@ const Page = () => {
                                 {user.firstName} {user.lastName}
                             </h2>
                             <p className="text-sm opacity-80 break-all">{user.email}</p>
-                            <span className="bg-white/20 text-xs px-3 py-1 rounded-full mt-1 inline-block">
+                            <span className="bg-[#D4AF37] text-[#0B1F3A] text-xs px-3 py-1 rounded-full mt-1 inline-block font-semibold">
                                 Starter
                             </span>
                         </div>
@@ -163,13 +163,13 @@ const Page = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-6">
-                        <Card className="rounded-2xl">
+                        <Card className="rounded-2xl border border-[#E5E5E5]">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <User size={18} /> Personal Information
                                     </h3>
-                                    <Button size="sm" variant="outline" onClick={handleEditToggle}>
+                                    <Button size="sm" variant="outline" className="border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]" onClick={handleEditToggle}>
                                         <Edit size={14} /> {isEditing ? "Save" : "Edit"}
                                     </Button>
                                 </div>
@@ -181,7 +181,7 @@ const Page = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="rounded-2xl">
+                        <Card className="rounded-2xl border border-[#E5E5E5]">
                             <CardContent className="p-4 sm:p-6">
                                 <h3 className="font-semibold flex items-center gap-2 mb-4">
                                     <Building size={18} /> Business Details
@@ -194,20 +194,20 @@ const Page = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="rounded-2xl">
+                        <Card className="rounded-2xl border border-[#E5E5E5]">
                             <CardContent className="p-4 sm:p-6">
                                 <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
                                     <h3 className="font-semibold flex items-center gap-2">
                                         <MapPin size={18} /> Saved Addresses
                                     </h3>
-                                    <Button size="sm" onClick={() => setOpen(true)}>
+                                    <Button size="sm" className="bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734]" onClick={() => setOpen(true)}>
                                         <Plus size={14} /> Add New
                                     </Button>
                                 </div>
 
                                 <div className="space-y-4">
                                     {addresses.map((addr) => (
-                                        <div key={addr.id} className="border hover:border-orange-500 p-4 rounded-xl flex flex-col sm:flex-row justify-between gap-3">
+                                        <div key={addr.id} className="border border-[#E5E5E5] hover:border-[#D4AF37] p-4 rounded-xl flex flex-col sm:flex-row justify-between gap-3 bg-white">
                                             <div>
                                                 <p className="font-medium">{addr.address_line1}</p>
                                                 <p className="text-sm text-gray-500">
@@ -217,7 +217,7 @@ const Page = () => {
                                             </div>
 
                                             <div className="flex gap-2 flex-wrap">
-                                                <Button size="sm" variant="outline" onClick={() => handleEdit(addr)}>
+                                                <Button size="sm" variant="outline" className="border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]" onClick={() => handleEdit(addr)}>
                                                     Edit
                                                 </Button>
                                                 <Button size="sm" variant="destructive" onClick={() => handleDelete(addr.id)}>
@@ -229,7 +229,7 @@ const Page = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="rounded-2xl">
+                        <Card className="rounded-2xl border border-[#E5E5E5]">
                             <CardContent className="p-4 sm:p-6">
                                 <h3 className="font-semibold flex items-center gap-2 mb-4">
                                     <Shield size={18} /> Security & Preferences
@@ -252,7 +252,7 @@ const Page = () => {
                         </Card>
                     </div>
                     <div className="space-y-6">
-                        <Card className="rounded-2xl bg-orange-500 text-white">
+                        <Card className="rounded-2xl bg-[#0B1F3A] text-[#FFF8EC] border border-[#E5E5E5]">
                             <CardContent className="p-6">
                                 <h3 className="font-semibold mb-2">Starter Plan</h3>
                                 <ul className="text-sm space-y-2">
@@ -261,29 +261,29 @@ const Page = () => {
                                     <li>✔ GST invoices</li>
                                     <li>✔ Account manager</li>
                                 </ul>
-                                <Button className="mt-4 w-full bg-white text-orange-600">
+                                <Button className="mt-4 w-full bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734] font-semibold">
                                     Upgrade
                                 </Button>
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl">
+                        <Card className="rounded-2xl border border-[#E5E5E5]">
                             <CardContent className="p-4 space-y-3">
-                                <Button asChild variant="outline" className="w-full justify-start">
+                                <Button asChild variant="outline" className="w-full justify-start border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                                     <Link href="/buyerorders" className="flex items-center gap-2 w-full">
                                         <Package size={16} />
                                         <span>My Orders</span>
                                     </Link>
                                 </Button>
 
-                                <Button asChild variant="outline" className="w-full justify-start">
+                                <Button asChild variant="outline" className="w-full justify-start border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                                     <Link href="/favourites" className="flex items-center gap-2 w-full">
                                         <Heart size={16} />
                                         <span>Favourites</span>
                                     </Link>
                                 </Button>
 
-                                <Button asChild variant="outline" className="w-full justify-start">
+                                <Button asChild variant="outline" className="w-full justify-start border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
                                     <Link href="/help" className="flex items-center gap-2 w-full">
                                         <Shield size={16} />
                                         <span>Help Centre</span>
