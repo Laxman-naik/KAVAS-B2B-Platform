@@ -37,15 +37,18 @@ const Page = () => {
   const [showFilters, setShowFilters] = useState(false);
   const favouriteItems = useSelector((state) => state.favourites.items);
   const { newArrivals, loading } = useSelector((state) => state.products);
-  const liked = favouriteItems.map((item) => item.id || item._id);
+  const liked = (Array.isArray(favouriteItems) ? favouriteItems : []).map(
+    (item) => item?._id ?? item?.id ?? item?.productId
+  );
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const onToggleFavourite = (product) => {
-    const productId = product.id;
+    const productId = product?._id ?? product?.id ?? product?.productId;
     const isLiked = liked.includes(productId);
+    if (!productId) return;
     if (isLiked) {
       dispatch(removeFromFavourites(productId));
     } else {
@@ -54,9 +57,11 @@ const Page = () => {
   };
 
   const onAddToCart = (product) => {
+    const productId = product?._id ?? product?.id ?? product?.productId;
+    if (!productId) return;
     dispatch(
       addToCart({
-        productId: product.id,
+        productId,
         quantity: 1,
         variantId: product?.variantId ?? product?.variant_id,
       })
@@ -80,14 +85,64 @@ const Page = () => {
     dispatch(fetchNewArrivals());
   }, [dispatch]);
 
+  const normalizeProduct = (product) => {
+    const id = product?._id ?? product?.id ?? product?.productId;
+    const category = String(
+      product?.category ?? product?.category_name ?? product?.categoryName ?? ""
+    ).trim();
+
+    const supplierType = String(
+      product?.supplierType ?? product?.supplier_type ?? product?.supplier ?? ""
+    ).trim();
+
+    const rawMoq =
+      product?.moq ?? product?.minQty ?? product?.min_qty ?? product?.minimumOrderQty;
+    const minQty =
+      typeof rawMoq === "number"
+        ? rawMoq
+        : parseInt(String(rawMoq ?? "").match(/\d+/)?.[0] || "0", 10);
+
+    const rating = Number.parseFloat(
+      product?.rating ?? product?.ratingValue ?? product?.avgRating ?? 0
+    );
+
+    const rawPrice = product?.priceValue ?? product?.price ?? 0;
+    const priceValue =
+      typeof rawPrice === "number"
+        ? rawPrice
+        : Number.parseFloat(String(rawPrice).replace(/[^0-9.]/g, "")) || 0;
+
+    return {
+      ...product,
+      __id: id,
+      __category: category,
+      __supplierType: supplierType,
+      __minQty: minQty,
+      __rating: Number.isFinite(rating) ? rating : 0,
+      __priceValue: Number.isFinite(priceValue) ? priceValue : 0,
+    };
+  };
+
+  const onClearFilters = () => {
+    setActiveCategory("All");
+    setSortOption("Most relevant");
+    setFilters({ minQty: [], rating: [], supplier: [] });
+    setShowFilters(false);
+  };
+
   const filteredProducts = (newArrivals || [])
+    .map(normalizeProduct)
     .filter((product) => {
-      if (activeCategory !== "All" && product.category !== activeCategory) {
+      if (
+        activeCategory !== "All" &&
+        String(product.__category).toLowerCase() !==
+          String(activeCategory).toLowerCase()
+      ) {
         return false;
       }
 
       if (filters.minQty.length > 0) {
-        const qty = parseInt(product.min?.match(/\d+/)?.[0] || 0, 10);
+        const qty = product.__minQty;
 
         const matchQty = filters.minQty.some((range) => {
           if (range === "Under 50 units") return qty < 50;
@@ -102,13 +157,13 @@ const Page = () => {
 
       if (filters.rating.length > 0) {
         const matchRating = filters.rating.some(
-          (r) => Number(product.rating) >= parseFloat(r)
+          (r) => Number(product.__rating) >= parseFloat(r)
         );
         if (!matchRating) return false;
       }
 
       if (filters.supplier.length > 0) {
-        const matchSupplier = filters.supplier.includes(product.supplierType);
+        const matchSupplier = filters.supplier.includes(product.__supplierType);
         if (!matchSupplier) return false;
       }
 
@@ -116,16 +171,16 @@ const Page = () => {
     })
     .sort((a, b) => {
       if (sortOption === "Price low to high") {
-        return (a.priceValue ?? 0) - (b.priceValue ?? 0);
+        return (a.__priceValue ?? 0) - (b.__priceValue ?? 0);
       }
       if (sortOption === "Price high to low") {
-        return (b.priceValue ?? 0) - (a.priceValue ?? 0);
+        return (b.__priceValue ?? 0) - (a.__priceValue ?? 0);
       }
       return 0;
     });
 
   return (
-    <div className="bg-white min-h-screen max-w-[1400px] mx-auto">
+    <div className="bg-white min-h-screen max-w-350 mx-auto">
       <div className="bg-white px-2 sm:px-6 py-2">
         <div className="mx-auto text-black">
           <p className="text-xs text-gray-500 mb-1">
@@ -149,7 +204,7 @@ const Page = () => {
           <p className="text-xs text-black mt-2">
             Showing{" "}
             <span className="font-semibold">{filteredProducts.length}</span> of{" "}
-            <span className="font-semibold">{newArrivals.length}</span>{" "}
+            <span className="font-semibold">{(newArrivals || []).length}</span>{" "}
             products
           </p>
         </div>
@@ -252,8 +307,17 @@ const Page = () => {
               <button
                 type="button"
                 className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition font-medium"
+                onClick={() => setShowFilters(false)}
               >
                 Apply Filters
+              </button>
+
+              <button
+                type="button"
+                className="w-full mt-2 bg-white border py-2 rounded-lg hover:bg-gray-50 transition font-medium"
+                onClick={onClearFilters}
+              >
+                Clear Filters
               </button>
             </div>
           </div>
@@ -282,7 +346,7 @@ const Page = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-5">
               {filteredProducts.map((product, index) => {
-                const productId = product.id || product._id;
+                const productId = product.__id ?? product.id ?? product._id;
                 const isLiked = liked.includes(productId);
 
                 return (
