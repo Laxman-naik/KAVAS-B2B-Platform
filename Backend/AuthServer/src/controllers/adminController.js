@@ -3,16 +3,6 @@ const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 const redis = require("../config/redis");
 
-/* ================= CONFIG ================= */
-
-const isProd = true;
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-};
-
 /* ================= TOKENS ================= */
 
 const generateAccessToken = (admin) => {
@@ -52,10 +42,6 @@ const login = async (req, res) => {
 
     const admin = result.rows[0];
 
-    if (!admin.password_hash) {
-      return res.status(500).json({ message: "Password not set" });
-    }
-
     const isMatch = await bcrypt.compare(password, admin.password_hash);
 
     if (!isMatch) {
@@ -72,16 +58,6 @@ const login = async (req, res) => {
       7 * 24 * 60 * 60
     );
 
-    res.cookie("accessToken", accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     return res.json({
       message: "Login success",
       user: {
@@ -89,30 +65,30 @@ const login = async (req, res) => {
         email: admin.email,
         role: admin.role,
       },
-      accessToken, refreshToken,
+      accessToken,
+      refreshToken,
     });
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
     return res.status(500).json({ message: err.message });
   }
 };
 
 /* ================= REFRESH ================= */
 
-const refreshToken = async (req, res) => {
+const refreshTokenHandler = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const { refreshToken } = req.body;
 
-    if (!token) {
+    if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token" });
     }
 
-    const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
 
     const storedToken = await redis.get(`admin_refresh:${decoded.id}`);
 
-    if (!storedToken || storedToken !== token) {
+    if (!storedToken || storedToken !== refreshToken) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
@@ -122,20 +98,11 @@ const refreshToken = async (req, res) => {
       { expiresIn: "15m" }
     );
 
-    res.cookie("accessToken", newAccessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60 * 1000,
+    return res.json({
+      accessToken: newAccessToken,
     });
 
-    return res.json({ message: "Access token refreshed" });
-
   } catch (err) {
-    console.error("REFRESH ERROR:", err);
-
-    // ✅ FIXED (match cookie options)
-    res.clearCookie("accessToken", cookieOptions);
-    res.clearCookie("refreshToken", cookieOptions);
-
     return res.status(401).json({ message: "Session expired" });
   }
 };
@@ -144,26 +111,18 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const { refreshToken } = req.body;
 
-    if (token) {
-      const decoded = jwt.verify(token, process.env.REFRESH_SECRET);
-
-      // ✅ Remove session from Redis
+    if (refreshToken) {
+      const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
       await redis.del(`admin_refresh:${decoded.id}`);
     }
   } catch (err) {
     console.log("Logout error:", err.message);
   }
 
-  // ❌ REMOVED wrong "token" cookie
-  // ✅ FIXED cookie clearing (must match options)
-  res.clearCookie("accessToken", cookieOptions);
-  res.clearCookie("refreshToken", cookieOptions);
-
   return res.json({ message: "Logged out" });
 };
-
 /* ================= GET ME ================= */
 
 const getMe = async (req, res) => {
@@ -180,4 +139,4 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { login, refreshToken, logout, getMe,};
+module.exports = { login, refreshTokenHandler, logout, getMe,};
