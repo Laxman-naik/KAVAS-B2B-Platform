@@ -225,6 +225,8 @@ exports.getProducts = async (req, res) => {
 };
 
 exports.getSingleProduct = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const { id } = req.params;
 
@@ -232,43 +234,77 @@ exports.getSingleProduct = async (req, res) => {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    const productResult = await pool.query(
+    const userId = req.user?.id || null;
+
+    // ✅ FIX: session + ip tracking
+    const sessionId = req.headers["x-session-id"] || null;
+    const ipAddress = req.ip;
+
+    await client.query("BEGIN");
+
+    const productResult = await client.query(
       `SELECT * FROM products 
        WHERE id = $1 AND is_active = true`,
       [id]
     );
 
     if (!productResult.rows.length) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Product not found" });
     }
 
     const product = productResult.rows[0];
 
-    const imagesResult = await pool.query(
-      `SELECT image_url FROM product_images WHERE product_id = $1`,
-      [id]
-    );
+    // fetch related data
+    const [imagesResult, specsResult, pricingResult, categoriesResult] =
+      await Promise.all([
+        client.query(`SELECT image_url FROM product_images WHERE product_id = $1`, [id]),
+        client.query(`SELECT key, value FROM product_specifications WHERE product_id = $1`, [id]),
+        client.query(`SELECT min_quantity, price, label FROM product_pricing_tiers WHERE product_id = $1 ORDER BY min_quantity ASC`, [id]),
+        client.query(
+          `SELECT c.id, c.name, c.slug, c.parent_id
+           FROM product_categories pc
+           JOIN categories c ON pc.category_id = c.id
+           WHERE pc.product_id = $1`,
+          [id]
+        ),
+      ]);
 
-    const specsResult = await pool.query(
-      `SELECT key, value FROM product_specifications WHERE product_id = $1`,
-      [id]
-    );
-
-    const pricingResult = await pool.query(
-      `SELECT min_quantity, price, label 
-       FROM product_pricing_tiers 
+    // ✅ FIX: STRONG THROTTLING (user OR session OR IP)
+    const existingView = await client.query(
+      `SELECT 1 FROM product_events
        WHERE product_id = $1
-       ORDER BY min_quantity ASC`,
-      [id]
+       AND event_type = 'view'
+       AND (
+         (user_id IS NOT NULL AND user_id = $2)
+         OR (session_id IS NOT NULL AND session_id = $3)
+         OR (ip_address = $4)
+       )
+       AND created_at > NOW() - INTERVAL '10 minutes'
+       LIMIT 1`,
+      [id, userId, sessionId, ipAddress]
     );
 
-    const categoriesResult = await pool.query(
-      `SELECT c.id, c.name, c.slug, c.parent_id
-       FROM product_categories pc
-       JOIN categories c ON pc.category_id = c.id
-       WHERE pc.product_id = $1`,
-      [id]
-    );
+    if (existingView.rows.length === 0) {
+      // update counters
+      await client.query(
+        `UPDATE products
+         SET views_count = views_count + 1,
+             views_last_7_days = views_last_7_days + 1
+         WHERE id = $1`,
+        [id]
+      );
+
+      // insert event
+      await client.query(
+        `INSERT INTO product_events 
+         (product_id, event_type, user_id, session_id, ip_address)
+         VALUES ($1, 'view', $2, $3, $4)`,
+        [id, userId, sessionId, ipAddress]
+      );
+    }
+
+    await client.query("COMMIT");
 
     res.json({
       ...product,
@@ -277,9 +313,12 @@ exports.getSingleProduct = async (req, res) => {
       pricingTiers: pricingResult.rows,
       categories: categoriesResult.rows,
     });
+
   } catch (err) {
-    console.error("getSingleProduct error:", err);
+    await client.query("ROLLBACK");
     res.status(500).json({ message: err.message });
+  } finally {
+    client.release();
   }
 };
 
@@ -371,5 +410,36 @@ exports.getProductsByCategoryAndSubcategory = async (req, res) => {
   } catch (err) {
     console.error("getProductsByCategoryAndSubcategory error:", err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.getTrendingProducts = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    const result = await pool.query(
+      `SELECT p.*, pi.image_url,
+        -- ✅ FIX: BETTER SCORING
+        (p.sales_last_7_days * 10 + p.views_last_7_days * 0.2) AS score
+       FROM products p
+       
+       -- ✅ FIX: PREVENT DUPLICATES
+       LEFT JOIN LATERAL (
+         SELECT image_url
+         FROM product_images
+         WHERE product_id = p.id
+         LIMIT 1
+       ) pi ON true
+
+       WHERE p.is_active = true
+       ORDER BY score DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    res.json({ success: true, data: result.rows });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

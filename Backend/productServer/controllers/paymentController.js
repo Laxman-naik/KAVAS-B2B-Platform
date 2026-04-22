@@ -7,12 +7,16 @@ exports.createCheckout = async (req, res) => {
     const { id: userId } = req.user;
     const { orderId } = req.body;
 
-    // 🔴 1. Validate input
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    //  1. Validate input
     if (!orderId) {
       return res.status(400).json({ message: "OrderId is required" });
     }
 
-    // 🔴 2. Fetch order (WITH ownership check)
+    //  2. Fetch order (WITH ownership check)
     const orderRes = await pool.query(
       `SELECT o.* 
        FROM orders o
@@ -27,7 +31,7 @@ exports.createCheckout = async (req, res) => {
 
     const order = orderRes.rows[0];
 
-    // 🔴 3. Prevent duplicate payment attempts
+    //  3. Prevent duplicate payment attempts
     const existingTx = await pool.query(
       `SELECT * FROM transactions 
        WHERE order_id = $1 AND status = 'created'`,
@@ -43,17 +47,17 @@ exports.createCheckout = async (req, res) => {
       });
     }
 
-    // 🔴 4. Convert safely to paise
+    //  4. Convert safely to paise
     const amount = Math.round(Number(order.total_amount) * 100);
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Invalid order amount" });
     }
 
-    // 🔴 5. Create Razorpay order
+    //  5. Create Razorpay order
     const razorpayOrder = await razorpayService.createOrder(amount);
 
-    // 🔴 6. Store transaction
+    //  6. Store transaction
     await pool.query(
       `INSERT INTO transactions 
        (user_id, order_id, razorpay_order_id, amount, status)
@@ -86,7 +90,6 @@ exports.verifyPayment = async (req, res) => {
       razorpay_signature,
     } = req.body;
 
-    // 1. Verify signature
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RZP_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -98,7 +101,6 @@ exports.verifyPayment = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 2. Lock transaction row (IMPORTANT)
     const txRes = await client.query(
       `SELECT * FROM transactions 
        WHERE razorpay_order_id = $1
@@ -106,54 +108,82 @@ exports.verifyPayment = async (req, res) => {
       [razorpay_order_id]
     );
 
-    if (!txRes.rows.length) {
-      throw new Error("Transaction not found");
-    }
+    if (!txRes.rows.length) throw new Error("Transaction not found");
 
     const tx = txRes.rows[0];
 
-    // 3. IDEMPOTENCY CHECK (critical)
+    // idempotency
     if (tx.status === "paid") {
       await client.query("ROLLBACK");
       return res.json({ success: true, message: "Already processed" });
     }
 
-    // 4. Update transaction
     await client.query(
       `UPDATE transactions
        SET status = 'paid',
            razorpay_payment_id = $1
-       WHERE razorpay_order_id = $2`,
-      [razorpay_payment_id, razorpay_order_id]
+       WHERE id = $2`,
+      [razorpay_payment_id, tx.id]
     );
 
-    // 5. Update order safely
     await client.query(
       `UPDATE orders
        SET status = 'confirmed',
            payment_status = 'paid'
-       WHERE id = $1 AND status != 'confirmed'`,
+       WHERE id = $1`,
       [tx.order_id]
     );
 
-    // 6. Insert history (avoid duplicates)
+    // fetch items
+    const itemsRes = await client.query(
+      `SELECT product_id, quantity
+       FROM order_items
+       WHERE order_id = $1`,
+      [tx.order_id]
+    );
+
+    // update sales + events
+    // inside verifyPayment after fetching order items
+
+for (const item of itemsRes.rows) {
+  await client.query(
+    `UPDATE products
+     SET sales_count = sales_count + $1,
+         sales_last_7_days = sales_last_7_days + $1
+     WHERE id = $2`,
+    [item.quantity, item.product_id]
+  );
+
+  // ✅ FIX: include quantity always
+  await client.query(
+    `INSERT INTO product_events 
+     (product_id, event_type, quantity)
+     VALUES ($1, 'purchase', $2)`,
+    [item.product_id, item.quantity]
+  );
+}
+
+    // history
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
        SELECT $1, 'confirmed'
        WHERE NOT EXISTS (
-         SELECT 1 FROM order_status_history 
+         SELECT 1 FROM order_status_history
          WHERE order_id = $1 AND status = 'confirmed'
        )`,
       [tx.order_id]
     );
 
-    // 7. Cart cleanup (safer version)
+    // FIXED cart cleanup (only purchased items)
     await client.query(
-      `DELETE FROM cart_items ci
-       USING carts c, orders o
-       WHERE ci.cart_id = c.id
-       AND o.shipping_address_id = c.user_id
-       AND o.id = $1`,
+      `DELETE FROM cart_items
+       WHERE product_id IN (
+         SELECT product_id FROM order_items WHERE order_id = $1
+       )
+       AND cart_id = (
+         SELECT id FROM carts
+         WHERE user_id = (SELECT user_id FROM orders WHERE id = $1)
+       )`,
       [tx.order_id]
     );
 
@@ -193,10 +223,10 @@ exports.handleWebhook = async (req, res) => {
 
       await client.query("BEGIN");
 
-      // find transaction
       const txRes = await client.query(
         `SELECT * FROM transactions
-         WHERE razorpay_payment_id = $1`,
+         WHERE razorpay_payment_id = $1
+         FOR UPDATE`,
         [payment.id]
       );
 
@@ -207,12 +237,12 @@ exports.handleWebhook = async (req, res) => {
 
       const tx = txRes.rows[0];
 
+      // idempotency
       if (tx.status === "paid") {
         await client.query("ROLLBACK");
         return res.json({ status: "already processed" });
       }
 
-      // update everything (source of truth)
       await client.query(
         `UPDATE transactions SET status = 'paid'
          WHERE id = $1`,
@@ -220,10 +250,36 @@ exports.handleWebhook = async (req, res) => {
       );
 
       await client.query(
-        `UPDATE orders SET status = 'confirmed'
+        `UPDATE orders
+         SET status = 'confirmed',
+             payment_status = 'paid'
          WHERE id = $1`,
         [tx.order_id]
       );
+
+      // SAME sales logic
+      const itemsRes = await client.query(
+        `SELECT product_id, quantity
+         FROM order_items
+         WHERE order_id = $1`,
+        [tx.order_id]
+      );
+
+      for (const item of itemsRes.rows) {
+        await client.query(
+          `UPDATE products
+           SET sales_count = sales_count + $1,
+               sales_last_7_days = sales_last_7_days + $1
+           WHERE id = $2`,
+          [item.quantity, item.product_id]
+        );
+
+        await client.query(
+          `INSERT INTO product_events (product_id, event_type, quantity)
+           VALUES ($1, 'purchase', $2)`,
+          [item.product_id, item.quantity]
+        );
+      }
 
       await client.query("COMMIT");
     }

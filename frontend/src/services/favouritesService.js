@@ -1,38 +1,17 @@
-import axios from "axios";
+import { productapi } from "../lib/axios";
 
-const API_URL = "http://localhost:5000/api/favourites";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+export const getFavouritesAPI = () => {
+  return productapi.get("/api/favourites");
 };
 
-export const getFavouritesAPI = async () => {
-  return await axios.get(API_URL, {
-    headers: getAuthHeaders(),
-  });
+export const addToFavouritesAPI = (productId) => {
+  if (!productId) throw new Error("productId is required");
+  return productapi.post("/api/favourites", { productId });
 };
 
-export const addToFavouritesAPI = async (productId) => {
-  return await axios.post(
-    API_URL,
-    { productId },
-    {
-      headers: getAuthHeaders(),
-    }
-  );
+export const removeFromFavouritesAPI = (productId) => {
+  if (!productId) throw new Error("productId is required");
+  return productapi.delete(`/api/favourites/${productId}`);
 };
 
-export const removeFromFavouritesAPI = async (productId) => {
-  return await axios.delete(`${API_URL}/${productId}`, {
-    headers: getAuthHeaders(),
-  });
-};
-
-export const clearFavouritesAPI = async () => {
-  return await axios.delete(API_URL, {
-    headers: getAuthHeaders(),
-  });
-};
+export const clearFavouritesAPI = () => { return productapi.delete("/api/favourites"); };

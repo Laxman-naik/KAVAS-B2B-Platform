@@ -1,10 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  getFavouritesAPI,
-  addToFavouritesAPI,
-  removeFromFavouritesAPI,
-  clearFavouritesAPI,
-} from "@/services/favouritesService";
+import { getFavouritesAPI, addToFavouritesAPI, removeFromFavouritesAPI, clearFavouritesAPI, } from "@/services/favouritesService";
 
 /* ================= ERROR HELPER ================= */
 const normalizeError = (err) =>

@@ -244,8 +244,12 @@ const handleCheckout = async () => {
 
                           <button
                             onClick={() => handleDecrease(item)}
-                            disabled={updating || item.quantity <= moq}
-                            className="px-2 bg-gray-200"
+                            disabled={(item.quantity || moq) <= moq || loading}
+                            className={`px-2.5 py-1 bg-gray-100 ${
+                              (item.quantity || moq) <= moq || loading
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-gray-200"
+                            }`}
                           >
                             -
                           </button>

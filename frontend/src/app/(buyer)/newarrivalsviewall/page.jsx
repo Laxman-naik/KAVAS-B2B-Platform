@@ -38,12 +38,18 @@ const Page = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const dispatch = useDispatch();
+<<<<<<< HEAD
   const favouriteItems = useSelector((state) => state.favourites.items || []);
   const liked = favouriteItems.map((item) => item._id ?? item.id);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+=======
+  const favouriteItems = useSelector((state) => state.favourites.items);
+
+  const liked = favouriteItems.map((item) => item.id || item._id);
+>>>>>>> 25dc89a4650f274e014741dcfc0c23fb564f8996
 
   const onToggleFavourite = (product) => {
     const productId = product._id ?? product.id;
@@ -128,10 +134,10 @@ const Page = () => {
         <div className="mx-auto text-black">
           <p className="text-xs text-gray-500 mb-1">
             <Link href="/">
-              <span className="hover:text-orange-600">Home</span>
+              <span className="hover:text-orange-600">Home </span>
             </Link>
             <span className="mx-1">{">>"}</span>
-            <span className="text-black font-semibold">New Arrivals</span>
+            <span className="text-black font-medium">New Arrivals</span>
           </p>
 
           <div className="flex items-center gap-2 mt-2">
@@ -142,6 +148,13 @@ const Page = () => {
 
           <p className="text-xs sm:text-sm text-black mt-1">
             Best-selling wholesale products across all categories
+          </p>
+
+          <p className="text-xs text-black mt-2">
+            Showing{" "}
+            <span className="font-semibold">{filteredProducts.length}</span> of{" "}
+            <span className="font-semibold">{arrivalProducts.length}</span>{" "}
+            products
           </p>
         </div>
       </div>
@@ -274,8 +287,8 @@ const Page = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
               {filteredProducts.map((product, index) => {
-                const productId = product._id ?? product.id;
-                const isLiked = mounted && liked.includes(productId);
+                const productId = product.id || product._id;
+                const isLiked = liked.includes(productId);
 
                 return (
                   <Link

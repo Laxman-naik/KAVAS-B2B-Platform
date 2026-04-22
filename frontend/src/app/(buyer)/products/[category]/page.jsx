@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { productapi,authapi } from "@/lib/axios";
 
 const COLORS = {
   primary: "#0B1F3A",
@@ -11,9 +12,6 @@ const COLORS = {
   text: "#1A1A1A",
   border: "#E5E5E5",
 };
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "https://kavas-b2b-platform-3.onrender.com";
 
 export default function CategoryPage({ params }) {
   const [categoryMeta, setCategoryMeta] = useState(null);
@@ -35,35 +33,18 @@ export default function CategoryPage({ params }) {
         const resolved = await params;
         const { category } = resolved;
         setRoute({ category });
-        const API_BASE = "http://localhost:5002";
-        // const API_BASE = "https://kavas-b2b-platform-3.onrender.com";
 
         const [metaRes, productsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/categories/slug/${category}`, {
-            cache: "no-store",
-          }),
-          fetch(`${API_BASE}/api/products/category/${category}`, {
-            cache: "no-store",
-          }),
+          authapi.get(`/api/categories/slug/${category}`),
+          productapi.get(`/api/products/category/${category}`),
         ]);
 
-        if (!metaRes.ok) {
-          throw new Error(`Category API failed: ${metaRes.status}`);
-        }
+        setCategoryMeta(metaRes?.data?.data || null);
 
-        if (!productsRes.ok) {
-          throw new Error(`Products API failed: ${productsRes.status}`);
-        }
-
-        const metaJson = await metaRes.json();
-        const productsJson = await productsRes.json();
-
-        setCategoryMeta(metaJson?.data || null);
-
-        const rawProducts = Array.isArray(productsJson?.data)
-          ? productsJson.data
-          : Array.isArray(productsJson)
-            ? productsJson
+        const rawProducts = Array.isArray(productsRes?.data?.data)
+          ? productsRes.data.data
+          : Array.isArray(productsRes?.data)
+            ? productsRes.data
             : [];
 
         const mappedProducts = rawProducts.map((p) => ({
