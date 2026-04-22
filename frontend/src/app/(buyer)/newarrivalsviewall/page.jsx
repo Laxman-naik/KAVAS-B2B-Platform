@@ -39,6 +39,10 @@ const Page = () => {
   const { newArrivals, loading } = useSelector((state) => state.products);
   const liked = favouriteItems.map((item) => item.id || item._id);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const onToggleFavourite = (product) => {
     const productId = product.id;
     const isLiked = liked.includes(productId);
@@ -175,7 +179,7 @@ const Page = () => {
             className="w-full bg-white border rounded-lg py-2 text-sm font-medium shadow"
           >
             Filters {showFilters ? "▲" : "▼"}
-          </button>
+          </button> 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 items-start">

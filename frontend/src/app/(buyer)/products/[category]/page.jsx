@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { productapi,authapi } from "@/lib/axios";
+import { useParams } from "next/navigation";
+import { productapi } from "@/lib/axios";
 
 const COLORS = {
   primary: "#0B1F3A",
@@ -13,7 +14,9 @@ const COLORS = {
   border: "#E5E5E5",
 };
 
-export default function CategoryPage({ params }) {
+export default function CategoryPage() {
+  const { category } = useParams();
+
   const [categoryMeta, setCategoryMeta] = useState(null);
   const [route, setRoute] = useState({ category: "" });
   const [products, setProducts] = useState([]);
@@ -27,15 +30,15 @@ export default function CategoryPage({ params }) {
 
   useEffect(() => {
     const load = async () => {
+      if (!category) return;
+
       setLoading(true);
 
       try {
-        const resolved = await params;
-        const { category } = resolved;
         setRoute({ category });
 
         const [metaRes, productsRes] = await Promise.all([
-          authapi.get(`/api/categories/slug/${category}`),
+          productapi.get(`/api/categories/slug/${category}`),
           productapi.get(`/api/products/category/${category}`),
         ]);
 
@@ -75,7 +78,7 @@ export default function CategoryPage({ params }) {
     };
 
     load();
-  }, [params]);
+  }, [category]);
 
   const toggleSupplier = (value) => {
     setSupplierType((prev) =>
