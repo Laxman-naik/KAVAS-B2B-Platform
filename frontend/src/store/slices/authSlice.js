@@ -1,106 +1,134 @@
 // import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// import {
-//   registerUserAPI,
-//   loginUser,
-//   logoutUser,
-//   getMe,
-// } from "@/services/authService";
-
-// import {
-//   loginAdminAPI,
-//   logoutAdminAPI,
-//   getAdminMe,
-// } from "@/services/adminServer";
+// import { registerUserAPI, loginUser, logoutUser, getMe, } from "@/services/authService";
+// import { loginAdminAPI, logoutAdminAPI, getAdminMe, } from "@/services/adminServer";
+// import { resetCart } from "./cartSlice";
 
 // /* ================= USER ================= */
 
-// // Register user
+// // REGISTER
 // export const registerUserThunk = createAsyncThunk(
 //   "auth/registerUser",
 //   async (data, { rejectWithValue }) => {
 //     try {
 //       const res = await registerUserAPI(data);
-//       return res.data;
+//       return res;
 //     } catch (err) {
 //       return rejectWithValue(err.response?.data || "Register failed");
 //     }
 //   }
 // );
 
-// // Login user
+// // LOGIN
 // export const loginUserThunk = createAsyncThunk(
 //   "auth/loginUser",
 //   async (data, { rejectWithValue }) => {
 //     try {
 //       const res = await loginUser(data);
-//       // console.log("LOGIN RESPONSE:", res.data);
-//       const token = res.data.token || res.data.accessToken;
-//       if (token) {
-//         localStorage.setItem("token", token);
-//       }
-//       return res.data;
+//       return res;
 //     } catch (err) {
 //       return rejectWithValue(err.response?.data || "Login failed");
 //     }
 //   }
 // );
 
-// // Load user
+// // LOAD USER
 // export const loadUserThunk = createAsyncThunk(
 //   "auth/loadUser",
 //   async (_, { rejectWithValue }) => {
 //     try {
 //       const res = await getMe();
-//       return res.data;
-//     } catch {
+//       return res;
+//     } catch (err) {
 //       return rejectWithValue("Not authenticated");
 //     }
 //   }
 // );
 
-// // Logout user
+// // LOGOUT USER
 // export const logoutUserThunk = createAsyncThunk(
 //   "auth/logoutUser",
 //   async (_, { dispatch }) => {
-//     await logoutUser();
-//     dispatch(clearAuth());
+//     try {
+//       await logoutUser();
+//     } catch (err) {
+//       console.error(err);
+//     }
+
+//     // clear storage (IMPORTANT for JWT)
+//     localStorage.removeItem("accessToken");
+//     localStorage.removeItem("refreshToken");
+
+//     dispatch(resetCart());
 //   }
 // );
 
 // /* ================= ADMIN ================= */
 
-// // Login admin
+// // LOGIN
 // export const loginAdminThunk = createAsyncThunk(
 //   "auth/loginAdmin",
 //   async (data, { rejectWithValue }) => {
 //     try {
 //       const res = await loginAdminAPI(data);
-//       return res.data;
+
+//       const { user, accessToken, refreshToken } = res.data;
+
+//       // ✅ STORE TOKENS
+//       localStorage.setItem("accessToken", accessToken);
+//       localStorage.setItem("refreshToken", refreshToken);
+
+//       return { user };
 //     } catch (err) {
 //       return rejectWithValue(err.response?.data || "Admin login failed");
 //     }
 //   }
 // );
 
-// // Load admin (ONLY ONE SOURCE OF TRUTH)
+// // LOAD ADMIN
 // export const loadAdminThunk = createAsyncThunk(
 //   "auth/loadAdmin",
 //   async (_, { rejectWithValue }) => {
 //     try {
+//       const token = localStorage.getItem("accessToken");
+//       if (!token) return rejectWithValue("No token");
+
 //       const res = await getAdminMe();
-//       return res.data; // { user }
+//       return res.data;
 //     } catch {
 //       return rejectWithValue("Not admin");
 //     }
 //   }
 // );
 
-// // Logout admin
+// // LOGOUT ADMIN
 // export const logoutAdminThunk = createAsyncThunk(
 //   "auth/logoutAdmin",
 //   async (_, { dispatch }) => {
-//     await logoutAdminAPI();
-//     dispatch(clearAuth());
+//     try {
+//       const refreshToken = localStorage.getItem("refreshToken");
+//       await logoutAdminAPI({ refreshToken });
+//     } catch (err) {
+//       console.error(err);
+//     }
+
+//     localStorage.removeItem("accessToken");
+//     localStorage.removeItem("refreshToken");
+
+//     dispatch(resetCart());
+//   }
+// );
+
+// export const fetchUsersThunk = createAsyncThunk(
+//   "admin/fetchUsers",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const res = await getAllUsersAPI();
+//       return res.data.users;
+//     } catch (err) {
+//       return rejectWithValue(
+//         err.response?.data?.message || "Failed to fetch users"
+//       );
+//     }
 //   }
 // );
 
@@ -113,6 +141,7 @@
 //   loading: false,
 //   error: null,
 //   initialized: false,
+//   users: [],
 // };
 
 // /* ================= SLICE ================= */
@@ -126,83 +155,102 @@
 //       state.user = null;
 //       state.role = null;
 //       state.isAuthenticated = false;
+
+//       localStorage.removeItem("accessToken");
+//       localStorage.removeItem("refreshToken");
 //     },
 //   },
 
 //   extraReducers: (builder) => {
 //     builder
 
-//       /* ===== USER ===== */
-
-//       .addCase(loginUserThunk.pending, (state) => {
+//       /* REGISTER */
+//       .addCase(registerUserThunk.pending, (state) => {
 //         state.loading = true;
 //       })
-//       .addCase(loginUserThunk.fulfilled, (state, action) => {
-//         state.user = action.payload.user;
-//         state.role = "user";
-//         state.isAuthenticated = true;
+//       .addCase(registerUserThunk.fulfilled, (state) => {
 //         state.loading = false;
 //       })
-//       .addCase(loginUserThunk.rejected, (state) => {
+//       .addCase(registerUserThunk.rejected, (state, action) => {
 //         state.loading = false;
+//         state.error = action.payload;
+//       })
+
+//       /* LOGIN */
+//       .addCase(loginUserThunk.pending, (state) => {
+//         state.loading = true;
+//         state.error = null;
+//       })
+//       .addCase(loginUserThunk.fulfilled, (state, action) => {
+//         state.loading = false;
+//         state.user = action.payload?.user || null;
+//         state.role = "user";
+//         state.isAuthenticated = !!action.payload?.user;
+//       })
+//       .addCase(loginUserThunk.rejected, (state, action) => {
+//         state.loading = false;
+//         state.error = action.payload;
 //         state.isAuthenticated = false;
 //       })
 
+//       /* LOAD USER */
 //       .addCase(loadUserThunk.fulfilled, (state, action) => {
-//         if (action.payload.user) {
-//           state.user = action.payload.user;
-//           state.role = "user";
-//           state.isAuthenticated = true;
-//         } else {
-//           state.user = null;
-//           state.role = null;
-//           state.isAuthenticated = false;
-//         }
+//         state.user = action.payload?.user || null;
+//         state.role = "user";
+//         state.isAuthenticated = !!action.payload?.user;
+//         state.initialized = true;
+//       })
+//       .addCase(loadUserThunk.rejected, (state) => {
+//         state.user = null;
+//         state.isAuthenticated = false;
+//         state.initialized = true;
 //       })
 
+//       /* LOGOUT USER */
 //       .addCase(logoutUserThunk.fulfilled, (state) => {
 //         state.user = null;
 //         state.role = null;
 //         state.isAuthenticated = false;
 //       })
 
-//       /* ===== ADMIN ===== */
-
-//       .addCase(loginAdminThunk.pending, (state) => {
-//         state.loading = true;
-//       })
+//       /* ADMIN LOGIN */
 //       .addCase(loginAdminThunk.fulfilled, (state, action) => {
-//         state.user = action.payload.user;
+//         state.user = action.payload?.user || null;
 //         state.role = "admin";
 //         state.isAuthenticated = true;
-//         state.loading = false;
-//       })
-//       .addCase(loginAdminThunk.rejected, (state) => {
-//         state.loading = false;
 //       })
 
-//       .addCase(loadAdminThunk.pending, (state) => {
-//         state.loading = true;
-//       })
+//       /* ADMIN LOAD */
 //       .addCase(loadAdminThunk.fulfilled, (state, action) => {
-//         state.user = action.payload.user;
+//         state.user = action.payload?.user || null;
 //         state.role = "admin";
 //         state.isAuthenticated = true;
-//         state.loading = false;
 //         state.initialized = true;
 //       })
+
 //       .addCase(loadAdminThunk.rejected, (state) => {
 //         state.user = null;
-//         state.role = null;
 //         state.isAuthenticated = false;
-//         state.loading = false;
 //         state.initialized = true;
 //       })
 
+//       /* ADMIN LOGOUT */
 //       .addCase(logoutAdminThunk.fulfilled, (state) => {
 //         state.user = null;
 //         state.role = null;
 //         state.isAuthenticated = false;
+//       })
+
+//       .addCase(fetchUsersThunk.pending, (state) => {
+//         state.loading = true;
+//       })
+//       .addCase(fetchUsersThunk.fulfilled, (state, action) => {
+//         state.loading = false;
+//         state.users = action.payload;
+//       })
+//       .addCase(fetchUsersThunk.rejected, (state, action) => {
+//         state.loading = false;
+//         state.error = action.payload;
 //       });
 //   },
 // });
@@ -211,10 +259,21 @@
 // export default authSlice.reducer;
 
 
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { registerUserAPI, loginUser, logoutUser, getMe, } from "@/services/authService";
-import { loginAdminAPI, logoutAdminAPI, getAdminMe, } from "@/services/adminServer";
+import {
+  registerUserAPI,
+  loginUser,
+  logoutUser,
+  getMe,
+} from "@/services/authService";
+
+import {
+  loginAdminAPI,
+  logoutAdminAPI,
+  getAdminMe,
+  getAllUsersAPI, // ✅ FIXED
+} from "@/services/adminServer";
+
 import { resetCart } from "./cartSlice";
 
 /* ================= USER ================= */
@@ -225,20 +284,26 @@ export const registerUserThunk = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const res = await registerUserAPI(data);
-      return res;
+      return res.data; // ✅ FIXED
     } catch (err) {
       return rejectWithValue(err.response?.data || "Register failed");
     }
   }
 );
 
-// LOGIN
+// LOGIN USER
 export const loginUserThunk = createAsyncThunk(
   "auth/loginUser",
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginUser(data);
-      return res;
+
+      const { user, accessToken, refreshToken } = res.data;
+
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      return { user }; // ✅ clean
     } catch (err) {
       return rejectWithValue(err.response?.data || "Login failed");
     }
@@ -251,8 +316,8 @@ export const loadUserThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await getMe();
-      return res;
-    } catch (err) {
+      return res.data;
+    } catch {
       return rejectWithValue("Not authenticated");
     }
   }
@@ -268,7 +333,6 @@ export const logoutUserThunk = createAsyncThunk(
       console.error(err);
     }
 
-    // clear storage (IMPORTANT for JWT)
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 
@@ -278,35 +342,48 @@ export const logoutUserThunk = createAsyncThunk(
 
 /* ================= ADMIN ================= */
 
+// LOGIN ADMIN
 export const loginAdminThunk = createAsyncThunk(
   "auth/loginAdmin",
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginAdminAPI(data);
-      return res;
+
+      const { user, accessToken, refreshToken } = res.data;
+
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      return { user };
     } catch (err) {
       return rejectWithValue(err.response?.data || "Admin login failed");
     }
   }
 );
 
+// LOAD ADMIN
 export const loadAdminThunk = createAsyncThunk(
   "auth/loadAdmin",
   async (_, { rejectWithValue }) => {
     try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No token");
+
       const res = await getAdminMe();
-      return res;
+      return res.data;
     } catch {
       return rejectWithValue("Not admin");
     }
   }
 );
 
+// LOGOUT ADMIN
 export const logoutAdminThunk = createAsyncThunk(
   "auth/logoutAdmin",
   async (_, { dispatch }) => {
     try {
-      await logoutAdminAPI();
+      const refreshToken = localStorage.getItem("refreshToken");
+      await logoutAdminAPI({ refreshToken });
     } catch (err) {
       console.error(err);
     }
@@ -315,6 +392,27 @@ export const logoutAdminThunk = createAsyncThunk(
     localStorage.removeItem("refreshToken");
 
     dispatch(resetCart());
+  }
+);
+
+/* ================= FETCH USERS ================= */
+
+export const fetchUsersThunk = createAsyncThunk(
+  "admin/fetchUsers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No token"); // ✅ FIXED
+
+      const res = await getAllUsersAPI();
+      console.log("API RESPONSE:", res); // 👈 full axios response
+      console.log("USERS DATA:", res.data.users); // 👈 actual data
+      return res.data.users;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch users"
+      );
+    }
   }
 );
 
@@ -327,6 +425,8 @@ const initialState = {
   loading: false,
   error: null,
   initialized: false,
+
+  users: [], // admin data
 };
 
 /* ================= SLICE ================= */
@@ -349,81 +449,54 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* REGISTER */
-      .addCase(registerUserThunk.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(registerUserThunk.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(registerUserThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      /* LOGIN */
-      .addCase(loginUserThunk.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      /* LOGIN USER */
       .addCase(loginUserThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload?.user || null;
+        state.user = action.payload.user;
         state.role = "user";
-        state.isAuthenticated = !!action.payload?.user;
-      })
-      .addCase(loginUserThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.isAuthenticated = false;
+        state.isAuthenticated = true;
       })
 
       /* LOAD USER */
       .addCase(loadUserThunk.fulfilled, (state, action) => {
-        state.user = action.payload?.user || null;
+        state.user = action.payload.user;
         state.role = "user";
-        state.isAuthenticated = !!action.payload?.user;
-        state.initialized = true;
-      })
-      .addCase(loadUserThunk.rejected, (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
+        state.isAuthenticated = true;
         state.initialized = true;
       })
 
-      /* LOGOUT USER */
-      .addCase(logoutUserThunk.fulfilled, (state) => {
-        state.user = null;
-        state.role = null;
-        state.isAuthenticated = false;
-      })
-
-      /* ADMIN LOGIN */
+      /* LOGIN ADMIN */
       .addCase(loginAdminThunk.fulfilled, (state, action) => {
-        state.user = action.payload?.user || null;
+        state.user = action.payload.user;
         state.role = "admin";
         state.isAuthenticated = true;
       })
 
-      /* ADMIN LOAD */
+      /* LOAD ADMIN */
       .addCase(loadAdminThunk.fulfilled, (state, action) => {
-        state.user = action.payload?.user || null;
+        state.user = action.payload.user;
         state.role = "admin";
         state.isAuthenticated = true;
         state.initialized = true;
       })
 
-      .addCase(loadAdminThunk.rejected, (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
-        state.initialized = true;
-      })
-
-      /* ADMIN LOGOUT */
+      /* LOGOUT */
       .addCase(logoutAdminThunk.fulfilled, (state) => {
         state.user = null;
         state.role = null;
         state.isAuthenticated = false;
+      })
+
+      /* FETCH USERS */
+      .addCase(fetchUsersThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUsersThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+      })
+      .addCase(fetchUsersThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

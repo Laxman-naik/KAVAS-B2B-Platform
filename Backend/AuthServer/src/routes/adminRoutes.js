@@ -10,5 +10,6 @@ router.post("/login", adminController.login);
 router.post("/refresh", adminController.refreshTokenHandler);
 router.post("/logout", adminController.logout);
 router.get("/me", authMiddleware, authorizeRoles("admin"), adminController.getMe);
+router.get("/users", authMiddleware, authorizeRoles("admin"), adminController.getAllUsers);
 
 module.exports = router;

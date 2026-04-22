@@ -139,4 +139,19 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { login, refreshTokenHandler, logout, getMe,};
+const getAllUsers = async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC"
+    );
+
+    return res.json({
+      users: result.rows,
+    });
+  } catch (err) {
+    console.error("GET USERS ERROR:", err);
+    return res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+module.exports = { login, refreshTokenHandler, logout, getMe, getAllUsers};
