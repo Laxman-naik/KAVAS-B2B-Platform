@@ -263,67 +263,45 @@ import { fetchUsersThunk } from "@/store/slices/authSlice";
 
 export default function BuyersTable() {
   const [search, setSearch] = useState("");
-
   const dispatch = useDispatch();
   const { users = [], loading } = useSelector((state) => state.auth);
-
-  console.log(users)
 
   useEffect(() => {
     dispatch(fetchUsersThunk());
   }, [dispatch]);
 
-  // ✅ filter using real field
   const filtered = users.filter((u) => u.role === "buyer").filter((u) => u.full_name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-4 text-white">
-
-      {/* SEARCH */}
       <div className="flex justify-between mb-6">
-        <input
-          placeholder="Search..."
-          className="px-4 py-2 rounded bg-[#13263C]"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <input placeholder="Search..." className="px-4 py-2 rounded bg-[#13263C]" value={search} onChange={(e) => setSearch(e.target.value)}/>
       </div>
-
-      {loading && <p>Loading users...</p>}
-
-      {/* TABLE */}
       <div className="border border-gray-700 rounded-xl overflow-hidden">
         <table className="w-full text-sm">
-
-          {/* ✅ FIXED HEADER */}
           <thead className="bg-[#111827] text-gray-400">
             <tr>
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Email</th>
+              <th className="px-4 py-3 text-left">Number</th>
               <th className="px-4 py-3 text-left">Role</th>
               <th className="px-4 py-3 text-left">Created</th>
             </tr>
           </thead>
-
           <tbody>
             {filtered.map((u) => (
               <tr key={u.id} className="border-t border-gray-800">
                 <td className="px-4 py-3">{u.full_name}</td>
                 <td className="px-4 py-3 text-blue-400">{u.email}</td>
+                <td className="px-4 py-3">{u.phone}</td>
                 <td className="px-4 py-3">{u.role}</td>
-                <td className="px-4 py-3">
-                  {new Date(u.created_at).toLocaleDateString()}
-                </td>
+                <td className="px-4 py-3">{new Date(u.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* EMPTY */}
-      {!loading && filtered.length === 0 && (
-        <p className="text-gray-400 mt-4">No users found</p>
-      )}
+      </div> 
+      {!loading && filtered.length === 0 && ( <p className="text-gray-400 mt-4">No users found</p>)}
     </div>
   );
 }

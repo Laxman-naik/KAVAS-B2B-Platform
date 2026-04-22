@@ -142,7 +142,7 @@ const getMe = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC"
+      "SELECT id, full_name, email, phone, role, created_at FROM users ORDER BY created_at DESC"
     );
 
     return res.json({
