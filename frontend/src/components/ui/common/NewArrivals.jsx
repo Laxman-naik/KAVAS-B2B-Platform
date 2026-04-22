@@ -119,71 +119,78 @@ export default function NewArrivals() {
   };
 
   return (
-    <div className=" py-6">
-      <div className="max-w-350 mx-auto px-4  rounded-2xl">
-          <div className="flex justify-between">
-            <h2 className="text-xl font-semibold border-l-4 border-orange-500 pl-2 mb-5">
-              New Arrivals
-            </h2>
-            <Link href="/newarrivalsviewall">
-              <span className="text-orange-500 text-sm cursor-pointer hover:underline">
-                View all →
-              </span>
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={scrollLeft}
-              className="p-2 bg-gray-100 rounded-full hover:scale-110"
-            >
-              <ChevronLeft />
-            </button>
-            <div
-              ref={scrollRef}
-              className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar flex-1"
-            >
-              {newProducts.map((item) => (
-                <Link key={item.id} href={`/product/${item.id}`}>
-                  <div className="min-w-55 bg-white rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col">
+    <div className="py-6 bg-[#FFF8EC]">
+      <div className="max-w-350 mx-auto px-4 rounded-2xl">
 
-                    <div className="relative h-56 overflow-hidden">
-                      <img
-                        src={item.image}
-                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
-                      />
-                      <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                        New
-                      </span>
-                    </div>
+        <div className="flex justify-between">
+          <h2 className="text-xl font-semibold border-l-4 border-[#D4AF37] text-[#0B1F3A] pl-2 mb-5">
+            New Arrivals
+          </h2>
 
-                    <div className="p-3 flex flex-col justify-between flex-1">
-                      <div>
-                        <h3 className="text-sm font-medium line-clamp-2">
-                          {item.title}
-                        </h3>
-                        <p className="text-orange-600 font-semibold mt-1">
-                          {item.price}
-                        </p>
-                        <p className="text-xs text-gray-500">{item.min}</p>
-                      </div>
+          <Link href="/newarrivalsviewall">
+            <span className="text-[#D4AF37] text-sm cursor-pointer hover:underline font-medium">
+              View all →
+            </span>
+          </Link>
+        </div>
 
-                      <div className="flex items-center mt-2 text-xs text-gray-600">
-                        <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                        {item.brand}
-                      </div>
-                    </div>
+        <div className="flex items-center gap-3">
 
+          <button
+            onClick={scrollLeft}
+            className="p-2 bg-white border border-[#E5E5E5] rounded-full hover:scale-110"
+          >
+            <ChevronLeft className="text-[#0B1F3A]" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar flex-1"
+          >
+            {newProducts.map((item) => (
+              <Link key={item._id ?? item.id} href={`/product/${item._id ?? item.id}`}>
+                <div className="min-w-55 bg-white border border-[#E5E5E5] rounded-xl shadow-sm hover:shadow-xl transition duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-2 h-80 flex flex-col">
+
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={item.image}
+                      className="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                    />
+                    <span className="absolute top-2 left-2 bg-[#D4AF37] text-[#0B1F3A] text-xs px-2 py-1 rounded-full font-semibold">
+                      New
+                    </span>
                   </div>
-                </Link>
-              ))}
-            </div>
-            <button
-              onClick={scrollRight}
-              className="p-2 bg-gray-100 rounded-full hover:scale-110"
-            >
-              <ChevronRight />
-            </button>
+
+                  <div className="p-3 flex flex-col justify-between flex-1">
+                    <div>
+                      <h3 className="text-sm font-medium text-[#1A1A1A] line-clamp-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-[#D4AF37] font-semibold mt-1">
+                        {item.price}
+                      </p>
+                      <p className="text-xs text-gray-500">{item.min}</p>
+                    </div>
+
+                    <div className="flex items-center mt-2 text-xs text-gray-600">
+                      <span className="w-2 h-2 bg-[#D4AF37] rounded-full mr-1"></span>
+                      {item.brand}
+                    </div>
+                  </div>
+
+                </div>
+              </Link>
+            ))}
           </div>
+
+          <button
+            onClick={scrollRight}
+            className="p-2 bg-white border border-[#E5E5E5] rounded-full hover:scale-110"
+          >
+            <ChevronRight className="text-[#0B1F3A]" />
+          </button>
+
+        </div>
       </div>
     </div>
   );

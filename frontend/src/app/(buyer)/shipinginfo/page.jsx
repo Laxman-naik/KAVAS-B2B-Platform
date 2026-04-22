@@ -1,218 +1,458 @@
 "use client";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  BookOpen,
+  Box,
+  ClipboardList,
+  Clock,
+  Globe,
+  MapPin,
+  Package,
+  PhoneCall,
+  RefreshCw,
+  ShieldCheck,
+  Truck,
+  Wallet,
+  XCircle,
+  FileText,
+  Edit3, Mail
+} from "lucide-react";
 
 const page = () => {
   return (
-    <div className="w-full min-h-screen bg-gray-50">
-      
-      <div className="w-full bg-orange-500 py-4 sm:py-6 md:py-8 flex justify-center px-4 sm:px-6 lg:px-10 mb-6 sm:mb-8">
-        <div className="max-w-5xl mx-auto w-full text-center sm:text-left">
-          
-          <h1 className="text-lg sm:text-2xl md:text-3xl  flex justify-center font-bold text-white leading-snug">
-            KAVAS Wholesale Hub – Shipping & Returns
-          </h1>
+    <div className="w-full min-h-screen bg-white">
+      <div className="bg-[#0B1F3A]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+            <div className="text-white">
+              <p className="text-xs text-white/70 mb-2">
+                <Link href="/" className="hover:text-[#D4AF37]">Home</Link>
+                <span className="mx-1">››</span>
+                <span className="text-white font-semibold">Shipping & Returns Policy</span>
+              </p>
 
-          <p className="text-white mt-2 flex justify-center  text-sm sm:text-base md:text-lg">
-            Find answers to common questions about shipping, returns, and refunds.
-          </p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+                Shipping & Returns <span className="text-[#D4AF37]">Policy</span>
+              </h1>
 
+              <p className="mt-2 text-sm sm:text-base text-[#D4AF37] font-bold">
+                Fast Delivery. Easy Returns. Trusted Support.
+              </p>
+
+              <p className="mt-3 max-w-xl text-sm text-white/80">
+                We ensure safe and timely delivery of your orders. Please read our Shipping & Returns Policy carefully.
+              </p>
+
+              <div className="mt-4 inline-flex items-center gap-2 rounded-sm bg-white/10 border border-white/10 px-3 py-2 text-xs text-white/85">
+                <BadgeCheck className="h-4 w-4 text-[#D4AF37]" />
+                <span className="font-semibold">Last Updated:</span>
+                <span>01 August 2025</span>
+              </div>
+            </div>
+
+            <div className="hidden lg:flex justify-end">
+              <div className="w-full max-w-md">
+                <svg width="420" height="180" viewBox="0 0 420 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+                  <defs>
+                    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stopColor="#D4AF37" stopOpacity="0.95" />
+                      <stop offset="1" stopColor="#D4AF37" stopOpacity="0.35" />
+                    </linearGradient>
+                    <filter id="shadow2" x="-20" y="-20" width="460" height="240" filterUnits="userSpaceOnUse">
+                      <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#000" floodOpacity="0.35" />
+                    </filter>
+                  </defs>
+
+                  <g filter="url(#shadow2)">
+                    <rect x="238" y="18" width="160" height="140" rx="12" fill="#FFFFFF" />
+                    <rect x="252" y="34" width="132" height="12" rx="6" fill="#E5E5E5" />
+                    <rect x="252" y="54" width="110" height="10" rx="5" fill="#E5E5E5" />
+                    <rect x="252" y="72" width="120" height="10" rx="5" fill="#E5E5E5" />
+                    <rect x="252" y="90" width="116" height="10" rx="5" fill="#E5E5E5" />
+                    <rect x="252" y="108" width="104" height="10" rx="5" fill="#E5E5E5" />
+                    <rect x="280" y="20" width="78" height="14" rx="7" fill="#D4AF37" />
+                    <path d="M265 60l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M265 78l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M265 96l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M265 114l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </g>
+
+                  <g filter="url(#shadow2)">
+                    <rect x="24" y="78" width="210" height="70" rx="14" fill="#0B1F3A" stroke="url(#g2)" strokeWidth="2" />
+                    <rect x="40" y="92" width="86" height="18" rx="9" fill="#D4AF37" />
+                    <rect x="40" y="116" width="110" height="10" rx="5" fill="#FFFFFF" fillOpacity="0.25" />
+                    <circle cx="186" cy="146" r="12" fill="#1A1A1A" />
+                    <circle cx="86" cy="146" r="12" fill="#1A1A1A" />
+                    <circle cx="186" cy="146" r="6" fill="#D4AF37" />
+                    <circle cx="86" cy="146" r="6" fill="#D4AF37" />
+                    <rect x="170" y="90" width="44" height="22" rx="8" fill="#0F2D55" />
+                  </g>
+
+                  <g filter="url(#shadow2)">
+                    <path d="M325 132c20 0 36 16 36 36H289c0-20 16-36 36-36z" fill="#0B1F3A" stroke="url(#g2)" strokeWidth="2" />
+                    <path d="M325 146l10 10-10 10-10-10 10-10z" fill="#D4AF37" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-6 lg:px-0">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-6 items-start">
+          <div className="space-y-4">
+            <Card id="order-processing" className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
+              <div className="flex items-center gap-3 px-4 sm:px-5 py-3 bg-white">
+                <div className="h-8 w-8 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">01</div>
+                <p className="font-extrabold text-sm sm:text-base text-[#1A1A1A]">Order Processing & Shipping Time</p>
+              </div>
+              <CardContent className="p-4 sm:p-5 bg-white">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="border border-[#E5E5E5] rounded-sm p-3 text-center">
+                    <Box className="h-6 w-6 mx-auto text-[#D4AF37]" />
+                    <p className="mt-2 text-sm font-extrabold text-[#1A1A1A]">1 - 3 Business Days</p>
+                    <p className="text-xs text-gray-600">Order Processing</p>
+                  </div>
+                  <div className="border border-[#E5E5E5] rounded-sm p-3 text-center">
+                    <Truck className="h-6 w-6 mx-auto text-[#D4AF37]" />
+                    <p className="mt-2 text-sm font-extrabold text-[#1A1A1A]">5 - 10 Business Days</p>
+                    <p className="text-xs text-gray-600">Standard Shipping</p>
+                  </div>
+                  <div className="border border-[#E5E5E5] rounded-sm p-3 text-center">
+                    <Clock className="h-6 w-6 mx-auto text-[#D4AF37]" />
+                    <p className="mt-2 text-sm font-extrabold text-[#1A1A1A]">2 - 5 Business Days</p>
+                    <p className="text-xs text-gray-600">Express Shipping</p>
+                  </div>
+                  <div className="border border-[#E5E5E5] rounded-sm p-3 text-center">
+                    <Package className="h-6 w-6 mx-auto text-[#D4AF37]" />
+                    <p className="mt-2 text-sm font-extrabold text-[#1A1A1A]">Multiple Packages</p>
+                    <p className="text-xs text-gray-600">May be shipped separately</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* SHIPPING SECTION */}
-        <Card className="shadow-sm rounded-xl sm:rounded-2xl">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800">Shipping</h2>
+            <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
+              <CardContent className="p-0 bg-white">
+                <div className="divide-y divide-[#E5E5E5]">
+                  {[
+                    {
+                      id: "shipping-charges",
+                      n: "02",
+                      icon: Wallet,
+                      title: "Shipping Charges",
+                      bullets: [
+                        "Shipping charges depend on order weight, volume, and delivery location",
+                        "Final shipping cost is displayed at checkout before payment",
+                        "Free shipping may be available on bulk orders or promotions",
+                      ],
+                    },
+                    {
+                      id: "tracking",
+                      n: "03",
+                      icon: MapPin,
+                      title: "Tracking Your Order",
+                      bullets: [
+                        "Tracking details will be shared via email and SMS after dispatch",
+                        "Orders can be tracked from the “My Orders” section",
+                      ],
+                    },
+                    {
+                      id: "international",
+                      n: "04",
+                      icon: Globe,
+                      title: "International Shipping",
+                      bullets: [
+                        "Available for select locations",
+                        "Customs duties and additional charges must be borne by the customer",
+                      ],
+                    },
+                    {
+                      id: "delivery-delays",
+                      n: "05",
+                      icon: AlertTriangle,
+                      title: "Delivery Delays",
+                      bullets: [
+                        "Delivery timelines may be affected by external factors",
+                        "Support team will assist in tracking and resolving such cases",
+                      ],
+                    },
+                  ].map((s) => (
+                    <div key={s.id} id={s.id} className="flex items-start gap-4 px-4 sm:px-5 py-4">
+                      <div className="h-8 w-8 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">
+                        {s.n}
+                      </div>
+                      <div className="h-10 w-10 rounded-sm bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center">
+                        <s.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-extrabold text-sm sm:text-base text-[#1A1A1A]">{s.title}</p>
+                        <div className="mt-2 text-sm text-gray-700 space-y-1">
+                          {s.bullets.map((b) => (
+                            <p key={b}>- {b}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            <Accordion type="single" collapsible className="w-full">
-
-              <AccordionItem value="item-1">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Why does the delivery date sometimes differ from the estimated timeline?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Delivery timelines are estimates and may vary due to holidays, courier delays, or operational constraints.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-2">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  What is the order processing and shipping time?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Orders are processed within 1–3 business days. Standard shipping takes 5–10 business days and express shipping takes 2–5 business days.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-3">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  What factors affect delivery time?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Delivery depends on product availability, processing time, delivery location, and courier timelines.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-4">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Why might my order arrive in multiple packages?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Orders may be split based on product availability or warehouse location.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-5">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  How are shipping charges calculated?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Charges depend on weight, volume, and delivery location. Final cost is shown at checkout.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-6">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  How can I track my order?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Tracking details are shared via email/SMS and available in the "My Orders" section.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-7">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Do you offer international shipping?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Yes, for select locations. Customs duties must be paid by the customer.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-8">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  What should I do if my delivery is delayed?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Contact support. We will assist in tracking and resolving the issue.
-                </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        {/* RETURNS SECTION */}
-        <Card className="shadow-sm rounded-xl sm:rounded-2xl">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800">Returns & Refunds</h2>
-
-            <Accordion type="single" collapsible className="w-full">
-
-              <AccordionItem value="r1">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  What items are eligible for return?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Returns are accepted only for damaged, defective, or incorrect products within 48 hours of delivery.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="r2">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Which items are not eligible for return?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Customized or misused products are not eligible for return.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="r3">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  What conditions must be met for a return?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Items must be unused, in original packaging, with all tags and invoices.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="r4">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  How do I initiate a return?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Contact support, share details and images, and pickup will be arranged after approval.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="r5">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  When will I receive my refund?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Refunds are processed within 5–10 business days to the original payment method.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="r6">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Are shipping charges refundable?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Shipping charges are non-refundable except for defective or incorrect items.
-                </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        {/* CANCELLATION SECTION */}
-        <Card className="shadow-sm rounded-xl sm:rounded-2xl">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800">Cancellations & Modifications</h2>
-
-            <Accordion type="single" collapsible className="w-full">
-
-              <AccordionItem value="c1">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Can I cancel my order?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Orders can only be canceled before shipment.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="c2">
-                <AccordionTrigger className="text-left text-sm sm:text-base">
-                  Can I modify my order?
-                </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-gray-600">
-                  Modifications are allowed only before processing begins.
-                </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        {/* CONTACT */}
-        <Card className="shadow-sm rounded-xl sm:rounded-2xl">
-          <CardContent className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-gray-800">Contact Us</h2>
-
-            <div className="space-y-2 text-gray-600 text-sm sm:text-base">
-              <p>Email: info@kavaswholesalehub.com</p>
-              <p>Phone: +91 0000000000</p>
-              <p>Support available during business hours</p>
+            <div className="rounded-sm border border-[#E5E5E5] bg-[#FFF1D6] px-4 sm:px-5 py-3">
+              <p className="font-extrabold text-sm text-[#1A1A1A]">Returns & Refunds Policy</p>
             </div>
-          </CardContent>
-        </Card>
 
+            <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
+              <CardContent className="p-0 bg-white">
+                <div className="divide-y divide-[#E5E5E5]">
+                  {[
+                    {
+                      id: "return-eligibility",
+                      n: "06",
+                      icon: RefreshCw,
+                      title: "Return Eligibility",
+                      bullets: [
+                        "Returns accepted only for damaged, defective, or incorrect products",
+                        "Return request must be raised within 48 hours of delivery",
+                      ],
+                    },
+                    {
+                      id: "non-returnable",
+                      n: "07",
+                      icon: XCircle,
+                      title: "Non-Returnable Items",
+                      bullets: [
+                        "Customized or special-order products",
+                        "Products damaged due to misuse or improper handling",
+                      ],
+                    },
+                    {
+                      id: "return-conditions",
+                      n: "08",
+                      icon: ShieldCheck,
+                      title: "Return Conditions",
+                      bullets: [
+                        "Items must be unused and in original packaging",
+                        "All tags, invoices, and accessories must be included",
+                      ],
+                    },
+                  ].map((s) => (
+                    <div key={s.id} id={s.id} className="flex items-start gap-4 px-4 sm:px-5 py-4">
+                      <div className="h-8 w-8 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">
+                        {s.n}
+                      </div>
+                      <div className="h-10 w-10 rounded-sm bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center">
+                        <s.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-extrabold text-sm sm:text-base text-[#1A1A1A]">{s.title}</p>
+                        <div className="mt-2 text-sm text-gray-700 space-y-1">
+                          {s.bullets.map((b) => (
+                            <p key={b}>- {b}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card id="return-process" className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
+              <div className="flex items-start gap-4 px-4 sm:px-5 py-4 bg-white">
+                <div className="h-10 w-10 rounded-sm bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">09</div>
+                    <p className="font-extrabold text-sm sm:text-base text-[#1A1A1A]">Return Process</p>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    {[
+                      { n: "01", t: "Contact customer support", d: "via email or phone" },
+                      { n: "02", t: "Provide order details", d: "and images of the issue" },
+                      { n: "03", t: "Return pickup", d: "arranged after approval" },
+                      { n: "04", t: "Inspection", d: "before refund/replacement" },
+                    ].map((step) => (
+                      <div key={step.n} className="rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] p-3">
+                        <p className="text-xs font-black text-[#D4AF37]">{step.n}</p>
+                        <p className="text-sm font-extrabold text-[#1A1A1A] mt-1">{step.t}</p>
+                        <p className="text-xs text-gray-600 mt-1">{step.d}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
+              <CardContent className="p-0 bg-white">
+                <div className="divide-y divide-[#E5E5E5]">
+                  {[
+                    {
+                      id: "refund-policy",
+                      n: "10",
+                      icon: FileText,
+                      title: "Refund Policy",
+                      bullets: [
+                        "Refunds processed within 5 - 10 business days after approval",
+                        "Refunds credited to original payment method",
+                        "Shipping charges are non-refundable except defective/incorrect items",
+                        "Timelines may vary depending on payment provider",
+                      ],
+                    },
+                    {
+                      id: "cancellations",
+                      n: "11",
+                      icon: Edit3,
+                      title: "Cancellations & Modifications",
+                      bullets: [
+                        "Orders can be cancelled only before shipment",
+                        "Once shipped, cancellation is not allowed",
+                        "Modifications must be requested before processing",
+                      ],
+                    },
+                    {
+                      id: "delivery-issues",
+                      n: "12",
+                      icon: AlertTriangle,
+                      title: "Delivery Issues",
+                      bullets: [
+                        "Incorrect address or failed attempts may incur re-delivery charges",
+                        "Contact support immediately for assistance",
+                      ],
+                    },
+                  ].map((s) => (
+                    <div key={s.id} id={s.id} className="flex items-start gap-4 px-4 sm:px-5 py-4">
+                      <div className="h-8 w-8 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">
+                        {s.n}
+                      </div>
+                      <div className="h-10 w-10 rounded-sm bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center">
+                        <s.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-extrabold text-sm sm:text-base text-[#1A1A1A]">{s.title}</p>
+                        <div className="mt-2 text-sm text-gray-700 space-y-1">
+                          {s.bullets.map((b) => (
+                            <p key={b}>- {b}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+
+          <div className="space-y-4 lg:sticky lg:top-24">
+            <Card className="rounded-sm overflow-hidden border border-[#E5E5E5] shadow-sm">
+              <div className="bg-[#0B1F3A] px-5 py-5 text-white">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-[#D4AF37]" />
+                  <p className="font-extrabold text-sm">Quick Navigation</p>
+                </div>
+
+                <div className="mt-4 bg-[#0B1F3A] border border-white/10 rounded-sm">
+                  {[
+                    { n: "01", t: "Order Processing & Shipping Time", id: "order-processing" },
+                    { n: "02", t: "Shipping Charges", id: "shipping-charges" },
+                    { n: "03", t: "Tracking Your Order", id: "tracking" },
+                    { n: "04", t: "International Shipping", id: "international" },
+                    { n: "05", t: "Delivery Delays", id: "delivery-delays" },
+                    { n: "06", t: "Return Eligibility", id: "return-eligibility" },
+                    { n: "07", t: "Non-Returnable Items", id: "non-returnable" },
+                    { n: "08", t: "Return Conditions", id: "return-conditions" },
+                    { n: "09", t: "Return Process", id: "return-process" },
+                    { n: "10", t: "Refund Policy", id: "refund-policy" },
+                    { n: "11", t: "Cancellations & Modifications", id: "cancellations" },
+                    { n: "12", t: "Delivery Issues", id: "delivery-issues" },
+                  ].map((item, idx, arr) => (
+                    <a
+                      key={item.id}
+                      href={`#${item.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-white/5 transition"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="h-6 w-6 rounded-sm bg-[#D4AF37] text-[#0B1F3A] text-[11px] font-black flex items-center justify-center">{item.n}</span>
+                        <span className="text-white/90 font-semibold text-xs leading-snug">{item.t}</span>
+                      </div>
+                      <span className="text-white/50">›</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="rounded-sm overflow-hidden border border-[#E5E5E5] shadow-sm">
+              <div className="bg-[#FFF1D6] px-5 py-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-sm bg-[#FFF1D6] border border-[#E5E5E5] flex items-center justify-center">
+                    <PhoneCall className="h-6 w-6 text-[#0B1F3A]" />
+                  </div>
+                  <h3 className="text-lg font-extrabold text-[#1A1A1A]">Need Help?</h3>
+                </div>
+                <p className="mt-1 text-sm text-gray-600 font-semibold">Our support team is ready to assist you with Shipping & Returns.</p>
+
+                <div className="mt-4 bg-[#0B1F3A] rounded-sm">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+                    <Mail className="text-[#D4AF37]" />
+                    <div>
+                      <p className="text-xs text-white/60">Email</p>
+                      <p className="text-sm font-semibold text-white">info@kavaswholesalehub.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <PhoneCall className="text-[#D4AF37]" />
+                    <div>
+                      <p className="text-xs text-white/60">Call</p>
+                      <p className="text-sm font-semibold text-white">+91 6302259849</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button className="mt-5 w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">Contact Support</Button>
+                <p className="mt-2 text-xs text-gray-500">Support available during business hours.</p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[#0B1F3A]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
+            <div className="flex items-center gap-3">
+              <Truck className="h-6 w-6 text-[#D4AF37]" />
+              <div>
+                <p className="font-extrabold text-sm">We’re Here to Help!</p>
+                <p className="text-xs text-white/70">For any shipping or return related questions, reach out to our support team.</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center text-sm">
+              <div className="flex items-center gap-2">
+                <Mail className="text-[#D4AF37]" />
+                <span className="text-white">info@kavaswholesalehub.com</span>
+              </div>
+
+              <div className="hidden sm:block h-4 w-px bg-white" />
+
+              <div className="flex items-center gap-2">
+                <PhoneCall className="text-[#D4AF37]" />
+                <span className="text-white">+91 6302259849</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

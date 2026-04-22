@@ -6,6 +6,8 @@ import Link from "next/link";
 import { fetchCart, updateCartItem, removeCartItem, clearCart, } from "@/store/slices/cartSlice";
 import { useRouter } from "next/navigation";
 import { createOrderFromCart } from "@/store/slices/orderSlice";
+import { loadRazorpay } from "@/lib/razorpay";
+import { createCheckout, verifyPayment } from "@/store/slices/paymentSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -93,7 +95,8 @@ const CartPage = () => {
 
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
 
-  const handleCheckout = async () => {
+
+const handleCheckout = async () => {
   if (!isAuthenticated) {
     alert("Login required");
     return;
@@ -110,25 +113,51 @@ const CartPage = () => {
   }
 
   try {
+    const isLoaded = await loadRazorpay();
+    if (!isLoaded) {
+      alert("Razorpay failed to load");
+      return;
+    }
+
     const idempotencyKey = crypto.randomUUID();
 
+    // 1. Create order
     const res = await dispatch(
-      createOrderFromCart({
-        idempotency_key: idempotencyKey,
-      })
+      createOrderFromCart({ idempotency_key: idempotencyKey })
     ).unwrap();
 
     const orderId = res?.orders?.[0]?.id;
 
     if (!orderId) {
-      alert("Order created but ID missing");
+      alert("Order ID missing");
       return;
     }
 
-    router.push(`/checkout/${orderId}`);
+    // 2. Create payment using orderId (NOT amount)
+    const paymentRes = await dispatch(
+      createCheckout({ orderId })
+    ).unwrap();
+
+    //  3. Open Razorpay
+    const rzp = new window.Razorpay({
+      key: paymentRes.key,
+      amount: paymentRes.amount,
+      currency: "INR",
+      order_id: paymentRes.orderId,
+
+      handler: async function (response) {
+        await dispatch(verifyPayment(response));
+
+        alert("Payment successful");
+        router.push("/checkout");
+      },
+    });
+
+    rzp.open();
+
   } catch (err) {
     console.error("Checkout error:", err);
-    alert(err || "Order creation failed");
+    alert(err?.message || "Checkout failed");
   }
 };
 
@@ -136,12 +165,16 @@ const CartPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* ================= LEFT CART ================= */}
         <div className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5" />
             <h2 className="text-lg sm:text-xl font-semibold">
               My Cart{" "}
-              <span className="text-gray-500 text-sm">({cartCount} items)</span>
+              <span className="text-gray-500 text-sm">
+                ({cartCount} items)
+              </span>
             </h2>
           </div>
 
@@ -169,6 +202,7 @@ const CartPage = () => {
             </div>
           ) : (
             <div className="space-y-4">
+
               {hasInvalidMoq && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">
                   Some items are below the minimum order quantity. Only MOQ quantity will be allowed.
@@ -186,7 +220,7 @@ const CartPage = () => {
                     className="bg-white border rounded-xl p-4 flex items-center gap-4"
                   >
                     <img
-                      src={item.image}
+                      src={item.image_url || item.image}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -205,7 +239,9 @@ const CartPage = () => {
                       )} */}
 
                       <div className="mt-2 flex items-center justify-between gap-3">
+
                         <div className="flex items-center border rounded-md overflow-hidden">
+
                           <button
                             onClick={() => handleDecrease(item)}
                             disabled={updating || item.quantity <= moq}
@@ -221,6 +257,7 @@ const CartPage = () => {
                           >
                             +
                           </button>
+
                         </div>
 
                         <div className="text-sm font-semibold text-gray-900"> ₹{itemTotal.toFixed(0)}</div>
@@ -239,6 +276,7 @@ const CartPage = () => {
             </div>
           )}
 
+          {/* buttons */}
           <div className="flex flex-col sm:flex-row gap-3 mt-4">
             <Link href="/products">
               <button className="w-full sm:w-auto flex items-center justify-center gap-2 border border-gray-400 px-4 py-2 rounded-md text-sm hover:bg-gray-200">
@@ -261,6 +299,7 @@ const CartPage = () => {
           </div>
         </div>
 
+        {/* ================= SUMMARY ================= */}
         <div className="bg-white border rounded-xl p-4 h-fit sticky top-20">
           <h3 className="text-base font-semibold mb-2">Order Summary</h3>
 
@@ -293,28 +332,14 @@ const CartPage = () => {
             <span>₹{totals.total.toFixed(2)}</span>
           </div>
 
-          {/* <Link href="/checkout">
-            <button
-              disabled={hasInvalidMoq || loading || cartItems.length === 0}
-              className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${hasInvalidMoq || loading || cartItems.length === 0
-                ? "bg-orange-300 text-white cursor-not-allowed"
-                : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}
-            >
-              Proceed to Checkout →
-            </button>
-          </Link> */}
-
           <button
             onClick={handleCheckout}
-            disabled={!canCheckout}
+            // disabled={!canCheckout}
             className={`w-full mt-4 py-2.5 rounded-md text-sm font-medium ${!canCheckout
-                ? "bg-orange-300 text-white cursor-not-allowed"
+                ? "bg-orange-500 text-white cursor-not-allowed"
                 : "bg-orange-500 hover:bg-orange-600 text-white"
               }`}
-          >
-            Proceed to Checkout →
-          </button>
+          > Proceed to Checkout →</button>
 
           <Link href="/products">
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
@@ -322,6 +347,7 @@ const CartPage = () => {
             </button>
           </Link>
         </div>
+
       </div>
     </div>
   );

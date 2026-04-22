@@ -1,24 +1,22 @@
-const createRazorpayOrder = async (req, res) => {
-  const { amount, order_id } = req.body;
+const Razorpay = require("razorpay");
 
-  const razorpayOrder = await razorpay.orders.create({
-    amount: amount,
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {
+  throw new Error("Razorpay keys are missing in environment variables");
+}
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_SECRET,
+});
+
+const createOrder = async (amount) => {
+  return await razorpay.orders.create({
+    amount,
     currency: "INR",
-    receipt: order_id,
-  });
-
-  res.json({
-    razorpayOrder,
-    key: process.env.RZP_KEY,
+    receipt: `rcpt_${Date.now()}`,
   });
 };
-exports.verifyPayment = ({ order_id, payment_id, signature }) => {
-  const crypto = require("crypto");
 
-  const generated = crypto
-    .createHmac("sha256", process.env.RAZORPAY_SECRET)
-    .update(order_id + "|" + payment_id)
-    .digest("hex");
-
-  return generated === signature;
+module.exports = {
+  createOrder,
 };

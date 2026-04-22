@@ -119,9 +119,8 @@ const VerifiedSuppliers = () => {
     <>
     <Navbar />
     <div className="bg-white min-h-screen">
-      {/* HEADER */}
       <div
-        className="bg-orange-400 text-white w-full shadow-md 
+        className="bg-orange-500 text-white w-full shadow-md 
                 flex flex-col items-center justify-center 
                 text-center 
                 py-6 sm:py-8 lg:py-10 
@@ -134,12 +133,8 @@ const VerifiedSuppliers = () => {
           500+ verified wholesale suppliers across all industries
         </p>
       </div>
-
-      {/* BODY */}
       <div className="bg-gray-50 min-h-screen py-4 sm:py-6">
         <div className="px-4 sm:px-6 lg:px-10 xl:px-16 space-y-6">
-
-          {/* FILTER */}
           <div className="bg-white p-3 sm:p-4 rounded-xl flex flex-wrap gap-2 sm:gap-3 items-center shadow-sm">
             <span className="font-medium text-sm sm:text-base">Filter:</span>
             {categories.map((cat) => (
@@ -153,8 +148,6 @@ const VerifiedSuppliers = () => {
               </Button>
             ))}
           </div>
-
-          {/* TITLE */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <h2 className="text-base sm:text-lg font-semibold border-l-4 border-orange-500 pl-2">
               All Suppliers
@@ -163,8 +156,6 @@ const VerifiedSuppliers = () => {
               Become a supplier →
             </span>
           </div>
-
-          {/* GRID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {filteredSuppliers.map((supplier) => (
               <Card
@@ -172,16 +163,10 @@ const VerifiedSuppliers = () => {
                 className="group relative rounded-2xl border border-gray-200 hover:border-orange-400 hover:shadow-lg transition duration-300 bg-white"
               >
                 <CardContent className="p-4 space-y-4">
-
-                  {/* HEADER UPDATED */}
                   <div className="space-y-3">
-
-                    {/* FULL WIDTH INITIALS */}
                     <div className="w-full h-16 flex items-center justify-center rounded-xl bg-orange-100 text-orange-600 font-bold text-lg tracking-wide">
                       {getInitials(supplier.name)}
                     </div>
-
-                    {/* NAME + VERIFIED */}
                     <div className="flex items-start justify-between">
                       <div>
                         <Link href={`/suppliers/${supplier.id}`}>
@@ -207,8 +192,6 @@ const VerifiedSuppliers = () => {
                     </div>
 
                   </div>
-
-                  {/* TAGS */}
                   <div className="flex flex-wrap gap-1">
                     {supplier.tags.map((tag, index) => (
                       <Badge
@@ -219,11 +202,7 @@ const VerifiedSuppliers = () => {
                       </Badge>
                     ))}
                   </div>
-
-                  {/* IMAGES */}
                   <SupplierImages images={supplier.images} />
-
-                  {/* STATS */}
                   <div className="grid grid-cols-3 text-center border-t pt-3">
                     <div>
                       <p className="font-semibold text-sm text-black">
@@ -249,8 +228,6 @@ const VerifiedSuppliers = () => {
                       <p className="text-[11px] text-gray-500">Response</p>
                     </div>
                   </div>
-
-                  {/* BUTTON */}
                   <Button
                     onClick={(e) => e.preventDefault()}
                     className="w-full h-10 rounded-lg font-medium bg-orange-500 hover:bg-orange-600 text-white text-sm shadow-sm"

@@ -27,7 +27,7 @@ const AllProducts = () => {
           </h2>
 
           <Link
-            href="/trendingviewall"
+            href="/allproducts"
             className="text-orange-500 text-sm font-medium hover:underline"
           >
             View all →
@@ -41,47 +41,49 @@ const AllProducts = () => {
           <>
             {/* Products Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {visibleProducts.map((item) => (
-                <Link
-                  key={item.id} // ✅ FIX
-                  href={`/product/${item._id}`} // ✅ FIX
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 dark:border-gray-700"
-                >
-                  {/* Image */}
-                  <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
-                    <img
-                      src={item.image_url || "https://placehold.co/400x400"}
-                      alt={item.name}
-                      onError={(e) => {
-                        e.currentTarget.src = "https://placehold.co/400x400";
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
+              {visibleProducts.map((item) => {
+                const itemId = item?._id ?? item?.id ?? item?.productId;
+                return (
+                  <Link
+                    key={itemId}
+                    href={`/product/${itemId}`}
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 dark:border-gray-700"
+                  >
+                    <div className="flex flex-col h-full">
+                      {/* Image */}
+                      <div className="h-36 sm:h-40 md:h-44 overflow-hidden bg-gray-100">
+                        <img
+                          src={item.image_url} // 
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      </div>
 
-                  {/* Content */}
-                  <div className="p-3 sm:p-4">
-                    <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-10">
-                      {item.name}
-                    </h3>
+                      {/* Content */}
+                      <div className="p-3 sm:p-4 flex-1">
+                        <h3 className="text-xs sm:text-sm font-semibold line-clamp-2 min-h-10">
+                          {item.name}
+                        </h3>
 
-                    <p className="text-orange-600 font-semibold text-sm sm:text-base mt-1">
-                      ₹{item.price}/unit
-                    </p>
+                        <p className="text-orange-600 font-semibold text-sm sm:text-base mt-1">
+                          ₹{item.price}/unit
+                        </p>
 
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Min. {item.moq} units {/* ✅ FIX */}
-                    </p>
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                          Min. {item.moq} units {/* */}
+                        </p>
 
-                    <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700 dark:text-gray-300">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      <span className="truncate">
-                        Supplier
-                      </span>
+                        <div className="flex items-center text-xs sm:text-sm gap-1 mt-2 text-gray-700 dark:text-gray-300">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="truncate">
+                            Supplier
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Empty State */}

@@ -44,7 +44,7 @@ const partners = [
 const DeliveryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* HERO */}
+    
       <section className="px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-12 sm:pb-10 md:pt-14 md:pb-12 text-center">
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-center mb-4">
@@ -109,7 +109,7 @@ const DeliveryPage = () => {
                   {item.icon}
                 </div>
 
-                <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2 min-h-[2.5rem] flex items-center justify-center">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-900 mb-2 min-h-10 flex items-center justify-center">
                   {item.title}
                 </h3>
 
