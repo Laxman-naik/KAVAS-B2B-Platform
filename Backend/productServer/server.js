@@ -1,6 +1,7 @@
+
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 const pool = require("./config/db");
 const cookieParser = require("cookie-parser");
 
@@ -10,6 +11,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const searchRoutes = require("./routes/searchRoutes");
+const favouritesRoutes = require("./routes/favouritesRoutes");
+
 
 const app = express();
 
@@ -29,6 +32,8 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/favourites", favouritesRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Product Server Running");

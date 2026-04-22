@@ -5,11 +5,11 @@ import { suppliers } from "@/data/suppliers";
 import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
+// import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 
-const ProductView = () => {
+const ProductView = () => { 
   const params = useParams();
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
