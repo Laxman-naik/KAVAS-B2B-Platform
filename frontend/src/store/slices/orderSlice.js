@@ -1,21 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  createOrderFromCartAPI,
-  createOrderAPI,
-  getUserOrdersAPI,
-  getOrderDetailsAPI,
-  updateOrderStatusAPI,
-} from "@/services/orderService";
+import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, } from "@/services/orderService";
 
-/* ================= ERROR HELPER ================= */
-const normalizeError = (err) =>
-  err?.response?.data?.message ||
-  err?.message ||
-  "Something went wrong";
+const normalizeError = (err) => err?.response?.data?.message || err?.message || "Something went wrong";
 
-/* ================= THUNKS ================= */
-
-/* CREATE ORDER FROM CART (CHECKOUT) */
 export const createOrderFromCart = createAsyncThunk(
   "order/createFromCart",
   async (data, thunkAPI) => {
@@ -23,9 +10,6 @@ export const createOrderFromCart = createAsyncThunk(
       const res = await createOrderFromCartAPI(data);
       return res.data;
     } catch (err) {
-  console.error("THUNK ERROR:", err);
-  console.error("SERVER ERROR:", err?.response?.data);
-
   return thunkAPI.rejectWithValue(
     err?.response?.data?.message || err.message
   );
@@ -33,7 +17,6 @@ export const createOrderFromCart = createAsyncThunk(
   }
 );
 
-/* MANUAL ORDER CREATE (optional) */
 export const createOrder = createAsyncThunk(
   "order/create",
   async (payload, thunkAPI) => {
@@ -46,7 +29,6 @@ export const createOrder = createAsyncThunk(
   }
 );
 
-/* GET ALL ORDERS */
 export const fetchOrders = createAsyncThunk(
   "order/fetchAll",
   async (_, thunkAPI) => {
@@ -59,7 +41,6 @@ export const fetchOrders = createAsyncThunk(
   }
 );
 
-/* GET SINGLE ORDER */
 export const fetchOrderDetails = createAsyncThunk(
   "order/fetchOne",
   async (orderId, thunkAPI) => {
@@ -72,7 +53,6 @@ export const fetchOrderDetails = createAsyncThunk(
   }
 );
 
-/* UPDATE ORDER STATUS (payment/webhook/admin) */
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
   async ({ orderId, status }, thunkAPI) => {

@@ -1,48 +1,7 @@
 "use client";
-import { useState } from "react";
-
-const ordersData = [
-  {
-    id: "#10482",
-    buyer: "Acme Corp",
-    vendor: "NovaParts",
-    value: 14200,
-    date: "Mar 30",
-    status: "Fulfilled",
-  },
-  {
-    id: "#10481",
-    buyer: "BuildMart",
-    vendor: "SteelWorks",
-    value: 8750,
-    date: "Mar 30",
-    status: "Processing",
-  },
-  {
-    id: "#10480",
-    buyer: "TechSource",
-    vendor: "NovaParts",
-    value: 31000,
-    date: "Mar 29",
-    status: "Fulfilled",
-  },
-  {
-    id: "#10479",
-    buyer: "GlobeTraders",
-    vendor: "MachTech",
-    value: 5200,
-    date: "Mar 28",
-    status: "Disputed",
-  },
-  {
-    id: "#10478",
-    buyer: "Nexlane",
-    vendor: "TexLine",
-    value: 9100,
-    date: "Mar 27",
-    status: "Fulfilled",
-  },
-];
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchOrders } from "@/store/slices/orderSlice";
 
 const statusStyles = {
   Fulfilled: "bg-green-500/20 text-green-400",
@@ -52,11 +11,16 @@ const statusStyles = {
 
 export default function OrdersTable() {
   const [search, setSearch] = useState("");
+  const dispatch = useDispatch();
+  const { orders = [], loading } = useSelector((state) => state.order);
+  console.log(orders);
 
-  // ✅ Improved Search Filter
-  const filtered = ordersData.filter((o) => {
+  useEffect(() => {
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  const filtered = orders.filter((o) => {
     const term = search.toLowerCase().trim();
-
     return (
       o.id.toLowerCase().includes(term) ||
       o.buyer.toLowerCase().includes(term) ||
@@ -67,10 +31,8 @@ export default function OrdersTable() {
 
   return (
     <div className="p-4 md:p-8 bg-[#0b1220] min-h-screen text-white">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-semibold">Orders</h1>
-
         <div className="flex gap-3">
           <input
             type="text"
@@ -91,44 +53,28 @@ export default function OrdersTable() {
         <table className="min-w-full text-sm">
           <thead className="bg-[#111827] text-gray-400">
             <tr>
-              {[
-                "Order ID",
-                "Buyer",
-                "Vendor",
-                "Value",
-                "Date",
-                "Status",
-              ].map((h) => (
-                <th key={h} className="px-6 py-4 text-left font-medium">
-                  {h}
-                </th>
-              ))}
+              {["Order ID", "Buyer", "Vendor", "Value", "Date", "Status",].map((h) => (
+                <th key={h} className="px-6 py-4 text-left font-medium">{h}</th>))}
             </tr>
           </thead>
-
           <tbody>
             {filtered.length > 0 ? (
-              filtered.map((o, i) => (
-                <tr
-                  key={i}
-                  className="border-t border-gray-800 hover:bg-[#111827] transition duration-200 cursor-pointer"
-                >
-                  <td className="px-6 py-4 font-medium text-blue-400 hover:underline">
-                    {o.id}
-                  </td>
-                  <td className="px-6 py-4">{o.buyer}</td>
-                  <td className="px-6 py-4 text-gray-300">{o.vendor}</td>
+              filtered.map((o) => (
+                <tr key={o.id} className="border-t border-gray-800">
+                  <td className="px-6 py-4 text-blue-400">{o.id}</td>
+                  <td className="px-6 py-4">{o.buyer_name}</td>
+                  <td className="px-6 py-4">{o.vendor_name}</td>
 
-                  {/* ✅ INR FORMAT */}
-                  <td className="px-6 py-4 text-orange-400 font-medium">
-                    ₹{o.value.toLocaleString("en-IN")}
+                  <td className="px-6 py-4 text-orange-400">
+                    ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
                   </td>
 
-                  <td className="px-6 py-4">{o.date}</td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs ${statusStyles[o.status]}`}
-                    >
+                    {new Date(o.created_at).toLocaleDateString()}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 rounded bg-green-500/20 text-green-400">
                       {o.status}
                     </span>
                   </td>
@@ -137,7 +83,7 @@ export default function OrdersTable() {
             ) : (
               <tr>
                 <td colSpan="6" className="text-center py-6 text-gray-400">
-                  No orders found
+                  {loading ? "Loading..." : "No orders found"}
                 </td>
               </tr>
             )}
