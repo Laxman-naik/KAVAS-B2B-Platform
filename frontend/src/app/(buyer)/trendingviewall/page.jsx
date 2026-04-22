@@ -212,7 +212,7 @@ const TrendingViewAllV1 = () => {
                                 handleAddToCart(product);
                               }}
                             >
-                              <ShoppingCart size={12} />
+                              <ShoppingCart size={12} /> add to cart
                             </Button>
 
                             <Button
