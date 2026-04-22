@@ -206,7 +206,7 @@ const Footer = () => {
         <div className="border-t border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3 text-sm text-white/80">
-              <ShieldCheck className="h-5 w-5 text-[#D4AF37]" />
+              <ShieldCheck className="h-9 w-9 text-[#D4AF37]" />
               <p>
                 {new Date().getFullYear()} <span className="text-[#D4AF37] font-semibold">KAVAS Wholesale Hub</span> | All Rights Reserved.
               </p>
