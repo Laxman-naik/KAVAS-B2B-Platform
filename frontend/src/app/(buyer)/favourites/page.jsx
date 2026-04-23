@@ -16,7 +16,9 @@ import {
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
+
   const [mounted, setMounted] = React.useState(false);
+  const [token, setToken] = React.useState(null);
 
   const { items: favourites, loading, error } = useSelector(
     (state) => state.favourites
@@ -24,10 +26,64 @@ const Page = () => {
 
   React.useEffect(() => {
     setMounted(true);
-    dispatch(fetchFavourites());
-  }, [dispatch]);
+
+    const savedToken = localStorage.getItem("accessToken");
+    setToken(savedToken);
+
+    const handleStorageChange = () => {
+      const updatedToken = localStorage.getItem("accessToken");
+      setToken(updatedToken);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted && token) {
+      dispatch(fetchFavourites());
+    }
+  }, [mounted, token, dispatch]);
+
+  const handleClearAll = () => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    dispatch(clearFavourites());
+  };
+
+  const handleRemove = (productId) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    dispatch(removeFromFavourites(productId));
+  };
 
   if (!mounted) return null;
+
+  if (!token) {
+    return (
+      <div className="bg-gray-100 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center py-16 bg-white rounded-2xl border">
+            <div className="text-5xl mb-3">❤️</div>
+            <p className="text-gray-600 mb-4">Please log in to view favourites</p>
+            <Button
+              onClick={() => router.push("/login")}
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+            >
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -40,7 +96,7 @@ const Page = () => {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => dispatch(clearFavourites())}
+              onClick={handleClearAll}
               className="cursor-pointer"
             >
               Clear all
@@ -97,7 +153,7 @@ const Page = () => {
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() => dispatch(removeFromFavourites(productId))}
+                        onClick={() => handleRemove(productId)}
                         className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow cursor-pointer"
                         aria-label="Remove from favourites"
                       >
@@ -119,9 +175,7 @@ const Page = () => {
                       </p>
 
                       {price ? (
-                        <p className="text-sm font-semibold mt-1">
-                          ₹{price}
-                        </p>
+                        <p className="text-sm font-semibold mt-1">₹{price}</p>
                       ) : null}
 
                       <Button className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9 cursor-pointer">
