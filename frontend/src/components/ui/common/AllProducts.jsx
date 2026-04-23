@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../../store/slices/productSlice";
 
-/* SESSION ID HELPER */
 const getSessionId = () => {
   let sessionId = localStorage.getItem("sessionId");
 
@@ -30,7 +29,7 @@ const AllProducts = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const visibleProducts = Array.isArray(products) ? products : [];
+  const visibleProducts = Array.isArray(products) ? products.slice(0, 10) : [];
 
   return (
     <div className="bg-white">

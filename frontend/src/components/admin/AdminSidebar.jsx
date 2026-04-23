@@ -19,11 +19,11 @@ const menuItems = [
   { title: "Analytics", icon: BarChart2, path: "/admin/analytics" },
 
   { section: "USERS" },
-  { title: "Buyers", icon: Users, badge: "248", path: "/admin/buyers" },
-  { title: "Vendors", icon: Users, badge: "12", path: "/admin/vendors" },
+  { title: "Buyers", icon: Users, path: "/admin/buyers" },
+  { title: "Vendors", icon: Users,  path: "/admin/vendors" },
 
   { section: "COMMERCE" },
-  { title: "Orders", icon: ShoppingCart, badge: "5", path: "/admin/orders" },
+  { title: "Orders", icon: ShoppingCart,  path: "/admin/orders" },
   { title: "Catalog", icon: FileText, path: "/admin/catalog" },
   { title: "RFQ / Quotes", icon: FileText, path: "/admin/rfq" },
 

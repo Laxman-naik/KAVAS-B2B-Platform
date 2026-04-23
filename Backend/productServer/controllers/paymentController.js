@@ -78,8 +78,6 @@ exports.createCheckout = async (req, res) => {
   }
 };
 
-/* ================= VERIFY PAYMENT ================= */
-
 exports.verifyPayment = async (req, res) => {
   const client = await pool.connect();
 
@@ -198,8 +196,6 @@ for (const item of itemsRes.rows) {
     client.release();
   }
 };
-
-/* ================= WEBHOOK ================= */
 
 exports.handleWebhook = async (req, res) => {
   const client = await pool.connect();
