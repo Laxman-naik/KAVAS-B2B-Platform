@@ -14,4 +14,6 @@ export const removeFromFavouritesAPI = (productId) => {
   return productapi.delete(`/api/favourites/${productId}`);
 };
 
-export const clearFavouritesAPI = () => { return productapi.delete("/api/favourites"); };
+export const clearFavouritesAPI = () => {
+  return productapi.delete("/api/favourites");
+};

@@ -119,6 +119,57 @@ const getSubcategoriesByParent = async (req, res) => {
   }
 };
 
+// NEW: Get category by slug with subcategories
+const getCategoryBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const categoryResult = await pool.query(
+      `
+      SELECT id, name, slug, parent_id
+      FROM categories
+      WHERE slug = $1
+        AND parent_id IS NULL
+      LIMIT 1;
+      `,
+      [slug]
+    );
+
+    if (categoryResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    const category = categoryResult.rows[0];
+
+    const subcategoriesResult = await pool.query(
+      `
+      SELECT id, name, slug, parent_id
+      FROM categories
+      WHERE parent_id = $1
+      ORDER BY name ASC;
+      `,
+      [category.id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...category,
+        subcategories: subcategoriesResult.rows,
+      },
+    });
+  } catch (error) {
+    console.error("getCategoryBySlug error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 // Get category by id
 const getCategoryById = async (req, res) => {
   try {
@@ -262,6 +313,7 @@ module.exports = {
   getAllCategories,
   getMainCategories,
   getSubcategoriesByParent,
+  getCategoryBySlug,
   getCategoryById,
   updateCategory,
   deleteCategory,

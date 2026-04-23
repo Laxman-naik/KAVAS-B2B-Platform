@@ -1,150 +1,267 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { FaHeart, FaShoppingCart } from "react-icons/fa";
 
-const deals = [
+const products = [
   {
-    title: "Wireless Earbuds TWS Pro",
-    price: 450,
-    oldPrice: 750,
-    discount: "40%",
-    img: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad",
+    name: "Wireless Earbuds Pro Max",
+    price: 2499,
+    old: 3999,
+    discount: "-37%",
+    img: "https://images.pexels.com/photos/22940565/pexels-photo-22940565.jpeg",
   },
   {
-    title: "Cotton T-Shirts Wholesale",
-    price: 88,
-    oldPrice: 160,
-    discount: "45%",
-    img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+    name: "Smart Watch Series 9",
+    price: 3499,
+    old: 5999,
+    discount: "-42%",
+    img: "https://cdn-icons-png.flaticon.com/512/992/992700.png",
   },
   {
-    title: "SS Bolt Set Hardware Kit",
-    price: 780,
-    oldPrice: 1250,
-    discount: "38%",
-    img: "https://images.unsplash.com/photo-1581091215367-59ab6b1b0c57",
+    name: "Running Shoes Air Pro",
+    price: 2199,
+    old: 3299,
+    discount: "-33%",
+    img: "https://cdn-icons-png.flaticon.com/512/2589/2589896.png",
   },
   {
-    title: "Hand Sanitizer 500ml Bulk",
-    price: 58,
-    oldPrice: 100,
-    discount: "42%",
-    img: "https://images.unsplash.com/photo-1585435557343-3b092031a831",
+    name: "Premium Laptop Backpack",
+    price: 1999,
+    old: 2999,
+    discount: "-33%",
+    img: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png",
+  },
+  {
+    name: "Insulated Water Bottle",
+    price: 799,
+    old: 1299,
+    discount: "-33%",
+    img: "https://cdn-icons-png.flaticon.com/512/1046/1046874.png",
+  },
+  {
+    name: "Noise Cancelling Headphones",
+    price: 2999,
+    old: 4499,
+    discount: "-33%",
+    img: "https://cdn-icons-png.flaticon.com/512/1046/1046876.png",
   },
 ];
 
 export default function FlashDealsPage() {
-  const [time, setTime] = useState(36000);
+  const [time, setTime] = useState(172800);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime((prev) => prev - 1);
+    const t = setInterval(() => {
+      setTime((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-    return () => clearInterval(timer);
+    return () => clearInterval(t);
   }, []);
 
-  const formatTime = () => {
-    const h = Math.floor(time / 3600);
-    const m = Math.floor((time % 3600) / 60);
-    const s = time % 60;
-    return `${h.toString().padStart(2, "0")} : ${m
-      .toString()
-      .padStart(2, "0")} : ${s.toString().padStart(2, "0")}`;
+  const format = (t) => {
+    const d = Math.floor(t / 86400);
+    const h = Math.floor((t % 86400) / 3600);
+    const m = Math.floor((t % 3600) / 60);
+    const s = t % 60;
+    return { d, h, m, s };
   };
 
+  const { d, h, m, s } = format(time);
+
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="bg-white text-black w-full p-5 text-center relative overflow-hidden">
-  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
-    🔥 Flash Deals & Bulk Discounts
-  </h1>
+    <div className="bg-[#FFF8EC] min-h-screen text-[#1A1A1A]">
 
-  <p className="text-xs sm:text-sm text-black opacity-80">
-    Exclusive wholesale discounts — limited time only
-  </p>
-
-  <div className="mt-4 bg-orange-500 inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-lg sm:text-xl font-bold">
-    {formatTime()}
-  </div>
-</div>
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex gap-3 mt-4 overflow-x-auto no-scrollbar">
-          {["All Deals", "Electronics", "Apparel", "Hardware", "FMCG", "Healthcare"].map(
-            (item, i) => (
-              <button
-                key={i}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm whitespace-nowrap rounded-full border-gray-100 bg-white shadow hover:bg-orange-500 hover:text-white transition"
-              >
-                {item}
-              </button>
-            )
-          )}
-        </div>
+      {/* 🔗 BREADCRUMB */}
+      <div className="px-6 pt-4 text-sm text-gray-500">
+        Home &gt; Flash Deals
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-6">
-        <div className="bg-white text-black rounded-xl p-4 sm:p-6">
-          <h2 className="font-bold mb-4 text-sm sm:text-base">
-            Exclusive Coupon Codes
-          </h2>
+      {/* 🔥 HERO SECTION */}
+      <div className="bg-[#0B1F3A] text-white rounded-xl mx-6 mt-3 px-8 py-10 flex flex-col lg:flex-row justify-between items-center relative overflow-hidden">
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  gap-3 sm:gap-4">
-            {["BULK500", "FIRST15", "PRO20", "KAVAS30"].map((code, i) => (
+        {/* LEFT */}
+        <div className="max-w-lg">
+          <h1 className="text-5xl font-extrabold">
+            ⚡ FLASH <span className="text-[#D4AF37]">DEALS</span>
+          </h1>
+
+          <div className="bg-[#D4AF37] text-black inline-block px-4 py-1 mt-3 rounded text-sm font-semibold">
+            LIMITED TIME ONLY!
+          </div>
+
+          <div className="mt-6">
+            <p className="text-sm opacity-80">UP TO</p>
+            <h2 className="text-5xl font-bold text-[#D4AF37]">
+              70% OFF
+            </h2>
+            <p className="text-sm opacity-70">
+              On Best Selling Products
+            </p>
+          </div>
+
+          {/* TIMER */}
+          <div className="flex gap-3 mt-4">
+            {[d, h, m, s].map((t, i) => (
               <div
                 key={i}
-                className=" p-3 sm:p-4 rounded-lg backdrop-blur bg-orange-500 hover:scale-105 transition-transform duration-200"
+                className="bg-white/10 px-4 py-2 rounded text-center w-16"
               >
-                <h3 className="font-bold text-base sm:text-lg">{code}</h3>
-                <p className="text-xs sm:text-sm opacity-80">Copy code</p>
+                <p className="text-lg font-bold">
+                  {String(t).padStart(2, "0")}
+                </p>
+                <p className="text-[10px] opacity-70">
+                  {["DAYS", "HRS", "MINS", "SECS"][i]}
+                </p>
               </div>
             ))}
+          </div>
+
+          <button className="mt-6 bg-[#D4AF37] text-black px-6 py-2 rounded font-semibold hover:scale-105 transition">
+            SHOP NOW
+          </button>
+        </div>
+
+        {/* RIGHT IMAGES */}
+        <div className="relative mt-10 lg:mt-0 flex items-end gap-4">
+
+          {/* PLATFORM */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-16 bg-[#D4AF37] rounded-full blur-md opacity-40"></div>
+
+          <img src="https://images.pexels.com/photos/30981655/pexels-photo-30981655.jpeg" className="w-20 z-10 hover:scale-110 transition" />
+          <img src="/images/watch.png" className="w-24 z-20 hover:scale-110 transition" />
+          <img src="/images/shoes.png" className="w-28 z-30 hover:scale-110 transition" />
+
+          <div className="absolute bottom-2 right-0 bg-[#D4AF37] text-black text-xs px-3 py-1 rounded rotate-[-10deg] shadow">
+            BEST PRICES
           </div>
         </div>
       </div>
 
-      {/* PRODUCTS */}
-      <div className="max-w-7xl mx-auto px-4 mt-6">
-        <h2 className="font-bold mb-4 text-base sm:text-lg">
-          Today's Best Deals
-        </h2>
+      {/* 🧭 CATEGORY */}
+      <div className="mx-6 mt-6 flex flex-wrap gap-3">
+        {[
+          "All Categories",
+          "Electronics",
+          "Fashion & Apparel",
+          "Home & Kitchen",
+          "Beauty & Personal Care",
+          "Sports & Fitness",
+          "Toys & Games",
+        ].map((c, i) => (
+          <button
+            key={i}
+            className={`px-4 py-2 rounded-full border text-sm ${
+              i === 0
+                ? "bg-[#D4AF37]"
+                : "bg-white hover:bg-[#D4AF37]"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-5 gap-4 sm:gap-5">
-          {deals.map((item, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl shadow overflow-hidden group hover:-translate-y-2 hover:scale-105 transition-all duration-300"
-            >
-              <div className="relative">
-                <img
-                  src={item.img}
-                  alt=""
-                  className="h-52 sm:h-52 md:h-60 w-full object-cover group-hover:scale-110 transition duration-300"
-                />
-                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                  {item.discount} OFF
-                </span>
+      {/* 🧱 MAIN */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mx-6 mt-6">
+
+        {/* SIDEBAR */}
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E5] h-fit">
+          <h3 className="font-semibold mb-3">PRICE RANGE</h3>
+
+          <input type="range" className="w-full accent-[#D4AF37]" />
+
+          <div className="flex justify-between text-sm mt-2">
+            <span>₹0</span>
+            <span>₹50,000</span>
+          </div>
+
+          <button className="mt-4 w-full bg-[#0B1F3A] text-white py-2 rounded">
+            APPLY FILTERS
+          </button>
+        </div>
+
+        {/* PRODUCTS */}
+        <div className="md:col-span-3">
+
+          {/* TOP BAR */}
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-600">
+              Showing 1–8 of 256 Flash Deals
+            </p>
+
+            <div className="flex items-center gap-3">
+              <select className="border border-[#E5E5E5] px-3 py-1.5 rounded text-sm">
+                <option>Ending Soon</option>
+              </select>
+
+              <div className="flex gap-2">
+                <div className="p-2 border rounded cursor-pointer hover:bg-[#D4AF37]">▦</div>
+                <div className="p-2 border rounded cursor-pointer hover:bg-[#D4AF37]">☰</div>
               </div>
+            </div>
+          </div>
 
-              <div className="p-3 sm:p-4">
-                <h3 className="text-sm font-semibold">{item.title}</h3>
+          {/* GRID → 6 ITEMS */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {products.map((p, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl border border-[#E5E5E5] p-3 relative group hover:shadow-lg transition"
+              >
+                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                  {p.discount}
+                </span>
 
-                <div className="mt-2">
-                  <span className="text-orange-600 font-bold">
-                    ₹{item.price}
+                <span className="absolute top-2 right-2 text-gray-400 hover:text-red-500 cursor-pointer">
+                  <FaHeart />
+                </span>
+
+                <img
+                  src={p.img}
+                  className="h-24 mx-auto object-contain group-hover:scale-110 transition"
+                />
+
+                <h3 className="text-xs mt-3 font-medium">
+                  {p.name}
+                </h3>
+
+                <div className="mt-2 text-sm">
+                  <span className="text-[#D4AF37] font-bold">
+                    ₹{p.price}
                   </span>
-                  <span className="line-through text-gray-400 ml-2 text-xs sm:text-sm">
-                    ₹{item.oldPrice}
+                  <span className="line-through text-gray-400 ml-2 text-xs">
+                    ₹{p.old}
                   </span>
                 </div>
 
-                <button className="mt-3 w-full bg-orange-500 text-white py-2 rounded hover:bg-orange-600 transition text-sm">
-                  Add to Cart
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Min. Order: 10 Units
+                </p>
+
+                <button className="mt-2 w-full bg-[#D4AF37] text-black py-1.5 rounded flex items-center justify-center gap-2 text-xs hover:bg-black hover:text-white transition">
+                  <FaShoppingCart /> Add
                 </button>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* PAGINATION */}
+          <div className="flex justify-center mt-6 gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                className={`px-3 py-1 rounded border ${
+                  n === 1
+                    ? "bg-[#0B1F3A] text-white"
+                    : "bg-white hover:bg-[#D4AF37]"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+
         </div>
       </div>
-
     </div>
   );
 }
