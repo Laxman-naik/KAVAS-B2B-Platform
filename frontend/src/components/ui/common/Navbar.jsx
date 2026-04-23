@@ -16,6 +16,12 @@ import {
   ShieldCheck,
   Phone,
   UserPlus,
+  Truck,
+  MapPin,
+  CreditCard,
+  ClipboardList,
+  Bell,
+  KeyRound,
 } from "lucide-react";
 
 import Login from "../auth/Login";
@@ -48,6 +54,7 @@ const Navbar = () => {
 
   const searchRef = useRef(null);
   const categoryRef = useRef(null);
+  const profileDropdownRef = useRef(null);
 
   const router = useRouter();
   const dispatch = useDispatch();
@@ -59,6 +66,7 @@ const Navbar = () => {
       state.cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0
   );
   const [initialEmail, setInitialEmail] = useState("");
+  const [postAuthRedirect, setPostAuthRedirect] = useState(null);
 
   useEffect(() => {
     setMounted(true);
@@ -142,6 +150,13 @@ const Navbar = () => {
       if (categoryRef.current && !categoryRef.current.contains(event.target)) {
         setCategoryOpen(false);
       }
+
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setDropdown(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -177,6 +192,24 @@ const Navbar = () => {
       handleSearchSubmit();
     }
   };
+
+  const openLoginForRedirect = (path) => {
+    setPostAuthRedirect(path || null);
+    setMode("login");
+    setInitialEmail("");
+    setOpen(true);
+    setDropdown(false);
+    setMobileMenu(false);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!postAuthRedirect) return;
+
+    const to = postAuthRedirect;
+    setPostAuthRedirect(null);
+    router.push(to);
+  }, [isAuthenticated, postAuthRedirect, router]);
 
   if (!mounted) return null;
 
@@ -422,8 +455,7 @@ const Navbar = () => {
                     type="button"
                     onClick={() => {
                       if (!isAuthenticated) {
-                        setMode("login");
-                        setOpen(true);
+                        openLoginForRedirect("/favourites");
                       } else {
                         router.push("/favourites");
                       }
@@ -441,16 +473,11 @@ const Navbar = () => {
                     <span className="text-[11px]">Wish List</span>
                   </button>
 
-                  <div className="relative">
+                  <div className="relative" ref={profileDropdownRef}>
                     <button
                       type="button"
                       onClick={() => {
-                        if (!isAuthenticated) {
-                          setMode("login");
-                          setOpen(true);
-                        } else {
-                          setDropdown((d) => !d);
-                        }
+                        setDropdown((d) => !d);
                       }}
                       className="flex flex-col items-center gap-1 text-white/90 hover:text-white"
                     >
@@ -460,77 +487,272 @@ const Navbar = () => {
                       <span className="text-[11px]">Profile</span>
                     </button>
 
-                    {dropdown && isAuthenticated && (
-                      <div className="absolute right-0 mt-3 w-72 bg-white border border-[#E5E5E5] rounded-sm shadow-2xl z-50 overflow-hidden">
+                    {dropdown && (
+                      <div className="absolute right-0 mt-3 w-80 bg-white border border-[#E5E5E5] rounded-sm shadow-2xl z-50 overflow-hidden">
                         <div className="px-5 py-4 bg-[#0B1F3A] text-center border-b border-[#E5E5E5]">
-                          <div className="text-xl font-semibold text-[#FFF8EC] leading-tight">
-                            {user?.full_name || user?.name || "Rahul Sharma"}
-                          </div>
-                          <div className="text-sm text-[#FFF8EC]/80 mt-1 truncate">
-                            {user?.email || "you@company.com"}
-                          </div>
+                          {isAuthenticated ? (
+                            <>
+                              <div className="text-xl font-semibold text-[#FFF8EC] leading-tight">
+                                {user?.full_name || user?.name || "User"}
+                              </div>
+                              <div className="text-sm text-[#FFF8EC]/80 mt-1 truncate">
+                                {user?.email || ""}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-xl font-semibold text-[#FFF8EC] leading-tight">
+                                Welcome
+                              </div>
+                              <div className="text-sm text-[#FFF8EC]/80 mt-1">
+                                Sign in to access your account
+                              </div>
+                            </>
+                          )}
                         </div>
+
                         <div className="py-2">
-                          <button
-                            onClick={() => {
-                              router.push("/profile");
-                              setDropdown(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                          >
-                            <User className="mr-2 h-5 w-5" />
-                            <span>My Profile</span>
-                          </button>
+                          {isAuthenticated ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  router.push("/profile");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <User className="h-5 w-5" />
+                                <span>My Profile</span>
+                              </button>
 
-                          <button
-                            onClick={() => {
-                              router.push("/buyerorders");
-                              setDropdown(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                          >
-                            <Package className="mr-2 h-5 w-5" />
-                            <span>My Orders</span>
-                          </button>
+                              <button
+                                onClick={() => {
+                                  router.push("/buyerorders");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Package className="h-5 w-5" />
+                                <span>My Orders</span>
+                              </button>
 
-                          <button
-                            onClick={() => {
-                              router.push("/favourites");
-                              setDropdown(false);
-                            }}
-                            className="w-full flex items-center justify-between px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                          >
-                            <span className="flex items-center gap-3">
-                              <Heart className="h-5 w-5 text-red-500" />
-                              <span>Favourites</span>
-                            </span>
+                              <button
+                                onClick={() => {
+                                  router.push("/trackorder");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Truck className="h-5 w-5" />
+                                <span>Track Order</span>
+                              </button>
 
-                            <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] flex items-center justify-center">
-                              {favouritesCount}
-                            </span>
-                          </button>
+                              <button
+                                onClick={() => {
+                                  router.push("/favourites");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center justify-between px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <Heart className="h-5 w-5 text-red-500" />
+                                  <span>Wishlist</span>
+                                </span>
+                                <span className="min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] flex items-center justify-center">
+                                  {favouritesCount}
+                                </span>
+                              </button>
 
-                          <button
-                            onClick={() => {
-                              router.push("/help");
-                              setDropdown(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                          >
-                            <CircleHelp className="mr-2 h-5 w-5" />
-                            <span>Help Centre</span>
-                          </button>
+                              <button
+                                onClick={() => {
+                                  router.push("/profile");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <MapPin className="h-5 w-5" />
+                                <span>Addresses</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  router.push("/profile");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <CreditCard className="h-5 w-5" />
+                                <span>Payment Methods</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  router.push("/help");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <ClipboardList className="h-5 w-5" />
+                                <span>Bulk Enquiry</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  router.push("/profile");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Bell className="h-5 w-5" />
+                                <span>Notifications</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  router.push("/profile");
+                                  setDropdown(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <KeyRound className="h-5 w-5" />
+                                <span>Change Password</span>
+                              </button>
+                            </>
+                          ) : (
+                            <div className="py-2">
+                              <div className="px-5 py-3 space-y-2">
+                                <Button
+                                  className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734]"
+                                  onClick={() => {
+                                    setMode("login");
+                                    setInitialEmail("");
+                                    setOpen(true);
+                                    setDropdown(false);
+                                  }}
+                                >
+                                  Sign in
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-[#E5E5E5] text-[#0B1F3A] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]"
+                                  onClick={() => {
+                                    setMode("register");
+                                    setInitialEmail("");
+                                    setOpen(true);
+                                    setDropdown(false);
+                                  }}
+                                >
+                                  Create account
+                                </Button>
+                              </div>
+
+                              <div className="border-t border-[#E5E5E5]" />
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/profile");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <User className="h-5 w-5" />
+                                <span>My Profile</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/buyerorders");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Package className="h-5 w-5" />
+                                <span>My Orders</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/trackorder");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Truck className="h-5 w-5" />
+                                <span>Track Order</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/favourites");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Heart className="h-5 w-5 text-red-500" />
+                                <span>Wishlist</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/profile");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <MapPin className="h-5 w-5" />
+                                <span>Addresses</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/profile");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <CreditCard className="h-5 w-5" />
+                                <span>Payment Methods</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/help");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <ClipboardList className="h-5 w-5" />
+                                <span>Bulk Enquiry</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/profile");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <Bell className="h-5 w-5" />
+                                <span>Notifications</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  openLoginForRedirect("/profile");
+                                }}
+                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                              >
+                                <KeyRound className="h-5 w-5" />
+                                <span>Change Password</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="border-t border-[#E5E5E5]" />
-
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-5 py-3 text-left text-[15px] text-red-600 hover:bg-[#FFF8EC]"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span>Sign out</span>
-                        </button>
+                        {isAuthenticated && (
+                          <>
+                            <div className="border-t border-[#E5E5E5]" />
+                            <button
+                              onClick={handleLogout}
+                              className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-red-600 hover:bg-[#FFF8EC]"
+                            >
+                              <LogOut className="h-5 w-5" />
+                              <span>Logout</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -538,9 +760,7 @@ const Navbar = () => {
                     type="button"
                     onClick={() => {
                       if (!isAuthenticated) {
-                        setMode("login");
-                        setInitialEmail("");
-                        setOpen(true);
+                        openLoginForRedirect("/cart");
                       } else {
                         router.push("/cart");
                       }
@@ -625,18 +845,31 @@ const Navbar = () => {
             {mobileMenu && (
               <div className="mt-3 w-full space-y-3 rounded-lg bg-white p-4 text-black shadow-md dark:bg-gray-800 dark:text-white lg:hidden">
                 {!isAuthenticated ? (
-                  <Button
-                    variant="outline"
-                    className="w-full bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
-                    onClick={() => {
-                      setMode("login");
-                      setInitialEmail("");
-                      setOpen(true);
-                      setMobileMenu(false);
-                    }}
-                  >
-                    Sign in
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734]"
+                      onClick={() => {
+                        setMode("login");
+                        setInitialEmail("");
+                        setOpen(true);
+                        setMobileMenu(false);
+                      }}
+                    >
+                      Sign in
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5] cursor-pointer"
+                      onClick={() => {
+                        setMode("register");
+                        setInitialEmail("");
+                        setOpen(true);
+                        setMobileMenu(false);
+                      }}
+                    >
+                      Create account
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <Button
@@ -659,7 +892,20 @@ const Navbar = () => {
                         setMobileMenu(false);
                       }}
                     >
+                      <Package className="mr-2 h-4 w-4" />
                       My Orders
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/trackorder");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <Truck className="mr-2 h-4 w-4" />
+                      Track Order
                     </Button>
 
                     <Button
@@ -670,7 +916,68 @@ const Navbar = () => {
                         setMobileMenu(false);
                       }}
                     >
-                      Favourites
+                      <Heart className="mr-2 h-4 w-4 text-red-500" />
+                      Wishlist
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/profile");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Addresses
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/profile");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Payment Methods
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/help");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Bulk Enquiry
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/profile");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <Bell className="mr-2 h-4 w-4" />
+                      Notifications
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        router.push("/profile");
+                        setMobileMenu(false);
+                      }}
+                    >
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Change Password
                     </Button>
 
                     <Button
@@ -678,6 +985,7 @@ const Navbar = () => {
                       className="w-full justify-start"
                       onClick={handleLogout}
                     >
+                      <LogOut className="mr-2 h-4 w-4 text-red-600" />
                       Logout
                     </Button>
                   </div>
