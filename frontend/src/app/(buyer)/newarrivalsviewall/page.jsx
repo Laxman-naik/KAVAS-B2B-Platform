@@ -63,15 +63,15 @@ const Page = () => {
   }, [dispatch]);
 
   const onToggleFavourite = (product) => {
-    const productId = product.productId;
-    const isLiked = liked.includes(productId);
+  const productId = String(product.productId);
+  const isLiked = liked.map(String).includes(productId);
 
-    if (isLiked) {
-      dispatch(removeFromFavourites(productId));
-    } else {
-      dispatch(addToFavourites(productId));
-    }
-  };
+  if (isLiked) {
+    dispatch(removeFromFavourites(productId));
+  } else {
+    dispatch(addToFavourites(productId));
+  }
+};
 
   const onAddToCart = (product) => {
     dispatch(

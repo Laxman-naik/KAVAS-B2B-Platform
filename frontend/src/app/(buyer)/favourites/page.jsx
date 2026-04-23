@@ -235,35 +235,17 @@ const Page = () => {
                     className="bg-white rounded-2xl border shadow-sm overflow-hidden"
                   >
                     <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          dispatch(removeFromFavourites(productId))
-                        }
+                      <button type="button"  onClick={() => dispatch(removeFromFavourites(productId))}
                         className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow cursor-pointer"
-                      >
-                        <X size={16} />
-                      </button>
-
+                      ><X size={16} /></button>
                       <Link href={`/product/${productId}`}>
-                        <img
-                          src={image}
-                          alt={name}
-                          className="w-full h-44 sm:h-52 object-cover"
-                        />
+                        <img src={image} alt={name} className="w-full h-44 sm:h-52 object-cover"/>
                       </Link>
                     </div>
 
                     <div className="p-3">
-                      <p className="text-sm font-medium line-clamp-2 min-h-10">
-                        {name}
-                      </p>
-
-                      {price && (
-                        <p className="text-sm font-semibold mt-1">
-                          ₹{price}
-                        </p>
-                      )}
+                      <p className="text-sm font-medium line-clamp-2">{name}</p>
+                      {price && (<p className="text-sm font-semibold mt-1">₹{price}</p>)}
 
                       <Button className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9 cursor-pointer">
                         MOVE TO CART
