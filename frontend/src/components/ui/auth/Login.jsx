@@ -50,7 +50,9 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
       if (res.meta.requestStatus === "fulfilled") {
         if (typeof setOpen === "function") setOpen(false);
         dispatch(loadUserThunk());
-        router.push("/");
+        if (typeof setOpen !== "function") {
+          router.push("/");
+        }
       }
     } catch (err) {
       console.log(err);
