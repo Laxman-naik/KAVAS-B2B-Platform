@@ -143,28 +143,16 @@ import { X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-
-import {
-  fetchFavourites,
-  removeFromFavourites,
-  clearFavourites,
-} from "@/store/slices/favouritesSlice";
-
+import {fetchFavourites, removeFromFavourites, clearFavourites,} from "@/store/slices/favouritesSlice";
 import { fetchProducts } from "@/store/slices/productSlice";
 
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-
   const [mounted, setMounted] = useState(false);
-
-  const { items: favouriteIds, loading, error } = useSelector(
-    (state) => state.favourites
-  );
-
+  const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
   const products = useSelector((state) => state.products.products || []);
 
-  /* ✅ Optimized lookup instead of filter */
   const productMap = useMemo(() => {
     const map = {};
     products.forEach((p) => {
@@ -183,7 +171,6 @@ const Page = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  /* ✅ Prevent hydration + flicker */
   if (!mounted || loading) {
     return (
       <div className="p-10 text-center text-gray-500">
