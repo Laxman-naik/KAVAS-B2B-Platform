@@ -5,12 +5,7 @@ import { suppliers } from "@/data/suppliers";
 import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-// import { toggleFavourite } from "@/store/slices/favouritesSlice";
-import { useState, useEffect } from "react";
 import { getSingleProduct } from "@/services/productService";
-
-import { useDispatch, useSelector } from "react-redux";
-import { toggleFavourite } from "@/store/slices/favouritesSlice";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 
@@ -502,7 +497,7 @@ const ProductView = () => {
           <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
             <button
               type="button"
-              onClick={() => dispatch(toggleFavourite(product))}
+              // onClick={() => dispatch(toggleFavourite(product))}
               className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:scale-110 transition"
             >
               <Heart
