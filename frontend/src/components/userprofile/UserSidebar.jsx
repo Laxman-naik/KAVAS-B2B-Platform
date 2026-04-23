@@ -17,15 +17,15 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { id: "profile", label: "My Profile", icon: User, path: "/user/profile" },
-  { id: "orders", label: "My Orders", icon: Package, path: "/user/orders" },
-  { id: "track", label: "Track Order", icon: Truck, path: "/user/track" },
-  { id: "wishlist", label: "Wishlist", icon: Heart, path: "/user/wishlist" },
-  { id: "addresses", label: "Addresses", icon: MapPin, path: "/user/addresses" },
-  { id: "payments", label: "Payment Methods", icon: CreditCard, path: "/user/payments" },
-  { id: "bulk", label: "Bulk Enquiry", icon: Package, path: "/user/bulk" },
-  { id: "notifications", label: "Notifications", icon: Bell, badge: 3, path: "/user/notifications" },
-  { id: "password", label: "Change Password", icon: Lock, path: "/user/password" },
+  { id: "profile", label: "My Profile", icon: User, path: "/userprofile/profile" },
+  { id: "orders", label: "My Orders", icon: Package, path: "/userprofile/orders" },
+  { id: "track", label: "Track Order", icon: Truck, path: "/userprofile/track" },
+  { id: "wishlist", label: "Wishlist", icon: Heart, path: "/userprofile/wishlist" },
+  { id: "addresses", label: "Addresses", icon: MapPin, path: "/userprofile/addresses" },
+  { id: "payments", label: "Payment Methods", icon: CreditCard, path: "/userprofile/payments" },
+  { id: "bulk", label: "Bulk Enquiry", icon: Package, path: "/userprofile/bulk" },
+  { id: "notifications", label: "Notifications", icon: Bell, badge: 3, path: "/userprofile/notifications" },
+  { id: "password", label: "Change Password", icon: Lock, path: "/userprofile/password" },
 ];
 
 export default function Sidebar() {
@@ -130,7 +130,7 @@ export default function Sidebar() {
               <h4 className="text-sm font-semibold">Need Help?</h4>
             </div>
 
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-gray-400 mb-2">
               Our support team is here 24/7 to assist you.
             </p>
 
