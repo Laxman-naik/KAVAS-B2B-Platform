@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { productapi, authapi } from "@/lib/axios";
+import { useParams } from "next/navigation";
+import { productapi } from "@/lib/axios";
 
 const COLORS = {
   primary: "#0B1F3A",
@@ -13,7 +14,9 @@ const COLORS = {
   border: "#E5E5E5",
 };
 
-export default function SubCategoryPage({ params }) {
+export default function SubCategoryPage() {
+  const { category, subcategory } = useParams();
+
   const [route, setRoute] = useState({ category: "", subcategory: "" });
   const [categoryMeta, setCategoryMeta] = useState(null);
   const [products, setProducts] = useState([]);
@@ -27,15 +30,15 @@ export default function SubCategoryPage({ params }) {
 
   useEffect(() => {
     const load = async () => {
+      if (!category || !subcategory) return;
+
       setLoading(true);
 
       try {
-        const { category, subcategory } = params;
-
         setRoute({ category, subcategory });
 
         const [metaRes, productsRes] = await Promise.all([
-          authapi.get(`/api/categories/slug/${category}`),
+          productapi.get(`/api/categories/slug/${category}`),
           productapi.get(`/api/products/category/${category}/${subcategory}`),
         ]);
 
@@ -43,19 +46,34 @@ export default function SubCategoryPage({ params }) {
 
         const rawProducts = Array.isArray(productsRes?.data?.data)
           ? productsRes.data.data
-          : [];
+          : Array.isArray(productsRes?.data)
+            ? productsRes.data
+            : [];
 
-        setProducts(rawProducts);
+        const mappedProducts = rawProducts.map((p) => ({
+          ...p,
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
+          minOrderQty: p.moq ?? p.minOrderQty ?? 0,
+          supplierType: p.supplier_type || p.supplierType || "",
+          createdAt: p.created_at || p.createdAt,
+        }));
 
+        setProducts(mappedProducts);
       } catch (error) {
         console.error("Failed to load subcategory page:", error);
+        setCategoryMeta(null);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, [params]);
+  }, [category, subcategory]);
 
   const toggleSupplier = (value) => {
     setSupplierType((prev) =>
