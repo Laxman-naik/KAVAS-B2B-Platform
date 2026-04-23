@@ -4,18 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Heart,
-  ShoppingCart,
-  LayoutGrid,
-  LayoutList,
-} from "lucide-react";
+import {Heart,ShoppingCart,LayoutGrid,LayoutList,} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  addToFavourites,
-  removeFromFavourites,
-  fetchFavourites,
-} from "@/store/slices/favouritesSlice";
+import {addToFavourites,removeFromFavourites,fetchFavourites,} from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
@@ -40,19 +31,12 @@ const Page = () => {
   const [mainCategories, setMainCategories] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    minQty: [],
-    rating: [],
-    supplier: [],
-  });
+  const [filters, setFilters] = useState({minQty: [],rating: [],supplier: [],});
 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const newArrivals = useSelector((state) => state.products.newArrivals || []);
-
-  const liked = favouriteItems.map(
-    (item) => item.productId || item.product_id || item.id || item._id
-  );
+  const liked = favouriteItems;
 
   useEffect(() => {
     dispatch(fetchNewArrivals());
@@ -495,7 +479,7 @@ const Page = () => {
                             }
                           >
                             <span
-                              className="absolute top-1 left-1 text-[9px] px-2 py-[2px] rounded"
+                              className="absolute top-1 left-1 text-[9px] px-2 py-0.5 rounded"
                               style={{
                                 backgroundColor: COLORS.primary,
                                 color: COLORS.white,

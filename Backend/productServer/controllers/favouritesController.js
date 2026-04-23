@@ -1,7 +1,41 @@
 const db = require("../config/db");
 
+/* ================= HELPERS ================= */
+
+// ensures one favourites row per user (atomic)
+const getOrCreateFavouriteId = async (userId) => {
+  const result = await db.query(
+    `
+    INSERT INTO favourites (user_id)
+    VALUES ($1)
+    ON CONFLICT (user_id)
+    DO UPDATE SET user_id = EXCLUDED.user_id
+    RETURNING id
+    `,
+    [userId]
+  );
+
+  return result.rows[0].id;
+};
+
+// get favouriteId only (no insert)
+const getFavouriteId = async (userId) => {
+  const result = await db.query(
+    `SELECT id FROM favourites WHERE user_id = $1`,
+    [userId]
+  );
+
+  return result.rows[0]?.id;
+};
+
+/* ================= CONTROLLERS ================= */
+
 exports.getFavourites = async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const userId = req.user.id;
 
     const result = await db.query(
@@ -10,7 +44,7 @@ exports.getFavourites = async (req, res) => {
       FROM favourites f
       JOIN favourite_items fi ON fi.favourite_id = f.id
       WHERE f.user_id = $1
-      ORDER BY fi.id DESC
+      ORDER BY fi.created_at DESC
       `,
       [userId]
     );
@@ -26,6 +60,10 @@ exports.getFavourites = async (req, res) => {
 
 exports.addToFavourites = async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const userId = req.user.id;
     const { productId } = req.body;
 
@@ -33,29 +71,8 @@ exports.addToFavourites = async (req, res) => {
       return res.status(400).json({ message: "productId is required" });
     }
 
-    // get or create favourites row
-    let result = await db.query(
-      `SELECT id FROM favourites WHERE user_id = $1`,
-      [userId]
-    );
+    const favouriteId = await getOrCreateFavouriteId(userId);
 
-    let favouriteId;
-
-    if (result.rows.length === 0) {
-      const created = await db.query(
-        `
-        INSERT INTO favourites (user_id)
-        VALUES ($1)
-        RETURNING id
-        `,
-        [userId]
-      );
-      favouriteId = created.rows[0].id;
-    } else {
-      favouriteId = result.rows[0].id;
-    }
-
-    // insert safely (no duplicates)
     await db.query(
       `
       INSERT INTO favourite_items (favourite_id, product_id)
@@ -74,19 +91,18 @@ exports.addToFavourites = async (req, res) => {
 
 exports.removeFromFavourites = async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const userId = req.user.id;
     const { productId } = req.params;
 
-    const result = await db.query(
-      `SELECT id FROM favourites WHERE user_id = $1`,
-      [userId]
-    );
+    const favouriteId = await getFavouriteId(userId);
 
-    if (result.rows.length === 0) {
+    if (!favouriteId) {
       return res.json({ productId });
     }
-
-    const favouriteId = result.rows[0].id;
 
     await db.query(
       `
@@ -105,16 +121,15 @@ exports.removeFromFavourites = async (req, res) => {
 
 exports.clearFavourites = async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const userId = req.user.id;
 
-    const result = await db.query(
-      `SELECT id FROM favourites WHERE user_id = $1`,
-      [userId]
-    );
+    const favouriteId = await getFavouriteId(userId);
 
-    if (result.rows.length > 0) {
-      const favouriteId = result.rows[0].id;
-
+    if (favouriteId) {
       await db.query(
         `DELETE FROM favourite_items WHERE favourite_id = $1`,
         [favouriteId]
