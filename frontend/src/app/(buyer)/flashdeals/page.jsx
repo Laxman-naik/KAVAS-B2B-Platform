@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
@@ -7,6 +8,19 @@ import {
   Zap,
   List,
 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const deals = [
   {
@@ -237,34 +251,31 @@ export default function FlashDealsPage() {
   );
 
   return (
-    <div className="bg-[#FFF8EC] min-h-screen">
-      <div className="max-w-[1500px] mx-auto px-4 py-6">
-        {/* HERO BANNER */}
-        <div className="rounded-sm overflow-hidden bg-[#0B1F3A] text-white shadow-md mb-6">
-          <div className="grid lg:grid-cols-3 items-center px-5 py-6 md:px-8 md:py-8 gap-6">
-            {/* LEFT */}
+    <div className="min-h-screen bg-[#FFF8EC]">
+      <div className="mx-auto max-w-[1500px] px-4 py-6">
+        <div className="mb-6 overflow-hidden rounded-sm bg-[#0B1F3A] text-white shadow-md">
+          <div className="grid items-center gap-6 px-5 py-6 md:px-8 md:py-8 lg:grid-cols-3">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="text-[#D4AF37] h-4 w-4" />
-                <span className="text-xs font-semibold tracking-wide text-[#D4AF37] uppercase">
+              <div className="mb-2 flex items-center gap-2">
+                <Zap className="h-4 w-4 text-[#D4AF37]" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-[#D4AF37]">
                   Limited Time
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-none">
+              <h1 className="text-3xl font-extrabold leading-none sm:text-4xl md:text-5xl">
                 FLASH DEALS
               </h1>
 
-              <p className="text-sm sm:text-base text-[#FFF8EC]/80 mt-3 max-w-md">
-                Up to <span className="text-[#D4AF37] font-bold">70% OFF</span>{" "}
+              <p className="mt-3 max-w-md text-sm text-[#FFF8EC]/80 sm:text-base">
+                Up to <span className="font-bold text-[#D4AF37]">70% OFF</span>{" "}
                 on best selling products across categories.
               </p>
             </div>
 
-            {/* MIDDLE COUNTDOWN */}
-            <div className="flex flex-col items-start lg:items-center justify-center">
-              <div className="bg-[#D4AF37] text-[#0B1F3A] border border-[#E5E5E5] rounded-xl p-4 sm:p-5 w-full max-w-[320px] shadow-md">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#0B1F3A]/80 mb-4 text-left lg:text-center">
+            <div className="flex flex-col items-start justify-center lg:items-center">
+              <div className="w-full max-w-[320px] rounded-xl border border-[#E5E5E5] bg-[#D4AF37] p-4 text-[#0B1F3A] shadow-md sm:p-5">
+                <p className="mb-4 text-left text-xs uppercase tracking-[0.2em] text-[#0B1F3A]/80 lg:text-center">
                   Ends In
                 </p>
 
@@ -277,12 +288,12 @@ export default function FlashDealsPage() {
                   ].map((item) => (
                     <div
                       key={item.label}
-                      className="flex-1 min-w-0 h-16 rounded-xl bg-white/30 border border-white/40 flex flex-col items-center justify-center"
+                      className="flex h-16 min-w-0 flex-1 flex-col items-center justify-center rounded-xl border border-white/40 bg-white/30"
                     >
-                      <span className="font-bold text-lg sm:text-xl">
+                      <span className="text-lg font-bold sm:text-xl">
                         {item.value}
                       </span>
-                      <span className="text-[9px] sm:text-[10px] text-[#0B1F3A]/80">
+                      <span className="text-[9px] text-[#0B1F3A]/80 sm:text-[10px]">
                         {item.label}
                       </span>
                     </div>
@@ -291,135 +302,131 @@ export default function FlashDealsPage() {
               </div>
             </div>
 
-            {/* RIGHT IMAGES */}
-            <div className="hidden lg:flex justify-center relative h-[230px] xl:h-[250px] mt-2">
-              <div className="absolute bottom-2 w-72 h-14 bg-[#D4AF37] blur-2xl opacity-30 rounded-full" />
+            <div className="relative mt-2 hidden h-[230px] justify-center lg:flex xl:h-[250px]">
+              <div className="absolute bottom-2 h-14 w-72 rounded-full bg-[#D4AF37] opacity-30 blur-2xl" />
 
               <img
                 src="https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?q=80&w=500&auto=format&fit=crop"
                 alt="Earbuds"
-                className="absolute left-0 top-16 w-24 h-24 object-cover rounded-2xl shadow-xl border border-white/10"
+                className="absolute left-0 top-16 h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-xl"
               />
 
               <img
                 src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=500&auto=format&fit=crop"
                 alt="Watch"
-                className="absolute left-20 top-0 w-28 h-36 object-cover rounded-2xl shadow-2xl border border-white/10"
+                className="absolute left-20 top-0 h-36 w-28 rounded-2xl border border-white/10 object-cover shadow-2xl"
               />
 
               <img
                 src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop"
                 alt="Shoes"
-                className="absolute right-0 top-10 w-32 h-24 object-cover rounded-2xl shadow-xl border border-white/10"
+                className="absolute right-0 top-10 h-24 w-32 rounded-2xl border border-white/10 object-cover shadow-xl"
               />
 
               <img
                 src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=500&auto=format&fit=crop"
                 alt="Headphones"
-                className="absolute left-12 bottom-6 w-24 h-24 object-cover rounded-2xl shadow-xl border border-white/10"
+                className="absolute bottom-6 left-12 h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-xl"
               />
 
               <img
                 src="https://images.unsplash.com/photo-1589003077984-894e133dabab?q=80&w=500&auto=format&fit=crop"
                 alt="Speaker"
-                className="absolute right-10 bottom-0 w-24 h-24 object-cover rounded-2xl shadow-xl border border-white/10"
+                className="absolute bottom-0 right-10 h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-xl"
               />
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="mb-6 flex flex-wrap gap-3">
           {categories.map((item) => (
-            <button
+            <Button
               key={item}
+              type="button"
               onClick={() => setSelectedCategory(item)}
-              className={`px-4 py-2 rounded-lg text-sm border transition ${
-                selectedCategory === item
-                  ? "bg-[#D4AF37] text-[#0B1F3A] border-[#D4AF37] font-semibold"
-                  : "bg-white text-gray-700 border-[#E5E5E5] hover:border-[#D4AF37]"
-              }`}
+              variant="outline"
+              className={`rounded-lg px-4 py-2 text-sm transition ${selectedCategory === item
+                  ? "border-[#D4AF37] bg-[#D4AF37] font-semibold text-[#0B1F3A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
+                  : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#D4AF37] hover:bg-white"
+                }`}
             >
               {item}
-            </button>
+            </Button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-          {/* Sidebar */}
-          <aside className="bg-white rounded-xl border border-[#E5E5E5] p-4 h-fit">
-            <h2 className="text-sm font-bold text-[#0B1F3A] uppercase mb-4">
-              Price Range
-            </h2>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
+          <Card className="h-fit rounded-xl border border-[#E5E5E5] bg-white shadow-none">
+            <CardContent className="p-4">
+              <h2 className="mb-4 text-sm font-bold uppercase text-[#0B1F3A]">
+                Price Range
+              </h2>
 
-            <input
-              type="range"
-              min="0"
-              max="50000"
-              step="100"
-              value={priceRange}
-              onChange={(e) => setPriceRange(Number(e.target.value))}
-              className="w-full accent-[#D4AF37]"
-            />
-
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="border rounded-lg px-3 py-2 text-sm bg-[#FFF8EC] border-[#E5E5E5]">
-                ₹0
+              <div className="px-1">
+                <input
+                  type="range"
+                  min="0"
+                  max="50000"
+                  step="100"
+                  value={priceRange}
+                  onChange={(e) => setPriceRange(Number(e.target.value))}
+                  className="w-full accent-[#D4AF37]"
+                />
               </div>
-              <div className="border rounded-lg px-3 py-2 text-sm bg-[#FFF8EC] border-[#E5E5E5]">
-                ₹{priceRange.toLocaleString()}
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-[#E5E5E5] bg-[#FFF8EC] px-3 py-2 text-sm">
+                  ₹0
+                </div>
+                <div className="rounded-lg border border-[#E5E5E5] bg-[#FFF8EC] px-3 py-2 text-sm">
+                  ₹{priceRange.toLocaleString()}
+                </div>
               </div>
-            </div>
 
-            <button className="w-full mt-4 bg-[#0B1F3A] text-white py-3 rounded-lg font-semibold">
-              APPLY FILTERS
-            </button>
+              <Button className="mt-4 w-full bg-[#0B1F3A] text-white hover:bg-[#0B1F3A]">
+                APPLY FILTERS
+              </Button>
 
-            <button
-              onClick={clearFilters}
-              className="mt-4 text-sm text-gray-500 underline"
-            >
-              Clear All
-            </button>
-          </aside>
+              <button
+                onClick={clearFilters}
+                className="mt-4 text-sm text-gray-500 underline"
+              >
+                Clear All
+              </button>
+            </CardContent>
+          </Card>
 
-          {/* Right content */}
           <section>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <p className="text-sm text-gray-600">
                 Showing {startItem}–{endItem} of {filteredAndSortedDeals.length} Flash Deals
               </p>
 
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-[#E5E5E5] rounded-lg pl-4 pr-10 py-2 text-sm text-gray-700 outline-none min-w-[180px]"
-                  >
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="min-w-[180px] border-[#E5E5E5] bg-white text-sm text-gray-700">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <SelectItem key={option.value} value={option.value}>
                         {option.label}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500"
-                  />
-                </div>
+                  </SelectContent>
+                </Select>
 
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setViewMode("list")}
-                  className={`w-10 h-10 rounded-lg border flex items-center justify-center transition ${
-                    viewMode === "list"
-                      ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                      : "bg-white text-gray-700 border-[#E5E5E5]"
-                  }`}
+                  className={`h-10 w-10 rounded-lg border p-0 ${viewMode === "list"
+                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                      : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
+                    }`}
                 >
-                  <List size={18} />
-                </button>
+                  <List className="h-[18px] w-[18px]" />
+                </Button>
               </div>
             </div>
 
@@ -427,150 +434,158 @@ export default function FlashDealsPage() {
               viewMode === "list" ? (
                 <div className="flex flex-col gap-4">
                   {currentDeals.map((item) => (
-                    <div
+                    <Card
                       key={item.id}
-                      className="bg-white rounded-xl border border-[#E5E5E5] p-4 flex gap-4 hover:shadow-md transition"
+                      className="rounded-xl border border-[#E5E5E5] bg-white shadow-none transition hover:shadow-md"
                     >
-                      <div className="w-40 h-32 bg-[#FFF8EC] rounded-lg overflow-hidden shrink-0">
-                        <img
-                          src={item.img}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500">{item.category}</p>
-
-                        <h3 className="text-lg font-semibold text-[#0B1F3A] mt-1">
-                          {item.title}
-                        </h3>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="text-xl font-bold text-[#D4AF37]">
-                            ₹{item.price.toLocaleString()}
-                          </span>
-                          <span className="text-sm text-gray-400 line-through">
-                            ₹{item.oldPrice.toLocaleString()}
-                          </span>
+                      <CardContent className="flex gap-4 p-4">
+                        <div className="h-32 w-40 shrink-0 overflow-hidden rounded-lg bg-[#FFF8EC]">
+                          <img
+                            src={item.img}
+                            alt={item.title}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
 
-                        <p className="text-sm text-gray-500 mt-1">
-                          Min. Order: {item.minOrder} Units
-                        </p>
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-500">{item.category}</p>
 
-                        <button className="mt-3 bg-[#D4AF37] text-[#0B1F3A] px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold">
-                          <ShoppingCart size={16} />
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
+                          <h3 className="mt-1 text-lg font-semibold text-[#0B1F3A]">
+                            {item.title}
+                          </h3>
+
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="text-xl font-bold text-[#D4AF37]">
+                              ₹{item.price.toLocaleString()}
+                            </span>
+                            <span className="text-sm text-gray-400 line-through">
+                              ₹{item.oldPrice.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-sm text-gray-500">
+                            Min. Order: {item.minOrder} Units
+                          </p>
+
+                          <Button className="mt-3 bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#D4AF37]">
+                            <ShoppingCart className="mr-2 h-4 w-4" />
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 sm:gap-5">
                   {currentDeals.map((item) => (
-                    <div
+                    <Card
                       key={item.id}
-                      className="bg-white rounded-xl border border-[#E5E5E5] p-3 hover:shadow-md transition"
+                      className="rounded-xl border border-[#E5E5E5] bg-white shadow-none transition hover:shadow-md"
                     >
-                      <div className="relative bg-[#FFF8EC] rounded-xl overflow-hidden h-48 sm:h-52 md:h-56">
-                        <span className="absolute top-2 left-2 bg-[#f04e23] text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-md z-10">
-                          {item.discount}
-                        </span>
-
-                        <span className="absolute top-2 right-2 bg-[#f04e23] text-white text-[9px] sm:text-[10px] font-bold px-2 py-1 rounded-md z-10">
-                          {days}:{hours}:{minutes}
-                        </span>
-
-                        <button className="absolute right-2 top-9 text-gray-400 hover:text-gray-600 z-10 bg-white/80 rounded-full p-1">
-                          <Heart size={16} />
-                        </button>
-
-                        <img
-                          src={item.img}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="pt-3 sm:pt-4">
-                        <p className="text-[11px] text-gray-500 mb-1">{item.category}</p>
-
-                        <h3 className="text-sm font-medium text-[#0B1F3A] leading-5 min-h-[40px]">
-                          {item.title}
-                        </h3>
-
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          <span className="text-lg sm:text-xl font-bold text-[#D4AF37]">
-                            ₹{item.price.toLocaleString()}
+                      <CardContent className="p-3">
+                        <div className="relative h-48 overflow-hidden rounded-xl bg-[#FFF8EC] sm:h-52 md:h-56">
+                          <span className="absolute left-2 top-2 z-10 rounded-md bg-[#f04e23] px-2 py-1 text-[10px] font-bold text-white sm:text-xs">
+                            {item.discount}
                           </span>
-                          <span className="text-xs sm:text-sm text-gray-400 line-through">
-                            ₹{item.oldPrice.toLocaleString()}
+
+                          <span className="absolute right-2 top-2 z-10 rounded-md bg-[#f04e23] px-2 py-1 text-[9px] font-bold text-white sm:text-[10px]">
+                            {days}:{hours}:{minutes}
                           </span>
+
+                          <button className="absolute right-2 top-9 z-10 rounded-full bg-white/80 p-1 text-gray-400 hover:text-gray-600">
+                            <Heart className="h-4 w-4" />
+                          </button>
+
+                          <img
+                            src={item.img}
+                            alt={item.title}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
 
-                        <p className="mt-1 text-xs sm:text-sm text-gray-500">
-                          Min. Order: {item.minOrder} Units
-                        </p>
+                        <div className="pt-3 sm:pt-4">
+                          <p className="mb-1 text-[11px] text-gray-500">{item.category}</p>
 
-                        <button className="mt-4 w-full bg-[#D4AF37] text-[#0B1F3A] font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 hover:opacity-95 transition text-sm">
-                          <ShoppingCart size={16} />
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
+                          <h3 className="min-h-[40px] text-sm font-medium leading-5 text-[#0B1F3A]">
+                            {item.title}
+                          </h3>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="text-lg font-bold text-[#D4AF37] sm:text-xl">
+                              ₹{item.price.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-gray-400 line-through sm:text-sm">
+                              ₹{item.oldPrice.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                            Min. Order: {item.minOrder} Units
+                          </p>
+
+                          <Button className="mt-4 w-full bg-[#D4AF37] py-2.5 text-sm font-semibold text-[#0B1F3A] hover:bg-[#D4AF37]">
+                            <ShoppingCart className="mr-2 h-4 w-4" />
+                            Add to Cart
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )
             ) : (
-              <div className="bg-white rounded-xl border border-[#E5E5E5] p-10 text-center text-gray-500">
-                No products found for the selected filters.
-              </div>
+              <Card className="rounded-xl border border-[#E5E5E5] bg-white shadow-none">
+                <CardContent className="p-10 text-center text-gray-500">
+                  No products found for the selected filters.
+                </CardContent>
+              </Card>
             )}
 
-            {/* Pagination */}
             {filteredAndSortedDeals.length > 0 && (
-              <div className="flex justify-center mt-8 gap-2 flex-wrap">
-                <button
+              <div className="mt-8 flex flex-wrap justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`w-10 h-10 rounded-lg border text-sm ${
-                    currentPage === 1
-                      ? "bg-gray-100 text-gray-400 border-[#E5E5E5] cursor-not-allowed"
-                      : "bg-white text-gray-700 border-[#E5E5E5] hover:border-[#0B1F3A]"
-                  }`}
+                  className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === 1
+                      ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
+                      : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                    }`}
                 >
                   ‹
-                </button>
+                </Button>
 
                 {Array.from({ length: totalPages }, (_, index) => index + 1).map(
                   (page) => (
-                    <button
+                    <Button
                       key={page}
+                      type="button"
+                      variant="outline"
                       onClick={() => handlePageChange(page)}
-                      className={`w-10 h-10 rounded-lg border text-sm ${
-                        currentPage === page
-                          ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                          : "bg-white text-gray-700 border-[#E5E5E5] hover:border-[#0B1F3A]"
-                      }`}
+                      className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === page
+                          ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                          : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                        }`}
                     >
                       {page}
-                    </button>
+                    </Button>
                   )
                 )}
 
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`w-10 h-10 rounded-lg border text-sm ${
-                    currentPage === totalPages
-                      ? "bg-gray-100 text-gray-400 border-[#E5E5E5] cursor-not-allowed"
-                      : "bg-white text-gray-700 border-[#E5E5E5] hover:border-[#0B1F3A]"
-                  }`}
+                  className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === totalPages
+                      ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
+                      : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                    }`}
                 >
                   ›
-                </button>
+                </Button>
               </div>
             )}
           </section>

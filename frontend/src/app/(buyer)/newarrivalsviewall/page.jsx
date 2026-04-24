@@ -79,6 +79,8 @@ const Page = () => {
   };
 
   const onAddToCart = (product) => {
+    const productId = product?._id ?? product?.id ?? product?.productId;
+    if (!productId) return;
     dispatch(
       addToCart({
         productId: product.productId,
@@ -502,10 +504,8 @@ const Page = () => {
                               aria-label="Toggle favourite"
                             >
                               <Heart
-                                size={14}
-                                className={
-                                  isLiked ? "text-red-500" : "text-gray-600"
-                                }
+                                size={16}
+                                className={isLiked ? "text-red-500" : "text-gray-600"}
                                 fill={isLiked ? "currentColor" : "none"}
                               />
                             </button>

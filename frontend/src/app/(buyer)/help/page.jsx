@@ -1,251 +1,412 @@
-"use client"
+"use client";
+import React, { useMemo, useState } from "react";
+import Image from "next/image";
+import {
+  ArrowRight,
+  Boxes,
+  ChevronDown,
+  Clock,
+  CreditCard,
+  Headphones,
+  Mail,
+  MessageCircle,
+  Minus,
+  Package,
+  Phone,
+  Plus,
+  RotateCcw,
+  Search,
+  User,
+} from "lucide-react";
 
-import React, { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ChevronDown, HelpCircle, PhoneCall, Mail, MessageCircle } from "lucide-react"
-import { helpData } from "@/data/helpData"
+const Page = () => {
+  const [query, setQuery] = useState("");
+  const [openFaq, setOpenFaq] = useState(0);
+  const [openTopic, setOpenTopic] = useState(0);
 
-const page = () => {
+  const categories = useMemo(
+    () => [
+      {
+        title: "Orders & Shipping",
+        desc: "Track orders, shipping methods, delivery time and more.",
+        icon: Package,
+      },
+      {
+        title: "Returns & Refunds",
+        desc: "Return process, refund status, eligibility and policies.",
+        icon: RotateCcw,
+      },
+      {
+        title: "Payments & Billing",
+        desc: "Payment methods, failed payments, invoices and billing help.",
+        icon: CreditCard,
+      },
+      {
+        title: "Account & Profile",
+        desc: "Manage your account, addresses, security and profile settings.",
+        icon: User,
+      },
+      {
+        title: "Products & Categories",
+        desc: "Product details, stock availability and category related help.",
+        icon: Boxes,
+      },
+      {
+        title: "General Support",
+        desc: "Other queries, technical issues and general assistance.",
+        icon: Headphones,
+      },
+    ],
+    []
+  );
 
-  const [activeSection, setActiveSection] = useState(0)
-  const [openIndex, setOpenIndex] = useState(null)
+  const topics = useMemo(
+    () => [
+      {
+        q: "How do I place a bulk order?",
+        a: "Open the product, check MOQ and price, then add required quantity to cart and proceed to checkout. For large volumes, use Bulk Orders or contact support to assist with supplier coordination.",
+      },
+      {
+        q: "How can I track my order?",
+        a: "Go to My Orders and open the order details to view tracking updates. You can also use the Track Order page with your order reference.",
+      },
+      {
+        q: "What are the shipping charges?",
+        a: "Shipping charges depend on supplier, weight/volume, and destination. Any shipping fees (if applicable) are shown at checkout before payment.",
+      },
+      {
+        q: "What is your return policy?",
+        a: "Return eligibility depends on product category and supplier policy. If the item is eligible, you can raise a return request from the order details page.",
+      },
+      {
+        q: "How do I cancel my order?",
+        a: "If the order hasn’t been processed by the supplier, you can cancel it from My Orders. If it’s already shipped, cancellation may not be available.",
+      },
+    ],
+    []
+  );
 
-  const toggleFAQ = (index) =>
-    setOpenIndex(prev => (prev === index ? null : index))
+  const faqs = useMemo(
+    () => [
+      {
+        q: "How long does delivery take?",
+        a: "Delivery timelines vary by supplier and destination. You’ll see an estimated delivery date at checkout and in your order tracking.",
+      },
+      {
+        q: "Can I change my order after placing it?",
+        a: "If the supplier hasn’t processed the order yet, you may be able to update quantity or cancel. Go to Orders and check the available actions.",
+      },
+      {
+        q: "What payment methods do you accept?",
+        a: "We support common payment methods based on availability, including cards and UPI. The available options are shown at checkout.",
+      },
+      {
+        q: "How do I return a product?",
+        a: "Open the order, select the item, and choose Return. Follow the prompts to schedule pickup (if available) or to ship back the product.",
+      },
+      {
+        q: "When will I receive my refund?",
+        a: "Refunds are typically processed after return verification. The exact time depends on your payment method and bank processing timelines.",
+      },
+    ],
+    []
+  );
 
-  const handleSectionChange = (index) => {
-    setActiveSection(index)
-    setOpenIndex(null)
-  }
-
-  const currentSection = helpData[activeSection]
-  const Icon = currentSection.icon
+  const onSearch = (e) => {
+    e.preventDefault();
+  };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FFF8EC]">
+      <div className="bg-[#0B1F3A]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-6 sm:py-8">
 
-      {/* HEADER */}
-      <div className="relative overflow-hidden bg-[#0B1F3A]">
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            <div className="text-white">
-              <p className="text-xs text-white/70 mb-2">
-                <span className="hover:text-[#D4AF37] cursor-pointer">Home</span>
-                <span className="mx-1">››</span>
-                <span className="text-white font-semibold">FAQs</span>
-              </p>
+          {/* Breadcrumb */}
+          <p className="text-xs text-white/70 mb-3">
+            <span className="hover:text-[#D4AF37] cursor-pointer">Home</span>
+            <span className="mx-1">››</span>
+            <span className="text-white font-semibold">Help & Support</span>
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] items-center">
+            <div>
+              <div className="text-[#D4AF37] text-[11px] font-semibold tracking-wider">
+                HELP CENTER
+              </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
-                Frequently Asked <span className="text-[#D4AF37]">Questions</span>
+              <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                How Can We Help You?
               </h1>
 
-              <p className="mt-2 text-sm sm:text-base text-[#D4AF37] font-bold">
-                Quick Answers. Better Experience.
+              <p className="mt-3 text-white/80 text-sm max-w-lg">
+                Find answers to your questions or reach out to us.
               </p>
 
-              <p className="mt-3 max-w-xl text-sm text-white/80">
-                Find clear answers to the most common questions about KAVAS Wholesale Hub.
-                Can’t find what you’re looking for? Our support team is here to help.
+              <p className="mt-1 text-white/70 text-sm max-w-lg">
+                We’re here to help you 24/7.
               </p>
-            </div>
+              <form onSubmit={onSearch} className="mt-4 max-w-lg">
+                <div className="flex items-stretch rounded-sm overflow-hidden border border-white/15 bg-white">
 
-            <div className="hidden lg:flex justify-end">
-              <div className="w-full max-w-md">
-                <div className="flex items-center justify-end">
-                  <svg
-                    width="320"
-                    height="150"
-                    viewBox="0 0 320 150"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-full"
-                  >
-                    <defs>
-                      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0" stopColor="#D4AF37" stopOpacity="0.9" />
-                        <stop offset="1" stopColor="#D4AF37" stopOpacity="0.35" />
-                      </linearGradient>
-                      <filter id="shadow" x="-20" y="-20" width="360" height="210" filterUnits="userSpaceOnUse">
-                        <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#000" floodOpacity="0.35" />
-                      </filter>
-                    </defs>
-
-                    <g filter="url(#shadow)">
-                      <path
-                        d="M40 40C40 26.7452 50.7452 16 64 16H184C197.255 16 208 26.7452 208 40V96C208 109.255 197.255 120 184 120H110L82 138V120H64C50.7452 120 40 109.255 40 96V40Z"
-                        fill="#0B1F3A"
-                        stroke="url(#g1)"
-                        strokeWidth="2"
-                      />
-                      <text x="78" y="70" fill="#D4AF37" fontSize="34" fontWeight="800" fontFamily="Arial, sans-serif">
-                        FAQ
-                      </text>
-                    </g>
-
-                    <g filter="url(#shadow)">
-                      <rect x="210" y="22" width="86" height="110" rx="14" fill="#FFF" />
-                      <rect x="220" y="40" width="66" height="10" rx="5" fill="#E5E5E5" />
-                      <rect x="220" y="60" width="56" height="10" rx="5" fill="#E5E5E5" />
-                      <rect x="220" y="80" width="62" height="10" rx="5" fill="#E5E5E5" />
-                      <circle cx="225" cy="45" r="4" fill="#16A34A" />
-                      <circle cx="225" cy="65" r="4" fill="#16A34A" />
-                      <circle cx="225" cy="85" r="4" fill="#16A34A" />
-                      <rect x="238" y="28" width="30" height="10" rx="5" fill="#D4AF37" />
-                    </g>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* MAIN SECTION */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
-
-          <div className="space-y-4">
-            {helpData.map((section, sectionIndex) => {
-              const SectionIcon = section.icon
-              const isActive = activeSection === sectionIndex
-
-              return (
-                <Card key={sectionIndex} className="overflow-hidden border border-[#E5E5E5] shadow-sm rounded-sm">
-                  <div
-                    className={`flex items-center justify-between gap-3 px-4 sm:px-5 py-3 cursor-pointer transition ${isActive ? "bg-[#0B1F3A]" : "bg-[#0B1F3A]"
-                      }`}
-                    onClick={() => handleSectionChange(sectionIndex)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-sm bg-[#D4AF37] text-[#0B1F3A] flex items-center justify-center text-xs font-black">
-                        {String(sectionIndex + 1).padStart(2, "0")}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <SectionIcon className="h-4 w-4 text-[#D4AF37]" />
-                        <p className="text-white font-semibold text-sm sm:text-base">
-                          {section.title}
-                        </p>
-                      </div>
-                    </div>
-
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-300 ${isActive ? "rotate-180 text-[#D4AF37]" : "text-white/70"
-                        }`}
+                  <div className="flex items-center gap-2 px-3 flex-1">
+                    <Search size={16} className="text-gray-500" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search help articles..."
+                      className="w-full h-10 text-sm outline-none"
                     />
                   </div>
 
-                  {isActive && (
-                    <CardContent className="p-0 bg-white">
-                      <div className="divide-y divide-[#E5E5E5]">
-                        {section.faqs.map((faq, index) => {
-                          const isOpen = openIndex === index
-                          return (
-                            <div key={index} className="px-4 sm:px-5 py-3">
-                              <button
-                                type="button"
-                                className="w-full flex items-start justify-between gap-4 text-left"
-                                onClick={() => toggleFAQ(index)}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <div className="mt-0.5 h-7 w-7 rounded-sm bg-[#FFF8EC] border border-[#E5E5E5] flex items-center justify-center text-xs font-black text-[#0B1F3A]">
-                                    Q
-                                  </div>
-                                  <p className="font-semibold text-sm text-[#1A1A1A]">
-                                    {faq.question}
-                                  </p>
-                                </div>
+                  <button
+                    type="submit"
+                    className="px-4 bg-[#D4AF37] text-[#0B1F3A] font-semibold text-sm"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
+            </div>
+            <div className="hidden lg:flex justify-end">
+              <Image
+                src="/help/help-hero.svg"
+                alt="Help Center"
+                width={280}
+                height={220}
+                priority
+                className="object-contain"
+              />
+            </div>
 
-                                <ChevronDown
-                                  className={`mt-1 h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180 text-[#D4AF37]" : "text-gray-400"
-                                    }`}
-                                />
-                              </button>
-
-                              {isOpen && (
-                                <p className="mt-2 pl-10 text-xs sm:text-sm text-gray-600">
-                                  {faq.answer}
-                                </p>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              )
-            })}
           </div>
-
-          <div className="lg:sticky lg:top-24">
-  <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
-    
-    <div className="bg-[#FFF1D6] px-5 py-6">
-
-      <div className="h-12 w-12 rounded-sm bg-white border border-[#E5E5E5] flex items-center justify-center">
-        <HelpCircle className="h-6 w-6 text-[#0B1F3A]" />
+        </div>
       </div>
 
-      <h3 className="mt-4 text-lg font-extrabold text-[#1A1A1A]">
-        Still Have <span className="text-[#D4AF37]">Questions?</span>
-      </h3>
-
-      <p className="mt-1 text-sm text-gray-600 font-semibold">
-        We’re here to help!
-      </p>
-
-      {/* CONTACT BOX */}
-      <div className="mt-4 bg-[#0B1F3A] rounded-sm">
-
-        <div className="flex items-center gap-3 px-4 py-3">
-          <PhoneCall className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Call Us</p>
-            <p className="text-sm font-semibold text-white">
-              +91 0000000000
-            </p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-3">
+            <div className="h-px w-10 bg-[#E9DDC9]" />
+            <h2 className="text-xl font-bold text-[#0B1F3A]">Help by Category</h2>
+            <div className="h-px w-10 bg-[#E9DDC9]" />
           </div>
         </div>
 
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Mail className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Email</p>
-            <p className="text-sm font-semibold text-white">
-              info@kavaswholesalehub.com
-            </p>
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {categories.map((c) => {
+            const Icon = c.icon;
+            return (
+              <button
+                key={c.title}
+                type="button"
+                className="text-left rounded-sm bg-white border border-[#E9DDC9] p-4 hover:shadow-sm transition"
+              >
+                <div className="h-12 w-12 rounded-sm bg-[#FFF8EC] border border-[#E9DDC9] flex items-center justify-center">
+                  <Icon size={22} className="text-[#0B1F3A]" />
+                </div>
+                <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">{c.title}</div>
+                <div className="mt-1 text-[11px] leading-relaxed text-gray-600 line-clamp-3">
+                  {c.desc}
+                </div>
+                <div className="mt-3 flex items-center justify-end text-[#0B1F3A]">
+                  <ArrowRight size={18} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="rounded-sm bg-white border border-[#E9DDC9] overflow-hidden">
+            <div className="px-5 py-2  border-[#E9DDC9]">
+              <div className="text-[#0B1F3A] font-bold">Popular Topics</div>
+            </div>
+            <div className="p-5">
+              <div className="space-y-2">
+                {topics.map((t, idx) => {
+                  const isOpen = openTopic === idx;
+                  return (
+                    <div key={t.q} className="rounded-sm border border-[#E9DDC9] overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setOpenTopic((p) => (p === idx ? -1 : idx))}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-semibold text-[#0B1F3A] bg-white hover:bg-[#FFF8EC] transition"
+                      >
+                        <span className="pr-3">{t.q}</span>
+                        <span className="h-8 w-8 rounded-sm border border-[#E9DDC9] bg-white flex items-center justify-center shrink-0">
+                          <ChevronDown
+                            size={16}
+                            className={`text-[#0B1F3A] transition-transform ${isOpen ? "rotate-180" : "rotate-0"
+                              }`}
+                          />
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className="px-4 pb-4 text-sm text-gray-700 leading-relaxed">
+                          {t.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="mt-4 w-full flex items-center justify-between rounded-sm bg-[#FFF8EC] border border-[#E9DDC9] px-4 py-3 text-sm font-semibold text-[#0B1F3A]"
+              >
+                View All Help Articles
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-sm bg-white border border-[#E9DDC9] overflow-hidden">
+            <div className="px-5 py-2 border-[#E9DDC9]">
+              <div className="text-[#0B1F3A] font-bold">Frequently Asked Questions</div>
+            </div>
+            <div className="p-5">
+              <div className="space-y-2">
+                {faqs.map((f, idx) => {
+                  const isOpen = openFaq === idx;
+                  return (
+                    <div key={f.q} className="rounded-sm border border-[#E9DDC9] overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaq((p) => (p === idx ? -1 : idx))}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-semibold text-[#0B1F3A] bg-white hover:bg-[#FFF8EC] transition"
+                      >
+                        <span className="pr-3">{f.q}</span>
+                        <span className="h-8 w-8 rounded-sm border border-[#E9DDC9] bg-white flex items-center justify-center shrink-0">
+                          {isOpen ? (
+                            <Minus size={16} className="text-[#0B1F3A]" />
+                          ) : (
+                            <Plus size={16} className="text-[#0B1F3A]" />
+                          )}
+                        </span>
+                      </button>
+                      {isOpen && (
+                        <div className="px-4 pb-4 text-sm text-gray-700 leading-relaxed">
+                          {f.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                className="mt-4 w-full flex items-center justify-between rounded-sm bg-[#FFF8EC] border border-[#E9DDC9] px-4 py-3 text-sm font-semibold text-[#0B1F3A]"
+              >
+                View All FAQs
+                <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 px-4 py-3">
-          <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Live Chat</p>
-            <p className="text-sm font-semibold text-white">
-              During Business Hours
-            </p>
+        <div className="mt-10 text-center">
+          <div className="inline-flex items-center gap-3">
+            <div className="h-px w-16 bg-[#E9DDC9]" />
+            <h3 className="text-lg sm:text-xl font-extrabold text-[#0B1F3A]">
+              Still Need Help? Contact Us
+            </h3>
+            <div className="h-px w-16 bg-[#E9DDC9]" />
           </div>
         </div>
 
-        {/* BUTTON AT BOTTOM */}
-        <div className="px-4 pb-4 ">
-          <Button className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">
-            Contact Support
-          </Button>
-        </div>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="rounded-sm bg-white border border-[#E9DDC9] p-5 flex flex-col h-full">
+            <div>
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-sm bg-[#0B1F3A] flex items-center justify-center shrink-0">
+                  <MessageCircle size={22} className="text-[#D4AF37]" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#0B1F3A]">Live Chat</div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    Chat with our support team in real-time.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="mt-auto w-full rounded-sm bg-[#0B1F3A] text-[#FFF8EC] py-2.5 text-sm font-semibold"
+            >
+              Start Live Chat
+            </button>
+          </div>
 
+          <div className="rounded-sm bg-white border border-[#E9DDC9] p-5 flex flex-col h-full">
+            <div>
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-sm bg-[#2E5A3A] flex items-center justify-center shrink-0">
+                  <Mail size={22} className="text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#0B1F3A]">Email Support</div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    Drop us an email and we’ll get back to you.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a
+              href="mailto:support@kavas.com"
+              className="mt-auto inline-flex w-full items-center justify-center rounded-sm bg-[#2E5A3A] text-white py-2.5 text-sm font-semibold"
+            >
+              Send an Email
+            </a>
+          </div>
+
+          <div className="rounded-sm bg-white border border-[#E9DDC9] p-5 flex flex-col h-full">
+            <div>
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-sm bg-[#D4AF37] flex items-center justify-center shrink-0">
+                  <Phone size={22} className="text-[#0B1F3A]" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#0B1F3A]">Call Us</div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    Speak with our support executive.
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-[#0B1F3A]">+91 6302259849</div>
+                </div>
+              </div>
+            </div>
+            <a
+              href="tel:+916302259849"
+              className="mt-auto inline-flex w-full items-center justify-center rounded-sm bg-[#D4AF37] text-[#0B1F3A] py-2.5 text-sm font-semibold"
+            >
+              Call Now
+            </a>
+          </div>
+
+          <div className="rounded-sm bg-white border border-[#E9DDC9] p-5 flex flex-col h-full">
+            <div>
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-sm bg-[#0B1F3A] flex items-center justify-center shrink-0">
+                  <Clock size={22} className="text-[#D4AF37]" />
+                </div>
+                <div>
+                  <div className="font-bold text-[#0B1F3A]">Support Hours</div>
+                  <div className="mt-1 text-sm text-gray-600">
+                    We are available 24/7 to assist you.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="mt-auto w-full rounded-sm bg-[#0B1F3A] text-[#FFF8EC] py-2.5 text-sm font-semibold"
+            >
+              24/7 Support
+            </button>
+          </div>
+        </div>
       </div>
-
     </div>
-  </Card>
-</div>
-        </div>
-      </div>
+  );
+};
 
-    </div>
-  )
-}
-
-export default page
+export default Page;

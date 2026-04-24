@@ -513,7 +513,7 @@ const TrendingViewAllV1 = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                onToggleFavourite(product);
+                                toggleFavourite(product);
                               }}
                               className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer"
                               style={{ backgroundColor: COLORS.white }}

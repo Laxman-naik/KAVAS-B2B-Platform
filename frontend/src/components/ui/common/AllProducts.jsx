@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../../../store/slices/productSlice";
 
-/* SESSION ID HELPER */
+
 const getSessionId = () => {
   let sessionId = localStorage.getItem("sessionId");
 
@@ -52,7 +52,7 @@ const AllProducts = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {visibleProducts.map((item) => {
+         {visibleProducts.slice(0, 15).map((item) => {
             const itemId = item?._id ?? item?.id ?? item?.productId;
 
             return (
