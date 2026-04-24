@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 // import { toggleFavourite } from "@/store/slices/favouritesSlice";
+import { getSingleProduct } from "@/services/productService";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 
