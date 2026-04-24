@@ -484,7 +484,9 @@ const Navbar = () => {
                       <span className="relative   flex items-center justify-center">
                         <User className="h-5 w-5 text-[#D4AF37]" />
                       </span>
-                      <span className="text-[11px]">Profile</span>
+                      <span className="text-[11px]">
+                        {isAuthenticated ? "My Profile" : "Profile"}
+                      </span>
                     </button>
 
                     {dropdown && (
@@ -727,16 +729,6 @@ const Navbar = () => {
                                 <Bell className="h-5 w-5" />
                                 <span>Notifications</span>
                               </button>
-
-                              <button
-                                onClick={() => {
-                                  openLoginForRedirect("/profile");
-                                }}
-                                className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                              >
-                                <KeyRound className="h-5 w-5" />
-                                <span>Change Password</span>
-                              </button>
                             </div>
                           )}
                         </div>
@@ -744,6 +736,16 @@ const Navbar = () => {
                         {isAuthenticated && (
                           <>
                             <div className="border-t border-[#E5E5E5]" />
+                            <button
+                              onClick={() => {
+                                router.push("/profile");
+                                setDropdown(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                            >
+                              <KeyRound className="h-5 w-5" />
+                              <span>Change Password</span>
+                            </button>
                             <button
                               onClick={handleLogout}
                               className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-red-600 hover:bg-[#FFF8EC]"

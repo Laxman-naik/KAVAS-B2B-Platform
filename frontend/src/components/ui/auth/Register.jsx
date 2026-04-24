@@ -1,20 +1,6 @@
 "use client";
 import Image from "next/image";
-import {
-  BadgePercent,
-  Boxes,
-  Eye,
-  Headset,
-  Lock,
-  Mail,
-  PackageCheck,
-  Phone,
-  ShieldCheck,
-  Tag,
-  Truck,
-  User,
-} from "lucide-react";
-
+import { BadgePercent, Boxes, Eye,Headset,Lock,Mail,PackageCheck, Phone,ShieldCheck, Tag, Truck,User,} from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUserThunk } from "../../../store/slices/authSlice";
@@ -85,7 +71,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
   if (isModal && !open) return null;
 
   const content = (
-    <div className="w-full bg-[#0B1F3A] px-4 py-7 rounded-2xl border-white/10">
+    <div className="w-full max-w-3xl mx-auto bg-[#0B1F3A] px-4 py-7 rounded-2xl border-white/10">
       <div className="flex justify-center">
         <Image
           src="/LOGOKAVAS.png"
@@ -97,7 +83,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
         />
       </div>
 
-      <div className="mt-3 w-full max-w-5xl bg-[#FFFFFF] relative rounded-sm shadow-lg border border-[#E5E5E5] overflow-hidden">
+      <div className="mt-3 w-full max-w-3xl bg-[#FFFFFF] relative rounded-sm shadow-lg border border-[#E5E5E5] overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="bg-[#0B1F3A] text-[#FFF8EC] p-5 sm:p-8">
             <h3 className="text-3xl font-bold tracking-tight">Welcome!</h3>
@@ -109,7 +95,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
               <img
                 src="https://images.unsplash.com/photo-1658851665036-10a9982f9b2d?auto=format&fit=crop&w=520&q=80"
                 alt="Register Illustration"
-                className="w-full max-w-[360px] h-40 object-cover rounded-xl border border-white/10"
+                className="w-full max-w-90 h-40 object-cover rounded-xl border border-white/10"
                 loading="lazy"
               />
             </div>
@@ -271,9 +257,13 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
                 <span className="whitespace-nowrap">
                   I agree to the{" "}
                   <Link href="/termsandconditions">
-                    <span className="text-[#D4AF37] cursor-pointer hover:underline">Terms</span>
+                    <span className="text-[#D4AF37] cursor-pointer hover:underline">Terms &Conditions</span>
                   </Link>
-                  .
+                  {" "} and {" "}
+                    <Link href="/privacy">
+                    <span className="text-[#D4AF37] cursor-pointer hover:underline">Privacy & Policy.</span>
+                  </Link>
+                  
                 </span>
               </label>
 
