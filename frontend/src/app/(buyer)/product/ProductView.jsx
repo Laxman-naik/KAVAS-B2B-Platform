@@ -5,6 +5,11 @@ import { suppliers } from "@/data/suppliers";
 import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
+<<<<<<< HEAD
+=======
+// import { toggleFavourite } from "@/store/slices/favouritesSlice";
+import { getSingleProduct } from "@/services/productService";
+>>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
 import { addToFavourites, removeFromFavourites, } from "@/store/slices/favouritesSlice";

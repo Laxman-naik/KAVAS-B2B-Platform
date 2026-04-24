@@ -6,7 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {Heart,ShoppingCart,LayoutGrid,LayoutList,} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+<<<<<<< HEAD
 import {addToFavourites,removeFromFavourites,fetchFavourites,} from "@/store/slices/favouritesSlice";
+=======
+>>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
@@ -19,7 +22,6 @@ const COLORS = {
   text: "#1A1A1A",
   border: "#E5E5E5",
   muted: "#6B7280",
-  chipBg: "#F8F8F8",
 };
 
 const ITEMS_PER_PAGE = 12;
@@ -31,16 +33,29 @@ const Page = () => {
   const [mainCategories, setMainCategories] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
+<<<<<<< HEAD
   const [filters, setFilters] = useState({minQty: [],rating: [],supplier: [],});
+=======
+
+  // UI only favourites state
+  const [favouriteIds, setFavouriteIds] = useState([]);
+
+  const [filters, setFilters] = useState({
+    minQty: [],
+    rating: [],
+    supplier: [],
+  });
+>>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   const dispatch = useDispatch();
-  const favouriteItems = useSelector((state) => state.favourites.items);
   const newArrivals = useSelector((state) => state.products.newArrivals || []);
+<<<<<<< HEAD
   const liked = favouriteItems;
+=======
+>>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   useEffect(() => {
     dispatch(fetchNewArrivals());
-    dispatch(fetchFavourites());
 
     const loadCategories = async () => {
       try {
@@ -62,6 +77,7 @@ const Page = () => {
     loadCategories();
   }, [dispatch]);
 
+<<<<<<< HEAD
   const onToggleFavourite = (product) => {
   const productId = String(product.productId);
   const isLiked = liked.map(String).includes(productId);
@@ -72,8 +88,19 @@ const Page = () => {
     dispatch(addToFavourites(productId));
   }
 };
+=======
+  const onToggleFavourite = (productId) => {
+    setFavouriteIds((prev) =>
+      prev.includes(String(productId))
+        ? prev.filter((id) => id !== String(productId))
+        : [...prev, String(productId)]
+    );
+  };
+>>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   const onAddToCart = (product) => {
+    const productId = product?._id ?? product?.id ?? product?.productId;
+    if (!productId) return;
     dispatch(
       addToCart({
         productId: product.productId,
@@ -109,7 +136,7 @@ const Page = () => {
   const normalizedProducts = useMemo(() => {
     return newArrivals.map((product) => ({
       ...product,
-      productId: product.id || product._id,
+      productId: String(product.id || product._id),
       imageUrl: product.image_url || product.imageUrl || "/placeholder.png",
       minOrderQty: Number(product.moq ?? product.minOrderQty ?? 0),
       supplierType: product.supplierType || product.supplier_type || "",
@@ -302,7 +329,7 @@ const Page = () => {
           >
             <div>
               <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
+                className="font-medium text-sm mb-2"
                 style={{ color: COLORS.primary }}
               >
                 MIN. ORDER QTY
@@ -330,14 +357,14 @@ const Page = () => {
               </div>
 
               <button
-                className="w-full mt-3 bg-[#0B1F3A] text-white py-2 rounded-md text-sm cursor-pointer"
+                className="w-full mt-3 py-2 rounded-md text-sm cursor-pointer"
                 style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
               >
                 APPLY FILTERS
               </button>
 
               <p
-                className="text-xs text-gray-500 mt-2 cursor-pointer"
+                className="text-xs mt-2 cursor-pointer"
                 style={{ color: COLORS.muted }}
                 onClick={clearAllFilters}
               >
@@ -347,7 +374,7 @@ const Page = () => {
 
             <div className="mt-6">
               <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
+                className="font-medium text-sm mb-2"
                 style={{ color: COLORS.primary }}
               >
                 RATING
@@ -373,7 +400,7 @@ const Page = () => {
 
             <div className="mt-6">
               <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
+                className="font-medium text-sm mb-2"
                 style={{ color: COLORS.primary }}
               >
                 SUPPLIER TYPE
@@ -397,13 +424,12 @@ const Page = () => {
 
           <main>
             <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="text-sm text-gray-700" style={{ color: COLORS.text }}>
+              <p className="text-sm" style={{ color: COLORS.text }}>
                 Showing{" "}
                 <span className="font-semibold">
                   {totalProducts === 0 ? 0 : startIndex + 1}
                 </span>
-                –
-                <span className="font-semibold">{endIndex}</span> of{" "}
+                –<span className="font-semibold">{endIndex}</span> of{" "}
                 <span className="font-semibold">{totalProducts}</span> Products
               </p>
 
@@ -411,7 +437,7 @@ const Page = () => {
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-sm"
+                  className="rounded-lg border bg-white px-3 py-2 text-sm"
                   style={{
                     borderColor: COLORS.border,
                     backgroundColor: COLORS.white,
@@ -427,7 +453,7 @@ const Page = () => {
                   onClick={() =>
                     setViewMode((m) => (m === "grid" ? "list" : "grid"))
                   }
-                  className="h-10 w-10 rounded-lg border border-[#E5E5E5] bg-white flex items-center justify-center cursor-pointer"
+                  className="h-10 w-10 rounded-lg border bg-white flex items-center justify-center cursor-pointer"
                   style={{
                     borderColor: COLORS.border,
                     backgroundColor: COLORS.white,
@@ -451,7 +477,7 @@ const Page = () => {
               }
             >
               {paginatedProducts.map((product) => {
-                const isLiked = liked.includes(product.productId);
+                const isLiked = favouriteIds.includes(String(product.productId));
 
                 return (
                   <Link
@@ -492,16 +518,14 @@ const Page = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                onToggleFavourite(product);
+                                onToggleFavourite(product.productId);
                               }}
                               className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer"
-                              style={{ backgroundColor: COLORS.white }}
+                              aria-label="Toggle favourite"
                             >
                               <Heart
-                                size={14}
-                                className={
-                                  isLiked ? "text-red-500" : "text-gray-600"
-                                }
+                                size={16}
+                                className={isLiked ? "text-red-500" : "text-gray-600"}
                                 fill={isLiked ? "currentColor" : "none"}
                               />
                             </button>
@@ -583,7 +607,7 @@ const Page = () => {
 
             {paginatedProducts.length === 0 && (
               <div
-                className="text-center py-12 text-gray-500"
+                className="text-center py-12"
                 style={{ color: COLORS.muted }}
               >
                 No products found for the selected filters.
@@ -635,10 +659,7 @@ const Page = () => {
 
                 {totalPages > 5 && (
                   <>
-                    <span
-                      className="px-1 text-gray-500"
-                      style={{ color: COLORS.muted }}
-                    >
+                    <span className="px-1" style={{ color: COLORS.muted }}>
                       …
                     </span>
                     <button
