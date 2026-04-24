@@ -192,7 +192,7 @@ export default function ProductManagementBody() {
         {filteredProducts.map((product) => (
           <div
             key={product.id}
-          className="bg-white rounded-lg border border-[#E5E5E5] overflow-hidden hover:shadow-md transition transform hover:-translate-y-[3px]"
+          className="bg-white rounded-lg border border-[#E5E5E5] overflow-hidden hover:shadow-md transition transform hover:-translate-y-0.75"
 >
             {/* IMAGE */}
             <div className="relative">

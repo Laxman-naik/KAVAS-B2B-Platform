@@ -68,7 +68,7 @@ const DashboardBody = () => {
   const statsData = [
     {
       title: "TOTAL REVENUE (MONTH)",
-      value: `₹${totalRevenue.toLocaleString()}`,
+      value: `₹${totalRevenue.toLocaleString("en-IN")}`,
       change: "+18.4%",
       positive: true,
     },
@@ -176,7 +176,7 @@ const DashboardBody = () => {
             {salesData[activeTab].map((h, i) => (
               <div
                 key={i}
-                className="flex-1 bg-gradient-to-t from-[#D4AF37] to-orange-300 rounded-md hover:scale-105 transition"
+                className="flex-1 bg-linear-to-t from-[#D4AF37] to-orange-300 rounded-md hover:scale-105 transition"
                 style={{ height: `${h}%` }}
               />
             ))}
@@ -253,7 +253,7 @@ const DashboardBody = () => {
                   >
                     <td className="p-3 font-medium">{o.id}</td>
                     <td className="p-3">{o.buyer}</td>
-                    <td className="p-3">₹{o.amount.toLocaleString()}</td>
+                    <td className="p-3">₹{o.amount.toLocaleString("en-IN")}</td>
                     <td className="p-3">{o.date}</td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded-full text-[10px] ${getStatusStyle(o.status)}`}>
