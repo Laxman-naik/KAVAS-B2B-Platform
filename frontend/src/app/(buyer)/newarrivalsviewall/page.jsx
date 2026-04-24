@@ -6,10 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {Heart,ShoppingCart,LayoutGrid,LayoutList,} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-<<<<<<< HEAD
 import {addToFavourites,removeFromFavourites,fetchFavourites,} from "@/store/slices/favouritesSlice";
-=======
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
@@ -33,26 +30,11 @@ const Page = () => {
   const [mainCategories, setMainCategories] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-<<<<<<< HEAD
   const [filters, setFilters] = useState({minQty: [],rating: [],supplier: [],});
-=======
-
-  // UI only favourites state
-  const [favouriteIds, setFavouriteIds] = useState([]);
-
-  const [filters, setFilters] = useState({
-    minQty: [],
-    rating: [],
-    supplier: [],
-  });
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   const dispatch = useDispatch();
   const newArrivals = useSelector((state) => state.products.newArrivals || []);
-<<<<<<< HEAD
   const liked = favouriteItems;
-=======
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   useEffect(() => {
     dispatch(fetchNewArrivals());
@@ -77,7 +59,6 @@ const Page = () => {
     loadCategories();
   }, [dispatch]);
 
-<<<<<<< HEAD
   const onToggleFavourite = (product) => {
   const productId = String(product.productId);
   const isLiked = liked.map(String).includes(productId);
@@ -88,15 +69,6 @@ const Page = () => {
     dispatch(addToFavourites(productId));
   }
 };
-=======
-  const onToggleFavourite = (productId) => {
-    setFavouriteIds((prev) =>
-      prev.includes(String(productId))
-        ? prev.filter((id) => id !== String(productId))
-        : [...prev, String(productId)]
-    );
-  };
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   const onAddToCart = (product) => {
     const productId = product?._id ?? product?.id ?? product?.productId;
