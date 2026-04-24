@@ -149,15 +149,9 @@ import { fetchProducts } from "@/store/slices/productSlice";
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-<<<<<<< HEAD
   const [mounted, setMounted] = useState(false);
   const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
   const products = useSelector((state) => state.products.products || []);
-=======
-
-  const [mounted, setMounted] = React.useState(false);
-  const [token, setToken] = React.useState(null);
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   const productMap = useMemo(() => {
     const map = {};
@@ -173,49 +167,9 @@ const Page = () => {
 
   useEffect(() => {
     setMounted(true);
-<<<<<<< HEAD
     dispatch(fetchFavourites());
     dispatch(fetchProducts());
   }, [dispatch]);
-=======
-
-    const savedToken = localStorage.getItem("accessToken");
-    setToken(savedToken);
-
-    const handleStorageChange = () => {
-      const updatedToken = localStorage.getItem("accessToken");
-      setToken(updatedToken);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (mounted && token) {
-      dispatch(fetchFavourites());
-    }
-  }, [mounted, token, dispatch]);
-
-  const handleClearAll = () => {
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    dispatch(clearFavourites());
-  };
-
-  const handleRemove = (productId) => {
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    dispatch(removeFromFavourites(productId));
-  };
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
   if (!mounted || loading) {
     return (
@@ -300,13 +254,7 @@ const Page = () => {
                     className="bg-white rounded-2xl border shadow-sm overflow-hidden"
                   >
                     <div className="relative">
-<<<<<<< HEAD
                       <button type="button"  onClick={() => dispatch(removeFromFavourites(productId))}
-=======
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(productId)}
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
                         className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow cursor-pointer"
                       ><X size={16} /></button>
                       <Link href={`/product/${productId}`}>
@@ -315,18 +263,8 @@ const Page = () => {
                     </div>
 
                     <div className="p-3">
-<<<<<<< HEAD
                       <p className="text-sm font-medium line-clamp-2">{name}</p>
                       {price && (<p className="text-sm font-semibold mt-1">₹{price}</p>)}
-=======
-                      <p className="text-sm font-medium line-clamp-2 min-h-10">
-                        {name}
-                      </p>
-
-                      {price ? (
-                        <p className="text-sm font-semibold mt-1">₹{price}</p>
-                      ) : null}
->>>>>>> 1a12976ac1186634f5535a2b1cdd658e95cdab72
 
                       <Button className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white text-xs h-9 cursor-pointer">
                         MOVE TO CART
