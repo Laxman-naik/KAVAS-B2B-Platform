@@ -1,6 +1,15 @@
-"use client"
+"use client";
 import React from "react";
-import { User } from "lucide-react";
+import {
+  User,
+  ShoppingBag,
+  Clock,
+  CheckCircle,
+  IndianRupee,
+  Home,
+  Building2,
+  Plus,
+} from "lucide-react";
 
 export default function ProfileBody() {
   return (
@@ -45,19 +54,54 @@ export default function ProfileBody() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         {[
-          { title: "Total Orders", value: 12 },
-          { title: "Pending Orders", value: 3 },
-          { title: "Delivered Orders", value: 9 },
-          { title: "Total Spent", value: "₹25,450" },
-        ].map((item, i) => (
-          <div
-            key={i}
-            className="bg-white border border-[#E5E5E5] rounded-xl p-4 hover:shadow-md transition transform hover:-translate-y-1"
-          >
-            <p className="text-sm text-gray-500">{item.title}</p>
-            <p className="text-xl font-semibold mt-2">{item.value}</p>
-          </div>
-        ))}
+          {
+            title: "Total Orders",
+            value: 12,
+            icon: ShoppingBag,
+            color: "text-green-600",
+            bg: "bg-green-100",
+          },
+          {
+            title: "Pending Orders",
+            value: 3,
+            icon: Clock,
+            color: "text-yellow-500",
+            bg: "bg-yellow-100",
+          },
+          {
+            title: "Delivered Orders",
+            value: 9,
+            icon: CheckCircle,
+            color: "text-green-600",
+            bg: "bg-green-100",
+          },
+          {
+            title: "Total Spent",
+            value: "₹25,450",
+            icon: IndianRupee,
+            color: "text-[#D4AF37]",
+            bg: "bg-[#D4AF37]/20",
+          },
+        ].map((item, i) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={i}
+              className="bg-white border border-[#E5E5E5]  rounded-xl p-5 hover:shadow-md transition"
+            >
+              {/* ICON + TITLE */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-md ${item.bg}`}>
+                  <Icon className={`${item.color}`} size={20} />
+                </div>
+                <p className="text-sm text-gray-500">{item.title}</p>
+              </div>
+
+              {/* VALUE */}
+              <p className="text-xl text-center font-semibold">{item.value}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Recent Orders */}
@@ -139,22 +183,32 @@ export default function ProfileBody() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Home */}
           <div className="bg-white border border-[#E5E5E5] p-4 rounded-xl hover:shadow-md transition">
-            <p className="font-medium">Home</p>
+            <div className="flex items-center gap-2 mb-2">
+              <Home className="text-green-600" size={18} />
+              <p className="font-medium">Home</p>
+            </div>
             <p className="text-sm text-gray-500">
               123, Green Hills Colony, Hyderabad, Telangana - 500001
             </p>
           </div>
 
+          {/* Office */}
           <div className="bg-white border border-[#E5E5E5] p-4 rounded-xl hover:shadow-md transition">
-            <p className="font-medium">Office</p>
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="text-blue-600" size={18} />
+              <p className="font-medium">Office</p>
+            </div>
             <p className="text-sm text-gray-500">
               45, Business Park, Hitech City, Hyderabad - 500081
             </p>
           </div>
 
-          <div className="flex items-center justify-center border-2 border-dashed border-[#E5E5E5] rounded-xl hover:bg-[#FFF8EC] cursor-pointer transition">
-            <span className="text-sm">+ Add New Address</span>
+          {/* Add Address */}
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#E5E5E5] rounded-xl hover:bg-[#FFF8EC] cursor-pointer transition">
+            <Plus className="mb-2 text-[#D4AF37]" />
+            <span className="text-sm">Add New Address</span>
           </div>
         </div>
       </div>
