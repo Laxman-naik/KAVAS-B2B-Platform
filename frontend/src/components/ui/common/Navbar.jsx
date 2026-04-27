@@ -257,7 +257,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="w-full bg-[#0B1F3A] border-b border-white/10">
+        <div className="w-full bg-[#0B1F3A]">
           <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-10 py-3">
             <div className="flex items-center justify-between gap-3 lg:gap-6">
               <div className="flex items-center gap-3 lg:hidden shrink-0">
@@ -540,7 +540,7 @@ const Navbar = () => {
 
                               <button
                                 onClick={() => {
-                                  router.push("/trackorder");
+                                  router.push("/ordertracking");
                                   setDropdown(false);
                                 }}
                                 className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
@@ -611,7 +611,7 @@ const Navbar = () => {
 
                               <button
                                 onClick={() => {
-                                  router.push("/profile");
+                                  router.push("/changepassword");
                                   setDropdown(false);
                                 }}
                                 className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
@@ -672,7 +672,7 @@ const Navbar = () => {
 
                               <button
                                 onClick={() => {
-                                  openLoginForRedirect("/trackorder");
+                                  openLoginForRedirect("/ordertracking");
                                 }}
                                 className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                               >
@@ -736,16 +736,6 @@ const Navbar = () => {
                         {isAuthenticated && (
                           <>
                             <div className="border-t border-[#E5E5E5]" />
-                            <button
-                              onClick={() => {
-                                router.push("/profile");
-                                setDropdown(false);
-                              }}
-                              className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                            >
-                              <KeyRound className="h-5 w-5" />
-                              <span>Change Password</span>
-                            </button>
                             <button
                               onClick={handleLogout}
                               className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-red-600 hover:bg-[#FFF8EC]"
@@ -833,7 +823,7 @@ const Navbar = () => {
                       <Button
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/trackorder")}
+                        onClick={() => openLoginForRedirect("/ordertracking")}
                       >
                         <Truck className="mr-2 h-4 w-4" />
                         Track Order
@@ -887,7 +877,7 @@ const Navbar = () => {
                         variant="outline"
                         className="w-full justify-start"
                         onClick={() => {
-                          router.push("/trackorder");
+                          router.push("/ordertracking");
                           setMobileMenu(false);
                         }}
                       >
@@ -959,7 +949,7 @@ const Navbar = () => {
                         variant="outline"
                         className="w-full justify-start"
                         onClick={() => {
-                          router.push("/profile");
+                          router.push("/changepassword");
                           setMobileMenu(false);
                         }}
                       >

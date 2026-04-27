@@ -1,20 +1,7 @@
 "use client";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import {
-  User,
-  Package,
-  Truck,
-  Heart,
-  MapPin,
-  CreditCard,
-  Bell,
-  Lock,
-  LogOut,
-  Menu,
-  Headphones,
-  X,
-} from "lucide-react";
+import { User, Package,Truck,Heart,MapPin,CreditCard,Bell,Lock, LogOut,Menu, Headphones, X,} from "lucide-react";
 
 const menuItems = [
   {
@@ -99,7 +86,7 @@ export default function Sidebar() {
 
       {/* SIDEBAR */}
           <div
-  className={`fixed top-29 left-0 z-40 w-[260px] 
+  className={`fixed top-29 left-0 z-40 w-65 
   h-[calc(100vh-64px)]
   bg-[#0B1F3A] text-white
   overflow-y-auto scrollbar-hide

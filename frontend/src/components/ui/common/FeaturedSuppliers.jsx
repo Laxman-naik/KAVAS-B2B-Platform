@@ -2,21 +2,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { suppliers } from "@/data/suppliers";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Headset,
-  Monitor,
-  Shirt,
-  ShieldCheck,
-  Sparkles,
-  Tag,
-  Truck,
-  Wrench,
+  ExternalLink,
+  Star,
 } from "lucide-react";
 
 const FeaturedSuppliers = () => {
@@ -31,30 +22,14 @@ const FeaturedSuppliers = () => {
     []
   );
 
-  const palette = useMemo(
-    () => [
-      { chip: "bg-amber-100 text-amber-700", ring: "bg-amber-50" },
-      { chip: "bg-emerald-100 text-emerald-700", ring: "bg-emerald-50" },
-      { chip: "bg-blue-100 text-blue-700", ring: "bg-blue-50" },
-      { chip: "bg-rose-100 text-rose-700", ring: "bg-rose-50" },
-    ],
-    []
-  );
-
-  const getCategoryMeta = (category) => {
-    const c = (category || "").toLowerCase();
-    if (c.includes("elect")) return { label: "Electronics", Icon: Monitor };
-    if (c.includes("health") || c.includes("beaut"))
-      return { label: "Health & Beauty", Icon: Sparkles };
-    if (c.includes("apparel") || c.includes("text"))
-      return { label: "Textiles", Icon: Shirt };
-    if (c.includes("hard")) return { label: "Hardware & Tools", Icon: Wrench };
-    return { label: category || "Supplies", Icon: Tag };
-  };
-
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (prefersReduced) return;
 
     const segmentWidth = container.scrollWidth / 4;
     segmentWidthRef.current = segmentWidth;
@@ -63,7 +38,7 @@ const FeaturedSuppliers = () => {
     let animationFrame;
     const animate = () => {
       if (container && !isPaused) {
-        container.scrollLeft += 0.35;
+        container.scrollLeft += 0.55;
 
         const seg = segmentWidthRef.current || container.scrollWidth / 4;
         if (container.scrollLeft >= seg * 3) {
@@ -122,39 +97,33 @@ const FeaturedSuppliers = () => {
   };
 
   return (
-    <section className="w-full  py-8">
+    <section className="w-full py-8">
       <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl border border-[#E5E5E5] shadow-sm px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="bg-white rounded-sm border border-[#E5E5E5] shadow-sm px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold tracking-wide text-[#D4AF37] uppercase">
-                Our Partners
+                Top Rated
               </div>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-[#0B1F3A]">
-                Featured Suppliers
+              <h2 className="mt-1 text-lg sm:text-xl font-bold text-[#1A1A1A]">
+                Shops
               </h2>
-              <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-                Partnering with trusted brands to deliver quality you can rely on.
-              </p>
             </div>
-
-            <Link href="/suppliers/verified">
-              <Button
-                variant="outline"
-                className="border-[#D4AF37] text-[#D4AF37] hover:bg-[#FFF8EC]"
-              >
-                View all suppliers
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+            <Link
+              href="/suppliers/verified"
+              className="text-sm font-medium text-[#0B1F3A] hover:underline inline-flex items-center gap-2"
+            >
+              View All
+              <ExternalLink size={16} />
             </Link>
           </div>
 
-          <div className="relative mt-6">
+          <div className="relative mt-4">
             <button
               type="button"
               aria-label="Previous"
               onClick={() => scrollByPage(-1)}
-              className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#0B1F3A] text-white items-center justify-center shadow-lg"
+              className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#FFF8EC] border border-[#E5E5E5] text-[#0B1F3A] items-center justify-center shadow"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -163,7 +132,7 @@ const FeaturedSuppliers = () => {
               type="button"
               aria-label="Next"
               onClick={() => scrollByPage(1)}
-              className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#0B1F3A] text-white items-center justify-center shadow-lg"
+              className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full bg-[#FFF8EC] border border-[#E5E5E5] text-[#0B1F3A] items-center justify-center shadow"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -172,57 +141,62 @@ const FeaturedSuppliers = () => {
               ref={containerRef}
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)}
+              onTouchEnd={() => setIsPaused(false)}
               className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2"
             >
               {loopSuppliers.map((supplier, index) => {
-                const colors = palette[index % palette.length];
-                const { label, Icon } = getCategoryMeta(supplier.category);
-                const initials = (supplier.name || "S").slice(0, 2).toUpperCase();
-                const isVerified = (supplier.tags || []).some((t) =>
-                  String(t).toLowerCase().includes("verified")
-                );
+                const cover = supplier?.images?.[0] || "/placeholder.png";
+                const logo = supplier?.images?.[1] || cover;
+                const rating = supplier?.stats?.rating ?? 5.0;
+                const items = supplier?.stats?.products || "0";
+                const status = supplier?.status || "Offline";
 
                 return (
                   <Link
                     key={`${supplier.id}-${index}`}
                     href={`/suppliers/${supplier.id}`}
-                    className="shrink-0 w-[78%] sm:w-[46%] md:w-[31%] lg:w-[23%]"
+                    className="shrink-0 w-[78%] sm:w-[56%] md:w-[38%] lg:w-[24%]"
                   >
-                    <Card className="h-full min-h-[360px] border-[#E5E5E5] hover:shadow-md transition-shadow rounded-2xl">
-                      <CardContent className="p-6 h-full">
-                        <div className="h-full flex flex-col items-center text-center">
-                          <div className="flex items-center justify-center">
-                            <div
-                              className={`h-24 w-24 rounded-full ${colors.ring} flex items-center justify-center border border-[#E5E5E5]`}
-                            >
-                              <div className="h-16 w-16 bg-white rounded-full border border-[#E5E5E5] flex items-center justify-center font-extrabold text-[#0B1F3A] text-xl">
-                                {initials}
-                              </div>
-                            </div>
-                          </div>
+                    <Card className="border-[#E5E5E5] hover:shadow-md transition-shadow rounded-sm overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="relative h-28 bg-gray-100">
+                          <img
+                            src={cover}
+                            alt={supplier.name}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/0 to-black/0" />
+                          <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-gray-700 border border-[#E5E5E5]">
+                            {status}
+                          </span>
 
-                          <div className="mt-4 text-[16px] font-bold text-[#0B1F3A] leading-6 line-clamp-2">
+                          <div className="absolute -bottom-6 left-4 h-12 w-12 rounded-full bg-white border border-[#E5E5E5] overflow-hidden shadow-sm">
+                            <img
+                              src={logo}
+                              alt={supplier.name}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="bg-[#0B1F3A] text-white pt-8 pb-4 px-4 min-h-[118px] flex flex-col">
+                          <div className="text-sm font-semibold truncate">
                             {supplier.name}
                           </div>
 
-                          <div className="mt-3 h-[2px] w-10 rounded-full bg-[#D4AF37]" />
-
-                          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600">
-                            {Icon && <Icon className="h-4 w-4" />}
-                            <span>{label}</span>
+                          <div className="mt-2 flex items-center justify-between text-xs text-white/85">
+                            <span className="text-[#FFF8EC]/90">{items} + Items</span>
+                            <span className="inline-flex items-center gap-1 font-semibold">
+                              <Star size={14} className="text-[#D4AF37] fill-[#D4AF37]" />
+                              {Number(rating).toFixed(1)}
+                            </span>
                           </div>
 
-                          <div className="mt-auto pt-6 w-full flex justify-center">
-                            {isVerified ? (
-                              <Badge className={`${colors.chip} border-0 px-4 py-2 rounded-xl font-semibold flex items-center gap-2`}>
-                                <ShieldCheck className="h-5 w-5" />
-                                Verified Supplier
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="px-4 py-2 rounded-xl font-semibold">
-                                Supplier
-                              </Badge>
-                            )}
+                          <div className="mt-auto pt-3 text-xs font-semibold text-[#D4AF37]">
+                            Visit Store →
                           </div>
                         </div>
                       </CardContent>
@@ -248,48 +222,6 @@ const FeaturedSuppliers = () => {
                   }`}
                 />
               ))}
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 rounded-lg border border-[#E5E5E5] bg-[#FFF8EC]/40 p-4">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center shrink-0">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#0B1F3A]">Trusted Partners</div>
-                <div className="text-xs text-gray-600">Working with verified suppliers.</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center shrink-0">
-                <Tag className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#0B1F3A]">Best Quality</div>
-                <div className="text-xs text-gray-600">Premium standards & checks.</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center shrink-0">
-                <Truck className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#0B1F3A]">Timely Delivery</div>
-                <div className="text-xs text-gray-600">On-time shipping & tracking.</div>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#0B1F3A] text-[#D4AF37] flex items-center justify-center shrink-0">
-                <Headset className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#0B1F3A]">Dedicated Support</div>
-                <div className="text-xs text-gray-600">24/7 support for your needs.</div>
-              </div>
             </div>
           </div>
         </div>
