@@ -31,7 +31,7 @@ const navItems = [
   // { href: "/bulk-enquiry", label: "Bulk Enquiry", icon: MessageSquareText },
   { href: "/notifications", label: "Notifications", icon: Bell, badge: 3 },
   { href: "/changepassword", label: "Change Password", icon: KeyRound },
-  { href: "/help", label: "Help Centre", icon: Shield },
+  // { href: "/help", label: "Help Centre", icon: Shield },
 ];
 
 export default function ProfileSidebar({ user, onLogout }) {
@@ -43,7 +43,7 @@ export default function ProfileSidebar({ user, onLogout }) {
   };
 
   return (
-    <div className="h-full bg-[#0B1F3A] w-full lg:w-[260px] lg:h-[calc(100vh-96px)]">
+    <div className="bg-[#0B1F3A] w-full lg:w-[260px] lg:sticky lg:top-20 h-fit">
       <Card className="rounded-sm bg-[#0B1F3A] text-[#FFF8EC] border border-white/10 overflow-hidden">
         <CardContent className="p-0 flex flex-col h-full">
           <div className="px-5 pt-5 pb-4 border-b border-white/10">
@@ -91,7 +91,7 @@ export default function ProfileSidebar({ user, onLogout }) {
             </nav>
           </div>
 
-          <div className="p-3 border-t border-white/10">
+          <div className="p-3 ">
             <Button
               type="button"
               variant="ghost"
