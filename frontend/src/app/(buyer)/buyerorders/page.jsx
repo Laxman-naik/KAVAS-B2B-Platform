@@ -137,7 +137,7 @@ const Page = () => {
 
   return (
     <>
-      <div className="bg-[#0B1F3A] min-h-screen">
+      <div className="bg-white min-h-screen">
         <div className="mx-auto bg-white border rounded-sm border-white/10">
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
             <div className="lg:sticky lg:top-24 self-start">

@@ -166,6 +166,17 @@ const Navbar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!mobileMenu) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [mobileMenu]);
+
   const handleLogout = async () => {
     try {
       await dispatch(logoutUserThunk()).unwrap();
@@ -442,7 +453,11 @@ const Navbar = () => {
                 <div className="hidden lg:flex items-center gap-6">
                   <button
                     type="button"
-                    onClick={() => router.push("/vendor")}
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        window.open("/vendor", "_blank", "noopener,noreferrer");
+                      }
+                    }}
                     className="flex flex-col items-center gap-1 text-white/90 hover:text-white"
                   >
                     <span className="relative  flex items-center justify-center">
@@ -772,224 +787,259 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {mobileMenu && (
-                <div className="mt-3 w-full space-y-3 rounded-lg bg-white p-4 text-black shadow-md dark:bg-gray-800 dark:text-white lg:hidden">
-                  {!isAuthenticated ? (
-                    <div className="space-y-2">
-                      <Button
-                        className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734]"
-                        onClick={() => {
-                          setMode("login");
-                          setInitialEmail("");
-                          setOpen(true);
-                          setMobileMenu(false);
-                        }}
-                      >
-                        Sign in
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5] cursor-pointer"
-                        onClick={() => {
-                          setMode("register");
-                          setInitialEmail("");
-                          setOpen(true);
-                          setMobileMenu(false);
-                        }}
-                      >
-                        Create account
-                      </Button>
+              <div
+                className={`fixed inset-0 z-[60] lg:hidden ${
+                  mobileMenu ? "" : "pointer-events-none"
+                }`}
+                aria-hidden={!mobileMenu}
+              >
+                <button
+                  type="button"
+                  onClick={() => setMobileMenu(false)}
+                  className={`absolute inset-0 bg-black/40 transition-opacity ${
+                    mobileMenu ? "opacity-100" : "opacity-0"
+                  }`}
+                  aria-label="Close menu"
+                  tabIndex={mobileMenu ? 0 : -1}
+                />
 
-                      <div className="border-t border-[#E5E5E5]" />
-
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/profile")}
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        My Profile
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/buyerorders")}
-                      >
-                        <Package className="mr-2 h-4 w-4" />
-                        My Orders
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/ordertracking")}
-                      >
-                        <Truck className="mr-2 h-4 w-4" />
-                        Track Order
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/favourites")}
-                      >
-                        <Heart className="mr-2 h-4 w-4 text-red-500" />
-                        Wishlist
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => openLoginForRedirect("/help")}
-                      >
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        Bulk Enquiry
-                      </Button>
+                <div
+                  className={`absolute left-0 top-0 h-full w-[min(22rem,85vw)] bg-white text-black shadow-2xl transition-transform duration-300 dark:bg-gray-800 dark:text-white ${
+                    mobileMenu ? "translate-x-0" : "-translate-x-full"
+                  }`}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E5E5] dark:border-gray-700">
+                    <div className="font-semibold text-[#0B1F3A] dark:text-white">
+                      Menu
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/profile");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        {(user?.full_name || user?.name || "User").split(" ")[0]}
-                      </Button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileMenu(false)}
+                      className="rounded-sm border border-[#E5E5E5] p-2 text-[#0B1F3A] hover:bg-[#FFF8EC] dark:border-gray-700 dark:text-white dark:hover:bg-white/10"
+                      aria-label="Close"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/buyerorders");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <Package className="mr-2 h-4 w-4" />
-                        My Orders
-                      </Button>
+                  <div className="p-4 space-y-3 max-h-[calc(100vh-56px)] overflow-y-auto overscroll-contain">
+                    {!isAuthenticated ? (
+                      <div className="space-y-2">
+                        <Button
+                          className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734]"
+                          onClick={() => {
+                            setMode("login");
+                            setInitialEmail("");
+                            setOpen(true);
+                            setMobileMenu(false);
+                          }}
+                        >
+                          Sign in
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5] cursor-pointer"
+                          onClick={() => {
+                            setMode("register");
+                            setInitialEmail("");
+                            setOpen(true);
+                            setMobileMenu(false);
+                          }}
+                        >
+                          Create account
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/ordertracking");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <Truck className="mr-2 h-4 w-4" />
-                        Track Order
-                      </Button>
+                        <div className="border-t border-[#E5E5E5]" />
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/favourites");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <Heart className="mr-2 h-4 w-4 text-red-500" />
-                        Wishlist
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openLoginForRedirect("/profile")}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          My Profile
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/profile");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <MapPin className="mr-2 h-4 w-4" />
-                        Addresses
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openLoginForRedirect("/buyerorders")}
+                        >
+                          <Package className="mr-2 h-4 w-4" />
+                          My Orders
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/profile");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Payment Methods
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openLoginForRedirect("/ordertracking")}
+                        >
+                          <Truck className="mr-2 h-4 w-4" />
+                          Track Order
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/help");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        Bulk Enquiry
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openLoginForRedirect("/favourites")}
+                        >
+                          <Heart className="mr-2 h-4 w-4 text-red-500" />
+                          Wishlist
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/profile");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <Bell className="mr-2 h-4 w-4" />
-                        Notifications
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => openLoginForRedirect("/help")}
+                        >
+                          <ClipboardList className="mr-2 h-4 w-4" />
+                          Bulk Enquiry
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/profile");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          {(user?.full_name || user?.name || "User").split(" ")[0]}
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          router.push("/changepassword");
-                          setMobileMenu(false);
-                        }}
-                      >
-                        <KeyRound className="mr-2 h-4 w-4" />
-                        Change Password
-                      </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/buyerorders");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <Package className="mr-2 h-4 w-4" />
+                          My Orders
+                        </Button>
 
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="mr-2 h-4 w-4 text-red-600" />
-                        Logout
-                      </Button>
-                    </div>
-                  )}
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/ordertracking");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <Truck className="mr-2 h-4 w-4" />
+                          Track Order
+                        </Button>
 
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        openLoginForRedirect("/cart");
-                      } else {
-                        router.push("/cart");
-                        setMobileMenu(false);
-                      }
-                    }}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4 text-[#0B1F3A]" />
-                    Cart
-                    {cartCount > 0 && (
-                      <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
-                        {cartCount}
-                      </span>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/favourites");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <Heart className="mr-2 h-4 w-4 text-red-500" />
+                          Wishlist
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/profile");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <MapPin className="mr-2 h-4 w-4" />
+                          Addresses
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/profile");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Payment Methods
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/help");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <ClipboardList className="mr-2 h-4 w-4" />
+                          Bulk Enquiry
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/profile");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <Bell className="mr-2 h-4 w-4" />
+                          Notifications
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => {
+                            router.push("/changepassword");
+                            setMobileMenu(false);
+                          }}
+                        >
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Change Password
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                          Logout
+                        </Button>
+                      </div>
                     )}
-                  </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start bg-[#FFF8EC] text-[#0B1F3A] border-[#E5E5E5]"
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          openLoginForRedirect("/cart");
+                        } else {
+                          router.push("/cart");
+                          setMobileMenu(false);
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4 text-[#0B1F3A]" />
+                      Cart
+                      {cartCount > 0 && (
+                        <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
+                          {cartCount}
+                        </span>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="mt-3 w-full md:hidden">

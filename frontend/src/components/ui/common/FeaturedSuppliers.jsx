@@ -103,10 +103,10 @@ const FeaturedSuppliers = () => {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold tracking-wide text-[#D4AF37] uppercase">
-                Top Rated
+                Featured
               </div>
               <h2 className="mt-1 text-lg sm:text-xl font-bold text-[#1A1A1A]">
-                Shops
+                Suppliers
               </h2>
             </div>
             <Link
