@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import { fetchAddresses, addAddress, editAddress, removeAddress } from "../../../store/slices/addressSlice";
+import { fetchAddresses, addAddress, editAddress, removeAddress, changeDefaultAddress, } from "../../../store/slices/addressSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -219,7 +219,11 @@ export default function Page() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {!a.isDefault && (<Button variant="outline" className="h-8 text-xs" onClick={() => dispatch(changeDefaultAddress(a.id))}>Set Default</Button>)}
+                            {a.isDefault ? (
+                              <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Default</span>
+                            ) : (
+                              <Button  variant="outline" className="h-8 text-xs"  onClick={async () => {await dispatch(changeDefaultAddress(a.id)); dispatch(fetchAddresses());}}>Set Default</Button>
+                            )}
                             <p className="font-semibold text-[#0B1F3A] text-sm truncate">{a.title}</p>
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}>
                               {a.tag}
@@ -230,9 +234,9 @@ export default function Page() {
                           checked={Boolean(a.active)}
                           onCheckedChange={(checked) =>
                             dispatch(editAddress({
-                                id: a.id,
-                                data: {...a, active: checked,},
-                              }))}
+                              id: a.id,
+                              data: { ...a, active: checked, },
+                            }))}
                         />
                       </div>
                       <div className="mt-3 space-y-2">

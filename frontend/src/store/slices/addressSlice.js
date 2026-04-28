@@ -7,7 +7,7 @@ import {
   setDefaultAddress,
 } from "@/services/addressService";
 
-/* ================= NORMALIZE ================= */
+/* ---------------- NORMALIZER ---------------- */
 const normalize = (a) => ({
   id: a.id,
   address_line1: a.address_line1 || "",
@@ -23,7 +23,7 @@ const normalize = (a) => ({
   active: a.active !== undefined ? Boolean(a.active) : true,
 });
 
-/* ================= THUNKS ================= */
+/* ---------------- THUNKS ---------------- */
 export const fetchAddresses = createAsyncThunk(
   "address/fetchAll",
   async (_, thunkAPI) => {
@@ -48,12 +48,6 @@ export const addAddress = createAsyncThunk(
   }
 );
 
-/* ================= SAFE UPDATE ================= */
-/*
-IMPORTANT:
-Do NOT send partial overwrite blindly from UI.
-Backend should accept partial updates OR you must merge.
-*/
 export const editAddress = createAsyncThunk(
   "address/update",
   async ({ id, data }, thunkAPI) => {
@@ -78,12 +72,12 @@ export const removeAddress = createAsyncThunk(
   }
 );
 
-/* ================= SEPARATE DEFAULT FLOW ================= */
 export const changeDefaultAddress = createAsyncThunk(
   "address/setDefault",
   async (id, thunkAPI) => {
     try {
       const res = await setDefaultAddress(id);
+      console.log("SET DEFAULT RESPONSE:", res.data);
       return normalize(res.data);
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -91,7 +85,7 @@ export const changeDefaultAddress = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
+/* ---------------- SLICE ---------------- */
 const addressSlice = createSlice({
   name: "address",
   initialState: {
@@ -110,48 +104,48 @@ const addressSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ===== FETCH ===== */
+      /* -------- FETCH -------- */
+      .addCase(fetchAddresses.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchAddresses.fulfilled, (state, action) => {
-        state.addresses = action.payload;
         state.loading = false;
+        state.addresses = action.payload;
+      })
+      .addCase(fetchAddresses.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
-      /* ===== ADD ===== */
+      /* -------- ADD -------- */
       .addCase(addAddress.fulfilled, (state, action) => {
         state.addresses.unshift(action.payload);
-        state.loading = false;
       })
 
-      /* ===== UPDATE (FULL EDIT ONLY) ===== */
+      /* -------- EDIT -------- */
       .addCase(editAddress.fulfilled, (state, action) => {
         const updated = action.payload;
 
         state.addresses = state.addresses.map((addr) =>
           addr.id === updated.id ? updated : addr
         );
-
-        state.loading = false;
       })
 
-      /* ===== DELETE ===== */
+      /* -------- DELETE -------- */
       .addCase(removeAddress.fulfilled, (state, action) => {
         state.addresses = state.addresses.filter(
           (addr) => addr.id !== action.payload
         );
-        state.loading = false;
       })
 
-      /* ===== DEFAULT ADDRESS ===== */
+      /* -------- SET DEFAULT (IMPORTANT FIX) -------- */
       .addCase(changeDefaultAddress.fulfilled, (state, action) => {
         const updated = action.payload;
 
-        state.addresses = state.addresses.map((addr) =>
-          addr.id === updated.id
-            ? updated
-            : { ...addr, is_default: false }
-        );
-
-        state.loading = false;
+        state.addresses = state.addresses.map((addr) => ({
+          ...addr,
+          is_default: addr.id === updated.id,
+        }));
       });
   },
 });

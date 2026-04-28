@@ -216,27 +216,75 @@ exports.deleteAddress = async (req, res) => {
   }
 };
 
+// exports.setDefaultAddress = async (req, res) => {
+//   const client = await pool.connect();
+
+//   try {
+//     const { id: userId } = req.user;
+//     const { id } = req.params;
+
+//     const result = await client.query(
+//       `UPDATE addresses
+//        SET is_default = CASE WHEN id = $1 THEN true ELSE false END
+//        WHERE user_id = $2
+//        RETURNING *`,
+//       [id, userId]
+//     );
+
+//     if (!result.rows.length) {
+//       return res.status(404).json({ message: "Address not found" });
+//     }
+
+//     res.json(result.rows.find(a => a.id === id));
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   } finally {
+//     client.release();
+//   }
+// };
+
 exports.setDefaultAddress = async (req, res) => {
   const client = await pool.connect();
 
   try {
     const { id: userId } = req.user;
-    const { id } = req.params;
+    const { id: addressId } = req.params;
 
-    const result = await client.query(
-      `UPDATE addresses
-       SET is_default = CASE WHEN id = $1 THEN true ELSE false END
-       WHERE user_id = $2
-       RETURNING *`,
-      [id, userId]
+    await client.query("BEGIN");
+
+    // 1. Check if address exists for this user
+    const check = await client.query(
+      `SELECT id FROM addresses WHERE id = $1 AND user_id = $2`,
+      [addressId, userId]
     );
 
-    if (!result.rows.length) {
+    if (check.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Address not found" });
     }
 
-    res.json(result.rows.find(a => a.id === id));
+    // 2. Remove default from all addresses
+    await client.query(
+      `UPDATE addresses SET is_default = false WHERE user_id = $1`,
+      [userId]
+    );
+
+    // 3. Set selected address as default
+    const result = await client.query(
+      `UPDATE addresses
+       SET is_default = true
+       WHERE id = $1 AND user_id = $2
+       RETURNING *`,
+      [addressId, userId]
+    );
+
+    await client.query("COMMIT");
+
+    res.json(result.rows[0]);
+
   } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("SET DEFAULT ERROR:", err); // 👈 helps debugging
     res.status(500).json({ message: err.message });
   } finally {
     client.release();
