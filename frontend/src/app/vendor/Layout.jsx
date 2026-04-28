@@ -1,18 +1,24 @@
-import React from "react";
-import VendorSidebar from "../../components/vendor/VendorSidebar";
-import VendorHeader from "../../components/vendor/VendorHeader";
+"use client";
 
-const layout = ({ children }) => {
+import React from "react";
+import { usePathname } from "next/navigation";
+// import VendorSidebar from "../../components/vendor/VendorSidebar";
+// import VendorHeader from "../../components/vendor/VendorHeader";
+
+const Layout = ({ children }) => {
+  const pathname = usePathname();
+ const hideLayout = pathname === "/vendor" || pathname === "/vendor/vendorlogin" || pathname === "/vendor/vendorregister";
   return (
     <div className="flex">
-      <VendorSidebar />
-
-      <div className="flex-1 ml-64">
-        <VendorHeader />
-        <main className="pt-16 ">{children}</main>
+      {/* {!hideLayout && <VendorSidebar />} */}
+      <div className={`flex-1 ${!hideLayout ? "ml-64" : ""}`}>
+        {/* {!hideLayout && <VendorHeader />} */}
+        <main className={!hideLayout ? "pt-16" : ""}>
+          {children}
+        </main>
       </div>
     </div>
   );
 };
 
-export default layout;
+export default Layout;
