@@ -1,19 +1,6 @@
 "use client";
 import Image from "next/image";
-import {
-  BadgePercent,
-  Heart,
-  ListOrdered,
-  MapPinCheckInside,
-  Eye,
-  Headset,
-  Lock,
-  ShieldCheck,
-  Tag,
-  Truck,
-  User,
-} from "lucide-react";
-
+import {BadgePercent,Heart,ListOrdered,MapPinCheckInside, Eye, Headset,Lock,ShieldCheck,Tag,Truck,User,} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadUserThunk, loginUserThunk } from "@/store/slices/authSlice";
@@ -62,7 +49,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
   if (isModal && !open) return null;
 
   const content = (
-    <div className="w-full bg-[#0B1F3A] px-4 py-7 rounded-2xl border-white/10">
+    <div className="w-full max-w-5xl mx-auto bg-[#0B1F3A] px-4 py-7 rounded-2xl border-white/10">
       <div className="flex justify-center">
         <Image
           src="/LOGOKAVAS.png"
@@ -74,7 +61,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
         />
       </div>
 
-      <div className="mt-3 w-full max-w-5xl bg-[#FFFFFF] relative rounded-sm shadow-lg border border-[#E5E5E5] overflow-hidden">
+      <div className="mt-3 w-full max-w-3xl bg-[#FFFFFF] relative rounded-sm shadow-lg border border-[#E5E5E5] overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="bg-[#0B1F3A] text-[#FFF8EC] p-6 sm:p-8">
             <h3 className="text-3xl font-bold tracking-tight">Welcome Back!</h3>
@@ -86,7 +73,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               <img
                 src="https://images.unsplash.com/photo-1658851665036-10a9982f9b2d?auto=format&fit=crop&w=520&q=80"
                 alt="Login Security"
-                className="w-full max-w-[360px] h-40 object-cover rounded-xl border border-white/10"
+                className="w-full max-w-90 h-40 object-cover rounded-xl border border-white/10"
                 loading="lazy"
               />
             </div>
@@ -299,7 +286,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
         }}
       >
         <div className="min-h-full flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-3xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
             {content}
           </div>
         </div>

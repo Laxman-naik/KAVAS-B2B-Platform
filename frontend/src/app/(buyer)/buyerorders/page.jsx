@@ -1,9 +1,13 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUserThunk } from "../../../store/slices/authSlice";
+import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import {
   Package,
   CheckCircle,
@@ -15,6 +19,9 @@ import {
   FileText,
   RotateCcw,
   Repeat,
+  Download,
+  ChevronRight,
+  Calendar,
 } from "lucide-react";
 
 const ordersData = [
@@ -60,12 +67,37 @@ const ordersData = [
 const Page = () => {
   const [tab, setTab] = useState("All Orders");
   const [timeFilter, setTimeFilter] = useState("All time");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateRange, setDateRange] = useState("");
+  const authUser = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
-  
+  const fullName = authUser?.full_name || authUser?.fullName || authUser?.name || "";
+  const [firstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
+  const user = {
+    firstName: authUser?.firstName || firstName,
+    lastName: authUser?.lastName || rest.join(" "),
+    email: authUser?.email || "",
+  };
+
+  const handleLogout = async () => {
+    await dispatch(logoutUserThunk());
+    router.push("/login");
+  };
+
   const filteredOrders = ordersData.filter((order) => {
+    const tabMatch = tab === "All Orders" || order.status === tab;
 
-    const tabMatch =
-      tab === "All Orders" || order.status === tab;
+    const statusMatch =
+      statusFilter === "All Status" || order.status === statusFilter;
+
+    const search = searchQuery.trim().toLowerCase();
+    const searchMatch =
+      !search ||
+      String(order.id).toLowerCase().includes(search) ||
+      order.items.some((it) => String(it.name).toLowerCase().includes(search));
 
     // TIME FILTER
     const orderDate = new Date(order.date);
@@ -91,174 +123,269 @@ const Page = () => {
       timeMatch = orderDate >= past;
     }
 
-    return tabMatch && timeMatch;
+    return tabMatch && statusMatch && searchMatch && timeMatch;
   });
+
+  const statusCounts = {
+    all: ordersData.length,
+    pending: ordersData.filter((o) => o.status === "Processing").length,
+    processing: ordersData.filter((o) => o.status === "Processing").length,
+    shipped: ordersData.filter((o) => o.status === "Shipped").length,
+    delivered: ordersData.filter((o) => o.status === "Delivered").length,
+    cancelled: ordersData.filter((o) => o.status === "Cancelled").length,
+  };
 
   return (
     <>
-      <div className="min-h-screen bg-[#FFF8EC]">
-        <div className="w-full bg-[#0B1F3A] text-[#FFF8EC] flex items-center justify-center text-center px-4 py-8">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center justify-center gap-2">
-              <Package size={24} /> My Orders
-            </h1>
-            <p className="text-xs sm:text-sm opacity-90 mt-1">
-              Track, manage, and reorder your bulk purchases
-            </p>
-          </div>
-        </div>
-        <div className="px-4 sm:px-6 lg:px-10 py-6">
-          <div className="flex flex-wrap gap-4 sm:gap-6 border-b border-[#E5E5E5] mb-6 text-xs sm:text-sm font-medium">
-            {["All Orders", "Processing", "Shipped", "Delivered", "Cancelled"].map(
-              (t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`pb-2 border-b-2 ${
-                    tab === t
-                      ? "border-[#D4AF37] text-[#0B1F3A]"
-                      : "border-transparent text-[#1A1A1A]/60"
-                  }`}
-                >
-                  {t}
-                </button>
-              )
-            )}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="border border-[#E5E5E5]">
-              <CardContent className="flex items-center gap-4 p-4">
-                <Package className="text-blue-500" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">5</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Total Orders</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-[#E5E5E5]">
-              <CardContent className="flex items-center gap-4 p-4">
-                <CheckCircle className="text-green-500" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">2</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Delivered</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-[#E5E5E5]">
-              <CardContent className="flex items-center gap-4 p-4">
-                <Hourglass className="text-yellow-500" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">2</p>
-                  <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border border-[#E5E5E5]">
-              <CardContent className="flex items-center gap-4 p-4">
-                <IndianRupee className="text-[#D4AF37]" />
-                <div>
-                  <p className="text-lg sm:text-xl font-bold">₹1,37,768</p>
-                  <p className="text-xs sm:text-sm text-gray-500">Total Spent</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="text"
-                placeholder="Search by order ID or product name..."
-                className="w-full h-10 pl-9 pr-3 rounded-md border border-[#E5E5E5] bg-white outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 hover:border-[#D4AF37] transition"
-              />
+      <div className="bg-[#0B1F3A] min-h-screen">
+        <div className="mx-auto bg-white border rounded-sm border-white/10">
+          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+            <div className="lg:sticky lg:top-24 self-start">
+              <ProfileSidebar user={user} onLogout={handleLogout} />
             </div>
-            <select
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-              className="border border-[#E5E5E5] bg-white rounded-md px-3 py-2 text-sm w-full sm:w-auto"
-            >
-              <option>All time</option>
-              <option>Last 30 days</option>
-              <option>Last 3 months</option>
-              <option>Last 6 months</option>
-            </select>
-          </div>
-          <div className="space-y-6">
-            {filteredOrders.map((order, index) => (
-              <Card key={index} className="border border-[#E5E5E5]">
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-                    <div>
-                      <p className="font-semibold">Order {order.id}</p>
-                      <p className="text-xs sm:text-sm text-gray-500">{order.date}</p>
-                    </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-4">
-                      <Badge
-                        className={`${
-                          order.status === "Delivered"
-                            ? "bg-green-100 text-green-600"
-                            : order.status === "Shipped"
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {order.status}
-                      </Badge>
-                      <p className="font-semibold text-[#0B1F3A]">
-                        ₹{order.total.toLocaleString()}
-                      </p>
-                    </div>
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">My Orders</h1>
+                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                    <span>Home</span>
+                    <ChevronRight size={14} />
+                    <span className="text-[#0B1F3A]">My Orders</span>
                   </div>
+                </div>
 
-                  <div className="space-y-3">
-                    {order.items.map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border border-[#E5E5E5] rounded-md p-3 bg-white"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-md object-cover border"
-                          />
+                <Button className="bg-[#0B1F3A] text-[#D4AF37] rounded-sm hover:bg-[#0B1F3A]/95 font-semibold w-full sm:w-auto">
+                  <Download size={16} className="mr-2" /> Download All Invoices
+                </Button>
+              </div>
 
-                          <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-xs sm:text-sm text-gray-500">
-                              {item.seller} • Qty: {item.qty}
-                            </p>
-                          </div>
-                        </div>
-
-                        <p className="text-[#0B1F3A] font-semibold">
-                          ₹{item.price.toLocaleString()}
-                        </p>
+              <Card className="rounded-sm border border-[#E5E5E5]">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                    <div className="lg:col-span-5">
+                      <p className="text-xs font-semibold text-[#0B1F3A] mb-2">Search Orders</p>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search by Order ID, Product or Brand..."
+                          className="pl-9 rounded-sm"
+                        />
                       </div>
-                    ))}
-                  </div>
+                    </div>
 
-                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-4">
-                    <Button className="bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] w-full sm:w-auto font-semibold">
-                      <Truck size={16} className="mr-1" /> Track Order
-                    </Button>
+                    <div className="lg:col-span-3">
+                      <p className="text-xs font-semibold text-[#0B1F3A] mb-2">Order Status</p>
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full h-10 rounded-sm border border-[#E5E5E5] bg-white px-3 text-sm"
+                      >
+                        <option>All Status</option>
+                        <option>Processing</option>
+                        <option>Shipped</option>
+                        <option>Delivered</option>
+                        <option>Cancelled</option>
+                      </select>
+                    </div>
 
-                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
-                      <FileText size={16} className="mr-1" /> Invoice
-                    </Button>
+                    <div className="lg:col-span-3">
+                      <p className="text-xs font-semibold text-[#0B1F3A] mb-2">Date Range</p>
+                      <div className="relative">
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <Input
+                          value={dateRange}
+                          onChange={(e) => setDateRange(e.target.value)}
+                          placeholder="Select Date Range"
+                          className="pr-9 rounded-sm"
+                        />
+                      </div>
+                    </div>
 
-                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
-                      <RotateCcw size={16} className="mr-1" /> Return
-                    </Button>
-
-                    <Button variant="outline" className="w-full sm:w-auto border-[#E5E5E5] hover:bg-[#FFF8EC] hover:text-[#0B1F3A]">
-                      <Repeat size={16} className="mr-1" /> Reorder
-                    </Button>
+                    <div className="lg:col-span-1">
+                      <p className="text-xs font-semibold text-[#0B1F3A] mb-2 opacity-0">Reset</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full rounded-sm border-[#E5E5E5]"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("All Status");
+                          setDateRange("");
+                          setTimeFilter("All time");
+                          setTab("All Orders");
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-blue-50 flex items-center justify-center">
+                      <Package className="text-blue-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">All Orders</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.all}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-yellow-50 flex items-center justify-center">
+                      <Hourglass className="text-yellow-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Pending</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.pending}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-indigo-50 flex items-center justify-center">
+                      <RotateCcw className="text-indigo-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Processing</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.processing}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-purple-50 flex items-center justify-center">
+                      <Truck className="text-purple-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Shipped</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.shipped}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-green-50 flex items-center justify-center">
+                      <CheckCircle className="text-green-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Delivered</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.delivered}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-sm border border-[#E5E5E5]">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-sm bg-red-50 flex items-center justify-center">
+                      <XCircle className="text-red-600" size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Cancelled</p>
+                      <p className="font-bold text-[#0B1F3A]">{statusCounts.cancelled}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="rounded-sm border border-[#E5E5E5]">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 text-xs text-gray-500">
+                          <th className="text-left font-medium px-4 py-3">Order Details</th>
+                          <th className="text-left font-medium px-4 py-3">Date</th>
+                          <th className="text-left font-medium px-4 py-3">Amount</th>
+                          <th className="text-left font-medium px-4 py-3">Status</th>
+                          <th className="text-left font-medium px-4 py-3">Payment</th>
+                          <th className="text-right font-medium px-4 py-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredOrders.flatMap((order) =>
+                          order.items.map((item, idx) => (
+                            <tr key={`${order.id}-${idx}`} className="border-t">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-12 h-12 rounded-sm object-cover border"
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="text-xs text-gray-500">Order ID</p>
+                                    <p className="font-semibold text-[#0B1F3A] truncate">{order.id}</p>
+                                    <p className="text-xs text-gray-500 truncate">{item.name}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-gray-600">{order.date}</td>
+                              <td className="px-4 py-4 font-semibold text-[#0B1F3A]">
+                                ₹{item.price.toLocaleString()}
+                              </td>
+                              <td className="px-4 py-4">
+                                <Badge
+                                  className={
+                                    order.status === "Delivered"
+                                      ? "bg-green-100 text-green-600"
+                                      : order.status === "Shipped"
+                                      ? "bg-blue-100 text-blue-600"
+                                      : order.status === "Cancelled"
+                                      ? "bg-red-100 text-red-600"
+                                      : "bg-yellow-100 text-yellow-700"
+                                  }
+                                >
+                                  {order.status}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-4 text-gray-600">Online Payment</td>
+                              <td className="px-4 py-4">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    className="rounded-sm border-[#E5E5E5] h-9"
+                                  >
+                                    View Details
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    className="rounded-sm border-[#E5E5E5] h-9 w-9 p-0"
+                                    title="Download"
+                                  >
+                                    <Download size={16} />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="px-4 py-3 border-t text-xs text-gray-500 flex items-center justify-between">
+                    <span>Showing 1 to {Math.min(filteredOrders.length, 12)} of {filteredOrders.length} orders</span>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0">1</Button>
+                      <Button variant="outline" className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0">2</Button>
+                      <Button variant="outline" className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0">3</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
