@@ -22,11 +22,10 @@ exports.createAddress = async (req, res) => {
 
     await client.query("BEGIN");
 
+    // reset previous default if needed
     if (is_default) {
       await client.query(
-        `UPDATE addresses
-         SET is_default = false
-         WHERE user_id = $1`,
+        `UPDATE addresses SET is_default = false WHERE user_id = $1`,
         [userId]
       );
     }
@@ -56,16 +55,15 @@ exports.createAddress = async (req, res) => {
         state,
         country,
         postal_code,
-        phone || null,
-        label || "Address",
-        type || "other",
+        phone,
+        label,
+        type,
         is_default,
         active,
       ]
     );
 
     await client.query("COMMIT");
-
     res.status(201).json(result.rows[0]);
   } catch (err) {
     await client.query("ROLLBACK");
@@ -115,29 +113,26 @@ exports.updateAddress = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // Only if user explicitly sets default
-    if (is_default) {
+    if (is_default === true) {
       await client.query(
-        `UPDATE addresses
-         SET is_default = false
-         WHERE user_id = $1`,
+        `UPDATE addresses SET is_default = false WHERE user_id = $1`,
         [userId]
       );
     }
 
     const result = await client.query(
       `UPDATE addresses SET
-        address_line1 = $1,
-        address_line2 = $2,
-        city = $3,
-        state = $4,
-        country = $5,
-        postal_code = $6,
-        phone = $7,
-        label = $8,
-        type = $9,
-        is_default = $10,
-        active = $11
+        address_line1 = COALESCE($1, address_line1),
+        address_line2 = COALESCE($2, address_line2),
+        city = COALESCE($3, city),
+        state = COALESCE($4, state),
+        country = COALESCE($5, country),
+        postal_code = COALESCE($6, postal_code),
+        phone = COALESCE($7, phone),
+        label = COALESCE($8, label),
+        type = COALESCE($9, type),
+        is_default = COALESCE($10, is_default),
+        active = COALESCE($11, active)
        WHERE id = $12 AND user_id = $13
        RETURNING *`,
       [
@@ -147,11 +142,11 @@ exports.updateAddress = async (req, res) => {
         state,
         country,
         postal_code,
-        phone || null,
-        label || "Address",
-        type || "other",
-        is_default ?? false,
-        active ?? true,
+        phone,
+        label,
+        type,
+        is_default,
+        active,
         id,
         userId,
       ]
@@ -163,7 +158,6 @@ exports.updateAddress = async (req, res) => {
     }
 
     await client.query("COMMIT");
-
     res.json(result.rows[0]);
   } catch (err) {
     await client.query("ROLLBACK");
@@ -195,19 +189,20 @@ exports.deleteAddress = async (req, res) => {
     }
 
     const deleted = result.rows[0];
+
+    // safer fallback: only set default if none exists
     if (deleted.is_default) {
-      await client.query(
-        `UPDATE addresses
-         SET is_default = true
-         WHERE id = (
-           SELECT id
-           FROM addresses
-           WHERE user_id = $1
-           ORDER BY created_at DESC
-           LIMIT 1
-         )`,
+      const remaining = await client.query(
+        `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
         [userId]
       );
+
+      if (remaining.rows.length > 0) {
+        await client.query(
+          `UPDATE addresses SET is_default = true WHERE id = $1`,
+          [remaining.rows[0].id]
+        );
+      }
     }
 
     await client.query("COMMIT");
@@ -228,35 +223,20 @@ exports.setDefaultAddress = async (req, res) => {
     const { id: userId } = req.user;
     const { id } = req.params;
 
-    await client.query("BEGIN");
-
-    // remove previous default
-    await client.query(
-      `UPDATE addresses
-       SET is_default = false
-       WHERE user_id = $1`,
-      [userId]
-    );
-
-    // set new default
     const result = await client.query(
       `UPDATE addresses
-       SET is_default = true
-       WHERE id = $1 AND user_id = $2
+       SET is_default = CASE WHEN id = $1 THEN true ELSE false END
+       WHERE user_id = $2
        RETURNING *`,
       [id, userId]
     );
 
     if (!result.rows.length) {
-      await client.query("ROLLBACK");
       return res.status(404).json({ message: "Address not found" });
     }
 
-    await client.query("COMMIT");
-
-    res.json(result.rows[0]);
+    res.json(result.rows.find(a => a.id === id));
   } catch (err) {
-    await client.query("ROLLBACK");
     res.status(500).json({ message: err.message });
   } finally {
     client.release();

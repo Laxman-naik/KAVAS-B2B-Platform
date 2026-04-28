@@ -230,12 +230,9 @@ export default function Page() {
                           checked={Boolean(a.active)}
                           onCheckedChange={(checked) =>
                             dispatch(editAddress({
-                              id: a.id,
-                              data: {
-                                active: checked
-                              }
-                            }))
-                          }
+                                id: a.id,
+                                data: {...a, active: checked,},
+                              }))}
                         />
                       </div>
                       <div className="mt-3 space-y-2">
@@ -305,10 +302,6 @@ export default function Page() {
             <Input placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} />
             <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} />
             <Input placeholder="Postal Code" value={newAddress.postal_code} onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })} />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={newAddress.is_default} onChange={(e) => setNewAddress({ ...newAddress, is_default: e.target.checked })} />
-              Set as default
-            </label>
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={resetForm}>Cancel</Button>
