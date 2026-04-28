@@ -15,64 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { ChevronRight, Plus, MapPin, Home, CheckCircle2, Trash2, Pencil, User, Phone, } from "lucide-react";
 
-// const seedAddresses = [
-//   {
-//     id: "addr_home",
-//     title: "Home Address",
-//     tag: "Home",
-//     isDefault: true,
-//     active: true,
-//     name: "Rahul Kumar",
-//     phone: "+91 6302259849",
-//     addressLine:
-//       "123, Green Hills Colony, Hyderabad, Telangana - 500001, India",
-//   },
-//   {
-//     id: "addr_office",
-//     title: "Office Address",
-//     tag: "Work",
-//     isDefault: false,
-//     active: true,
-//     name: "Rahul Kumar",
-//     phone: "+91 6302259849",
-//     addressLine:
-//       "8-2-293/82/A, 2nd Floor, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034, India",
-//   },
-//   {
-//     id: "addr_warehouse",
-//     title: "Warehouse Address",
-//     tag: "Other",
-//     isDefault: false,
-//     active: true,
-//     name: "Rahul Kumar",
-//     phone: "+91 6302259849",
-//     addressLine:
-//       "Survey No. 45, Shamshan Narayanapur, Near ORR, Ranga Reddy District, Hyderabad, Telangana - 501359, India",
-//   },
-//   {
-//     id: "addr_billing",
-//     title: "Billing Address",
-//     tag: "Billing",
-//     isDefault: false,
-//     active: true,
-//     name: "Rahul Kumar",
-//     phone: "+91 6302259849",
-//     addressLine:
-//       "Flat No. 502, Sree Nilayam Apartments, Ameerpet, Hyderabad, Telangana - 500016, India",
-//   },
-//   {
-//     id: "addr_secondary",
-//     title: "Secondary Home",
-//     tag: "Home",
-//     isDefault: false,
-//     active: true,
-//     name: "Rahul Kumar",
-//     phone: "+91 6302259849",
-//     addressLine:
-//       "H. No. 12-5-678/1, Street No. 3, Kukatpally, Hyderabad, Telangana - 500072, India",
-//   },
-// ];
-
 const tagStyles = {
   Home: "bg-green-100 text-green-700",
   Work: "bg-blue-100 text-blue-700",
@@ -90,7 +32,10 @@ export default function Page() {
   const user = { firstName: authUser?.firstName || firstName, lastName: authUser?.lastName || rest.join(" "), email: authUser?.email || "", };
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [newAddress, setNewAddress] = useState({ address_line1: "", address_line2: "", city: "", state: "", country: "", postal_code: "", });
+  const [newAddress, setNewAddress] = useState({
+    address_line1: "", address_line2: "", city: "", state: "", country: "", postal_code: "", phone: "",
+    label: "", type: "home", is_default: false, active: true,
+  });
 
   const resetForm = () => {
     setOpen(false);
@@ -102,19 +47,16 @@ export default function Page() {
       state: "",
       country: "",
       postal_code: "",
+      phone: "",
+      label: "",
+      type: "home",
+      is_default: false,
+      active: true,
     });
   };
 
   const handleAddAddress = async () => {
-    const payload = {
-      address_line1: newAddress.address_line1,
-      address_line2: newAddress.address_line2,
-      city: newAddress.city,
-      state: newAddress.state,
-      country: newAddress.country,
-      postal_code: newAddress.postal_code,
-    };
-
+    const payload = { ...newAddress };
     await dispatch(addAddress(payload));
     resetForm();
   };
@@ -141,41 +83,50 @@ export default function Page() {
       state: addr.state || "",
       country: addr.country || "",
       postal_code: addr.postal_code || "",
+      phone: addr.phone || "",
+      label: addr.label || "",
+      type: addr.type || "other",
+      is_default: addr.is_default || false,
+      active: addr.active ?? true
     });
     setOpen(true);
   };
 
   const normalizedAddresses = useMemo(() => {
-    if (Array.isArray(addresses) && addresses.length > 0) {
-      return addresses.map((a, idx) => {
-        const title = a?.label || a?.title || `Address ${idx + 1}`;
-        const tag = a?.tag || a?.type || "Other";
-        const addressLine = [
-          a?.address_line1,
-          a?.address_line2,
-          a?.city,
-          a?.state,
-          a?.country,
-          a?.postal_code ? `- ${a.postal_code}` : "",
-        ]
-          .filter(Boolean)
-          .join(", ");
+    if (!Array.isArray(addresses) || addresses.length === 0) return [];
 
-        return {
-          id: a?.id ?? `addr_${idx}`,
-          title,
-          tag: tagStyles[tag] ? tag : "Other",
-          isDefault: Boolean(a?.isDefault || a?.is_default),
-          active: a?.active !== undefined ? Boolean(a.active) : true,
-          name: a?.name || fullName || "",
-          phone: a?.phone || authUser?.phone || "",
-          addressLine,
-        };
-      });
-    }
+    return addresses.map((a, idx) => {
+      const type = (a?.type || "other").toLowerCase();
 
-    return [];
-  }, [addresses, authUser?.phone, fullName]);
+      const addressLine = [
+        a?.address_line1,
+        a?.address_line2,
+        a?.city,
+        a?.state,
+        a?.country,
+        a?.postal_code ? `- ${a.postal_code}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      return {
+        ...a,
+        id: a?.id ?? `addr_${idx}`,
+        title: a?.label || `Address ${idx + 1}`,
+        tag: type.charAt(0).toUpperCase() + type.slice(1),
+        isDefault: Boolean(a?.is_default),
+        active: a?.active ?? true,
+
+        // 👇 FIX HERE
+        name:
+          a?.name ||
+          `${authUser?.firstName || firstName} ${authUser?.lastName || rest.join(" ")}`.trim(),
+
+        phone: a?.phone || authUser?.phone || "",
+        addressLine,
+      };
+    });
+  }, [addresses, authUser, firstName, rest]);
 
   const stats = useMemo(() => {
     const total = normalizedAddresses.length;
@@ -194,26 +145,20 @@ export default function Page() {
     <div className="bg-[#0B1F3A] min-h-screen">
       <div className="mx-auto bg-white border rounded-sm border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-          <div className="lg:sticky lg:top-24 self-start">
-            <ProfileSidebar user={user} onLogout={handleLogout} />
-          </div>
-
+          <div className="lg:sticky lg:top-24 self-start"><ProfileSidebar user={user} onLogout={handleLogout} /></div>
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">My Addresses</h1>
                 <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                  <Link href="/" className="hover:underline">Home</Link>
-                  <ChevronRight size={14} />
+                  <Link href="/" className="hover:underline">Home</Link><ChevronRight size={14} />
                   <span className="text-[#0B1F3A]">My Addresses</span>
                 </div>
               </div>
-
               <Button onClick={() => setOpen(true)} className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto">
                 <Plus size={16} className="mr-2" /> Add New Address
               </Button>
             </div>
-
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Card className="rounded-sm border border-[#E5E5E5]">
                 <CardContent className="p-4 flex items-center gap-3">
@@ -274,23 +219,24 @@ export default function Page() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {a.isDefault ? (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
-                                Default
-                              </span>
-                            ) : null}
+                            {!a.isDefault && (<Button variant="outline" className="h-8 text-xs" onClick={() => dispatch(changeDefaultAddress(a.id))}>Set Default</Button>)}
                             <p className="font-semibold text-[#0B1F3A] text-sm truncate">{a.title}</p>
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}>
                               {a.tag}
                             </span>
                           </div>
                         </div>
-                        <Switch onCheckedChange={(checked) =>
-                          dispatch(editAddress({
-                            id: a.id,
-                            data: { active: checked }
-                          }))
-                        } />
+                        <Switch
+                          checked={Boolean(a.active)}
+                          onCheckedChange={(checked) =>
+                            dispatch(editAddress({
+                              id: a.id,
+                              data: {
+                                active: checked
+                              }
+                            }))
+                          }
+                        />
                       </div>
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center gap-2 text-xs text-gray-700">
@@ -345,12 +291,24 @@ export default function Page() {
         <DialogContent className="rounded-2xl w-[95%] sm:max-w-md">
           <DialogHeader><DialogTitle>{editId ? "Edit Address" : "Add Address"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <Input placeholder="Label (e.g. Home Address)" value={newAddress.label} onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })} />
+            <select value={newAddress.type} onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}>
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="other">Other</option>
+              <option value="billing">Billing</option>
+            </select>
             <Input placeholder="Address Line 1" value={newAddress.address_line1} onChange={(e) => setNewAddress({ ...newAddress, address_line1: e.target.value })} />
             <Input placeholder="Address Line 2" value={newAddress.address_line2} onChange={(e) => setNewAddress({ ...newAddress, address_line2: e.target.value })} />
+            <Input placeholder="Phone" value={newAddress.phone} onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })} />
             <Input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} />
             <Input placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} />
             <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} />
             <Input placeholder="Postal Code" value={newAddress.postal_code} onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })} />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={newAddress.is_default} onChange={(e) => setNewAddress({ ...newAddress, is_default: e.target.checked })} />
+              Set as default
+            </label>
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={resetForm}>Cancel</Button>
