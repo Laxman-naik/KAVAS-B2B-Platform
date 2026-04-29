@@ -7,7 +7,14 @@ import { usePathname } from "next/navigation";
 
 const Layout = ({ children }) => {
   const pathname = usePathname();
- const hideLayout = pathname === "/vendor" || pathname === "/vendor/vendorlogin" || pathname === "/vendor/vendorregister";
+  const hideLayout = [
+    "/vendor",
+    "/vendor/vendorlogin",
+    "/vendor/vendorregister",
+    "/vendor/vendorbusinessdetails",
+    "/vendor/vendorstoredetails",
+  ].includes(pathname);
+
   return (
     <div className="flex">
       {/* {!hideLayout && <VendorSidebar />} */}

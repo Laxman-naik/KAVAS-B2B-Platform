@@ -57,13 +57,13 @@ const VendorFeatures = () => {
   ];
 
   return (
-    <section id="features" className="bg-white py-14">
+    <section id="features" className="bg-[#FFF8EC] py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1F3A]">
             Everything You Need to Succeed
           </h2>
-          <div className="mt-3 mx-auto h-[3px] w-10 rounded-full bg-[#D4AF37]" />
+          <div className="mt-3 mx-auto h-0.75 w-10 rounded-full bg-[#D4AF37]" />
         </div>
 
         <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">

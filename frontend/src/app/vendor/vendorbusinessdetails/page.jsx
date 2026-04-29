@@ -145,14 +145,12 @@ export default function VendorBusinessDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F3F9FF] via-white to-white">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-[#E5E5E5]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-[#FFF8EC]">
+      <header className="w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link href="/vendor" className="flex items-center gap-2">
             <Image src="/LOGOKAVAS.png" alt="KAVAS" width={150} height={48} className="h-9 w-auto" priority />
-            <div className="leading-none">
-              <div className="text-[11px] font-semibold tracking-wide text-[#0B1F3A]/80">SELLER HUB</div>
-            </div>
+
           </Link>
 
           <div className="hidden md:flex items-center gap-3">
@@ -182,7 +180,7 @@ export default function VendorBusinessDetailsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+      <main className="w-full px-4 sm:px-6 lg:px-10 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <aside className="lg:col-span-3">
             <div className="rounded-2xl bg-white border border-[#E5E5E5] shadow-sm p-5">
@@ -229,7 +227,9 @@ export default function VendorBusinessDetailsPage() {
               </div>
 
               <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="grid gap-2">
+                <div className="text-xs font-bold text-[#0B1F3A]">Business Details</div>
+
+                <div className="grid gap-2 mt-3">
                   {navItems.map((x) => (
                     <button
                       type="button"
@@ -242,34 +242,26 @@ export default function VendorBusinessDetailsPage() {
                       className="flex w-full items-center justify-between gap-2 text-[11px] rounded-md px-2 py-2 hover:bg-[#F3F9FF]"
                     >
                       <span className="flex items-center gap-2">
+
+                        {/* ICON */}
                         {x.complete ? (
                           <CheckCircle2 size={14} className="text-[#0B1F3A]" />
                         ) : (
-                          <Circle
-                            size={14}
-                            className={
-                              x.id === activeSection || (x.id === "business_details" && (activeSection === "business_info" || activeSection === "bank_details"))
-                                ? "text-[#0B1F3A] fill-[#0B1F3A]"
-                                : "text-gray-300"
-                            }
-                          />
+                          <Circle size={14} className="text-gray-300" />
                         )}
-                        <span
-                          className={
-                            x.id === activeSection || (x.id === "business_details" && (activeSection === "business_info" || activeSection === "bank_details"))
-                              ? "text-[#0B1F3A] font-bold"
-                              : "text-gray-600 font-semibold"
-                          }
-                        >
+
+                        {/* TEXT */}
+                        <span className="text-gray-600 font-semibold">
                           {x.label}
                         </span>
+
                       </span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-5 border-t border-[#E5E5E5] pt-5">
+              {/* <div className="mt-5 border-t border-[#E5E5E5] pt-5">
                 <div className="text-xs font-bold text-[#0B1F3A]">Listing &amp; Stock Availability</div>
                 <div className="mt-3 grid gap-2">
                   {[
@@ -282,7 +274,7 @@ export default function VendorBusinessDetailsPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           </aside>
 
@@ -515,11 +507,10 @@ export default function VendorBusinessDetailsPage() {
                   <button
                     type="submit"
                     disabled={!(businessInfoComplete && bankDetailsComplete)}
-                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${
-                      businessInfoComplete && bankDetailsComplete
+                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${businessInfoComplete && bankDetailsComplete
                         ? "bg-[#0B1F3A]"
                         : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     Save &amp; Continue →
                   </button>

@@ -788,7 +788,7 @@ const Navbar = () => {
               </div>
 
               <div
-                className={`fixed inset-0 z-[60] lg:hidden ${
+                className={`fixed inset-0 z-60 lg:hidden ${
                   mobileMenu ? "" : "pointer-events-none"
                 }`}
                 aria-hidden={!mobileMenu}

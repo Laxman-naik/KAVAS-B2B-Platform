@@ -50,7 +50,7 @@ const VendorNavbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E5E5E5] bg-white">
+    <header className="sticky top-0 z-50 border-b border-[#E5E5E5] bg-[#0B1F3A]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/vendor" className="flex items-center gap-3">
@@ -63,7 +63,7 @@ const VendorNavbar = () => {
               priority
             />
             <div className="leading-tight">
-              <div className="text-[10px] font-semibold tracking-wide text-[#0B1F3A]">
+              <div className="text-[10px] font-semibold tracking-wide text-white">
                 SELLER HUB
               </div>
             </div>
@@ -74,7 +74,7 @@ const VendorNavbar = () => {
               <a
                 key={x.href}
                 href={x.href}
-                className="text-sm font-semibold text-[#0B1F3A] hover:text-[#0B1F3A]/80"
+                className="text-sm font-semibold text-white hover:text-white/80"
               >
                 {x.label}
               </a>
@@ -84,7 +84,7 @@ const VendorNavbar = () => {
               <button
                 type="button"
                 onClick={() => setResourcesOpen((s) => !s)}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-[#0B1F3A] hover:text-[#0B1F3A]/80"
+                className="inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-white/80"
                 aria-expanded={resourcesOpen}
                 aria-haspopup="menu"
               >
@@ -128,7 +128,7 @@ const VendorNavbar = () => {
             <Link
               href="/help"
               onClick={() => setResourcesOpen(false)}
-              className="text-sm font-semibold text-[#0B1F3A] hover:text-[#0B1F3A]/80"
+              className="text-sm font-semibold text-white hover:text-white/80"
             >
               Help
             </Link>
@@ -137,13 +137,13 @@ const VendorNavbar = () => {
           <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/vendor/vendorlogin"
-              className="rounded-sm border border-[#0B1F3A]/25 px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+              className="rounded-sm border border-white/25 px-4 py-2 text-sm font-semibold text-[#0B1F3A] bg-white hover:opacity-90"
             >
               Login
             </Link>
             <Link
               href="/vendor/vendorregister"
-              className="rounded-sm bg-[#0B1F3A] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              className="rounded-sm bg-white px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:opacity-90"
             >
               Create Account
             </Link>
