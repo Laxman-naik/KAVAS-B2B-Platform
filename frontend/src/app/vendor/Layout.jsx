@@ -2,8 +2,8 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-// import VendorSidebar from "../../components/vendor/VendorSidebar";
-// import VendorHeader from "../../components/vendor/VendorHeader";
+import VendorSidebar from "../../components/vendor/VendorSidebar";
+import VendorHeader from "../../components/vendor/VendorHeader";
 
 const Layout = ({ children }) => {
   const pathname = usePathname();
@@ -17,9 +17,9 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex">
-      {/* {!hideLayout && <VendorSidebar />} */}
+      {!hideLayout && <VendorSidebar />}
       <div className={`flex-1 ${!hideLayout ? "ml-64" : ""}`}>
-        {/* {!hideLayout && <VendorHeader />} */}
+        {!hideLayout && <VendorHeader />}
         <main className={!hideLayout ? "pt-16" : ""}>
           {children}
         </main>
