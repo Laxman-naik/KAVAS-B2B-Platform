@@ -29,44 +29,22 @@ const registerVendor = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const vendorResult = await client.query(`
+    const result = await client.query(`
       INSERT INTO vendorprofile (email, phone, password_hash)
       VALUES ($1, $2, $3)
-      RETURNING id, email, phone
+      RETURNING id, email, phone, email_verified, phone_verified
     `, [email, phone, hashedPassword]);
-
-    const vendor = vendorResult.rows[0];
-
-    const onboardingResult = await client.query(`
-      INSERT INTO vendor_onboarding (vendor_id, status)
-      VALUES ($1, 'draft')
-      RETURNING id
-    `, [vendor.id]);
-
-    const onboarding = onboardingResult.rows[0];
 
     await client.query("COMMIT");
 
-    const token = jwt.sign(
-      { id: vendor.id, type: "vendor" },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
     res.json({
-      message: "Vendor registered successfully",
-      token,
-      vendor,
-      onboarding_id: onboarding.id
+      message: "Registered. Please verify OTP",
+      vendor: result.rows[0]
     });
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
-
-    res.status(400).json({
-      message: err.message || "Registration failed"
-    });
+    res.status(400).json({ message: err.message });
   } finally {
     client.release();
   }
@@ -74,51 +52,153 @@ const registerVendor = async (req, res) => {
 
 const sendOtp = async (req, res) => {
   try {
-    const { phone, email } = req.body;
+    const { email, phone } = req.body;
 
-    if (!phone && !email) {
-      return res.status(400).json({ message: "Phone or email required" });
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone required" });
+    }
+
+    const identifier = email || phone;
+
+    const check = await db.query(`
+      SELECT id FROM vendorprofile
+      WHERE email = $1 OR phone = $2
+    `, [email, phone]);
+
+    if (!check.rows.length) {
+      return res.status(404).json({ message: "Vendor not found. Register first." });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
 
-    await db.query(`
-      INSERT INTO otp_verifications (identifier, otp, expires_at)
-      VALUES ($1, $2, now() + interval '5 minutes')
-    `, [phone || email, otp]);
+    if (email) {
+      await db.query(`
+        UPDATE vendorprofile
+        SET email_otp = $1,
+            email_otp_expires = now() + interval '5 minutes'
+        WHERE email = $2
+      `, [otp, email]);
+    }
+
+    if (phone) {
+      await db.query(`
+        UPDATE vendorprofile
+        SET phone_otp = $1,
+            phone_otp_expires = now() + interval '5 minutes'
+        WHERE phone = $2
+      `, [otp, phone]);
+    }
 
     console.log("OTP:", otp);
 
     res.json({ message: "OTP sent" });
 
   } catch (err) {
-    console.error("OTP ERROR:", err);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
 
 const verifyOtp = async (req, res) => {
+  const client = await db.connect();
+
   try {
     const { identifier, otp } = req.body;
 
-    const result = await db.query(`
-      SELECT * FROM otp_verifications
-      WHERE identifier = $1
-        AND otp = $2
-        AND expires_at > now()
-      ORDER BY created_at DESC
-      LIMIT 1
-    `, [identifier, otp]);
+    await client.query("BEGIN");
 
-    if (!result.rows.length) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
+    let user;
+
+    // check email
+    let result = await client.query(`
+      SELECT * FROM vendorprofile WHERE email = $1
+    `, [identifier]);
+
+    if (result.rows.length) {
+      user = result.rows[0];
+
+      if (user.email_otp == otp && user.email_otp_expires > new Date()) {
+        await client.query(`
+          UPDATE vendorprofile
+          SET email_verified = true,
+              email_otp = NULL,
+              email_otp_expires = NULL
+          WHERE email = $1
+        `, [identifier]);
+      }
     }
 
-    res.json({ message: "OTP verified" });
+    // check phone
+    result = await client.query(`
+      SELECT * FROM vendorprofile WHERE phone = $1
+    `, [identifier]);
+
+    if (result.rows.length) {
+      user = result.rows[0];
+
+      if (user.phone_otp == otp && user.phone_otp_expires > new Date()) {
+        await client.query(`
+          UPDATE vendorprofile
+          SET phone_verified = true,
+              phone_otp = NULL,
+              phone_otp_expires = NULL
+          WHERE phone = $1
+        `, [identifier]);
+      }
+    }
+
+    // 🔥 check both verified
+    const check = await client.query(`
+      SELECT * FROM vendorprofile
+      WHERE email = $1 OR phone = $2
+    `, [identifier, identifier]);
+
+    const vendor = check.rows[0];
+
+    if (vendor.email_verified && vendor.phone_verified) {
+
+      // create onboarding only once
+      const existing = await client.query(`
+        SELECT id FROM vendor_onboarding WHERE vendor_id = $1
+      `, [vendor.id]);
+
+      let onboardingId;
+
+      if (!existing.rows.length) {
+        const onboarding = await client.query(`
+          INSERT INTO vendor_onboarding (vendor_id, status)
+          VALUES ($1, 'draft')
+          RETURNING id
+        `, [vendor.id]);
+
+        onboardingId = onboarding.rows[0].id;
+      } else {
+        onboardingId = existing.rows[0].id;
+      }
+
+      await client.query("COMMIT");
+
+      const token = jwt.sign(
+        { id: vendor.id, type: "vendor" },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      return res.json({
+        message: "Verification complete. Proceed to onboarding",
+        token,
+        onboarding_id: onboardingId
+      });
+    }
+
+    await client.query("COMMIT");
+
+    return res.json({ message: "OTP verified" });
 
   } catch (err) {
-    console.error(err);
+    await client.query("ROLLBACK");
     res.status(500).json({ message: "Verification failed" });
+  } finally {
+    client.release();
   }
 };
 
