@@ -65,30 +65,35 @@ const sendOtp = async (req, res) => {
   try {
     const { email, phone } = req.body;
 
-    if (!email || !phone) {
-      return res.status(400).json({ message: "Email & phone required" });
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone required" });
     }
 
-    const emailOtp = Math.floor(100000 + Math.random() * 900000);
-    const phoneOtp = Math.floor(100000 + Math.random() * 900000);
+    if (email) {
+      const emailOtp = Math.floor(100000 + Math.random() * 900000);
 
-    otpStore.set(email, {
-      otp: emailOtp,
-      expires: Date.now() + 5 * 60 * 1000,
-      verified: false
-    });
+      otpStore.set(email, {
+        otp: emailOtp,
+        expires: Date.now() + 5 * 60 * 1000,
+        verified: false,
+      });
 
-    otpStore.set(phone, {
-      otp: phoneOtp,
-      expires: Date.now() + 5 * 60 * 1000,
-      verified: false
-    });
+      console.log("Email OTP:", emailOtp);
+    }
 
-    console.log("Email OTP:", emailOtp);
-    console.log("Phone OTP:", phoneOtp);
+    if (phone) {
+      const phoneOtp = Math.floor(100000 + Math.random() * 900000);
 
-    res.json({ message: "OTP sent" ,EmailOTP : emailOtp, PhoneOTP: phoneOtp });
+      otpStore.set(phone, {
+        otp: phoneOtp,
+        expires: Date.now() + 5 * 60 * 1000,
+        verified: false,
+      });
 
+      console.log("Phone OTP:", phoneOtp);
+    }
+
+    res.json({ message: "OTP sent" });
   } catch (err) {
     res.status(500).json({ message: "Failed to send OTP" });
   }

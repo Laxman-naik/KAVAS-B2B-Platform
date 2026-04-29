@@ -1,9 +1,10 @@
-import React from 'react'
+import { authapi } from "../lib/axios";
 
-const vendorServer = () => {
-  return (
-    <div>vendorServer</div>
-  )
-}
+export const sendVendorOtpAPI = (data) =>
+  authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
 
-export default vendorServer
+export const verifyVendorOtpAPI = (data) =>
+  authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
+
+export const registerVendorAPI = (data) =>
+  authapi.post("/api/vendor/register", data);
