@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+const otpStore = new Map();
 
 const registerVendor = async (req, res) => {
   const client = await db.connect();
@@ -8,8 +9,13 @@ const registerVendor = async (req, res) => {
   try {
     const { email, phone, password, confirmPassword } = req.body;
 
-    if (!email || !phone || !password || !confirmPassword) {
-      return res.status(400).json({ message: "All fields required" });
+    const emailData = otpStore.get(email);
+    const phoneData = otpStore.get(phone);
+
+    if (!emailData?.verified || !phoneData?.verified) {
+      return res.status(400).json({
+        message: "Verify OTP before registration"
+      });
     }
 
     if (password !== confirmPassword) {
@@ -18,28 +24,33 @@ const registerVendor = async (req, res) => {
 
     await client.query("BEGIN");
 
-    const existingVendor = await client.query(
-      `SELECT id FROM vendorprofile WHERE email = $1 OR phone = $2`,
-      [email, phone]
-    );
-
-    if (existingVendor.rows.length) {
-      throw new Error("Vendor already exists");
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const result = await client.query(`
-      INSERT INTO vendorprofile (email, phone, password_hash)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, phone, email_verified, phone_verified
+    const vendorResult = await client.query(`
+      INSERT INTO vendorprofile (
+        email, phone, password_hash, email_verified, phone_verified
+      )
+      VALUES ($1, $2, $3, true, true)
+      RETURNING id
     `, [email, phone, hashedPassword]);
+
+    const vendorId = vendorResult.rows[0].id;
+
+    const onboarding = await client.query(`
+      INSERT INTO vendor_onboarding (vendor_id, status)
+      VALUES ($1, 'draft')
+      RETURNING id
+    `, [vendorId]);
 
     await client.query("COMMIT");
 
+    // cleanup
+    otpStore.delete(email);
+    otpStore.delete(phone);
+
     res.json({
-      message: "Registered. Please verify OTP",
-      vendor: result.rows[0]
+      message: "Registered successfully",
+      onboarding_id: onboarding.rows[0].id
     });
 
   } catch (err) {
@@ -54,44 +65,29 @@ const sendOtp = async (req, res) => {
   try {
     const { email, phone } = req.body;
 
-    if (!email && !phone) {
-      return res.status(400).json({ message: "Email or phone required" });
+    if (!email || !phone) {
+      return res.status(400).json({ message: "Email & phone required" });
     }
 
-    const identifier = email || phone;
+    const emailOtp = Math.floor(100000 + Math.random() * 900000);
+    const phoneOtp = Math.floor(100000 + Math.random() * 900000);
 
-    const check = await db.query(`
-      SELECT id FROM vendorprofile
-      WHERE email = $1 OR phone = $2
-    `, [email, phone]);
+    otpStore.set(email, {
+      otp: emailOtp,
+      expires: Date.now() + 5 * 60 * 1000,
+      verified: false
+    });
 
-    if (!check.rows.length) {
-      return res.status(404).json({ message: "Vendor not found. Register first." });
-    }
+    otpStore.set(phone, {
+      otp: phoneOtp,
+      expires: Date.now() + 5 * 60 * 1000,
+      verified: false
+    });
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    console.log("Email OTP:", emailOtp);
+    console.log("Phone OTP:", phoneOtp);
 
-    if (email) {
-      await db.query(`
-        UPDATE vendorprofile
-        SET email_otp = $1,
-            email_otp_expires = now() + interval '5 minutes'
-        WHERE email = $2
-      `, [otp, email]);
-    }
-
-    if (phone) {
-      await db.query(`
-        UPDATE vendorprofile
-        SET phone_otp = $1,
-            phone_otp_expires = now() + interval '5 minutes'
-        WHERE phone = $2
-      `, [otp, phone]);
-    }
-
-    console.log("OTP:", otp);
-
-    res.json({ message: "OTP sent" });
+    res.json({ message: "OTP sent" ,EmailOTP : emailOtp, PhoneOTP: phoneOtp });
 
   } catch (err) {
     res.status(500).json({ message: "Failed to send OTP" });
@@ -99,106 +95,34 @@ const sendOtp = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-  const client = await db.connect();
-
   try {
-    const { identifier, otp } = req.body;
+    const { email, phone, emailOtp, phoneOtp } = req.body;
 
-    await client.query("BEGIN");
+    const emailData = otpStore.get(email);
+    const phoneData = otpStore.get(phone);
 
-    let user;
-
-    // check email
-    let result = await client.query(`
-      SELECT * FROM vendorprofile WHERE email = $1
-    `, [identifier]);
-
-    if (result.rows.length) {
-      user = result.rows[0];
-
-      if (user.email_otp == otp && user.email_otp_expires > new Date()) {
-        await client.query(`
-          UPDATE vendorprofile
-          SET email_verified = true,
-              email_otp = NULL,
-              email_otp_expires = NULL
-          WHERE email = $1
-        `, [identifier]);
-      }
+    if (!emailData || !phoneData) {
+      return res.status(400).json({ message: "OTP not found" });
     }
 
-    // check phone
-    result = await client.query(`
-      SELECT * FROM vendorprofile WHERE phone = $1
-    `, [identifier]);
-
-    if (result.rows.length) {
-      user = result.rows[0];
-
-      if (user.phone_otp == otp && user.phone_otp_expires > new Date()) {
-        await client.query(`
-          UPDATE vendorprofile
-          SET phone_verified = true,
-              phone_otp = NULL,
-              phone_otp_expires = NULL
-          WHERE phone = $1
-        `, [identifier]);
-      }
+    if (emailData.otp != emailOtp || phoneData.otp != phoneOtp) {
+      return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // 🔥 check both verified
-    const check = await client.query(`
-      SELECT * FROM vendorprofile
-      WHERE email = $1 OR phone = $2
-    `, [identifier, identifier]);
-
-    const vendor = check.rows[0];
-
-    if (vendor.email_verified && vendor.phone_verified) {
-
-      // create onboarding only once
-      const existing = await client.query(`
-        SELECT id FROM vendor_onboarding WHERE vendor_id = $1
-      `, [vendor.id]);
-
-      let onboardingId;
-
-      if (!existing.rows.length) {
-        const onboarding = await client.query(`
-          INSERT INTO vendor_onboarding (vendor_id, status)
-          VALUES ($1, 'draft')
-          RETURNING id
-        `, [vendor.id]);
-
-        onboardingId = onboarding.rows[0].id;
-      } else {
-        onboardingId = existing.rows[0].id;
-      }
-
-      await client.query("COMMIT");
-
-      const token = jwt.sign(
-        { id: vendor.id, type: "vendor" },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-
-      return res.json({
-        message: "Verification complete. Proceed to onboarding",
-        token,
-        onboarding_id: onboardingId
-      });
+    if (emailData.expires < Date.now() || phoneData.expires < Date.now()) {
+      return res.status(400).json({ message: "OTP expired" });
     }
 
-    await client.query("COMMIT");
+    emailData.verified = true;
+    phoneData.verified = true;
 
-    return res.json({ message: "OTP verified" });
+    otpStore.set(email, emailData);
+    otpStore.set(phone, phoneData);
+
+    res.json({ message: "OTP verified" });
 
   } catch (err) {
-    await client.query("ROLLBACK");
     res.status(500).json({ message: "Verification failed" });
-  } finally {
-    client.release();
   }
 };
 
