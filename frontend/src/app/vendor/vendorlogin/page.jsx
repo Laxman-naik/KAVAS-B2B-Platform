@@ -3,9 +3,11 @@
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, TrendingUp, Boxes } from "lucide-react";
 
 export default function VendorLoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,7 @@ export default function VendorLoginPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    router.push("/vendor/dashboard");
   };
 
   return (
