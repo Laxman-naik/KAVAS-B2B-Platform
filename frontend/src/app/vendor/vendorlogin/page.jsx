@@ -38,7 +38,7 @@ export default function VendorLoginPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#FFF8EC] to-white">
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#FFF8EC] ">
           <div className="p-10">
             <div className="flex items-start gap-3">
               <Image
@@ -89,7 +89,7 @@ export default function VendorLoginPage() {
           </div>
 
           <div className="pointer-events-none absolute -bottom-8 -right-10 opacity-[0.12]">
-            <Image src="/lotussymbol.png" alt="" width={520} height={520} className="h-auto w-[520px]" />
+            <Image src="/lotussymbol.png" alt="" width={520} height={520} className="h-auto w-130" />
           </div>
         </aside>
 
