@@ -1,16 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
 import Link from "next/link";
 
 const FlashDeals = () => {
+  const initialSeconds = 2 * 24 * 60 * 60 + 14 * 60 * 60 + 36 * 60 + 48;
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSecondsLeft((s) => (s <= 1 ? initialSeconds : s - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [initialSeconds]);
+
+  const days = Math.floor(secondsLeft / (24 * 60 * 60));
+  const hours = Math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((secondsLeft % (60 * 60)) / 60);
+  const seconds = secondsLeft % 60;
+  const pad2 = (n) => String(n).padStart(2, "0");
+
   return (
-    <div className="py-4 bg-white">
+    <div className="py-3 bg-white">
       <div className="max-w-[1400px] mx-auto px-4">
         <div className="rounded-xl overflow-hidden bg-gradient-to-r from-[#071a33] via-[#0b2a55] to-[#04101f] text-white shadow">
 
-          <div className="grid lg:grid-cols-2 items-center px-5 py-6 md:px-8 md:py-7">
+          <div className="grid lg:grid-cols-2 items-center px-5 py-4 md:px-8 md:py-5">
 
             {/* LEFT */}
             <div>
@@ -21,21 +37,21 @@ const FlashDeals = () => {
                 </span>
               </div>
 
-              <h2 className="text-2xl md:text-3xl font-bold leading-tight">
+              <h2 className="text-xl md:text-2xl font-bold leading-tight">
                 Flash Deals
               </h2>
 
-              <p className="text-xs sm:text-sm text-gray-300 mt-1 mb-4 max-w-md">
+              <p className="text-xs sm:text-sm text-gray-300 mt-1 mb-3 max-w-md">
                 Up to <span className="text-[#D4AF37] font-bold">70% OFF</span>{" "}
                 on bulk orders across categories
               </p>
 
               {/* TIMER */}
-              <div className="flex gap-2 mb-4">
-                {["02", "14", "36", "48"].map((t, i) => (
+              <div className="flex gap-2 mb-3">
+                {[pad2(days), pad2(hours), pad2(minutes), pad2(seconds)].map((t, i) => (
                   <div
                     key={i}
-                    className="w-12 h-12 rounded-lg bg-white/10 flex flex-col items-center justify-center text-xs"
+                    className="w-11 h-11 md:w-12 md:h-12 rounded-lg bg-white/10 flex flex-col items-center justify-center text-xs"
                   >
                     <span className="font-bold text-sm">{t}</span>
                     <span className="text-[9px] text-gray-300">
@@ -55,7 +71,7 @@ const FlashDeals = () => {
 
             {/* RIGHT IMAGES */}
             {/* RIGHT IMAGES */}
-            <div className="hidden lg:flex justify-center relative h-[200px]">
+            <div className="hidden lg:flex justify-center relative h-[170px]">
 
               {/* glow */}
               <div className="absolute bottom-0 w-56 h-12 bg-[#D4AF37] blur-xl opacity-30 rounded-full"></div>

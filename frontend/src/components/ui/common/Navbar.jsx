@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import SubNavbar from "./SubNavbar";
 import {
   Search,
   ShoppingCart,
   Heart,
-  ChevronDown,
   User,
   Menu,
   X,
@@ -39,8 +39,6 @@ const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -53,7 +51,6 @@ const Navbar = () => {
   const [searchLoading, setSearchLoading] = useState(false);
 
   const searchRef = useRef(null);
-  const categoryRef = useRef(null);
   const profileDropdownRef = useRef(null);
 
   const router = useRouter();
@@ -147,10 +144,6 @@ const Navbar = () => {
         setShowSearchDropdown(false);
       }
 
-      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
-        setCategoryOpen(false);
-      }
-
       if (
         profileDropdownRef.current &&
         !profileDropdownRef.current.contains(event.target)
@@ -224,15 +217,6 @@ const Navbar = () => {
 
   if (!mounted) return null;
 
-  const categories = [
-    "All Categories",
-    "Electronics",
-    "Fashion",
-    "Home & Kitchen",
-    "Industrial",
-    "Beauty & Personal Care",
-  ];
-
   return (
     <>
       <div className="w-full sticky top-0 z-50 shadow-sm bg-[#0B1F3A] text-[#FFF8EC]">
@@ -302,22 +286,8 @@ const Navbar = () => {
               <div className="hidden md:flex flex-1 justify-center min-w-0">
                 <div ref={searchRef} className="w-full max-w-3xl px-2 relative">
                   <div
-                    ref={categoryRef}
                     className="flex items-stretch rounded-sm overflow-hidden border border-white/15 bg-white shadow-lg relative"
                   >
-                    <button
-                      type="button"
-                      onClick={() => setCategoryOpen((v) => !v)}
-                      className="h-11 px-4 bg-[#0B1F3A] text-white text-sm flex items-center gap-2 border-r border-white/10"
-                    >
-                      <span className="whitespace-nowrap">{selectedCategory}</span>
-                      <ChevronDown
-                        className={`h-4 w-4 opacity-80 transition-transform ${
-                          categoryOpen ? "rotate-180" : "rotate-0"
-                        }`}
-                      />
-                    </button>
-
                     <input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -335,30 +305,6 @@ const Navbar = () => {
                     >
                       <Search size={18} />
                     </button>
-
-                    {categoryOpen && (
-                      <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-[#E5E5E5] rounded-sm shadow-xl z-50 overflow-hidden">
-                        <div className="max-h-72 overflow-auto py-1">
-                          {categories.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              onClick={() => {
-                                setSelectedCategory(c);
-                                setCategoryOpen(false);
-                              }}
-                              className={`w-full text-left px-4 py-2 text-sm hover:bg-[#FFF8EC] ${
-                                selectedCategory === c
-                                  ? "bg-[#FFF8EC] text-[#0B1F3A] font-semibold"
-                                  : "text-[#1A1A1A]"
-                              }`}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {showSearchDropdown && (
@@ -1043,21 +989,8 @@ const Navbar = () => {
             </div>
 
             <div className="mt-3 w-full md:hidden">
-              <div ref={categoryRef} className="relative">
+              <div className="relative">
                 <div className="flex w-full items-stretch rounded-sm shadow-lg overflow-hidden border border-white/15 bg-white">
-                  <button
-                    type="button"
-                    onClick={() => setCategoryOpen((v) => !v)}
-                    className="h-11 px-4 bg-[#0B1F3A] text-white text-sm flex items-center gap-2 border-r border-white/10"
-                  >
-                    <span className="whitespace-nowrap">{selectedCategory}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 opacity-80 transition-transform ${
-                        categoryOpen ? "rotate-180" : "rotate-0"
-                      }`}
-                    />
-                  </button>
-
                   <input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -1076,34 +1009,12 @@ const Navbar = () => {
                     <Search size={18} />
                   </button>
                 </div>
-
-                {categoryOpen && (
-                  <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-[#E5E5E5] rounded-sm shadow-xl z-50 overflow-hidden">
-                    <div className="max-h-72 overflow-auto py-1">
-                      {categories.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategory(c);
-                            setCategoryOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-[#FFF8EC] ${
-                            selectedCategory === c
-                              ? "bg-[#FFF8EC] text-[#0B1F3A] font-semibold"
-                              : "text-[#1A1A1A]"
-                          }`}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </div>
+
+       <SubNavbar />
       </div>
 
       {mode === "login" ? (

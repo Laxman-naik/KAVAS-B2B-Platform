@@ -20,7 +20,6 @@ const VendorLanding = () => {
   <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-10">
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
       
-      {/* LEFT CONTENT */}
       <div className="lg:col-span-6">
         <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold leading-tight text-[#0B1F3A]">
           Grow Your Business
@@ -55,7 +54,7 @@ const VendorLanding = () => {
         </div>
       </div>
 
-      {/* RIGHT IMAGE */}
+      
       <div className="lg:col-span-6">
         <div className="relative">
           <div className="absolute inset-0 -z-10 blur-2xl opacity-40 bg-[#0B1F3A]/10" />

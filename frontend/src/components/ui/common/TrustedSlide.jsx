@@ -6,91 +6,111 @@ import Link from "next/link";
 const TrustedSlide = () => {
   const items = [
     {
-      icon: <CheckCircle className="text-green-600 w-6 h-6" />,
+      icon: <CheckCircle className="w-6 h-6" />,
       title: "Verified Suppliers",
       desc: "Every vendor vetted",
       desc1: "Learn More",
-      bg: "bg-green-100",
-      color: "bg-green-50",
+      bg: "bg-[#D4AF37]/15",
+      color: "bg-white",
       link: "/services/suppliers",
     },
     {
-      icon: <Lock className="text-yellow-600 w-6 h-6" />,
+      icon: <Lock className="w-6 h-6" />,
       title: "Secure Payments",
       desc: "Escrow on all orders",
       desc1: "Learn More",
-      bg: "bg-yellow-100",
-      color: "bg-yellow-50",
+      bg: "bg-[#D4AF37]/15",
+      color: "bg-white",
       link: "/services/securepayments",
     },
     {
-      icon: <Truck className="text-orange-600 w-6 h-6" />,
+      icon: <Truck className="w-6 h-6" />,
       title: "Pan-India Delivery",
       desc: "Across 28 states",
       desc1: "Learn More",
-      bg: "bg-orange-100",
-      color: "bg-orange-50",
+      bg: "bg-[#D4AF37]/15",
+      color: "bg-white",
       link: "/services/delivery",
     },
     {
-      icon: <Handshake className="text-yellow-700 w-6 h-6" />,
+      icon: <Handshake className="w-6 h-6" />,
       title: "Dedicated Support",
       desc: "Account manager",
       desc1: "Learn More",
-      bg: "bg-yellow-100",
-      color: "bg-yellow-50",
+      bg: "bg-[#D4AF37]/15",
+      color: "bg-white",
       link: "/services/support",
     },
     {
-      icon: <RefreshCcw className="text-green-600 w-6 h-6" />,
+      icon: <RefreshCcw className="w-6 h-6" />,
       title: "Easy Returns",
       desc: "Hassle-free",
       desc1: "Learn More",
-      bg: "bg-green-100",
-      color: "bg-green-50",
+      bg: "bg-[#D4AF37]/15",
+      color: "bg-white",
       link: "/services/returns",
     },
   ];
 
   return (
-    <div className="dark:bg-gray-900">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 className="text-xl md:text-2xl font-semibold border-l-4 pl-2 border-orange-500 mb-6">
-          Our Services
-        </h1>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
+    <section className="bg-white">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div>
+            <div className="flex items-center gap-2">
+              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
 
+              <div className="text-[11px] font-extrabold tracking-widest text-[#0B1F3A]/60 uppercase">
+               Your business, our priority
+              </div>
+              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+            </div>
+
+            <h2 className="mt-1 text-lg sm:text-3xl font-extrabold text-[#0B1F3A]">
+              Our Services
+            </h2>
+          </div>
+        {/* <div className="flex items-start gap-3">
+          <div className="mt-1 h-8 w-1 rounded-full bg-[#D4AF37]" />
+          <div>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#0B1F3A]">
+              Our Services
+            </h2>
+            <p className="mt-1 text-sm text-[#0B1F3A]/70">
+              Your business, our priority. Enjoy a seamless B2B buying experience.
+            </p>
+          </div>
+        </div> */}
+
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {items.map((item, index) => (
             <div
               key={index}
-              className={`flex flex-col  items-center text-center gap-3 
-                            p-4 sm:p-5 rounded-xl shadow-sm
-                            hover:shadow-md hover:-translate-y-1 transition-all duration-300 ${item.color}`}
+              className={`rounded-2xl border border-black/10 shadow-sm hover:shadow-md transition ${item.color}`}
             >
-              <div className={`p-2 sm:p-3 rounded-lg ${item.bg}`}>
-                {item.icon}
-              </div>
+              <div className="p-4">
+                <div className={`h-12 w-12 rounded-2xl grid place-items-center ${item.bg} text-[#0B1F3A]`}>
+                  {item.icon}
+                </div>
 
-              <p className="font-semibold text-sm">
-                {item.title}
-              </p>
+                <div className="mt-3 text-sm font-extrabold text-[#0B1F3A]">
+                  {item.title}
+                </div>
+                <div className="mt-1 text-xs text-[#0B1F3A]/70">
+                  {item.desc}
+                </div>
 
-              <p className="text-xs text-gray-500">
-                {item.desc}
-              </p>
-              <Link href={item.link}>
-                <p className="text-xs text-gray-600 cursor-pointer hover:underline">
+                {/* <Link
+                  href={item.link}
+                  className="mt-3 inline-flex items-center text-xs font-semibold text-[#0B1F3A] hover:text-[#D4AF37]"
+                >
                   {item.desc1} →
-                </p>
-              </Link>
+                </Link> */}
+              </div>
             </div>
           ))}
-
         </div>
-
       </div>
-
-    </div>
+    </section>
 
   );
 };

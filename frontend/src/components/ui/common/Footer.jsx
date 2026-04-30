@@ -74,15 +74,15 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/deals" className="hover:text-[#D4AF37] transition-colors">
-                    Deals
+                  <Link href="/flashdeals" className="hover:text-[#D4AF37] transition-colors">
+                    Flash Deals
                   </Link>
                 </li>
-                <li>
-                  <Link href="/bulkorders" className="hover:text-[#D4AF37] transition-colors">
+                {/* <li>
+                  <Link href="/help" className="hover:text-[#D4AF37] transition-colors">
                     Bulk Orders
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link href="/trackorder" className="hover:text-[#D4AF37] transition-colors">
                     Track Order
@@ -162,7 +162,12 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/vendor" className="hover:text-[#D4AF37] transition-colors">
+                  <Link
+                    href="/vendor"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#D4AF37] transition-colors"
+                  >
                     Become a Seller
                   </Link>
                 </li>
@@ -225,10 +230,10 @@ const Footer = () => {
             <div className="flex items-center gap-3 md:gap-4">
               <span className="text-sm text-white/75">We Accept</span>
               <div className="flex items-center gap-3">
-                <img src="/payments/visa.svg" alt="Visa" className="h-9 w-auto bg-white/10 backdrop-blur-md rounded-sm" />
-                <img src="/payments/mastercard.svg" alt="Mastercard" className="h-9 w-auto bg-white/10 backdrop-blur-md rounded-sm" />
-                <img src="/payments/rupay.svg" alt="RuPay" className="h-9 w-auto bg-white/10 backdrop-blur-md rounded-sm" />
-                <img src="/payments/upi.svg" alt="UPI" className="h-9 w-auto bg-white/10 backdrop-blur-md rounded-sm" />
+                <img src="/visa.png" alt="Visa" className="h-9 w-16 object-contain bg-white rounded-sm p-1" />
+                <img src="/Mastercardlogo.svg.png" alt="Mastercard" className="h-9 w-16 object-contain bg-white rounded-sm p-1" />
+                <img src="/RuPay.svg.png" alt="RuPay" className="h-9 w-16 object-contain bg-white rounded-sm p-1" />
+                <img src="/UPIlogo.svg.png" alt="UPI" className="h-9 w-16 object-contain bg-white rounded-sm p-1" />
               </div>
             </div>
           </div>
