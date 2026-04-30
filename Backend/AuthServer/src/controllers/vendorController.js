@@ -296,25 +296,47 @@ export const sendOtp = async (req, res) => {
 /* ================= VERIFY OTP ================= */
 export const verifyOtp = async (req, res) => {
   try {
-    const { email, phone, emailOtp, phoneOtp } = req.body;
+    let { email, phone, emailOtp, phoneOtp } = req.body;
 
+    // normalize inputs
+    emailOtp = emailOtp ? String(emailOtp).trim() : null;
+    phoneOtp = phoneOtp ? String(phoneOtp).trim() : null;
+
+    // ================= EMAIL VERIFY =================
     if (email) {
       const emailData = otpStore.get(email);
 
-      if (!emailData) return res.status(400).json({ message: "Email OTP not found" });
-      if (emailData.expires < Date.now()) return res.status(400).json({ message: "Email OTP expired" });
-      if (emailData.otp != emailOtp) return res.status(400).json({ message: "Invalid email OTP" });
+      if (!emailData) {
+        return res.status(400).json({ message: "Email OTP not found" });
+      }
+
+      if (Date.now() > emailData.expires) {
+        return res.status(400).json({ message: "Email OTP expired" });
+      }
+
+      if (String(emailData.otp) !== emailOtp) {
+        return res.status(400).json({ message: "Invalid email OTP" });
+      }
 
       emailData.verified = true;
       otpStore.set(email, emailData);
     }
 
+    // ================= PHONE VERIFY =================
     if (phone) {
       const phoneData = otpStore.get(phone);
 
-      if (!phoneData) return res.status(400).json({ message: "Phone OTP not found" });
-      if (phoneData.expires < Date.now()) return res.status(400).json({ message: "Phone OTP expired" });
-      if (phoneData.otp != phoneOtp) return res.status(400).json({ message: "Invalid phone OTP" });
+      if (!phoneData) {
+        return res.status(400).json({ message: "Phone OTP not found" });
+      }
+
+      if (Date.now() > phoneData.expires) {
+        return res.status(400).json({ message: "Phone OTP expired" });
+      }
+
+      if (String(phoneData.otp) !== phoneOtp) {
+        return res.status(400).json({ message: "Invalid phone OTP" });
+      }
 
       phoneData.verified = true;
       otpStore.set(phone, phoneData);
