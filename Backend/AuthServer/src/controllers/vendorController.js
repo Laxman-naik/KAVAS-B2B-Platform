@@ -123,34 +123,86 @@ export const sendOtp = async (req, res) => {
 };
 
 /* ================= VERIFY OTP ================= */
+// export const verifyOtp = async (req, res) => {
+//   try {
+//     const { email, phone, emailOtp, phoneOtp } = req.body;
+
+//     const emailData = otpStore.get(email);
+//     const phoneData = otpStore.get(phone);
+
+//     if (!emailData || !phoneData) {
+//       return res.status(400).json({ message: "OTP not found" });
+//     }
+
+//     if (emailData.otp != emailOtp || phoneData.otp != phoneOtp) {
+//       return res.status(400).json({ message: "Invalid OTP" });
+//     }
+
+//     if (emailData.expires < Date.now() || phoneData.expires < Date.now()) {
+//       return res.status(400).json({ message: "OTP expired" });
+//     }
+
+//     emailData.verified = true;
+//     phoneData.verified = true;
+
+//     otpStore.set(email, emailData);
+//     otpStore.set(phone, phoneData);
+
+//     res.json({ message: "OTP verified" });
+
+//   } catch (err) {
+//     res.status(500).json({ message: "Verification failed" });
+//   }
+// };
+
 export const verifyOtp = async (req, res) => {
   try {
     const { email, phone, emailOtp, phoneOtp } = req.body;
 
-    const emailData = otpStore.get(email);
-    const phoneData = otpStore.get(phone);
+    const emailData = email ? otpStore.get(email) : null;
+    const phoneData = phone ? otpStore.get(phone) : null;
 
-    if (!emailData || !phoneData) {
-      return res.status(400).json({ message: "OTP not found" });
+    // ================= CHECK EXISTS =================
+    if (email && !emailData) {
+      return res.status(400).json({ message: "Email OTP not found" });
     }
 
-    if (emailData.otp != emailOtp || phoneData.otp != phoneOtp) {
-      return res.status(400).json({ message: "Invalid OTP" });
+    if (phone && !phoneData) {
+      return res.status(400).json({ message: "Phone OTP not found" });
     }
 
-    if (emailData.expires < Date.now() || phoneData.expires < Date.now()) {
-      return res.status(400).json({ message: "OTP expired" });
+    // ================= VERIFY EMAIL =================
+    if (email) {
+      if (emailData.expires < Date.now()) {
+        return res.status(400).json({ message: "Email OTP expired" });
+      }
+
+      if (emailData.otp != emailOtp) {
+        return res.status(400).json({ message: "Invalid email OTP" });
+      }
+
+      emailData.verified = true;
+      otpStore.set(email, emailData);
     }
 
-    emailData.verified = true;
-    phoneData.verified = true;
+    // ================= VERIFY PHONE =================
+    if (phone) {
+      if (phoneData.expires < Date.now()) {
+        return res.status(400).json({ message: "Phone OTP expired" });
+      }
 
-    otpStore.set(email, emailData);
-    otpStore.set(phone, phoneData);
+      if (phoneData.otp != phoneOtp) {
+        return res.status(400).json({ message: "Invalid phone OTP" });
+      }
 
-    res.json({ message: "OTP verified" });
+      phoneData.verified = true;
+      otpStore.set(phone, phoneData);
+    }
+
+    return res.json({ message: "OTP verified successfully" });
 
   } catch (err) {
-    res.status(500).json({ message: "Verification failed" });
+    console.error(err);
+    return res.status(500).json({ message: "Verification failed" });
   }
 };
