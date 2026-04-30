@@ -83,7 +83,7 @@ export const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      const message = `Your Kavas verification OTP is ${otp}. Valid for 5 minutes. Do not share this code.`;
+      const message = `Your Kavas verification OTP is ${phoneOtp}. Valid for 5 minutes. Do not share this code.`;
 
       await axios.post(
         "https://www.fast2sms.com/dev/bulkV2",
