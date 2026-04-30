@@ -1,9 +1,13 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const db = require("../config/db");
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import db from "../config/db.js";
+import axios from "axios";
+import { sendEmailOtp } from "../utils/emailService.js";
+
 const otpStore = new Map();
 
-const registerVendor = async (req, res) => {
+/* ================= REGISTER VENDOR ================= */
+export const registerVendor = async (req, res) => {
   const client = await db.connect();
 
   try {
@@ -13,9 +17,7 @@ const registerVendor = async (req, res) => {
     const phoneData = otpStore.get(phone);
 
     if (!emailData?.verified || !phoneData?.verified) {
-      return res.status(400).json({
-        message: "Verify OTP before registration"
-      });
+      return res.status(400).json({ message: "Verify OTP before registration" });
     }
 
     if (password !== confirmPassword) {
@@ -26,31 +28,32 @@ const registerVendor = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const vendorResult = await client.query(`
-      INSERT INTO vendorprofile (
+    const vendorResult = await client.query(
+      `INSERT INTO vendorprofile (
         email, phone, password_hash, email_verified, phone_verified
       )
       VALUES ($1, $2, $3, true, true)
-      RETURNING id
-    `, [email, phone, hashedPassword]);
+      RETURNING id`,
+      [email, phone, hashedPassword]
+    );
 
     const vendorId = vendorResult.rows[0].id;
 
-    const onboarding = await client.query(`
-      INSERT INTO vendor_onboarding (vendor_id, status)
-      VALUES ($1, 'draft')
-      RETURNING id
-    `, [vendorId]);
+    const onboarding = await client.query(
+      `INSERT INTO vendor_onboarding (vendor_id, status)
+       VALUES ($1, 'draft')
+       RETURNING id`,
+      [vendorId]
+    );
 
     await client.query("COMMIT");
 
-    // cleanup
     otpStore.delete(email);
     otpStore.delete(phone);
 
     res.json({
       message: "Registered successfully",
-      onboarding_id: onboarding.rows[0].id
+      onboarding_id: onboarding.rows[0].id,
     });
 
   } catch (err) {
@@ -61,7 +64,8 @@ const registerVendor = async (req, res) => {
   }
 };
 
-const sendOtp = async (req, res) => {
+/* ================= SEND OTP ================= */
+export const sendOtp = async (req, res) => {
   try {
     const { email, phone } = req.body;
 
@@ -69,18 +73,7 @@ const sendOtp = async (req, res) => {
       return res.status(400).json({ message: "Email or phone required" });
     }
 
-    if (email) {
-      const emailOtp = Math.floor(100000 + Math.random() * 900000);
-
-      otpStore.set(email, {
-        otp: emailOtp,
-        expires: Date.now() + 5 * 60 * 1000,
-        verified: false,
-      });
-
-      console.log("Email OTP:", emailOtp);
-    }
-
+    // ================= PHONE OTP =================
     if (phone) {
       const phoneOtp = Math.floor(100000 + Math.random() * 900000);
 
@@ -90,16 +83,47 @@ const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      console.log("Phone OTP:", phoneOtp);
+      const message = `Your Kavas verification OTP is ${otp}. Valid for 5 minutes. Do not share this code.`;
+
+      await axios.post(
+        "https://www.fast2sms.com/dev/bulkV2",
+        {
+          route: "q",
+          message,
+          language: "english",
+          numbers: phone,
+        },
+        {
+          headers: {
+            authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+          },
+        }
+      );
     }
 
-    res.json({ message: "OTP sent" });
+    // ================= EMAIL OTP =================
+    if (email) {
+      const emailOtp = Math.floor(100000 + Math.random() * 900000);
+
+      otpStore.set(email, {
+        otp: emailOtp,
+        expires: Date.now() + 5 * 60 * 1000,
+        verified: false,
+      });
+
+      await sendEmailOtp(email, emailOtp);
+    }
+
+    res.json({ message: "OTP sent successfully" });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 };
 
-const verifyOtp = async (req, res) => {
+/* ================= VERIFY OTP ================= */
+export const verifyOtp = async (req, res) => {
   try {
     const { email, phone, emailOtp, phoneOtp } = req.body;
 
@@ -130,5 +154,3 @@ const verifyOtp = async (req, res) => {
     res.status(500).json({ message: "Verification failed" });
   }
 };
-
-module.exports = { registerVendor, sendOtp, verifyOtp};
