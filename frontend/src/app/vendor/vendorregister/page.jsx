@@ -129,6 +129,7 @@ export default function VendorRegisterPage() {
       phone: form.mobile,
       email: form.email,
       password: form.password,
+      confirmPassword: form.confirmPassword,
     };
 
     const res = await dispatch(registerVendor(payload));

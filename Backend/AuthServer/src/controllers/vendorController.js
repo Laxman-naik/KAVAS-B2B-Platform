@@ -362,16 +362,21 @@ export const registerVendor = async (req, res) => {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
-    // ================= OTP CHECK =================
+    // ================= EMAIL OTP CHECK =================
     if (email) {
-      const emailData = otpStore.get(email);
+      const emailKey = `email:${email}`;
+      const emailData = otpStore.get(emailKey);
+
       if (!emailData?.verified) {
         return res.status(400).json({ message: "Email OTP not verified" });
       }
     }
 
+    // ================= PHONE OTP CHECK =================
     if (phone) {
-      const phoneData = otpStore.get(phone);
+      const phoneKey = `phone:${phone}`;
+      const phoneData = otpStore.get(phoneKey);
+
       if (!phoneData?.verified) {
         return res.status(400).json({ message: "Phone OTP not verified" });
       }
@@ -401,8 +406,9 @@ export const registerVendor = async (req, res) => {
 
     await client.query("COMMIT");
 
-    otpStore.delete(email);
-    otpStore.delete(phone);
+    // cleanup OTPs
+    otpStore.delete(`email:${email}`);
+    otpStore.delete(`phone:${phone}`);
 
     return res.json({
       message: "Registered successfully",
