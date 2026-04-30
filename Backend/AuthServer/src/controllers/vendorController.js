@@ -243,7 +243,9 @@ export const sendOtp = async (req, res) => {
     if (phone) {
       const phoneOtp = Math.floor(100000 + Math.random() * 900000);
 
-      otpStore.set(phone, {
+      const key = `phone:${phone}`;
+
+      otpStore.set(key, {
         otp: phoneOtp,
         expires,
         verified: false,
@@ -261,19 +263,21 @@ export const sendOtp = async (req, res) => {
         },
         {
           headers: {
-            authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts"
+            authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
           },
         }
       );
 
-      console.log("PHONE OTP:", phone, phoneOtp);
+      console.log("PHONE OTP:", key, phoneOtp);
     }
 
     // ================= EMAIL OTP =================
     if (email) {
       const emailOtp = Math.floor(100000 + Math.random() * 900000);
 
-      otpStore.set(email, {
+      const key = `email:${email}`;
+
+      otpStore.set(key, {
         otp: emailOtp,
         expires,
         verified: false,
@@ -281,7 +285,7 @@ export const sendOtp = async (req, res) => {
 
       await sendEmailOtp(email, emailOtp);
 
-      console.log("EMAIL OTP:", email, emailOtp);
+      console.log("EMAIL OTP:", key, emailOtp);
     }
 
     return res.json({ message: "OTP sent successfully" });
@@ -296,51 +300,41 @@ export const sendOtp = async (req, res) => {
 /* ================= VERIFY OTP ================= */
 export const verifyOtp = async (req, res) => {
   try {
-    let { email, phone, emailOtp, phoneOtp } = req.body;
+    let { email, phone, otp } = req.body;
 
-    // normalize inputs
-    emailOtp = emailOtp ? String(emailOtp).trim() : null;
-    phoneOtp = phoneOtp ? String(phoneOtp).trim() : null;
+    otp = otp ? String(otp).trim() : null;
 
-    // ================= EMAIL VERIFY =================
+    // ================= EMAIL =================
     if (email) {
-      const emailData = otpStore.get(email);
+  const key = `email:${email}`;
+  const emailData = otpStore.get(key);
 
-      if (!emailData) {
-        return res.status(400).json({ message: "Email OTP not found" });
-      }
+  if (!emailData) return res.status(400).json({ message: "Email OTP not found" });
+  if (Date.now() > emailData.expires) return res.status(400).json({ message: "Email OTP expired" });
 
-      if (Date.now() > emailData.expires) {
-        return res.status(400).json({ message: "Email OTP expired" });
-      }
+  if (String(emailData.otp) !== otp) {
+    return res.status(400).json({ message: "Invalid email OTP" });
+  }
 
-      if (String(emailData.otp) !== emailOtp) {
-        return res.status(400).json({ message: "Invalid email OTP" });
-      }
+  emailData.verified = true;
+  otpStore.set(key, emailData);
+}
 
-      emailData.verified = true;
-      otpStore.set(email, emailData);
-    }
-
-    // ================= PHONE VERIFY =================
+    // ================= PHONE =================
     if (phone) {
-      const phoneData = otpStore.get(phone);
+  const key = `phone:${phone}`;
+  const phoneData = otpStore.get(key);
 
-      if (!phoneData) {
-        return res.status(400).json({ message: "Phone OTP not found" });
-      }
+  if (!phoneData) return res.status(400).json({ message: "Phone OTP not found" });
+  if (Date.now() > phoneData.expires) return res.status(400).json({ message: "Phone OTP expired" });
 
-      if (Date.now() > phoneData.expires) {
-        return res.status(400).json({ message: "Phone OTP expired" });
-      }
+  if (String(phoneData.otp) !== otp) {
+    return res.status(400).json({ message: "Invalid phone OTP" });
+  }
 
-      if (String(phoneData.otp) !== phoneOtp) {
-        return res.status(400).json({ message: "Invalid phone OTP" });
-      }
-
-      phoneData.verified = true;
-      otpStore.set(phone, phoneData);
-    }
+  phoneData.verified = true;
+  otpStore.set(key, phoneData);
+}
 
     return res.json({ message: "OTP verified successfully" });
 

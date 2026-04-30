@@ -119,8 +119,8 @@ export default function VendorRegisterPage() {
     otp.emailVerified &&
     form.password &&
     form.confirmPassword &&
-    form.password === form.confirmPassword;
-    form.password.length >= 6
+    form.password === form.confirmPassword &&
+    form.password.length >= 6;
 
   const onContinue = async (e) => {
     e.preventDefault();
