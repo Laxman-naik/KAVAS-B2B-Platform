@@ -72,7 +72,7 @@ export default function VendorLoginPage() {
       const step = data.onboarding_step || 1;
 
       if (step === 1) {
-        router.push("/vendor/vendorbusiness");
+        router.push("/vendor/vendorbusinessdetails");
         return;
       }
 
