@@ -210,17 +210,30 @@ export const loginVendor = async (req, res) => {
     let query;
     let values;
 
+    // ✅ EMAIL LOGIN
     if (email) {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step
+        SELECT 
+          vp.*, 
+          vo.id as onboarding_id, 
+          vo.status, 
+          vo.current_step,
+          vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE LOWER(vp.email) = LOWER($1)
       `;
       values = [email];
-    } else {
+    } 
+    // ✅ PHONE LOGIN
+    else {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step
+        SELECT 
+          vp.*, 
+          vo.id as onboarding_id, 
+          vo.status, 
+          vo.current_step,
+          vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE vp.phone = $1
@@ -236,16 +249,19 @@ export const loginVendor = async (req, res) => {
 
     const vendor = result.rows[0];
 
+    // ❗ Account status
     if (!vendor.is_active) {
       return res.status(403).json({ message: "Account disabled" });
     }
 
+    // ❗ Password check
     const isMatch = await bcrypt.compare(password, vendor.password_hash);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // ❗ Verification check
     if (!vendor.email_verified || !vendor.phone_verified) {
       return res.status(403).json({
         message: "Please verify email and phone before login",
@@ -258,41 +274,56 @@ export const loginVendor = async (req, res) => {
       [vendor.id]
     );
 
-    // ✅ Generate JWT
-    const token = generateToken({
-      vendor_id: vendor.id,
-      onboarding_id: vendor.onboarding_id,
-    });
-
     // ================= ONBOARDING LOGIC =================
 
     let next_action = "dashboard";
+    let onboarding_step = vendor.current_step || 1;
 
-    if (!vendor.status || vendor.status === "draft") {
+    // ❗ No onboarding record (edge case)
+    if (!vendor.onboarding_id) {
+      next_action = "onboarding";
+      onboarding_step = 1;
+    }
+
+    // 🟡 DRAFT → continue onboarding
+    else if (vendor.status === "draft") {
       next_action = "onboarding";
     }
 
-    if (vendor.status === "submitted") {
+    // 🔴 SUBMITTED → BLOCK
+    else if (vendor.status === "submitted") {
       return res.status(403).json({
         message: "Your application is under review. Admin approval required.",
         status: "submitted",
       });
     }
 
-    if (vendor.status === "rejected") {
-      return res.status(403).json({
-        message: "Your application was rejected. Please update details.",
-        status: "rejected",
-      });
+    // 🟠 REJECTED → allow editing (IMPORTANT FIX)
+    else if (vendor.status === "rejected") {
+      next_action = "onboarding";
     }
 
-    // approved → allow dashboard
+    // 🟢 APPROVED → dashboard
+    else if (vendor.status === "approved") {
+      next_action = "dashboard";
+    }
+
+    // ================= TOKEN =================
+
+    const token = generateToken({
+      vendor_id: vendor.id,
+      onboarding_id: vendor.onboarding_id,
+    });
+
+    // ================= RESPONSE =================
 
     return res.json({
       message: "Login successful",
       token,
-      next_action, // 👈 frontend uses this
-      onboarding_step: vendor.current_step || 1,
+      next_action,
+      onboarding_step,
+      status: vendor.status,
+      rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,
         email: vendor.email,

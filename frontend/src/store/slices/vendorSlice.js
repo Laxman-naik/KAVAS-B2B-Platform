@@ -139,6 +139,7 @@ import {
   sendVendorOtpAPI,
   verifyVendorOtpAPI,
   registerVendorAPI,
+  loginVendorAPI,
   getVendorProfileAPI,
   upsertBusinessAPI,
   getBusinessAPI,
@@ -147,6 +148,15 @@ import {
   getOnboardingStateAPI,
   updateOnboardingStepAPI,
 } from "../../services/vendorServer";
+
+/* ================= SAFE TOKEN ================= */
+
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("accessToken");
+  }
+  return null;
+};
 
 /* ================= THUNKS ================= */
 
@@ -180,6 +190,25 @@ export const registerVendor = createAsyncThunk(
     try {
       const res = await registerVendorAPI(data);
       return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+/* ===== LOGIN ===== */
+export const loginVendor = createAsyncThunk(
+  "vendor/login",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await loginVendorAPI(data);
+
+      // 🔴 FORCE FAIL if error exists
+      if (res?.error) {
+        return rejectWithValue(res);
+      }
+
+      return res;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
@@ -249,7 +278,7 @@ export const fetchBankDetails = createAsyncThunk(
   }
 );
 
-/* ===== ONBOARDING STATE ===== */
+/* ===== ONBOARDING ===== */
 export const fetchOnboardingState = createAsyncThunk(
   "vendor/getState",
   async (_, { rejectWithValue }) => {
@@ -278,6 +307,11 @@ export const updateOnboardingStep = createAsyncThunk(
 
 const initialState = {
   loading: false,
+  error: null,
+
+  isAuthenticated: false,
+  token: getToken(), // ✅ SAFE
+  next_action: null,
 
   otp: {
     mobileSent: false,
@@ -301,8 +335,6 @@ const initialState = {
 
   business: null,
   bank: null,
-
-  error: null,
 };
 
 /* ================= SLICE ================= */
@@ -313,27 +345,60 @@ const vendorSlice = createSlice({
 
   reducers: {
     resetVendorState: () => initialState,
+
+    logoutVendor: (state) => {
+      state.isAuthenticated = false;
+      state.token = null;
+      state.vendor = { id: null, data: null };
+      state.next_action = null;
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("next_action");
+        localStorage.removeItem("onboarding_step");
+      }
+    },
   },
 
   extraReducers: (builder) => {
     builder
 
-      /* ===== OTP SEND ===== */
+      /* ===== LOGIN ===== */
+      .addCase(loginVendor.fulfilled, (state, action) => {
+        if (action.payload?.error) {
+          state.isAuthenticated = false;
+          state.error = action.payload.message;
+          state.next_action = action.payload.status;
+          return;
+        }
+
+        state.isAuthenticated = true;
+        state.token = action.payload.token;
+        state.next_action = action.payload.next_action;
+
+        state.vendor = {
+          id: action.payload.vendor?.id,
+          data: action.payload.vendor,
+        };
+
+        state.onboarding.current_step =
+          action.payload.onboarding_step || 1;
+
+        state.onboarding.status =
+          action.payload.status || "draft";
+      })
+
+      /* ===== OTP ===== */
       .addCase(sendVendorOtp.fulfilled, (state, action) => {
         if (action.meta.arg.phone) state.otp.mobileSent = true;
         if (action.meta.arg.email) state.otp.emailSent = true;
       })
 
-      /* ===== VERIFY OTP ===== */
-      .addCase(verifyVendorOtp.fulfilled, (state, action) => {
+      .addCase(verifyVendorOtp.fulfilled, (state) => {
         state.verification = {
           phone_verified: true,
           email_verified: true,
         };
-
-        if (action.payload?.vendor_id) {
-          state.vendor.id = action.payload.vendor_id;
-        }
       })
 
       /* ===== REGISTER ===== */
@@ -348,6 +413,7 @@ const vendorSlice = createSlice({
       .addCase(fetchVendorProfile.fulfilled, (state, action) => {
         state.vendor.id = action.payload?.id;
         state.vendor.data = action.payload;
+
         state.verification = {
           phone_verified: action.payload?.phone_verified,
           email_verified: action.payload?.email_verified,
@@ -370,17 +436,49 @@ const vendorSlice = createSlice({
         state.bank = action.payload?.data;
       })
 
-      /* ===== ONBOARDING STATE ===== */
+      /* ===== ONBOARDING ===== */
       .addCase(fetchOnboardingState.fulfilled, (state, action) => {
         state.onboarding = action.payload;
       })
 
       .addCase(updateOnboardingStep.fulfilled, (state, action) => {
         state.onboarding.current_step =
-          action.payload?.data?.current_step || state.onboarding.current_step;
-      });
+          action.payload?.data?.current_step ||
+          state.onboarding.current_step;
+      })
+
+      /* ===== MATCHERS (LAST ONLY) ===== */
+      .addMatcher(
+        (action) =>
+          action.type.startsWith("vendor/") &&
+          action.type.endsWith("/pending"),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          action.type.startsWith("vendor/") &&
+          action.type.endsWith("/rejected"),
+        (state, action) => {
+          state.loading = false;
+          state.error =
+            action.payload?.message ||
+            action.payload ||
+            "Something went wrong";
+        }
+      )
+      .addMatcher(
+        (action) =>
+          action.type.startsWith("vendor/") &&
+          action.type.endsWith("/fulfilled"),
+        (state) => {
+          state.loading = false;
+        }
+      );
   },
 });
 
-export const { resetVendorState } = vendorSlice.actions;
+export const { resetVendorState, logoutVendor } = vendorSlice.actions;
 export default vendorSlice.reducer;

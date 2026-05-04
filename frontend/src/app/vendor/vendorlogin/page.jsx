@@ -5,9 +5,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, TrendingUp, Boxes } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { loginVendor } from "@/store/slices/vendorSlice";
 
 export default function VendorLoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -33,10 +38,68 @@ export default function VendorLoginPage() {
     []
   );
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = async (e) => {
+  e.preventDefault();
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    const payload = {
+      password,
+      ...(identifier.includes("@")
+        ? { email: identifier }
+        : { phone: identifier }),
+    };
+
+    const data = await dispatch(loginVendor(payload)).unwrap();
+
+    console.log("LOGIN RESPONSE:", data);
+
+    // 🔴 BLOCKED
+    if (data.status === "submitted") {
+      setError("Your application is under review");
+      return;
+    }
+
+    if (data.status === "rejected") {
+      router.push("/vendor/rejected");
+      return;
+    }
+
+    // 🟡 DRAFT → ONBOARDING FLOW
+    if (data.status === "draft") {
+      const step = data.onboarding_step || 1;
+
+      if (step === 1) {
+        router.push("/vendor/vendorbusiness");
+        return;
+      }
+
+      if (step === 2) {
+        router.push("/vendor/vendorbank");
+        return;
+      }
+
+      if (step === 3) {
+        router.push("/vendor/vendorreview");
+        return;
+      }
+
+      // fallback
+      router.push("/vendor/vendorbusiness");
+      return;
+    }
+
+    // 🟢 APPROVED → DASHBOARD
     router.push("/vendor/dashboard");
-  };
+
+  } catch (err) {
+    setError(err?.message || "Invalid credentials");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-white">
@@ -179,26 +242,16 @@ export default function VendorLoginPage() {
 
                   <button
                     type="submit"
-                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold hover:opacity-90"
+                    disabled={loading}
+                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
                   >
-                    Login
+                    {loading ? "Logging in..." : "Login"}
                   </button>
-
-                  <div className="flex items-center gap-4">
-                    <div className="h-px flex-1 bg-[#E5E5E5]" />
-                    <div className="text-xs text-gray-500">or</div>
-                    <div className="h-px flex-1 bg-[#E5E5E5]" />
-                  </div>
-
-                  <button
-                    type="button"
-                    className="h-11 w-full rounded-sm border border-[#E5E5E5] bg-white text-sm font-semibold text-[#1A1A1A] hover:bg-[#FFF8EC]"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <span className="text-base">G</span>
-                      Login with Google
-                    </span>
-                  </button>
+                  {error && (
+                    <div className="mt-4 text-sm text-red-500 text-center">
+                      {error}
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
