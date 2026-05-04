@@ -5,24 +5,17 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  BadgeCheck,
-  Building2,
-  CheckCircle2,
-  ChevronDown,
-  Circle,
-  HelpCircle,
-  Landmark,
-  Lock,
-  MapPin,
-  Phone,
-  ShieldCheck,
-} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
+import { fetchVendorProfile } from "@/store/slices/vendorSlice";
 
 export default function VendorBusinessDetailsPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const businessInfoRef = useRef(null);
   const bankDetailsRef = useRef(null);
+  const vendor = useSelector((state) => state.vendor.vendor);
+  const verification = useSelector((state) => state.vendor.verification);
 
   const [form, setForm] = useState({
     businessName: "",
@@ -40,21 +33,39 @@ export default function VendorBusinessDetailsPage() {
     ifsc: "",
   });
 
+  useEffect(() => {
+  if (vendor?.id) {
+    dispatch(fetchVendorProfile(vendor.id));
+  }
+}, []);
+
   const [activeSection, setActiveSection] = useState("business_info");
 
   const setValue = (key) => (e) => {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-  const verificationItems = useMemo(
-    () => [
-      { label: "Mobile Verification", done: false },
-      { label: "Email Verification", done: false },
-      { label: "ID Verification", done: false },
-      { label: "Signature Verification", done: false },
-    ],
-    []
-  );
+const verificationItems = useMemo(
+  () => [
+    {
+      label: "Mobile Verification",
+      done: !!verification?.phone_verified,
+    },
+    {
+      label: "Email Verification",
+      done: !!verification?.email_verified,
+    },
+    {
+      label: "ID Verification",
+      done: !!verification?.id_verified,
+    },
+    {
+      label: "Signature Verification",
+      done: !!verification?.signature_verified,
+    },
+  ],
+  [verification]
+);
 
   const requiredBusinessFields = useMemo(
     () => [
@@ -138,11 +149,41 @@ export default function VendorBusinessDetailsPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
     if (!(businessInfoComplete && bankDetailsComplete)) return;
+
+    // 1. Save business details
+    await upsertBusinessAPI({
+      business_name: form.businessName,
+      business_type: form.businessType,
+      registered_name: form.registeredBusinessName,
+      pan: form.businessPan,
+      gstin: form.gstin,
+      registration_number: form.businessRegNo,
+      address: form.businessAddress,
+      pincode: form.pincode,
+      city: form.city,
+      state: form.state,
+    });
+
+    // 2. Save bank details
+    await upsertBankAPI({
+      account_holder_name: form.accountHolderName,
+      account_number: form.bankAccountNumber,
+      ifsc_code: form.ifsc,
+    });
+
+    // 3. Move to next step only after success
     router.push("/vendor/vendorstoredetails");
-  };
+
+  } catch (err) {
+    console.error("Save failed:", err);
+    alert("Failed to save details");
+  }
+};
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
@@ -199,11 +240,7 @@ export default function VendorBusinessDetailsPage() {
                 <div className="mt-3 grid gap-2">
                   {verificationItems.slice(0, 2).map((x) => (
                     <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      {x.done ? (
-                        <CheckCircle2 size={14} className="text-[#0B1F3A]" />
-                      ) : (
-                        <Circle size={14} className="text-gray-300" />
-                      )}
+                      {x.done ? (<CheckCircle2 size={14} className="text-[#0B1F3A]" />) : (<Circle size={14} className="text-gray-300" />)}
                       <div className="font-semibold">{x.label}</div>
                     </div>
                   ))}
@@ -260,21 +297,6 @@ export default function VendorBusinessDetailsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="text-xs font-bold text-[#0B1F3A]">Listing &amp; Stock Availability</div>
-                <div className="mt-3 grid gap-2">
-                  {[
-                    "Listing Created",
-                    "Stock Added",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      <Circle size={14} className="text-gray-300" />
-                      <div className="font-semibold">{x}</div>
-                    </div>
-                  ))}
-                </div>
-              </div> */}
             </div>
           </aside>
 
@@ -294,7 +316,7 @@ export default function VendorBusinessDetailsPage() {
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        Business / Store Name <span className="text-red-500">*</span>
+                        Business holder Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         value={form.businessName}
@@ -338,7 +360,7 @@ export default function VendorBusinessDetailsPage() {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        Business PAN <span className="text-red-500">*</span>
+                        PAN <span className="text-red-500">*</span>
                       </label>
                       <input
                         value={form.businessPan}
@@ -350,7 +372,7 @@ export default function VendorBusinessDetailsPage() {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        GSTIN <span className="text-red-500">*</span>
+                        GSTIN (Optional)
                       </label>
                       <div className="mt-2 relative">
                         <input
@@ -359,12 +381,6 @@ export default function VendorBusinessDetailsPage() {
                           placeholder="Enter GSTIN"
                           className="w-full h-11 rounded-md border border-[#E5E5E5] px-3 pr-28 text-sm outline-none focus:border-[#0B1F3A]"
                         />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-extrabold text-[#0B1F3A] hover:underline"
-                        >
-                          Verify GSTIN
-                        </button>
                       </div>
                     </div>
 

@@ -474,22 +474,6 @@ export default function VendorRegisterPage() {
             </section>
 
             <aside className="lg:col-span-5 bg-[#0B1F3A] p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5]">
-              {/* <div className="rounded-2xl bg-white border border-[#E5E5E5] shadow-sm p-5 flex gap-4 items-start">
-                <div className="h-12 w-12 rounded-full bg-[#0B1F3A]/10 flex items-center justify-center text-[#0B1F3A] font-extrabold">
-                  AV
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-[#0B1F3A]">
-                    <Quote size={18} className="text-[#0B1F3A]" />
-                    <div className="text-sm font-bold">Kavas Seller Hub helped me grow</div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-600 leading-relaxed">
-                    my business to more categories with consistent growth.
-                  </div>
-                  <div className="mt-2 text-[11px] text-gray-500">— Amit Verma, Kavas Seller</div>
-                </div>
-              </div> */}
-
               <div className="mt-6 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(13,38,76,0.18)] border border-[#0B1F3A]/15">
                 <div className="   relative">
                   <Link href="/vendor" className="flex items-center gap-3">
