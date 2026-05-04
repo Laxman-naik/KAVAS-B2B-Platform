@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import axios from "axios";
 import { sendEmailOtp } from "../utils/emailService.js";
-import { generateToken } from "../utils/jwt.js";
+import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
 
 const otpStore = new Map();
 
@@ -199,123 +199,6 @@ export const registerVendor = async (req, res) => {
   }
 };
 
-// export const loginVendor = async (req, res) => {
-//   try {
-//     const { email, phone, password } = req.body;
-
-//     if (!password || (!email && !phone)) {
-//       return res.status(400).json({
-//         message: "Email or phone and password required",
-//       });
-//     }
-
-//     let query;
-//     let values;
-//     if (email) {
-//       query = `
-//         SELECT 
-//           vp.*, 
-//           vo.id as onboarding_id, 
-//           vo.status, 
-//           vo.current_step,
-//           vo.rejection_reason
-//         FROM vendorprofile vp
-//         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
-//         WHERE LOWER(vp.email) = LOWER($1)
-//       `;
-//       values = [email];
-//     } 
-//     else {
-//       query = `
-//         SELECT 
-//           vp.*, 
-//           vo.id as onboarding_id, 
-//           vo.status, 
-//           vo.current_step,
-//           vo.rejection_reason
-//         FROM vendorprofile vp
-//         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
-//         WHERE vp.phone = $1
-//       `;
-//       values = [phone];
-//     }
-
-//     const result = await db.query(query, values);
-
-//     if (!result.rows.length) {
-//       return res.status(400).json({ message: "Vendor not found" });
-//     }
-
-//     const vendor = result.rows[0];
-
-//     if (!vendor.is_active) {
-//       return res.status(403).json({ message: "Account disabled" });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, vendor.password_hash);
-
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
-
-//     if (!vendor.email_verified || !vendor.phone_verified) {
-//       return res.status(403).json({
-//         message: "Please verify email and phone before login",
-//       });
-//     }
-
-//     await db.query(
-//       `UPDATE vendorprofile SET last_login = NOW() WHERE id = $1`,
-//       [vendor.id]
-//     );
-
-//     let next_action = "dashboard";
-//     let onboarding_step = vendor.current_step || 1;
-
-//     if (!vendor.onboarding_id) {
-//       next_action = "onboarding";
-//       onboarding_step = 1;
-//     }
-//     else if (vendor.status === "draft") {
-//       next_action = "onboarding";
-//     }
-//     else if (vendor.status === "submitted") {
-//       return res.status(403).json({
-//         message: "Your application is under review. Admin approval required.",
-//         status: "submitted",
-//       });
-//     }
-//     else if (vendor.status === "rejected") {
-//       next_action = "onboarding";
-//     }
-//     else if (vendor.status === "approved") {
-//       next_action = "dashboard";
-//     }
-
-//     const token = generateToken({
-//       vendor_id: vendor.id,
-//       onboarding_id: vendor.onboarding_id,
-//     });
-
-//     return res.json({
-//       message: "Login successful",
-//       token,
-//       next_action,
-//       onboarding_step,
-//       status: vendor.status,
-//       rejection_reason: vendor.rejection_reason || null,
-//       vendor: {
-//         id: vendor.id,
-//         email: vendor.email,
-//         phone: vendor.phone,
-//       },
-//     });
-
-//   } catch (err) {
-//     console.error("LOGIN ERROR:", err);
-//     return res.status(500).json({ message: "Login failed" });
-//   }
-// };
 export const loginVendor = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
@@ -354,29 +237,32 @@ export const loginVendor = async (req, res) => {
 
     const vendor = result.rows[0];
 
+    // ✅ check active
     if (!vendor.is_active) {
       return res.status(403).json({ message: "Account disabled" });
     }
 
+    // ✅ password check
     const isMatch = await bcrypt.compare(password, vendor.password_hash);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // optional: verify email/phone
     if (!vendor.email_verified || !vendor.phone_verified) {
       return res.status(403).json({
         message: "Verify email & phone first",
       });
     }
 
-    // ✅ Update last login
+    // ✅ update last login
     await db.query(
       `UPDATE vendorprofile SET last_login = NOW() WHERE id = $1`,
       [vendor.id]
     );
 
-    /* ================= FLOW ================= */
+    /* ================= ONBOARDING FLOW ================= */
 
     let next_action = "dashboard";
     let onboarding_step = vendor.current_step || 1;
@@ -393,18 +279,31 @@ export const loginVendor = async (req, res) => {
       });
     } else if (vendor.status === "rejected") {
       next_action = "onboarding";
+      onboarding_step = 1;
     }
 
     /* ================= TOKENS ================= */
 
-    const accessToken = generateToken({
-      vendor_id: vendor.id,
-      onboarding_id: vendor.onboarding_id,
-    });
+    // 🔥 ACCESS TOKEN (short life)
+    const accessToken = jwt.sign(
+      {
+        vendor_id: vendor.id,
+        onboarding_id: vendor.onboarding_id,
+      },
+      process.env.ACCESS_SECRET,
+      { expiresIn: "15m" }
+    );
 
-    const refreshToken = randomBytes(64).toString("hex");
+    // 🔥 REFRESH TOKEN (secure JWT instead of random string)
+    const refreshToken = jwt.sign(
+      {
+        vendor_id: vendor.id,
+      },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    // ✅ Store session
+    // ✅ store session
     await db.query(
       `INSERT INTO vendor_sessions 
        (vendor_id, refresh_token, user_agent, ip_address, expires_at)
@@ -440,14 +339,18 @@ export const loginVendor = async (req, res) => {
 
 export const refreshAccessToken = async (req, res) => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const { refreshToken } = req.body;
 
     if (!refreshToken) {
       return res.status(401).json({ message: "No refresh token" });
     }
 
+    // 1. verify token
+    const decoded = verifyRefreshToken(refreshToken);
+
+    // 2. check DB session
     const session = await db.query(
-      `SELECT vendor_id FROM vendor_sessions 
+      `SELECT * FROM vendor_sessions 
        WHERE refresh_token = $1 AND expires_at > NOW()`,
       [refreshToken]
     );
@@ -456,44 +359,37 @@ export const refreshAccessToken = async (req, res) => {
       return res.status(401).json({ message: "Invalid session" });
     }
 
-    const vendor_id = session.rows[0].vendor_id;
-
-    const accessToken = generateAccessToken({ vendor_id });
-
-    return res.json({
-      accessToken,
-      vendor: { id: vendor_id } // 👈 IMPORTANT
+    // 3. issue new access token
+    const accessToken = generateAccessToken({
+      vendor_id: decoded.vendor_id,
     });
 
+    return res.json({ accessToken });
+
   } catch (err) {
-    return res.status(500).json({ message: "Refresh failed" });
+    return res.status(401).json({ message: "Refresh failed" });
   }
 };
 
-// export const logoutVendor = async (req, res) => {
-//   try {
-//     const token = req.headers.authorization?.split(" ")[1];
+export const getMe = async (req, res) => {
+  try {
+    const vendorId = req.user.vendor_id;
 
-//     if (!token) {
-//       return res.status(400).json({ message: "Token missing" });
-//     }
+    const result = await db.query(
+      `SELECT id, email, phone, email_verified, phone_verified, is_active
+       FROM vendorprofile
+       WHERE id = $1`,
+      [vendorId]
+    );
 
-//     // decode token to get expiry
-//     const decoded = jwt.decode(token);
+    return res.json({
+      vendor: result.rows[0],
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
-//     await db.query(
-//       `INSERT INTO token_blacklist (token, expires_at)
-//        VALUES ($1, to_timestamp($2))`,
-//       [token, decoded.exp]
-//     );
-
-//     return res.json({ message: "Logged out successfully" });
-
-//   } catch (err) {
-//     console.error("LOGOUT ERROR:", err);
-//     return res.status(500).json({ message: "Logout failed" });
-//   }
-// };
 export const logoutVendor = async (req, res) => {
   try {
     const { refreshToken } = req.body;

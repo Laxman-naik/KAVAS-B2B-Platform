@@ -15,6 +15,7 @@ const {
   getBankDetails, 
   getOnboardingState,
   updateOnboardingStep,
+  getMe
 } = require("../controllers/vendorController");
 
 const authMiddleware = require("../middleware/vendorMiddleware");
@@ -25,6 +26,7 @@ router.post("/register", registerVendor);
 router.post("/login", loginVendor);
 router.post("/refresh", refreshAccessToken);
 router.post("/logout", logoutVendor);
+router.get("/me", authMiddleware, getMe);
 
 router.post("/business", authMiddleware, upsertBusinessDetails);
 router.get("/getbusiness", authMiddleware, getBusinessDetails);
