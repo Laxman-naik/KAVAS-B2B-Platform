@@ -1,12 +1,13 @@
-
 "use client";
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, TrendingUp, Boxes } from "lucide-react";
 
 export default function VendorLoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -34,12 +35,13 @@ export default function VendorLoginPage() {
 
   const onSubmit = (e) => {
     e.preventDefault();
+    router.push("/vendor/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-white">
       <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#FFF8EC] to-white">
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#FFF8EC] ">
           <div className="p-10">
             <div className="flex items-start gap-3">
               <Image
@@ -90,7 +92,7 @@ export default function VendorLoginPage() {
           </div>
 
           <div className="pointer-events-none absolute -bottom-8 -right-10 opacity-[0.12]">
-            <Image src="/lotussymbol.png" alt="" width={520} height={520} className="h-auto w-[520px]" />
+            <Image src="/lotussymbol.png" alt="" width={520} height={520} className="h-auto w-130" />
           </div>
         </aside>
 
@@ -226,4 +228,3 @@ export default function VendorLoginPage() {
     </div>
   );
 }
-

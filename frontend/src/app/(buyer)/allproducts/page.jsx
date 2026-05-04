@@ -46,9 +46,9 @@ const Page = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const onToggleFavourite = (product) => {
-    dispatch(toggleFavourite(product));
-  };
+  // const onToggleFavourite = (product) => {
+  //   dispatch(toggleFavourite(product));
+  // };
 
   const onAddToCart = (product) => {
     dispatch(addToCart(product));
@@ -366,7 +366,7 @@ const Page = () => {
                                   type="button"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    onToggleFavourite({ ...product, _id: productId });
+                                    // onToggleFavourite({ ...product, _id: productId });
                                   }}
                                   className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
                                   aria-label="Toggle favourite"

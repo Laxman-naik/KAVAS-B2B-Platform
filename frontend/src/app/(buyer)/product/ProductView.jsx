@@ -5,19 +5,16 @@ import { suppliers } from "@/data/suppliers";
 import { useState, useEffect } from "react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
 import { useDispatch, useSelector } from "react-redux";
-// import { toggleFavourite } from "@/store/slices/favouritesSlice";
-import { getSingleProduct } from "@/services/productService";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, PackageCheck, RefreshCcw, Star, Truck, XIcon, Heart } from "lucide-react";
+import { addToFavourites, removeFromFavourites, } from "@/store/slices/favouritesSlice";
 
-const ProductView = () => { 
+const ProductView = () => {
   const params = useParams();
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
   const id = params?.Id ?? params?.id;
-
   const productId = typeof id === "string" ? id : Array.isArray(id) ? id[0] : "";
-
   const { product: apiProduct, loading, error } = useSelector((state) => state.products);
 
   useEffect(() => {
@@ -51,8 +48,6 @@ const ProductView = () => {
   };
 
   const product = normalizeProduct(apiProduct);
-
-
   const [qty, setQty] = useState(50);
   const [mounted, setMounted] = useState(false);
 
@@ -61,11 +56,7 @@ const ProductView = () => {
   }, []);
 
   const [activeImage, setActiveImage] = useState(null);
-
-  const mediaItems =
-    product?.media && product.media.length > 0
-      ? product.media
-      : [{ type: "image", src: product?.image || "/placeholder.png" }];
+  const mediaItems = product?.media && product.media.length > 0 ? product.media : [{ type: "image", src: product?.image || "/placeholder.png" }];
 
   useEffect(() => {
     if (product?.media?.length > 0) {
@@ -124,6 +115,16 @@ const ProductView = () => {
     setIsWriteReviewOpen(false);
   };
 
+  const handleFavouriteToggle = () => {
+      if (!product?.id) return;
+
+      if (isWishlisted) {
+        dispatch(removeFromFavourites(product.id));
+      } else {
+        dispatch(addToFavourites(product.id));
+      }
+    };
+
   const reviews = [
     {
       id: 1,
@@ -146,27 +147,18 @@ const ProductView = () => {
 
   ];
 
-  const averageRating =
-    reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+  const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
 
   const renderStars = (rating) => {
     const rounded = Math.round(rating);
     return (
       <div className="flex items-center gap-0.5" aria-label={`Rating ${rounded} out of 5`}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <span
-            key={i}
-            className={i < rounded ? "text-amber-500" : "text-gray-300"}
-          >
-            ★
-          </span>
-        ))}
+        {Array.from({ length: 5 }).map((_, i) => (<span key={i} className={i < rounded ? "text-amber-500" : "text-gray-300"}>★</span>))}
       </div>
     );
   };
 
-  const WriteReviewDialog = () => {
-    const isSubmitDisabled = !reviewRating || !reviewComment.trim();
+  const WriteReviewDialog = () => {const isSubmitDisabled = !reviewRating || !reviewComment.trim();
 
     return (
       <Dialog open={isWriteReviewOpen} onOpenChange={handleReviewDialogChange}>
@@ -295,8 +287,8 @@ const ProductView = () => {
                 disabled={isSubmitDisabled}
                 onClick={submitReview}
                 className={`w-1/2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${isSubmitDisabled
-                    ? "bg-gray-300 cursor-not-allowed"
-                    : "bg-gray-900 hover:bg-gray-800"
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-gray-900 hover:bg-gray-800"
                   }`}
               >
                 Submit
@@ -318,12 +310,8 @@ const ProductView = () => {
         {steps.map((step, index) => (
           <div key={index} className="flex items-start gap-4">
             <div className="flex flex-col items-center">
-              <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                {index + 1}
-              </div>
-              {index !== steps.length - 1 && (
-                <div className="w-px flex-1 bg-gray-200 mt-2" />
-              )}
+              <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">{index + 1}</div>
+              {index !== steps.length - 1 && (<div className="w-px flex-1 bg-gray-200 mt-2" />)}
             </div>
 
             <div className="flex-1">
@@ -459,9 +447,7 @@ const ProductView = () => {
     return <div className="p-10 text-center">Product Not Found</div>;
   }
 
-  const isWishlisted = mounted
-    ? favouriteItems.some((item) => String(item._id ?? item.id) === String(product.id))
-    : false;
+  const isWishlisted = mounted ? favouriteItems.includes(product.id) : false;
 
   const normalizeName = (value) =>
     String(value || "")
@@ -496,53 +482,27 @@ const ProductView = () => {
       <div className="grid lg:grid-cols-2 gap-7 items-start">
         <div className="space-y-4">
           <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300 relative">
-            <button
-              type="button"
-              onClick={() => dispatch(toggleFavourite(product))}
-              className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:scale-110 transition"
-            >
-              <Heart
-                className={`w-5 h-5 transition ${isWishlisted
-                    ? "fill-red-500 text-red-500"
-                    : "text-gray-400"
-                  }`}
-              />
+            <button type="button" onClick={handleFavouriteToggle} className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:scale-110 transition">
+              <Heart className={`w-5 h-5 transition ${isWishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
             </button>
 
             <div className="overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center h-72 sm:h-96 lg:h-105">
               {selectedMedia.type === "image" ? (
-                <img
-                  src={selectedMedia?.src || "/placeholder.png"}
-                  className="w-full h-full object-contain transition duration-300 "
-                />
+                <img src={selectedMedia?.src || "/placeholder.png"} className="w-full h-full object-contain transition duration-300 " />
               ) : (
-                <video
-                  src={selectedMedia?.src}
-                  controls
-                  className="w-full h-full object-contain"
-                />
+                <video src={selectedMedia?.src} controls className="w-full h-full object-contain" />
               )}
             </div>
 
             <div className="mt-3 grid grid-cols-5 gap-3">
               {mediaItems.map((item, idx) => {
-                const isActive =
-                  selectedMedia.src === item.src &&
-                  selectedMedia.type === item.type;
-
+                const isActive = selectedMedia.src === item.src && selectedMedia.type === item.type;
                 return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveImage(item)}
+                  <button key={idx} type="button" onClick={() => setActiveImage(item)}
                     className={`rounded-lg border p-1 overflow-hidden transition ${isActive ? "border-orange-500" : "border-gray-200"
                       }`}
                   >
-                    {item.type === "image" ? (
-                      <img
-                        src={item.src || "/placeholder.png"}
-                        className="w-full h-16 object-contain"
-                      />
+                    {item.type === "image" ? (<img src={item.src || "/placeholder.png"} className="w-full h-16 object-contain" />
                     ) : (
                       <div className="relative w-full h-16 bg-black flex items-center justify-center">
                         <span className="text-white text-xs">▶</span>
@@ -637,8 +597,8 @@ const ProductView = () => {
                     key={i}
                     onClick={() => setQty(tier.min)}
                     className={`rounded-lg px-3 py-2 w-23.75 sm:w-27.5 text-center transition hover:scale-105 ${isActive
-                        ? "border-2 border-orange-500 bg-white"
-                        : "bg-gray-100 hover:bg-gray-200"
+                      ? "border-2 border-orange-500 bg-white"
+                      : "bg-gray-100 hover:bg-gray-200"
                       }`}
                   >
                     <p className="text-[10px] sm:text-xs text-gray-500">

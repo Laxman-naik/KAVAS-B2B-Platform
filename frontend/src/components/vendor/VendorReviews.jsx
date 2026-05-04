@@ -109,7 +109,7 @@ const VendorReviews = () => {
           <p className="mt-2 text-sm sm:text-base text-gray-600">
             Real stories from real sellers across India
           </p>
-          <div className="mt-4 mx-auto h-[3px] w-10 rounded-full bg-[#D4AF37]" />
+          <div className="mt-4 mx-auto h-0.75 w-10 rounded-full bg-[#D4AF37]" />
         </div>
 
         <div className="mt-10">
@@ -155,7 +155,7 @@ const VendorReviews = () => {
                     <div className="h-9 w-9 rounded-full bg-[#0B1F3A] text-white flex items-center justify-center text-xs font-bold">
                       {initials}
                     </div>
-                    <div className="min-h-[36px]">
+                    <div className="min-h-9">
                       <div className="text-sm font-semibold text-[#1A1A1A] whitespace-nowrap overflow-hidden text-ellipsis">
                         {r.name}
                       </div>

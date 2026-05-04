@@ -199,15 +199,21 @@ exports.createOrderFromCart = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    // No filtering anymore (since buyer removed)
-    const result = await pool.query(
-      `SELECT * FROM orders 
-       ORDER BY created_at DESC`
-    );
+    const result = await pool.query(`
+      SELECT 
+        o.*,
+        u.full_name AS buyer_name
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+    `);
 
-    res.json(result.rows);
+    res.json({
+      orders: result.rows,
+    });
 
   } catch (err) {
+    console.error("GET ORDERS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

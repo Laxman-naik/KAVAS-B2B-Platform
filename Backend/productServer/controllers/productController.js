@@ -203,21 +203,15 @@ exports.deleteProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const parsedPage = Number(page);
-    const parsedLimit = Number(limit);
-    const offset = (parsedPage - 1) * parsedLimit;
-
     const result = await pool.query(
       `SELECT * FROM products
        WHERE is_active = true
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [parsedLimit, offset]
+       ORDER BY created_at DESC`
     );
 
-    res.json(result.rows);
+    res.json({
+      products: result.rows,
+    });
   } catch (err) {
     console.error("getProducts error:", err);
     res.status(500).json({ message: err.message });

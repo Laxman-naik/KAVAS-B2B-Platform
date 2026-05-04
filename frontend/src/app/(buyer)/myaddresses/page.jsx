@@ -6,79 +6,13 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import { fetchAddresses } from "../../../store/slices/addressSlice";
+import { fetchAddresses, addAddress, editAddress, removeAddress, changeDefaultAddress, } from "../../../store/slices/addressSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  ChevronRight,
-  Plus,
-  MapPin,
-  Home,
-  CheckCircle2,
-  Trash2,
-  Pencil,
-  User,
-  Phone,
-} from "lucide-react";
-
-const seedAddresses = [
-  {
-    id: "addr_home",
-    title: "Home Address",
-    tag: "Home",
-    isDefault: true,
-    active: true,
-    name: "Rahul Kumar",
-    phone: "+91 6302259849",
-    addressLine:
-      "123, Green Hills Colony, Hyderabad, Telangana - 500001, India",
-  },
-  {
-    id: "addr_office",
-    title: "Office Address",
-    tag: "Work",
-    isDefault: false,
-    active: true,
-    name: "Rahul Kumar",
-    phone: "+91 6302259849",
-    addressLine:
-      "8-2-293/82/A, 2nd Floor, Road No. 12, Banjara Hills, Hyderabad, Telangana - 500034, India",
-  },
-  {
-    id: "addr_warehouse",
-    title: "Warehouse Address",
-    tag: "Other",
-    isDefault: false,
-    active: true,
-    name: "Rahul Kumar",
-    phone: "+91 6302259849",
-    addressLine:
-      "Survey No. 45, Shamshan Narayanapur, Near ORR, Ranga Reddy District, Hyderabad, Telangana - 501359, India",
-  },
-  {
-    id: "addr_billing",
-    title: "Billing Address",
-    tag: "Billing",
-    isDefault: false,
-    active: true,
-    name: "Rahul Kumar",
-    phone: "+91 6302259849",
-    addressLine:
-      "Flat No. 502, Sree Nilayam Apartments, Ameerpet, Hyderabad, Telangana - 500016, India",
-  },
-  {
-    id: "addr_secondary",
-    title: "Secondary Home",
-    tag: "Home",
-    isDefault: false,
-    active: true,
-    name: "Rahul Kumar",
-    phone: "+91 6302259849",
-    addressLine:
-      "H. No. 12-5-678/1, Street No. 3, Kukatpally, Hyderabad, Telangana - 500072, India",
-  },
-];
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ChevronRight, Plus, MapPin, Home, CheckCircle2, Trash2, Pencil, User, Phone, } from "lucide-react";
 
 const tagStyles = {
   Home: "bg-green-100 text-green-700",
@@ -92,6 +26,7 @@ export default function Page() {
   const { addresses } = useSelector((state) => state.address);
   const dispatch = useDispatch();
   const router = useRouter();
+<<<<<<< HEAD
 
   const fullName =
     authUser?.full_name || authUser?.fullName || authUser?.name || "";
@@ -103,6 +38,49 @@ export default function Page() {
     firstName: authUser?.firstName || firstName,
     lastName: authUser?.lastName || rest.join(" "),
     email: authUser?.email || "",
+=======
+  const fullName = authUser?.full_name || authUser?.fullName || authUser?.name || "";
+  const [firstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
+  const user = { firstName: authUser?.firstName || firstName, lastName: authUser?.lastName || rest.join(" "), email: authUser?.email || "", };
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [newAddress, setNewAddress] = useState({
+    address_line1: "", address_line2: "", city: "", state: "", country: "", postal_code: "", phone: "",
+    label: "", type: "home", is_default: false, active: true,
+  });
+
+  const resetForm = () => {
+    setOpen(false);
+    setEditId(null);
+    setNewAddress({
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      state: "",
+      country: "",
+      postal_code: "",
+      phone: "",
+      label: "",
+      type: "home",
+      is_default: false,
+      active: true,
+    });
+  };
+
+  const handleAddAddress = async () => {
+    const payload = { ...newAddress };
+    await dispatch(addAddress(payload));
+    resetForm();
+  };
+
+  const handleUpdate = async () => {
+    await dispatch(editAddress({ id: editId, data: newAddress }));
+    resetForm();
+  };
+
+  const handleDelete = async (id) => {
+    await dispatch(removeAddress(id));
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
   };
 
   useEffect(() => {
@@ -211,51 +189,67 @@ export default function Page() {
     }
   };
 
+  const handleEditClick = (addr) => {
+    setEditId(addr.id);
+    setNewAddress({
+      address_line1: addr.address_line1 || "",
+      address_line2: addr.address_line2 || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      country: addr.country || "",
+      postal_code: addr.postal_code || "",
+      phone: addr.phone || "",
+      label: addr.label || "",
+      type: addr.type || "other",
+      is_default: addr.is_default || false,
+      active: addr.active ?? true
+    });
+    setOpen(true);
+  };
+
   const normalizedAddresses = useMemo(() => {
-    if (Array.isArray(addresses) && addresses.length > 0) {
-      return addresses.map((a, idx) => {
-        const title = a?.label || a?.title || `Address ${idx + 1}`;
-        const tag = a?.tag || a?.type || "Other";
-        const addressLine = [
-          a?.address_line1,
-          a?.address_line2,
-          a?.city,
-          a?.state,
-          a?.country,
-          a?.postal_code ? `- ${a.postal_code}` : "",
-        ]
-          .filter(Boolean)
-          .join(", ");
+    if (!Array.isArray(addresses) || addresses.length === 0) return [];
 
-        return {
-          id: a?.id ?? `addr_${idx}`,
-          title,
-          tag: tagStyles[tag] ? tag : "Other",
-          isDefault: Boolean(a?.isDefault || a?.is_default) || idx === 0,
-          active: a?.active !== undefined ? Boolean(a.active) : true,
-          name: a?.name || fullName || "",
-          phone: a?.phone || authUser?.phone || "",
-          addressLine,
-        };
-      });
-    }
+    return addresses.map((a, idx) => {
+      const type = (a?.type || "other").toLowerCase();
 
-    return seedAddresses;
-  }, [addresses, authUser?.phone, fullName]);
+      const addressLine = [
+        a?.address_line1,
+        a?.address_line2,
+        a?.city,
+        a?.state,
+        a?.country,
+        a?.postal_code ? `- ${a.postal_code}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-  const [localAddresses, setLocalAddresses] = useState(seedAddresses);
+      return {
+        ...a,
+        id: a?.id ?? `addr_${idx}`,
+        title: a?.label || `Address ${idx + 1}`,
+        tag: type.charAt(0).toUpperCase() + type.slice(1),
+        isDefault: Boolean(a?.is_default),
+        active: a?.active ?? true,
 
-  useEffect(() => {
-    setLocalAddresses(normalizedAddresses);
-  }, [normalizedAddresses]);
+        // 👇 FIX HERE
+        name:
+          a?.name ||
+          `${authUser?.firstName || firstName} ${authUser?.lastName || rest.join(" ")}`.trim(),
+
+        phone: a?.phone || authUser?.phone || "",
+        addressLine,
+      };
+    });
+  }, [addresses, authUser, firstName, rest]);
 
   const stats = useMemo(() => {
-    const total = localAddresses.length;
-    const defaultCount = localAddresses.filter((a) => a.isDefault).length || 1;
-    const active = localAddresses.filter((a) => a.active).length;
-    const inactive = localAddresses.filter((a) => !a.active).length;
+    const total = normalizedAddresses.length;
+    const defaultCount = normalizedAddresses.filter((a) => a.isDefault).length;
+    const active = normalizedAddresses.filter((a) => a.active).length;
+    const inactive = normalizedAddresses.filter((a) => !a.active).length;
     return { total, defaultCount, active, inactive };
-  }, [localAddresses]);
+  }, [normalizedAddresses]);
 
   const handleLogout = async () => {
     await dispatch(logoutUserThunk());
@@ -266,10 +260,7 @@ export default function Page() {
     <div className="bg-[#0B1F3A] min-h-screen">
       <div className="mx-auto bg-white border rounded-sm border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-          <div className="lg:sticky lg:top-24 self-start">
-            <ProfileSidebar user={user} onLogout={handleLogout} />
-          </div>
-
+          <div className="lg:sticky lg:top-24 self-start"><ProfileSidebar user={user} onLogout={handleLogout} /></div>
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
@@ -277,6 +268,7 @@ export default function Page() {
                   My Addresses
                 </h1>
                 <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+<<<<<<< HEAD
                   <Link href="/" className="hover:underline">
                     Home
                   </Link>
@@ -291,9 +283,16 @@ export default function Page() {
               >
                 <Plus size={16} className="mr-2" />
                 Add New Address
+=======
+                  <Link href="/" className="hover:underline">Home</Link><ChevronRight size={14} />
+                  <span className="text-[#0B1F3A]">My Addresses</span>
+                </div>
+              </div>
+              <Button onClick={() => setOpen(true)} className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto">
+                <Plus size={16} className="mr-2" /> Add New Address
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
               </Button>
             </div>
-
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Card className="rounded-sm border border-[#E5E5E5]">
                 <CardContent className="p-4 flex items-center gap-3">
@@ -358,16 +357,22 @@ export default function Page() {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<<<<<<< HEAD
                 {localAddresses.map((a) => (
                   <Card
                     key={a.id}
                     className="rounded-sm border border-[#E5E5E5]"
                   >
+=======
+                {normalizedAddresses.map((a) => (
+                  <Card key={a.id} className="rounded-sm border border-[#E5E5E5]">
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             {a.isDefault ? (
+<<<<<<< HEAD
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
                                 Default
                               </span>
@@ -378,23 +383,36 @@ export default function Page() {
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}
                             >
+=======
+                              <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Default</span>
+                            ) : (
+                              <Button  variant="outline" className="h-8 text-xs"  onClick={async () => {await dispatch(changeDefaultAddress(a.id)); dispatch(fetchAddresses());}}>Set Default</Button>
+                            )}
+                            <p className="font-semibold text-[#0B1F3A] text-sm truncate">{a.title}</p>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}>
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                               {a.tag}
                             </span>
                           </div>
                         </div>
-
                         <Switch
                           checked={Boolean(a.active)}
                           onCheckedChange={(checked) =>
+<<<<<<< HEAD
                             setLocalAddresses((prev) =>
                               prev.map((x) =>
                                 x.id === a.id ? { ...x, active: checked } : x,
                               ),
                             )
                           }
+=======
+                            dispatch(editAddress({
+                              id: a.id,
+                              data: { ...a, active: checked, },
+                            }))}
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                         />
                       </div>
-
                       <div className="mt-3 space-y-2">
                         <div className="flex items-center gap-2 text-xs text-gray-700">
                           <User size={14} className="text-gray-500" />
@@ -410,6 +428,7 @@ export default function Page() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-end gap-2">
+<<<<<<< HEAD
                         <Button
                           variant="outline"
                           onClick={() => openEditModal(a)}
@@ -425,6 +444,13 @@ export default function Page() {
                         >
                           <Trash2 size={14} className="mr-1" />
                           Delete
+=======
+                        <Button variant="outline" onClick={() => handleEditClick(a)} className="rounded-sm border-[#E5E5E5] h-8 text-xs">
+                          <Pencil size={14} className="mr-1" /> Edit
+                        </Button>
+                        <Button variant="outline" onClick={() => handleDelete(a.id)} className="rounded-sm border-[#E5E5E5] h-8 text-xs text-red-600 hover:text-red-600">
+                          <Trash2 size={14} className="mr-1" /> Delete
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                         </Button>
                       </div>
                     </CardContent>
@@ -436,6 +462,7 @@ export default function Page() {
                     <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
                       <Plus size={20} className="text-gray-700" />
                     </div>
+<<<<<<< HEAD
                     <p className="mt-3 font-semibold text-[#0B1F3A]">
                       Add New Address
                     </p>
@@ -448,6 +475,14 @@ export default function Page() {
                     >
                       <Plus size={16} className="mr-2" />
                       Add Address
+=======
+                    <p className="mt-3 font-semibold text-[#0B1F3A]">Add New Address</p>
+                    <p className="mt-1 text-xs text-gray-500 max-w-55">
+                      Save multiple addresses and ship to your convenience
+                    </p>
+                    <Button onClick={() => setOpen(true)} className="mt-4 bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95">
+                      <Plus size={16} className="mr-2" /> Add Address
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                     </Button>
                   </CardContent>
                 </Card>
@@ -461,6 +496,7 @@ export default function Page() {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg w-full max-w-lg p-6 space-y-4 shadow-xl">
@@ -544,3 +580,33 @@ export default function Page() {
     </div>
   );
 }
+=======
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="rounded-2xl w-[95%] sm:max-w-md">
+          <DialogHeader><DialogTitle>{editId ? "Edit Address" : "Add Address"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input placeholder="Label (e.g. Home Address)" value={newAddress.label} onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })} />
+            <select value={newAddress.type} onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}>
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="other">Other</option>
+              <option value="billing">Billing</option>
+            </select>
+            <Input placeholder="Address Line 1" value={newAddress.address_line1} onChange={(e) => setNewAddress({ ...newAddress, address_line1: e.target.value })} />
+            <Input placeholder="Address Line 2" value={newAddress.address_line2} onChange={(e) => setNewAddress({ ...newAddress, address_line2: e.target.value })} />
+            <Input placeholder="Phone" value={newAddress.phone} onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })} />
+            <Input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} />
+            <Input placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} />
+            <Input placeholder="Country" value={newAddress.country} onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })} />
+            <Input placeholder="Postal Code" value={newAddress.postal_code} onChange={(e) => setNewAddress({ ...newAddress, postal_code: e.target.value })} />
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={resetForm}>Cancel</Button>
+            <Button onClick={editId ? handleUpdate : handleAddAddress}>{editId ? "Update" : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f

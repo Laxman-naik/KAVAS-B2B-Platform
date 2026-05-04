@@ -1,17 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const verifyToken = require("../middleware/authMiddleware");
 
-const {
-  getFavourites,
-  addToFavourites,
-  removeFromFavourites,
-  clearFavourites,
-} = require("../controllers/favouritesController");
+const verifyToken = require("../middleware/authMiddleware");
+const { getFavourites, addToFavourites, removeFromFavourites, clearFavourites,} = require("../controllers/favouritesController");
 
 router.get("/", verifyToken, getFavourites);
-router.post("/", verifyToken, addToFavourites);
-router.delete("/:productId", verifyToken, removeFromFavourites);
-router.delete("/", verifyToken, clearFavourites);
+router.post("/add", verifyToken, addToFavourites);
+router.delete("/remove/:productId", verifyToken, removeFromFavourites);
+router.delete("/clear", verifyToken, clearFavourites);
 
 module.exports = router;

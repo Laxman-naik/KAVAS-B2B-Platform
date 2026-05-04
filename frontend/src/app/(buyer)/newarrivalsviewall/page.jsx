@@ -4,13 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Heart,
-  ShoppingCart,
-  LayoutGrid,
-  LayoutList,
-} from "lucide-react";
+import { Heart, ShoppingCart, LayoutGrid, LayoutList, } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { addToFavourites, removeFromFavourites, fetchFavourites, } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
@@ -34,21 +30,15 @@ const Page = () => {
   const [mainCategories, setMainCategories] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-
-  // UI only favourites state
-  const [favouriteIds, setFavouriteIds] = useState([]);
-
-  const [filters, setFilters] = useState({
-    minQty: [],
-    rating: [],
-    supplier: [],
-  });
+  const [filters, setFilters] = useState({ minQty: [], rating: [], supplier: [], });
 
   const dispatch = useDispatch();
   const newArrivals = useSelector((state) => state.products.newArrivals || []);
+  const favouriteItems = useSelector((state) => state.favourites.items || []);
 
   useEffect(() => {
-    dispatch(fetchNewArrivals());
+  dispatch(fetchNewArrivals());
+  dispatch(fetchFavourites());
 
     const loadCategories = async () => {
       try {
@@ -57,8 +47,8 @@ const Page = () => {
         const rawCategories = Array.isArray(res?.data?.data)
           ? res.data.data
           : Array.isArray(res?.data)
-          ? res.data
-          : [];
+            ? res.data
+            : [];
 
         const parentCategories = rawCategories.filter((cat) => !cat.parent_id);
         setMainCategories(parentCategories);
@@ -70,12 +60,15 @@ const Page = () => {
     loadCategories();
   }, [dispatch]);
 
-  const onToggleFavourite = (productId) => {
-    setFavouriteIds((prev) =>
-      prev.includes(String(productId))
-        ? prev.filter((id) => id !== String(productId))
-        : [...prev, String(productId)]
-    );
+  const onToggleFavourite = (product) => {
+    const productId = String(product.productId);
+    const isLiked = favouriteItems.map(String).includes(String(product.productId));
+
+    if (isLiked) {
+      dispatch(removeFromFavourites(productId));
+    } else {
+      dispatch(addToFavourites(productId));
+    }
   };
 
   const onAddToCart = (product) => {
@@ -266,15 +259,15 @@ const Page = () => {
                 style={
                   activeCategory === cat.slug
                     ? {
-                        backgroundColor: COLORS.accent,
-                        color: COLORS.primary,
-                        borderColor: COLORS.accent,
-                      }
+                      backgroundColor: COLORS.accent,
+                      color: COLORS.primary,
+                      borderColor: COLORS.accent,
+                    }
                     : {
-                        backgroundColor: COLORS.white,
-                        color: COLORS.text,
-                        borderColor: COLORS.border,
-                      }
+                      backgroundColor: COLORS.white,
+                      color: COLORS.text,
+                      borderColor: COLORS.border,
+                    }
                 }
               >
                 {cat.name}
@@ -299,9 +292,8 @@ const Page = () => {
           </div>
 
           <div
-            className={`${
-              showFilters ? "block" : "hidden"
-            } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
+            className={`${showFilters ? "block" : "hidden"
+              } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
             style={{
               backgroundColor: COLORS.white,
               borderColor: COLORS.border,
@@ -457,7 +449,7 @@ const Page = () => {
               }
             >
               {paginatedProducts.map((product) => {
-                const isLiked = favouriteIds.includes(String(product.productId));
+                const isLiked = favouriteItems.map(String).includes(String(product.productId));
 
                 return (
                   <Link
@@ -485,7 +477,7 @@ const Page = () => {
                             }
                           >
                             <span
-                              className="absolute top-1 left-1 text-[9px] px-2 py-[2px] rounded"
+                              className="absolute top-1 left-1 text-[9px] px-2 py-0.5 rounded"
                               style={{
                                 backgroundColor: COLORS.primary,
                                 color: COLORS.white,
@@ -498,7 +490,7 @@ const Page = () => {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                onToggleFavourite(product.productId);
+                                onToggleFavourite(product);
                               }}
                               className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer"
                               aria-label="Toggle favourite"
@@ -555,11 +547,10 @@ const Page = () => {
 
                             <div className="mt-3">
                               <Button
-                                className={`flex items-center gap-2 rounded-md cursor-pointer ${
-                                  viewMode === "grid"
+                                className={`flex items-center gap-2 rounded-md cursor-pointer ${viewMode === "grid"
                                     ? "w-full text-sm py-2 justify-center"
                                     : "text-xs px-3 py-1.5"
-                                }`}
+                                  }`}
                                 style={{
                                   backgroundColor: COLORS.accent,
                                   color: COLORS.primary,
@@ -621,15 +612,15 @@ const Page = () => {
                       style={
                         safePage === pageNum
                           ? {
-                              backgroundColor: COLORS.primary,
-                              color: COLORS.cream,
-                              borderColor: COLORS.primary,
-                            }
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.cream,
+                            borderColor: COLORS.primary,
+                          }
                           : {
-                              backgroundColor: COLORS.white,
-                              color: COLORS.primary,
-                              borderColor: COLORS.border,
-                            }
+                            backgroundColor: COLORS.white,
+                            color: COLORS.primary,
+                            borderColor: COLORS.border,
+                          }
                       }
                     >
                       {pageNum}
@@ -649,15 +640,15 @@ const Page = () => {
                       style={
                         safePage === totalPages
                           ? {
-                              backgroundColor: COLORS.primary,
-                              color: COLORS.cream,
-                              borderColor: COLORS.primary,
-                            }
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.cream,
+                            borderColor: COLORS.primary,
+                          }
                           : {
-                              backgroundColor: COLORS.white,
-                              color: COLORS.primary,
-                              borderColor: COLORS.border,
-                            }
+                            backgroundColor: COLORS.white,
+                            color: COLORS.primary,
+                            borderColor: COLORS.border,
+                          }
                       }
                     >
                       {totalPages}

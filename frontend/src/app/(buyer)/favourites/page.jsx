@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,26 +10,31 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import {
-  fetchFavourites,
-  removeFromFavourites,
-  clearFavourites,
-  getProductIdFromItem,
-} from "@/store/slices/favouritesSlice";
+import {fetchFavourites,removeFromFavourites,clearFavourites,getProductIdFromItem,} from "@/store/slices/favouritesSlice";
+import { fetchProducts } from "@/store/slices/productSlice";
 
 const Page = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
+  const products = useSelector((state) => state.products.products || []);
   const [token, setToken] = React.useState(null);
   const [selected, setSelected] = React.useState({});
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
 
-  const { items: favourites, loading, error } = useSelector(
-    (state) => state.favourites
-  );
+  const productMap = useMemo(() => {
+  const map = {};
+  products.forEach((p) => {
+    map[p.id] = p;
+  });
+  return map;
+}, [products]);
+
+  // const favouriteProducts = useMemo(() => {
+  //   return favouriteIds.map((id) => productMap[id]).filter(Boolean);
+  // }, [favouriteIds, productMap]);
 
   const authUser = useSelector((state) => state.auth.user);
 
@@ -43,21 +48,25 @@ const Page = () => {
 
   React.useEffect(() => {
     setMounted(true);
+    dispatch(fetchFavourites());
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
-    const savedToken = localStorage.getItem("accessToken");
-    setToken(savedToken);
+    useEffect(() => {
+  const savedToken = localStorage.getItem("accessToken");
+  setToken(savedToken);
 
-    const handleStorageChange = () => {
-      const updatedToken = localStorage.getItem("accessToken");
-      setToken(updatedToken);
-    };
+  const handleStorageChange = () => {
+    const updatedToken = localStorage.getItem("accessToken");
+    setToken(updatedToken);
+  };
 
-    window.addEventListener("storage", handleStorageChange);
+  window.addEventListener("storage", handleStorageChange);
 
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+  };
+}, []);
 
   React.useEffect(() => {
     if (mounted && token) {
@@ -86,42 +95,65 @@ const Page = () => {
     dispatch(removeFromFavourites(productId));
   };
 
-  const normalized = React.useMemo(() => {
-    return (favourites || []).map((item, index) => {
-      const productId = getProductIdFromItem(item) || index;
-      const image =
-        item?.image ||
-        item?.image_url ||
-        item?.imageUrl ||
-        item?.product?.image ||
-        "/placeholder.png";
-      const price =
-        Number(item?.wholesalePrice ?? item?.priceValue ?? item?.price ?? item?.product?.price ?? 0) || 0;
-      const mrp =
-        Number(item?.mrp ?? item?.product?.mrp ?? item?.originalPrice ?? price) || 0;
-      const name = item?.name || item?.product?.name || "Product";
-      const sku = item?.sku || item?.product?.sku || "";
-      const color = item?.color || item?.product?.color || "";
-      const addedOnDate = item?.addedOnDate || item?.createdAt || "15 May 2024";
-      const addedOnTime = item?.addedOnTime || "02:30 PM";
-      const stockLabel = item?.stockLabel || "In Stock";
-      const stockNote = item?.stockNote || "250+ available";
+  // const normalized = React.useMemo(() => {
+  //   return (favourites || []).map((item, index) => {
+  //     const productId = getProductIdFromItem(item) || index;
+  //     const image =
+  //       item?.image ||
+  //       item?.image_url ||
+  //       item?.imageUrl ||
+  //       item?.product?.image ||
+  //       "/placeholder.png";
+  //     const price =
+  //       Number(item?.wholesalePrice ?? item?.priceValue ?? item?.price ?? item?.product?.price ?? 0) || 0;
+  //     const mrp =
+  //       Number(item?.mrp ?? item?.product?.mrp ?? item?.originalPrice ?? price) || 0;
+  //     const name = item?.name || item?.product?.name || "Product";
+  //     const sku = item?.sku || item?.product?.sku || "";
+  //     const color = item?.color || item?.product?.color || "";
+  //     const addedOnDate = item?.addedOnDate || item?.createdAt || "15 May 2024";
+  //     const addedOnTime = item?.addedOnTime || "02:30 PM";
+  //     const stockLabel = item?.stockLabel || "In Stock";
+  //     const stockNote = item?.stockNote || "250+ available";
+
+  //     return {
+  //       productId,
+  //       image,
+  //       name,
+  //       sku,
+  //       color,
+  //       mrp,
+  //       price,
+  //       stockLabel,
+  //       stockNote,
+  //       addedOnDate,
+  //       addedOnTime,
+  //     };
+  //   });
+  // }, [favourites]);
+
+  const normalized = useMemo(() => {
+  return favouriteIds
+    .map((id) => {
+      const product = productMap[id];
+      if (!product) return null;
 
       return {
-        productId,
-        image,
-        name,
-        sku,
-        color,
-        mrp,
-        price,
-        stockLabel,
-        stockNote,
-        addedOnDate,
-        addedOnTime,
+        productId: id,
+        image: product.image || "/placeholder.png",
+        name: product.name || "Product",
+        sku: product.sku || "",
+        color: product.color || "",
+        mrp: product.mrp || product.price || 0,
+        price: product.price || 0,
+        stockLabel: "In Stock",
+        stockNote: "Available",
+        addedOnDate: product.createdAt || "",
+        addedOnTime: "",
       };
-    });
-  }, [favourites]);
+    })
+    .filter(Boolean);
+}, [favouriteIds, productMap]);
 
   const totals = React.useMemo(() => {
     const totalItems = normalized.length;
@@ -288,7 +320,7 @@ const Page = () => {
                             </td>
 
                             <td className="px-4 py-4">
-                              <div className="flex items-center gap-3 min-w-[280px]">
+                              <div className="flex items-center gap-3 min-w-70">
                                 <img
                                   src={row.image}
                                   alt={row.name}

@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -25,6 +24,12 @@ export default function VendorRegisterPage() {
   const step = 1;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otp, setOtp] = useState({
+    mobile: { sent: false, verified: false, digits: Array(6).fill("") },
+    email: { sent: false, verified: false, digits: Array(6).fill("") },
+  });
+  const otpRefs = useRef({ mobile: [], email: [] });
+
   const [form, setForm] = useState({
     mobile: "",
     email: "",
@@ -67,6 +72,54 @@ export default function VendorRegisterPage() {
     setForm((s) => ({ ...s, [key]: value }));
   };
 
+  const sendOtp = (channel) => {
+    setOtp((s) => ({
+      ...s,
+      [channel]: { ...s[channel], sent: true, verified: false, digits: Array(6).fill("") },
+    }));
+    requestAnimationFrame(() => {
+      otpRefs.current?.[channel]?.[0]?.focus?.();
+    });
+  };
+
+  const onOtpChange = (channel, index) => (e) => {
+    const raw = e.target.value ?? "";
+    const val = String(raw).replace(/\D/g, "").slice(-1);
+
+    setOtp((s) => {
+      const nextDigits = [...s[channel].digits];
+      nextDigits[index] = val;
+      return { ...s, [channel]: { ...s[channel], digits: nextDigits } };
+    });
+
+    if (val && index < 5) {
+      otpRefs.current?.[channel]?.[index + 1]?.focus?.();
+    }
+  };
+
+  const onOtpKeyDown = (channel, index) => (e) => {
+    if (e.key !== "Backspace") return;
+    if (otp[channel].digits[index]) return;
+    if (index === 0) return;
+    otpRefs.current?.[channel]?.[index - 1]?.focus?.();
+  };
+
+  const verifyOtp = (channel) => {
+    const code = otp[channel].digits.join("");
+    if (code.length !== 6) return;
+    setOtp((s) => ({
+      ...s,
+      [channel]: { ...s[channel], verified: true },
+    }));
+  };
+
+  const canContinue =
+    otp.mobile.verified &&
+    otp.email.verified &&
+    String(form.password).trim().length > 0 &&
+    String(form.confirmPassword).trim().length > 0 &&
+    form.password === form.confirmPassword;
+
   const onContinue = (e) => {
     e?.preventDefault?.();
     router.push("/vendor/vendorbusinessdetails");
@@ -77,18 +130,20 @@ export default function VendorRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F3F9FF] via-white to-white">
+    <div className="min-h-screen bg-[#FFF8EC]">
       <header className="w-full">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link href="/vendor" className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-sm bg-[#0B1F3A] flex items-center justify-center">
-                <span className="text-white font-extrabold text-lg">K</span>
-              </div>
-              <div className="leading-none">
-                <div className="text-sm font-extrabold text-[#0B1F3A]">KAVAS</div>
-                <div className="text-[11px] font-semibold tracking-wide text-[#0B1F3A]/80">SELLER HUB</div>
-              </div>
+        <div className="w-full px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
+          <Link href="/vendor" className="flex items-center gap-3">
+
+            <div className="flex items-start gap-3">
+              <Image
+                src="/LOGOKAVAS.png"
+                alt="KAVAS"
+                width={210}
+                height={72}
+                className="h-12 w-auto"
+                priority
+              />
             </div>
           </Link>
 
@@ -101,7 +156,7 @@ export default function VendorRegisterPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 pb-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-12">
         <div className="rounded-2xl bg-white shadow-[0_10px_40px_rgba(13,38,76,0.10)] border border-[#E5E5E5] overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <section className="lg:col-span-7 p-6 sm:p-10">
@@ -112,71 +167,65 @@ export default function VendorRegisterPage() {
                 Start selling and grow your business with India&apos;s trusted platform
               </div>
 
-             <div className="mt-6 flex items-center gap-4">
-  {/* STEP 1 */}
-  <div className="flex items-center gap-2">
-    <div
-      className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
-        step === 1
-          ? "bg-[#0B1F3A] text-white"
-          : "border border-[#E5E5E5] text-gray-500"
-      }`}
-    >
-      1
-    </div>
-    <div
-      className={`text-[11px] font-bold ${
-        step === 1 ? "text-[#0B1F3A]" : "text-gray-500"
-      }`}
-    >
-      EMAIL & PASSWORD
-    </div>
-  </div>
+              <div className="mt-6 flex items-center gap-4">
+                {/* STEP 1 */}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step === 1
+                      ? "bg-[#0B1F3A] text-white"
+                      : "border border-[#E5E5E5] text-gray-500"
+                      }`}
+                  >
+                    1
+                  </div>
+                  <div
+                    className={`text-[11px] font-bold ${step === 1 ? "text-[#0B1F3A]" : "text-gray-500"
+                      }`}
+                  >
+                    EMAIL & PASSWORD
+                  </div>
+                </div>
 
-  <div className="h-px flex-1 bg-[#E5E5E5]" />
+                <div className="h-px flex-1 bg-[#E5E5E5]" />
 
-  {/* STEP 2 */}
-  <div className="flex items-center gap-2">
-    <div
-      className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
-        step === 2
-          ? "bg-[#0B1F3A] text-white"
-          : "border border-[#E5E5E5] text-gray-500"
-      }`}
-    >
-      2
-    </div>
-    <div
-      className={`text-[11px] font-bold ${
-        step === 2 ? "text-[#0B1F3A]" : "text-gray-500"
-      }`}
-    >
-      BUSINESS DETAILS
-    </div>
-  </div>
+                {/* STEP 2 */}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step === 2
+                      ? "bg-[#0B1F3A] text-white"
+                      : "border border-[#E5E5E5] text-gray-500"
+                      }`}
+                  >
+                    2
+                  </div>
+                  <div
+                    className={`text-[11px] font-bold ${step === 2 ? "text-[#0B1F3A]" : "text-gray-500"
+                      }`}
+                  >
+                    BUSINESS DETAILS
+                  </div>
+                </div>
 
-  <div className="h-px flex-1 bg-[#E5E5E5]" />
+                <div className="h-px flex-1 bg-[#E5E5E5]" />
 
-  {/* STEP 3 */}
-  <div className="flex items-center gap-2">
-    <div
-      className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
-        step === 3
-          ? "bg-[#0B1F3A] text-white"
-          : "border border-[#E5E5E5] text-gray-500"
-      }`}
-    >
-      3
-    </div>
-    <div
-      className={`text-[11px] font-bold ${
-        step === 3 ? "text-[#0B1F3A]" : "text-gray-500"
-      }`}
-    >
-      STORE & PICKUP DETAILS
-    </div>
-  </div>
-</div>
+                {/* STEP 3 */}
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step === 3
+                      ? "bg-[#0B1F3A] text-white"
+                      : "border border-[#E5E5E5] text-gray-500"
+                      }`}
+                  >
+                    3
+                  </div>
+                  <div
+                    className={`text-[11px] font-bold ${step === 3 ? "text-[#0B1F3A]" : "text-gray-500"
+                      }`}
+                  >
+                    STORE & PICKUP DETAILS
+                  </div>
+                </div>
+              </div>
 
               <div className="mt-7">
                 {step === 1 ? (
@@ -193,11 +242,48 @@ export default function VendorRegisterPage() {
                       />
                       <button
                         type="button"
+                        onClick={() => sendOtp("mobile")}
+                        disabled={otp.mobile.verified || !String(form.mobile).trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
-                        Send OTP
+                        {otp.mobile.verified ? "Verified" : otp.mobile.sent ? "Resend OTP" : "Send OTP"}
                       </button>
                     </div>
+
+                    {otp.mobile.sent && !otp.mobile.verified && (
+                      <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
+                          <button
+                            type="button"
+                            onClick={() => verifyOtp("mobile")}
+                            disabled={otp.mobile.digits.join("").length !== 6}
+                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${
+                              otp.mobile.digits.join("").length === 6
+                                ? "bg-[#0B1F3A] hover:opacity-95"
+                                : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                            }`}
+                          >
+                            Verify
+                          </button>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          {otp.mobile.digits.map((d, i) => (
+                            <input
+                              key={i}
+                              inputMode="numeric"
+                              value={d}
+                              onChange={onOtpChange("mobile", i)}
+                              onKeyDown={onOtpKeyDown("mobile", i)}
+                              ref={(el) => {
+                                otpRefs.current.mobile[i] = el;
+                              }}
+                              className="h-10 w-10 rounded-md border border-[#E5E5E5] text-center text-sm font-bold text-[#0B1F3A] outline-none focus:border-[#0B1F3A]"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -211,11 +297,48 @@ export default function VendorRegisterPage() {
                       />
                       <button
                         type="button"
+                        onClick={() => sendOtp("email")}
+                        disabled={otp.email.verified || !String(form.email).trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
-                        Send OTP
+                        {otp.email.verified ? "Verified" : otp.email.sent ? "Resend OTP" : "Send OTP"}
                       </button>
                     </div>
+
+                    {otp.email.sent && !otp.email.verified && (
+                      <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
+                          <button
+                            type="button"
+                            onClick={() => verifyOtp("email")}
+                            disabled={otp.email.digits.join("").length !== 6}
+                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${
+                              otp.email.digits.join("").length === 6
+                                ? "bg-[#0B1F3A] hover:opacity-95"
+                                : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                            }`}
+                          >
+                            Verify
+                          </button>
+                        </div>
+                        <div className="mt-2 flex items-center gap-2">
+                          {otp.email.digits.map((d, i) => (
+                            <input
+                              key={i}
+                              inputMode="numeric"
+                              value={d}
+                              onChange={onOtpChange("email", i)}
+                              onKeyDown={onOtpKeyDown("email", i)}
+                              ref={(el) => {
+                                otpRefs.current.email[i] = el;
+                              }}
+                              className="h-10 w-10 rounded-md border border-[#E5E5E5] text-center text-sm font-bold text-[#0B1F3A] outline-none focus:border-[#0B1F3A]"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -273,7 +396,10 @@ export default function VendorRegisterPage() {
 
                     <button
                       type="submit"
-                      className="mt-2 h-12 w-full rounded-md bg-[#0B1F3A] text-white text-sm font-bold hover:opacity-95 flex items-center justify-center gap-2"
+                      disabled={!canContinue}
+                      className={`mt-2 h-12 w-full rounded-md text-white text-sm font-bold flex items-center justify-center gap-2 ${
+                        canContinue ? "bg-[#0B1F3A] hover:opacity-95" : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                      }`}
                     >
                       Register &amp; Continue
                       <span className="text-white/90">→</span>
@@ -331,8 +457,8 @@ export default function VendorRegisterPage() {
               </div>
             </section>
 
-            <aside className="lg:col-span-5 bg-gradient-to-b from-[#E9F4FF] via-[#F3F9FF] to-white p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5]">
-              <div className="rounded-2xl bg-white border border-[#E5E5E5] shadow-sm p-5 flex gap-4 items-start">
+            <aside className="lg:col-span-5 bg-[#0B1F3A] p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5]">
+              {/* <div className="rounded-2xl bg-white border border-[#E5E5E5] shadow-sm p-5 flex gap-4 items-start">
                 <div className="h-12 w-12 rounded-full bg-[#0B1F3A]/10 flex items-center justify-center text-[#0B1F3A] font-extrabold">
                   AV
                 </div>
@@ -346,11 +472,21 @@ export default function VendorRegisterPage() {
                   </div>
                   <div className="mt-2 text-[11px] text-gray-500">— Amit Verma, Kavas Seller</div>
                 </div>
-              </div>
+              </div> */}
 
               <div className="mt-6 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(13,38,76,0.18)] border border-[#0B1F3A]/15">
-                <div className="bg-[#0B1F3A] px-6 py-5 relative">
-                  <div className="text-[11px] font-bold tracking-wide text-white/80">KAVAS SELLER HUB</div>
+                <div className="   relative">
+                  <Link href="/vendor" className="flex items-center gap-3">
+                    <Image
+                      src="/LOGOKAVAS.png"
+                      alt="KAVAS"
+                      width={180}
+                      height={60}
+                      className="h-14 w-auto"
+                      priority
+                    />
+                    
+                  </Link>
                   <div className="mt-2 text-2xl font-extrabold leading-tight text-white">
                     GROW <span className="text-[#D4AF37]">FASTER</span>,
                     <br />
@@ -390,15 +526,15 @@ export default function VendorRegisterPage() {
                     </div>
                   </div>
 
-                  <button
+                  {/* <button
                     type="button"
                     className="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-2 text-xs font-extrabold text-[#0B1F3A] hover:opacity-95"
                   >
                     Start Selling Now
-                  </button>
+                  </button> */}
 
                   <div className="pointer-events-none absolute -right-6 -bottom-10 opacity-20">
-                    <Image src="/lotussymbol.png" alt="" width={240} height={240} className="h-auto w-[240px]" />
+                    <Image src="/lotussymbol.png" alt="" width={240} height={240} className="h-auto w-60" />
                   </div>
                 </div>
               </div>
@@ -432,5 +568,3 @@ export default function VendorRegisterPage() {
     </div>
   );
 }
-
-

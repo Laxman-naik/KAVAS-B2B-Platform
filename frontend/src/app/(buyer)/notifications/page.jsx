@@ -296,7 +296,7 @@ export default function Page() {
                             setStatusFilter(e.target.value);
                             setPage(1);
                           }}
-                          className="h-9 rounded-sm border border-[#E5E5E5] bg-white pl-8 pr-8 text-sm w-full sm:w-[160px]"
+                          className="h-9 rounded-sm border border-[#E5E5E5] bg-white pl-8 pr-8 text-sm w-full sm:w-40"
                         >
                           {statusOptions.map((s) => (
                             <option key={s} value={s}>
