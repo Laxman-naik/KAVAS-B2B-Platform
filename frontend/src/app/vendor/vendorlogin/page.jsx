@@ -53,10 +53,7 @@ export default function VendorLoginPage() {
     };
 
     const data = await dispatch(loginVendor(payload)).unwrap();
-
-    console.log("LOGIN RESPONSE:", data);
-
-    // 🔴 BLOCKED
+    
     if (data.status === "submitted") {
       setError("Your application is under review");
       return;
@@ -67,9 +64,8 @@ export default function VendorLoginPage() {
       return;
     }
 
-    // 🟡 DRAFT → ONBOARDING FLOW
     if (data.status === "draft") {
-      const step = data.onboarding_step || 1;
+      const step = data.onboarding_step;
 
       if (step === 1) {
         router.push("/vendor/vendorbusinessdetails");
@@ -86,12 +82,9 @@ export default function VendorLoginPage() {
         return;
       }
 
-      // fallback
-      router.push("/vendor/vendorbusiness");
+      router.push("/vendor/vendorbusinessdetails");
       return;
     }
-
-    // 🟢 APPROVED → DASHBOARD
     router.push("/vendor/dashboard");
 
   } catch (err) {

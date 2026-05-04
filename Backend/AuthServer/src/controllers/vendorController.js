@@ -1,4 +1,6 @@
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
+import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import axios from "axios";
 import { sendEmailOtp } from "../utils/emailService.js";
@@ -197,6 +199,123 @@ export const registerVendor = async (req, res) => {
   }
 };
 
+// export const loginVendor = async (req, res) => {
+//   try {
+//     const { email, phone, password } = req.body;
+
+//     if (!password || (!email && !phone)) {
+//       return res.status(400).json({
+//         message: "Email or phone and password required",
+//       });
+//     }
+
+//     let query;
+//     let values;
+//     if (email) {
+//       query = `
+//         SELECT 
+//           vp.*, 
+//           vo.id as onboarding_id, 
+//           vo.status, 
+//           vo.current_step,
+//           vo.rejection_reason
+//         FROM vendorprofile vp
+//         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+//         WHERE LOWER(vp.email) = LOWER($1)
+//       `;
+//       values = [email];
+//     } 
+//     else {
+//       query = `
+//         SELECT 
+//           vp.*, 
+//           vo.id as onboarding_id, 
+//           vo.status, 
+//           vo.current_step,
+//           vo.rejection_reason
+//         FROM vendorprofile vp
+//         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+//         WHERE vp.phone = $1
+//       `;
+//       values = [phone];
+//     }
+
+//     const result = await db.query(query, values);
+
+//     if (!result.rows.length) {
+//       return res.status(400).json({ message: "Vendor not found" });
+//     }
+
+//     const vendor = result.rows[0];
+
+//     if (!vendor.is_active) {
+//       return res.status(403).json({ message: "Account disabled" });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, vendor.password_hash);
+
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
+
+//     if (!vendor.email_verified || !vendor.phone_verified) {
+//       return res.status(403).json({
+//         message: "Please verify email and phone before login",
+//       });
+//     }
+
+//     await db.query(
+//       `UPDATE vendorprofile SET last_login = NOW() WHERE id = $1`,
+//       [vendor.id]
+//     );
+
+//     let next_action = "dashboard";
+//     let onboarding_step = vendor.current_step || 1;
+
+//     if (!vendor.onboarding_id) {
+//       next_action = "onboarding";
+//       onboarding_step = 1;
+//     }
+//     else if (vendor.status === "draft") {
+//       next_action = "onboarding";
+//     }
+//     else if (vendor.status === "submitted") {
+//       return res.status(403).json({
+//         message: "Your application is under review. Admin approval required.",
+//         status: "submitted",
+//       });
+//     }
+//     else if (vendor.status === "rejected") {
+//       next_action = "onboarding";
+//     }
+//     else if (vendor.status === "approved") {
+//       next_action = "dashboard";
+//     }
+
+//     const token = generateToken({
+//       vendor_id: vendor.id,
+//       onboarding_id: vendor.onboarding_id,
+//     });
+
+//     return res.json({
+//       message: "Login successful",
+//       token,
+//       next_action,
+//       onboarding_step,
+//       status: vendor.status,
+//       rejection_reason: vendor.rejection_reason || null,
+//       vendor: {
+//         id: vendor.id,
+//         email: vendor.email,
+//         phone: vendor.phone,
+//       },
+//     });
+
+//   } catch (err) {
+//     console.error("LOGIN ERROR:", err);
+//     return res.status(500).json({ message: "Login failed" });
+//   }
+// };
 export const loginVendor = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
@@ -207,33 +326,19 @@ export const loginVendor = async (req, res) => {
       });
     }
 
-    let query;
-    let values;
+    let query, values;
 
-    // ✅ EMAIL LOGIN
     if (email) {
       query = `
-        SELECT 
-          vp.*, 
-          vo.id as onboarding_id, 
-          vo.status, 
-          vo.current_step,
-          vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE LOWER(vp.email) = LOWER($1)
       `;
       values = [email];
-    } 
-    // ✅ PHONE LOGIN
-    else {
+    } else {
       query = `
-        SELECT 
-          vp.*, 
-          vo.id as onboarding_id, 
-          vo.status, 
-          vo.current_step,
-          vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE vp.phone = $1
@@ -249,22 +354,19 @@ export const loginVendor = async (req, res) => {
 
     const vendor = result.rows[0];
 
-    // ❗ Account status
     if (!vendor.is_active) {
       return res.status(403).json({ message: "Account disabled" });
     }
 
-    // ❗ Password check
     const isMatch = await bcrypt.compare(password, vendor.password_hash);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // ❗ Verification check
     if (!vendor.email_verified || !vendor.phone_verified) {
       return res.status(403).json({
-        message: "Please verify email and phone before login",
+        message: "Verify email & phone first",
       });
     }
 
@@ -274,52 +376,51 @@ export const loginVendor = async (req, res) => {
       [vendor.id]
     );
 
-    // ================= ONBOARDING LOGIC =================
+    /* ================= FLOW ================= */
 
     let next_action = "dashboard";
     let onboarding_step = vendor.current_step || 1;
 
-    // ❗ No onboarding record (edge case)
     if (!vendor.onboarding_id) {
       next_action = "onboarding";
       onboarding_step = 1;
-    }
-
-    // 🟡 DRAFT → continue onboarding
-    else if (vendor.status === "draft") {
+    } else if (vendor.status === "draft") {
       next_action = "onboarding";
-    }
-
-    // 🔴 SUBMITTED → BLOCK
-    else if (vendor.status === "submitted") {
+    } else if (vendor.status === "submitted") {
       return res.status(403).json({
-        message: "Your application is under review. Admin approval required.",
+        message: "Application under review",
         status: "submitted",
       });
-    }
-
-    // 🟠 REJECTED → allow editing (IMPORTANT FIX)
-    else if (vendor.status === "rejected") {
+    } else if (vendor.status === "rejected") {
       next_action = "onboarding";
     }
 
-    // 🟢 APPROVED → dashboard
-    else if (vendor.status === "approved") {
-      next_action = "dashboard";
-    }
+    /* ================= TOKENS ================= */
 
-    // ================= TOKEN =================
-
-    const token = generateToken({
+    const accessToken = generateToken({
       vendor_id: vendor.id,
       onboarding_id: vendor.onboarding_id,
     });
 
-    // ================= RESPONSE =================
+    const refreshToken = randomBytes(64).toString("hex");
+
+    // ✅ Store session
+    await db.query(
+      `INSERT INTO vendor_sessions 
+       (vendor_id, refresh_token, user_agent, ip_address, expires_at)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '7 days')`,
+      [
+        vendor.id,
+        refreshToken,
+        req.headers["user-agent"] || null,
+        req.ip || null,
+      ]
+    );
 
     return res.json({
       message: "Login successful",
-      token,
+      accessToken,
+      refreshToken,
       next_action,
       onboarding_step,
       status: vendor.status,
@@ -334,6 +435,81 @@ export const loginVendor = async (req, res) => {
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     return res.status(500).json({ message: "Login failed" });
+  }
+};
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "No refresh token" });
+    }
+
+    const session = await db.query(
+      `SELECT * FROM vendor_sessions 
+       WHERE refresh_token = $1 AND expires_at > NOW()`,
+      [refreshToken]
+    );
+
+    if (!session.rows.length) {
+      return res.status(401).json({ message: "Invalid session" });
+    }
+
+    const vendor_id = session.rows[0].vendor_id;
+
+    const newAccessToken = generateAccessToken({ vendor_id });
+
+    return res.json({ accessToken: newAccessToken });
+
+  } catch (err) {
+    return res.status(500).json({ message: "Refresh failed" });
+  }
+};
+
+// export const logoutVendor = async (req, res) => {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1];
+
+//     if (!token) {
+//       return res.status(400).json({ message: "Token missing" });
+//     }
+
+//     // decode token to get expiry
+//     const decoded = jwt.decode(token);
+
+//     await db.query(
+//       `INSERT INTO token_blacklist (token, expires_at)
+//        VALUES ($1, to_timestamp($2))`,
+//       [token, decoded.exp]
+//     );
+
+//     return res.json({ message: "Logged out successfully" });
+
+//   } catch (err) {
+//     console.error("LOGOUT ERROR:", err);
+//     return res.status(500).json({ message: "Logout failed" });
+//   }
+// };
+export const logoutVendor = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token required" });
+    }
+
+    // ✅ Delete session
+    await db.query(
+      `DELETE FROM vendor_sessions WHERE refresh_token = $1`,
+      [refreshToken]
+    );
+
+    return res.json({ message: "Logged out successfully" });
+
+  } catch (err) {
+    console.error("LOGOUT ERROR:", err);
+    return res.status(500).json({ message: "Logout failed" });
   }
 };
 

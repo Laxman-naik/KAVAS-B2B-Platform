@@ -30,7 +30,6 @@
 
 import { authapi } from "../lib/axios";
 
-/* ================= OTP ================= */
 
 export const sendVendorOtpAPI = (data) =>
   authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
@@ -39,18 +38,19 @@ export const verifyVendorOtpAPI = (data) =>
   authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
 
 export const registerVendorAPI = (data) =>
-  authapi.post("/api/vendor/register", data);
-
-/* ================= LOGIN ================= */
+  authapi.post("/api/vendor/register", data, { skipAuth: true });
 
 export const loginVendorAPI = async (data) => {
   try {
-    const res = await authapi.post("/api/vendor/login", data, {skipAuth: true,});
+    const res = await authapi.post("/api/vendor/login", data, {
+      skipAuth: true,
+      withCredentials: true, 
+    });
 
     const response = res.data;
-    // ✅ store only on client
-    if (typeof window !== "undefined" && response?.token) {
-      localStorage.setItem("accessToken", response.token);
+
+    if (typeof window !== "undefined" && response?.accessToken) {
+      localStorage.setItem("accessToken", response.accessToken);
       localStorage.setItem("next_action", response.next_action || "dashboard");
       localStorage.setItem("onboarding_step", response.onboarding_step || 1);
     }
@@ -71,12 +71,17 @@ export const loginVendorAPI = async (data) => {
   }
 };
 
-/* ================= PROFILE ================= */
+
+export const refreshTokenAPI = () =>
+  authapi.post("/api/vendor/refresh", {}, { withCredentials: true });
+
+export const logoutVendorAPI = (refreshToken) =>
+  authapi.post("/api/vendor/logout", { refreshToken });
+
 
 export const getVendorProfileAPI = (id) =>
-  authapi.get(`/api/vendor/${id}`);
+  authapi.get(`/api/vendor/${id}`, { skipAuth: true });
 
-/* ================= BUSINESS ================= */
 
 export const upsertBusinessAPI = (data) =>
   authapi.post("/api/vendor/business", data);
@@ -84,18 +89,17 @@ export const upsertBusinessAPI = (data) =>
 export const getBusinessAPI = () =>
   authapi.get("/api/vendor/getbusiness");
 
-/* ================= BANK ================= */
-
 export const upsertBankAPI = (data) =>
   authapi.post("/api/vendor/bank", data);
 
 export const getBankAPI = () =>
   authapi.get("/api/vendor/getbank");
 
-/* ================= ONBOARDING ================= */
-
 export const getOnboardingStateAPI = () =>
   authapi.get("/api/vendor/state");
 
 export const updateOnboardingStepAPI = (step) =>
   authapi.patch("/api/vendor/step", { step });
+
+export const getVendorProfileSelfAPI = () =>
+  authapi.get("/api/vendor/me"); 
