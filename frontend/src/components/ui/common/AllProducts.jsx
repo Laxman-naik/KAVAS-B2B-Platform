@@ -58,7 +58,7 @@ const AllProducts = () => {
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-         {visibleProducts.slice(0, 15).map((item) => {
+         {visibleProducts.slice(0, 12).map((item) => {
             const itemId = item?._id ?? item?.id ?? item?.productId;
 
             return (

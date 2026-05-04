@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
+import { createProduct as createProductAPI } from "../../../services/productService";
 
 export default function ProductManagementBody() {
   const productsData = [
@@ -493,18 +494,39 @@ export default function ProductManagementBody() {
       <AddNewProductModal
         open={openAdd}
         onClose={() => setOpenAdd(false)}
-        onSubmit={(data) => {
+        onSubmit={async (data) => {
+          const payload = {
+            name: data?.name,
+            sku: data?.sku,
+            category: data?.category,
+            unit: data?.unit,
+            status: data?.status,
+            description: data?.description,
+            price: Number(data?.price || 0),
+            mrp: Number(data?.mrp || 0),
+            gst: data?.gst,
+            moq: Number(data?.moq || 0),
+            stock: Number(data?.stock || 0),
+            images: Array.isArray(data?.images)
+              ? data.images.filter((x) => typeof x === "string")
+              : [],
+          };
+
+          const res = await createProductAPI(payload);
+          const created = res?.data?.product;
+
           const next = {
-            id: Date.now(),
-            name: String(data?.name || "New Product"),
+            id: created?.id ?? Date.now(),
+            name: String(data?.name || created?.name || "New Product"),
             sku: String(data?.sku || `SKU-${Date.now()}`),
             category: String(data?.category || "Industrial Hardware"),
-            price: Number(data?.price || 0),
-            moq: Number(data?.moq || 1),
-            stock: Number(data?.stock || 0),
-            status: String(data?.status || "Active"),
+            price: Number(data?.price || created?.price || 0),
+            moq: Number(data?.moq || created?.moq || 1),
+            stock: Number(data?.stock || created?.stock || 0),
+            status: String(data?.status || (created?.is_active ? "Active" : "Pending Review") || "Active"),
             image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789",
           };
+
           setProducts((s) => [next, ...s]);
           setPage(1);
           setOpenAdd(false);

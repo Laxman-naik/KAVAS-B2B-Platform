@@ -1,19 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Search,
-  Eye,
-  Download,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  RefreshCcw,
-  Truck,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import {Search, Eye, Download, Printer, ChevronLeft, ChevronRight, Clock, RefreshCcw,Truck,CheckCircle2, XCircle,} from "lucide-react";
 
 export default function OrdersManagementBody() {
   const ordersData = [
@@ -101,8 +89,6 @@ export default function OrdersManagementBody() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
-  /* ================= STATS ================= */
-
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === "Pending").length;
@@ -127,7 +113,6 @@ export default function OrdersManagementBody() {
     };
   }, [orders]);
 
-  /* ================= FILTER ================= */
 
   const filteredOrders = useMemo(() => {
     const q = String(search || "").trim().toLowerCase();
@@ -163,13 +148,10 @@ export default function OrdersManagementBody() {
     return `Showing ${start}-${end} of ${totalFiltered}`;
   }, [safePage, totalFiltered]);
 
-  /* ================= ACTIONS ================= */
 
   const updateStatus = (id, next) => {
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: next } : o)));
   };
-
-  /* ================= STYLES ================= */
 
   const statusStyle = (status) => {
     switch (status) {
@@ -235,8 +217,6 @@ export default function OrdersManagementBody() {
           </button>
         </div>
       </div>
-
-      {/* ================= STATS CARDS ================= */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl bg-[#0B1F3A] text-white p-5">
           <div className="text-xs text-white/70">Total Revenue</div>
@@ -274,10 +254,8 @@ export default function OrdersManagementBody() {
           <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">Shipped</div>
         </div>
       </div>
-
-      {/* ================= SEARCH ================= */}
       <div className="mt-5 flex flex-col lg:flex-row gap-3">
-        <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-[420px]">
+        <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-105">
           <Search size={16} className="text-gray-400" />
           <input
             placeholder="Search order ID, buyer..."
@@ -296,7 +274,7 @@ export default function OrdersManagementBody() {
             setPaymentFilter(e.target.value);
             setPage(1);
           }}
-          className="h-11 w-full lg:w-[190px] rounded-xl border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
+          className="h-11 w-full lg:w-47.5 rounded-xl border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
         >
           {[
             "All Payments",
@@ -310,8 +288,6 @@ export default function OrdersManagementBody() {
           ))}
         </select>
       </div>
-
-      {/* ================= TABS ================= */}
       <div className="mt-4 rounded-2xl border border-[#E5E5E5] bg-white p-2 overflow-x-auto">
         <div className="flex items-center gap-2 min-w-max">
           {tabs.map((t) => {
@@ -341,8 +317,6 @@ export default function OrdersManagementBody() {
           })}
         </div>
       </div>
-
-      {/* ================= TABLE ================= */}
       <div className="mt-4 hidden md:block bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[#FFF8EC]">
@@ -464,7 +438,6 @@ export default function OrdersManagementBody() {
         </table>
       </div>
 
-      {/* ================= MOBILE ================= */}
       <div className="md:hidden space-y-3">
         {pagedOrders.map((o) => (
           <div key={o.id} className="bg-white border rounded-lg p-3">
@@ -546,7 +519,7 @@ export default function OrdersManagementBody() {
   );
 }
 
-/* ================= COMPONENT ================= */
+
 
 function StatCard({ title, value, color }) {
   return (

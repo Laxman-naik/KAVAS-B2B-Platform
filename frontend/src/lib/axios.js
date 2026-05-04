@@ -47,13 +47,48 @@ const attachHeaders = (config) => {
 authapi.interceptors.request.use(attachHeaders);
 productapi.interceptors.request.use(attachHeaders);
 
-// import axios from "axios";
+const attachRefreshInterceptor = (apiInstance) => {
+  apiInstance.interceptors.response.use(
+    (res) => res,
+    async (error) => {
+      const originalRequest = error.config;
 
-// const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
-// const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
+      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+        originalRequest._retry = true;
 
-// /* ================= SESSION ================= */
-// if (typeof window !== "undefined") {
+        try {
+          const refreshToken = localStorage.getItem("refreshToken");
+          if (!refreshToken) throw new Error("No refresh token");
+
+          const res = await authapi.post(
+            "/api/auth/refresh",
+            { refreshToken },
+            { skipAuth: true }
+          );
+          const newAccessToken = res.data?.accessToken;
+          if (!newAccessToken) throw new Error("No access token returned");
+
+          localStorage.setItem("accessToken", newAccessToken);
+
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          return apiInstance(originalRequest);
+        } catch (err) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          return Promise.reject(err);
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
+};
+
+attachRefreshInterceptor(authapi);
+attachRefreshInterceptor(productapi);
+
 //   if (!localStorage.getItem("sessionId")) {
 //     localStorage.setItem("sessionId", crypto.randomUUID());
 //   }
