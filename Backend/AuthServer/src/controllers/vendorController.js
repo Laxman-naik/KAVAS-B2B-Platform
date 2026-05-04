@@ -376,16 +376,39 @@ export const getMe = async (req, res) => {
     const vendorId = req.user.vendor_id;
 
     const result = await db.query(
-      `SELECT id, email, phone, email_verified, phone_verified, is_active
-       FROM vendorprofile
-       WHERE id = $1`,
+      `SELECT vp.id, vp.email, vp.phone, vp.email_verified, vp.phone_verified, vp.is_active,
+              vo.id as onboarding_id, vo.status, vo.current_step
+       FROM vendorprofile vp
+       LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+       WHERE vp.id = $1`,
       [vendorId]
     );
 
+    const vendor = result.rows[0];
+
+    // Get business and bank details
+    const businessResult = await db.query(
+      `SELECT * FROM vendor_business_details WHERE onboarding_id = $1`,
+      [vendor.onboarding_id]
+    );
+
+    const bankResult = await db.query(
+      `SELECT * FROM vendor_bank_details WHERE onboarding_id = $1`,
+      [vendor.onboarding_id]
+    );
+
     return res.json({
-      vendor: result.rows[0],
+      vendor: vendor,
+      onboarding: {
+        id: vendor.onboarding_id,
+        current_step: vendor.current_step,
+        status: vendor.status,
+      },
+      business: businessResult.rows[0] || null,
+      bank: bankResult.rows[0] || null,
     });
   } catch (err) {
+    console.error("GET ME ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };

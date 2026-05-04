@@ -42,8 +42,17 @@ export const loginVendorAPI = async (data) => {
 };
 
 
-export const refreshTokenAPI = () =>
-  authapi.post("/api/vendor/refresh", {}, { withCredentials: true });
+export const refreshTokenAPI = async () => {
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  const res = await authapi.post("/api/vendor/refresh", {
+    refreshToken,
+  });
+
+  localStorage.setItem("accessToken", res.data.accessToken);
+
+  return res.data;
+};
 
 export const logoutVendorAPI = (refreshToken) =>
   authapi.post("/api/vendor/logout", { refreshToken });
@@ -72,4 +81,8 @@ export const updateOnboardingStepAPI = (step) =>
   authapi.patch("/api/vendor/step", { step });
 
 export const getVendorProfileSelfAPI = () =>
-  authapi.get("/api/vendor/me"); 
+  authapi.get("/api/vendor/me", {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+  });

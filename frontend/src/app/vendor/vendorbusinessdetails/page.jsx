@@ -7,7 +7,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
-import { fetchVendorProfile } from "@/store/slices/vendorSlice";
+import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal } from "@/store/slices/vendorSlice";
+import { upsertBusinessAPI, upsertBankAPI } from "@/services/vendorServer";
 
 export default function VendorBusinessDetailsPage() {
   const router = useRouter();
@@ -15,7 +16,9 @@ export default function VendorBusinessDetailsPage() {
   const businessInfoRef = useRef(null);
   const bankDetailsRef = useRef(null);
   const vendor = useSelector((state) => state.vendor.vendor);
-  const verification = useSelector((state) => state.vendor.vendor);
+const business = useSelector((state) => state.vendor.business);
+const bank = useSelector((state) => state.vendor.bank);
+const vendorId = vendor?.id;
   
 
   const [form, setForm] = useState({
@@ -34,28 +37,58 @@ export default function VendorBusinessDetailsPage() {
     ifsc: "",
   });
 
-  useEffect(() => {
-  if (vendor?.id) {
-    dispatch(fetchVendorProfile(vendor.id));
-  }
-}, [vendor?.id]);
-
   const [activeSection, setActiveSection] = useState("business_info");
+
+  useEffect(() => {
+  if (vendorId) {
+    dispatch(fetchVendorProfile(vendorId));
+    dispatch(fetchBusinessDetails());
+    dispatch(fetchBankDetails());
+  }
+}, [vendorId, dispatch]);
+
+useEffect(() => {
+  if (business) {
+    setForm(prev => ({
+      ...prev,
+      businessName: business.business_name || "",
+      businessType: business.business_type || "",
+      registeredBusinessName: business.registered_name || "",
+      businessPan: business.pan || "",
+      gstin: business.gstin || "",
+      businessRegNo: business.registration_number || "",
+      businessAddress: business.address || "",
+      pincode: business.pincode || "",
+      city: business.city || "",
+      state: business.state || "",
+    }));
+  }
+}, [business]);
+
+useEffect(() => {
+  if (bank) {
+    setForm(prev => ({
+      ...prev,
+      accountHolderName: bank.account_holder_name || "",
+      bankAccountNumber: bank.account_number || "",
+      ifsc: bank.ifsc_code || "",
+    }));
+  }
+}, [bank]);
 
   const setValue = (key) => (e) => {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
 const verificationItems = useMemo(() => {
-  const v = vendor?.verification || verification;
-
+  const v = vendor; 
   return [
     { label: "Mobile Verification", done: v?.phone_verified === true },
     { label: "Email Verification", done: v?.email_verified === true },
     { label: "ID Verification", done: v?.id_verified === true },
     { label: "Signature Verification", done: v?.signature_verified === true },
   ];
-}, [vendor, verification]);
+}, [vendor]);
 
   const requiredBusinessFields = useMemo(
     () => [
@@ -133,8 +166,6 @@ const verificationItems = useMemo(() => {
         setActiveSection("business_info");
       }
     };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -146,7 +177,7 @@ const verificationItems = useMemo(() => {
     if (!(businessInfoComplete && bankDetailsComplete)) return;
 
     // 1. Save business details
-    await upsertBusinessAPI({
+    await dispatch(saveBusinessDetails({
       business_name: form.businessName,
       business_type: form.businessType,
       registered_name: form.registeredBusinessName,
@@ -157,14 +188,14 @@ const verificationItems = useMemo(() => {
       pincode: form.pincode,
       city: form.city,
       state: form.state,
-    });
+    })).unwrap();
 
     // 2. Save bank details
-    await upsertBankAPI({
+    await dispatch(saveBankDetails({
       account_holder_name: form.accountHolderName,
       account_number: form.bankAccountNumber,
       ifsc_code: form.ifsc,
-    });
+    })).unwrap();
 
     // 3. Move to next step only after success
     router.push("/vendor/vendorstoredetails");
@@ -176,11 +207,7 @@ const verificationItems = useMemo(() => {
 };
 
 const handleLogout = () => {
-  dispatch({ type: "vendor/logout" }); 
-
-  localStorage.removeItem("vendorToken");
-  localStorage.removeItem("refreshToken");
-
+  dispatch(logoutLocal());
   router.push("/vendor/vendorlogin");
 };
 
