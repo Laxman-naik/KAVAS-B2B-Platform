@@ -168,6 +168,15 @@ export default function VendorStoreDetailsPage() {
     if (!(storeInfoComplete && pickupAddressComplete)) return;
   };
 
+  const handleLogout = () => {
+  dispatch({ type: "vendor/logout" });
+
+  localStorage.removeItem("vendorToken");
+  localStorage.removeItem("refreshToken");
+
+  router.push("/vendor/vendorlogin");
+};
+
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
       <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-[#E5E5E5]">
@@ -200,7 +209,7 @@ export default function VendorStoreDetailsPage() {
             </div>
           </div>
 
-          <div className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
+          <div onClick={handleLogout} className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
         </div>
       </header>
 

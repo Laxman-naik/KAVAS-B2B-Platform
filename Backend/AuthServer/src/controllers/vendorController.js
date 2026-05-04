@@ -447,7 +447,7 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     const session = await db.query(
-      `SELECT * FROM vendor_sessions 
+      `SELECT vendor_id FROM vendor_sessions 
        WHERE refresh_token = $1 AND expires_at > NOW()`,
       [refreshToken]
     );
@@ -458,9 +458,12 @@ export const refreshAccessToken = async (req, res) => {
 
     const vendor_id = session.rows[0].vendor_id;
 
-    const newAccessToken = generateAccessToken({ vendor_id });
+    const accessToken = generateAccessToken({ vendor_id });
 
-    return res.json({ accessToken: newAccessToken });
+    return res.json({
+      accessToken,
+      vendor: { id: vendor_id } // 👈 IMPORTANT
+    });
 
   } catch (err) {
     return res.status(500).json({ message: "Refresh failed" });

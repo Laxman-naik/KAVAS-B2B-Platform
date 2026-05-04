@@ -212,9 +212,26 @@ export const loginVendor = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginVendorAPI(data);
-      return res.data;
+
+      console.log("LOGIN API RAW RESPONSE:", res);
+
+      // ✅ FIX: handle both Axios styles safely
+      const payload = res?.data ?? res;
+
+      if (!payload) {
+        return rejectWithValue("Empty response from server");
+      }
+
+      return payload;
+
     } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
+      console.log("LOGIN API ERROR:", err);
+
+      return rejectWithValue(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Network error"
+      );
     }
   }
 );
@@ -242,6 +259,8 @@ export const fetchVendorProfile = createAsyncThunk(
       const res = await getVendorProfileAPI(id);
       return res.data;
     } catch (err) {
+      console.log("Vendor fetch error:", err);
+
       return rejectWithValue(err.response?.data || err.message);
     }
   }
@@ -374,134 +393,147 @@ const vendorSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder
+  builder
 
-      /* ================= LOGIN ================= */
-      .addCase(loginVendor.fulfilled, (state, action) => {
-        const payload = action.payload;
+    /* ================= LOGIN ================= */
+    .addCase(loginVendor.fulfilled, (state, action) => {
+  const payload = action.payload;
 
-        if (!payload) {
-          state.error = "Empty login response";
-          state.isAuthenticated = false;
-          return;
-        }
+  if (!payload) {
+    state.error = "Empty login response";
+    state.isAuthenticated = false;
+    return;
+  }
 
-        const accessToken = payload?.accessToken;
-        const refreshToken = payload?.refreshToken;
+  const accessToken = payload?.accessToken;
+  const refreshToken = payload?.refreshToken;
 
-        if (!accessToken) {
-          state.error = "Missing accessToken from backend";
-          state.isAuthenticated = false;
-          return;
-        }
+  if (!accessToken) {
+    state.error = "Missing accessToken from backend";
+    state.isAuthenticated = false;
+    return;
+  }
 
-        state.isAuthenticated = true;
-        state.accessToken = accessToken;
-        state.refreshToken = refreshToken || null;
+  // ================= AUTH =================
+  state.isAuthenticated = true;
+  state.accessToken = accessToken;
+  state.refreshToken = refreshToken || null;
 
-        state.vendor = payload?.vendor ?? null;
+  // ================= VENDOR =================
+  state.vendor = payload?.vendor ?? null;
 
-        /* ================= SAFE ONBOARDING ================= */
-        state.onboarding.current_step =
-          payload?.onboarding_step ??
-          state.onboarding?.current_step ??
-          1;
+  // ================= SAFE ONBOARDING (FIXED) =================
+  state.onboarding.current_step =
+    payload?.onboarding_step ?? 1;
 
-        state.onboarding.status =
-          payload?.status ??
-          state.onboarding?.status ??
-          "draft";
+  state.onboarding.status =
+    payload?.status ?? "draft";
+
+  // ================= SAFE NEXT ACTION =================
+  state.next_action =
+    payload?.next_action ?? null;
+
+  // ================= STORAGE =================
+  if (typeof window !== "undefined") {
+    localStorage.setItem("accessToken", accessToken);
+
+    if (refreshToken) {
+      localStorage.setItem("refreshToken", refreshToken);
+    }
+  }
+})
+
+    /* ================= REFRESH ================= */
+    .addCase(refreshVendorToken.fulfilled, (state, action) => {
+      const token = action.payload?.accessToken;
+
+      if (token) {
+        state.accessToken = token;
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("accessToken", accessToken);
-
-          if (refreshToken) {
-            localStorage.setItem("refreshToken", refreshToken);
-          }
+          localStorage.setItem("accessToken", token);
         }
-      })
+      }
+    })
 
-      /* ================= REFRESH ================= */
-      .addCase(refreshVendorToken.fulfilled, (state, action) => {
-        state.accessToken = action.payload?.accessToken || null;
+    /* ================= OTP ================= */
+    .addCase(sendVendorOtp.fulfilled, (state, action) => {
+      if (action.meta.arg?.email) state.otp.email.sent = true;
+      if (action.meta.arg?.phone) state.otp.phone.sent = true;
+    })
 
-        if (typeof window !== "undefined" && action.payload?.accessToken) {
-          localStorage.setItem("accessToken", action.payload.accessToken);
-        }
-      })
+    .addCase(verifyVendorOtp.fulfilled, (state) => {
+      state.otp.email.verified = true;
+      state.otp.phone.verified = true;
+    })
 
-      /* ================= OTP ================= */
-      .addCase(sendVendorOtp.fulfilled, (state, action) => {
-        if (action.meta.arg.email) state.otp.email.sent = true;
-        if (action.meta.arg.phone) state.otp.phone.sent = true;
-      })
+    /* ================= REGISTER ================= */
+    .addCase(registerVendor.fulfilled, (state, action) => {
+      state.vendor = action.payload ?? null;
+    })
 
-      .addCase(verifyVendorOtp.fulfilled, (state) => {
-        state.otp.email.verified = true;
-        state.otp.phone.verified = true;
-      })
+    /* ================= PROFILE ================= */
+    .addCase(fetchVendorProfile.fulfilled, (state, action) => {
+      state.vendor = action.payload ?? null;
+    })
 
-      /* ================= REGISTER ================= */
-      .addCase(registerVendor.fulfilled, (state, action) => {
-        state.vendor = action.payload ?? null;
-      })
+    /* ================= BUSINESS ================= */
+    .addCase(fetchBusinessDetails.fulfilled, (state, action) => {
+      state.business = action.payload ?? null;
+    })
+    .addCase(saveBusinessDetails.fulfilled, (state, action) => {
+      state.business = action.payload?.data ?? null;
+    })
 
-      /* ================= PROFILE ================= */
-      .addCase(fetchVendorProfile.fulfilled, (state, action) => {
-        state.vendor = action.payload ?? null;
-      })
+    /* ================= BANK ================= */
+    .addCase(fetchBankDetails.fulfilled, (state, action) => {
+      state.bank = action.payload ?? null;
+    })
+    .addCase(saveBankDetails.fulfilled, (state, action) => {
+      state.bank = action.payload?.data ?? null;
+    })
 
-      /* ================= BUSINESS ================= */
-      .addCase(fetchBusinessDetails.fulfilled, (state, action) => {
-        state.business = action.payload ?? null;
-      })
-      .addCase(saveBusinessDetails.fulfilled, (state, action) => {
-        state.business = action.payload?.data ?? null;
-      })
+    /* ================= ONBOARDING ================= */
+    .addCase(fetchOnboardingState.fulfilled, (state, action) => {
+      state.onboarding = {
+        ...state.onboarding,
+        ...action.payload,
+      };
+    })
 
-      /* ================= BANK ================= */
-      .addCase(fetchBankDetails.fulfilled, (state, action) => {
-        state.bank = action.payload ?? null;
-      })
-      .addCase(saveBankDetails.fulfilled, (state, action) => {
-        state.bank = action.payload?.data ?? null;
-      })
+    .addCase(updateOnboardingStep.fulfilled, (state, action) => {
+      const step = action.payload?.data?.current_step;
 
-      /* ================= ONBOARDING ================= */
-      .addCase(fetchOnboardingState.fulfilled, (state, action) => {
-        state.onboarding = action.payload ?? state.onboarding;
-      })
-      .addCase(updateOnboardingStep.fulfilled, (state, action) => {
-        state.onboarding.current_step =
-          action.payload?.data?.current_step ??
-          state.onboarding.current_step;
-      })
+      if (step !== undefined) {
+        state.onboarding.current_step = step;
+      }
+    })
 
-      /* ================= GLOBAL LOADERS ================= */
-      .addMatcher(
-        (a) => a.type.startsWith("vendor/") && a.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        }
-      )
-      .addMatcher(
-        (a) => a.type.startsWith("vendor/") && a.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error =
-            action.payload?.message ||
-            action.payload ||
-            "Error";
-        }
-      )
-      .addMatcher(
-        (a) => a.type.startsWith("vendor/") && a.type.endsWith("/fulfilled"),
-        (state) => {
-          state.loading = false;
-        }
-      );
-  },
+    /* ================= GLOBAL ================= */
+    .addMatcher(
+      (a) => a.type.startsWith("vendor/") && a.type.endsWith("/pending"),
+      (state) => {
+        state.loading = true;
+        state.error = null;
+      }
+    )
+    .addMatcher(
+      (a) => a.type.startsWith("vendor/") && a.type.endsWith("/rejected"),
+      (state, action) => {
+        state.loading = false;
+        state.error =
+          action.payload?.message ||
+          action.payload ||
+          "Error";
+      }
+    )
+    .addMatcher(
+      (a) => a.type.startsWith("vendor/") && a.type.endsWith("/fulfilled"),
+      (state) => {
+        state.loading = false;
+      }
+    );
+}
 });
 
 export const { resetVendorState, logoutLocal } = vendorSlice.actions;

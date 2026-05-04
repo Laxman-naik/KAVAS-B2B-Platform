@@ -15,7 +15,8 @@ export default function VendorBusinessDetailsPage() {
   const businessInfoRef = useRef(null);
   const bankDetailsRef = useRef(null);
   const vendor = useSelector((state) => state.vendor.vendor);
-  const verification = useSelector((state) => state.vendor.verification);
+  const verification = useSelector((state) => state.vendor.vendor);
+  
 
   const [form, setForm] = useState({
     businessName: "",
@@ -37,7 +38,7 @@ export default function VendorBusinessDetailsPage() {
   if (vendor?.id) {
     dispatch(fetchVendorProfile(vendor.id));
   }
-}, []);
+}, [vendor?.id]);
 
   const [activeSection, setActiveSection] = useState("business_info");
 
@@ -45,27 +46,16 @@ export default function VendorBusinessDetailsPage() {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-const verificationItems = useMemo(
-  () => [
-    {
-      label: "Mobile Verification",
-      done: !!verification?.phone_verified,
-    },
-    {
-      label: "Email Verification",
-      done: !!verification?.email_verified,
-    },
-    {
-      label: "ID Verification",
-      done: !!verification?.id_verified,
-    },
-    {
-      label: "Signature Verification",
-      done: !!verification?.signature_verified,
-    },
-  ],
-  [verification]
-);
+const verificationItems = useMemo(() => {
+  const v = vendor?.verification || verification;
+
+  return [
+    { label: "Mobile Verification", done: v?.phone_verified === true },
+    { label: "Email Verification", done: v?.email_verified === true },
+    { label: "ID Verification", done: v?.id_verified === true },
+    { label: "Signature Verification", done: v?.signature_verified === true },
+  ];
+}, [vendor, verification]);
 
   const requiredBusinessFields = useMemo(
     () => [
@@ -185,6 +175,15 @@ const verificationItems = useMemo(
   }
 };
 
+const handleLogout = () => {
+  dispatch({ type: "vendor/logout" }); 
+
+  localStorage.removeItem("vendorToken");
+  localStorage.removeItem("refreshToken");
+
+  router.push("/vendor/vendorlogin");
+};
+
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
       <header className="w-full">
@@ -217,7 +216,7 @@ const verificationItems = useMemo(
             </div>
           </div>
 
-          <div className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
+          <div onClick={handleLogout} className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
         </div>
       </header>
 

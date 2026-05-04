@@ -53,31 +53,53 @@ export default function VendorLoginPage() {
     };
 
     const data = await dispatch(loginVendor(payload)).unwrap();
-    
-    if (data.status === "submitted") {
+
+    console.log("LOGIN RESPONSE:", data);
+
+    if (!data) {
+      setError("Empty response from server");
+      return;
+    }
+
+    const {
+      status,
+      onboarding_step,
+      next_action,
+      vendor,
+      message,
+    } = data;
+
+    // optional debug
+    console.log({ status, onboarding_step, next_action, vendor });
+
+    // 🚨 safety guard
+    if (!status) {
+      setError("Missing status from backend response");
+      return;
+    }
+
+    if (status === "submitted") {
       setError("Your application is under review");
       return;
     }
 
-    if (data.status === "rejected") {
+    if (status === "rejected") {
       router.push("/vendor/rejected");
       return;
     }
 
-    if (data.status === "draft") {
-      const step = data.onboarding_step;
-
-      if (step === 1) {
+    if (status === "draft") {
+      if (onboarding_step === 1) {
         router.push("/vendor/vendorbusinessdetails");
         return;
       }
 
-      if (step === 2) {
+      if (onboarding_step === 2) {
         router.push("/vendor/vendorbank");
         return;
       }
 
-      if (step === 3) {
+      if (onboarding_step === 3) {
         router.push("/vendor/vendorreview");
         return;
       }
@@ -85,10 +107,19 @@ export default function VendorLoginPage() {
       router.push("/vendor/vendorbusinessdetails");
       return;
     }
+
     router.push("/vendor/dashboard");
 
   } catch (err) {
-    setError(err?.message || "Invalid credentials");
+
+  const msg =
+    err?.data?.message ||
+    err?.payload?.message ||
+    err?.message ||
+    err ||
+    null;
+
+  setError(msg || "Something went wrong");
   } finally {
     setLoading(false);
   }
