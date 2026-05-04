@@ -53,7 +53,7 @@ const VendorNavbar = () => {
     <header className="sticky top-0 z-50 border-b border-[#E5E5E5] bg-[#0B1F3A]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/vendor" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <Image
               src="/LOGOKAVAS.png"
               alt="KAVAS"
@@ -62,11 +62,6 @@ const VendorNavbar = () => {
               className="h-9 w-auto"
               priority
             />
-            <div className="leading-tight">
-              <div className="text-[10px] font-semibold tracking-wide text-white">
-                SELLER HUB
-              </div>
-            </div>
           </Link>
 
           <nav className="hidden lg:flex items-center justify-center gap-8 flex-1">

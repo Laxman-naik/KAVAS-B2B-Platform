@@ -32,17 +32,22 @@ import FeaturedSuppliers from "@/components/ui/common/FeaturedSuppliers";
 import FlashDeals from "@/components/ui/common/FlashDeals";
 import TrustedSlide from "@/components/ui/common/TrustedSlide";
 import AllProducts from "@/components/ui/common/AllProducts";
+import WhyChoose from "@/components/ui/common/WhyChoose"
 
 export default function BuyerHome() {
   return (
     <>
       <Home />
+       <TrendingProducts />
+       <FlashDeals />
       <NewArrivals />
-      <FlashDeals />
-      <TrendingProducts />
       <TrustedSlide />
+      <WhyChoose />
+     
       <AllProducts />
-      <FeaturedSuppliers />
+       
+      {/* <FeaturedSuppliers /> */}
+      
     </>
   );
 }
