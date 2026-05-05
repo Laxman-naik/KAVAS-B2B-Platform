@@ -393,25 +393,33 @@ const vendorSlice = createSlice({
 
       /* ================= LOGIN ================= */
       .addCase(loginVendor.fulfilled, (state, action) => {
-        const payload = action.payload;
+  const payload = action.payload;
 
-        if (!payload?.accessToken) {
-          state.error = payload?.message || "Login failed";
-          state.isAuthenticated = false;
-          return;
-        }
+  if (!payload?.accessToken) {
+    state.error = payload?.message || "Login failed";
+    state.isAuthenticated = false;
+    return;
+  }
 
-        state.isAuthenticated = true;
-        state.accessToken = payload.accessToken;
-        state.refreshToken = payload.refreshToken || null;
+  state.isAuthenticated = true;
+  state.accessToken = payload.accessToken;
+  state.refreshToken = payload.refreshToken || null;
 
-        state.vendor = payload.vendor || null;
+  // 🔥 persist BOTH tokens
+  if (typeof window !== "undefined") {
+    localStorage.setItem("accessToken", payload.accessToken);
+    if (payload.refreshToken) {
+      localStorage.setItem("refreshToken", payload.refreshToken);
+    }
+  }
 
-        state.onboarding = {
-          current_step: payload.onboarding_step || 1,
-          status: payload.status || "draft",
-        };
-      })
+  state.vendor = payload.vendor || null;
+
+  state.onboarding = {
+    current_step: payload.onboarding_step || 1,
+    status: payload.status || "draft",
+  };
+})
 
       /* ================= REFRESH ================= */
       .addCase(refreshVendorToken.fulfilled, (state, action) => {

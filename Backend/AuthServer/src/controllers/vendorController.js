@@ -448,7 +448,10 @@ export const getVendorProfile = async (req, res) => {
 
 export const upsertBusinessDetails = async (req, res) => {
   try {
-    const onboarding_id = req.user?.onboarding_id; // assume auth middleware
+    console.log("BUSINESS DETAILS REQUEST - req.user:", req.user);
+    console.log("BUSINESS DETAILS REQUEST - req.body:", req.body);
+    
+    const onboarding_id = req.user?.onboarding_id;
     const {
       business_name,
       business_type,
@@ -594,7 +597,7 @@ export const upsertBankDetails = async (req, res) => {
     });
   } catch (err) {
     console.error("Bank Details Error:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: err });
   }
 };
 

@@ -39,12 +39,14 @@ const vendorId = vendor?.id;
 
   const [activeSection, setActiveSection] = useState("business_info");
 
-  useEffect(() => {
-  if (vendorId) {
-    dispatch(fetchVendorProfile(vendorId));
-    dispatch(fetchBusinessDetails());
-    dispatch(fetchBankDetails());
-  }
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!vendorId || !token) return;
+
+  dispatch(fetchVendorProfile(vendorId));
+  dispatch(fetchBusinessDetails());
+  dispatch(fetchBankDetails());
 }, [vendorId, dispatch]);
 
 useEffect(() => {
