@@ -446,12 +446,98 @@ export const getVendorProfile = async (req, res) => {
   res.json(result.rows[0]);
 };
 
+// export const upsertBusinessDetails = async (req, res) => {
+//   try {
+//     console.log("BUSINESS DETAILS REQUEST - req.user:", req.user);
+//     console.log("BUSINESS DETAILS REQUEST - req.body:", req.body);
+    
+//     const onboarding_id = req.user?.onboarding_id;
+//     const {
+//       business_name,
+//       business_type,
+//       registered_name,
+//       pan,
+//       gstin,
+//       registration_number,
+//       address,
+//       pincode,
+//       city,
+//       state,
+//     } = req.body;
+
+//     if (!onboarding_id) {
+//       return res.status(400).json({ message: "Onboarding ID missing" });
+//     }
+
+//     // basic validation (don’t rely only on frontend)
+//     if (!business_name || !business_type || !pan || !address) {
+//       return res.status(400).json({
+//         message: "Required business fields missing",
+//       });
+//     }
+
+//     const query = `
+//       INSERT INTO vendor_business_details (
+//         onboarding_id,
+//         business_name,
+//         business_type,
+//         registered_name,
+//         pan,
+//         gstin,
+//         registration_number,
+//         address,
+//         pincode,
+//         city,
+//         state
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+//       ON CONFLICT (onboarding_id)
+//       DO UPDATE SET
+//         business_name = EXCLUDED.business_name,
+//         business_type = EXCLUDED.business_type,
+//         registered_name = EXCLUDED.registered_name,
+//         pan = EXCLUDED.pan,
+//         gstin = EXCLUDED.gstin,
+//         registration_number = EXCLUDED.registration_number,
+//         address = EXCLUDED.address,
+//         pincode = EXCLUDED.pincode,
+//         city = EXCLUDED.city,
+//         state = EXCLUDED.state
+//       RETURNING *;
+//     `;
+
+//     const values = [
+//       onboarding_id,
+//       business_name,
+//       business_type,
+//       registered_name,
+//       pan,
+//       gstin,
+//       registration_number,
+//       address,
+//       pincode,
+//       city,
+//       state,
+//     ];
+
+//     const result = await db.query(query, values);
+
+//     return res.status(200).json({
+//       message: "Business details saved",
+//       data: result.rows[0],
+//     });
+//   } catch (err) {
+//     console.error("Business Details Error:", err);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
 export const upsertBusinessDetails = async (req, res) => {
   try {
-    console.log("BUSINESS DETAILS REQUEST - req.user:", req.user);
-    console.log("BUSINESS DETAILS REQUEST - req.body:", req.body);
-    
+    console.log("👉 BUSINESS DETAILS REQUEST - user:", req.user);
+    console.log("👉 BUSINESS DETAILS REQUEST - body:", req.body);
+
     const onboarding_id = req.user?.onboarding_id;
+
     const {
       business_name,
       business_type,
@@ -465,17 +551,21 @@ export const upsertBusinessDetails = async (req, res) => {
       state,
     } = req.body;
 
+    // 🔴 HARD FAIL if onboarding missing
     if (!onboarding_id) {
-      return res.status(400).json({ message: "Onboarding ID missing" });
+      return res.status(400).json({
+        message: "Onboarding ID missing (auth issue)",
+      });
     }
 
-    // basic validation (don’t rely only on frontend)
+    // 🔴 VALIDATION
     if (!business_name || !business_type || !pan || !address) {
       return res.status(400).json({
         message: "Required business fields missing",
       });
     }
 
+    // ✅ UPSERT QUERY (FIXED)
     const query = `
       INSERT INTO vendor_business_details (
         onboarding_id,
@@ -491,7 +581,7 @@ export const upsertBusinessDetails = async (req, res) => {
         state
       )
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-      ON CONFLICT (onboarding_id)
+      ON CONFLICT ON CONSTRAINT unique_business_onboarding_id
       DO UPDATE SET
         business_name = EXCLUDED.business_name,
         business_type = EXCLUDED.business_type,
@@ -510,25 +600,33 @@ export const upsertBusinessDetails = async (req, res) => {
       onboarding_id,
       business_name,
       business_type,
-      registered_name,
+      registered_name || null,
       pan,
-      gstin,
-      registration_number,
+      gstin || null,
+      registration_number || null,
       address,
-      pincode,
-      city,
-      state,
+      pincode || null,
+      city || null,
+      state || null,
     ];
 
     const result = await db.query(query, values);
+
+    console.log("✅ BUSINESS UPSERT SUCCESS:", result.rows[0]);
 
     return res.status(200).json({
       message: "Business details saved",
       data: result.rows[0],
     });
+
   } catch (err) {
-    console.error("Business Details Error:", err);
-    return res.status(500).json({ message: "Server error" });
+    console.error("❌ Business Details Error FULL:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+      code: err.code,
+    });
   }
 };
 
