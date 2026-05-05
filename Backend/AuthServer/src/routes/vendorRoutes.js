@@ -34,7 +34,7 @@ router.post("/business", authMiddleware, upsertBusinessDetails);
 router.get("/getbusiness", authMiddleware, getBusinessDetails);
 router.post("/bank", authMiddleware, upsertBankDetails);
 router.get("/getbank", authMiddleware, getBankDetails);
-router.post("/api/vendor/store-details", authMiddleware, upsertStoreAndPickup);
+router.post("/store-details", authMiddleware, upsertStoreAndPickup);
 router.get("/getstore", authMiddleware, getStoreAndPickup)
 router.get("/state", authMiddleware, getOnboardingState);
 router.patch("/step", authMiddleware, updateOnboardingStep);

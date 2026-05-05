@@ -24,10 +24,9 @@ export default function VendorStoreDetailsPage() {
   const bank = useSelector((state) => state.vendor.bank);
   const loading = useSelector((state) => state.vendor.loading);
   const error = useSelector((state) => state.vendor.error);
+  const pickup = useSelector((state) => state.vendor.pickup);
 
   const [form, setForm] = useState({
-    storeName: "",
-    storeType: "",
     tagline: "",
     description: "",
     pickupAddress: "",
@@ -54,20 +53,18 @@ export default function VendorStoreDetailsPage() {
     return [
       { label: "Mobile Verification", done: v?.phone_verified === true },
       { label: "Email Verification", done: v?.email_verified === true },
-      { label: "ID Verification", done: v?.id_verified === true },
-      { label: "Signature Verification", done: v?.signature_verified === true },
     ];
   }, [vendor]);
 
   const isFilled = (key) => String(form[key] ?? "").trim().length > 0;
 
-  const requiredStoreFields = useMemo(() => ["storeName", "storeType"], []);
+  const requiredStoreFields = useMemo(() => [], []);
   const requiredPickupFields = useMemo(() => ["pickupAddress", "pincode", "city", "state"], []);
 
   const storeInfoComplete = useMemo(
-    () => requiredStoreFields.every((k) => isFilled(k)) && Boolean(storeImageUrl) && Boolean(storeLogoUrl),
-    [form, requiredStoreFields, storeImageUrl, storeLogoUrl]
-  );
+  () => Boolean(storeImageUrl) && Boolean(storeLogoUrl),
+  [storeImageUrl, storeLogoUrl]
+);
 
   const pickupAddressComplete = useMemo(
     () => requiredPickupFields.every((k) => isFilled(k)),
@@ -78,8 +75,6 @@ export default function VendorStoreDetailsPage() {
     const sectionSteps = [
       { key: "mobile_verification", done: verificationItems[0]?.done },
       { key: "email_verification", done: verificationItems[1]?.done },
-      // { key: "id_verification", done: verificationItems[2]?.done },
-      // { key: "signature_verification", done: verificationItems[3]?.done },
       { key: "business_information", done: true },
       { key: "bank_details", done: true },
       { key: "store_information", done: storeInfoComplete },
@@ -117,26 +112,26 @@ export default function VendorStoreDetailsPage() {
   useEffect(() => {
     dispatch(fetchVendorme());
     dispatch(fetchStoreDetails());
+    dispatch(saveStoreDetails());
   }, [dispatch]);
 
   // Populate form with store data if available
   useEffect(() => {
-    if (store) {
-      setForm(prev => ({
-        ...prev,
-        storeName: store.store_name || "",
-        storeType: store.store_type || "",
-        tagline: store.tagline || "",
-        description: store.description || "",
-        pickupAddress: store.pickup_address || "",
-        pincode: store.pincode || "",
-        city: store.city || "",
-        state: store.state || "",
-      }));
-      setStoreImageUrl(store.store_image || "");
-      setStoreLogoUrl(store.store_logo || "");
-    }
-  }, [store]);
+  if (store || pickup) {
+    setForm(prev => ({
+      ...prev,
+      tagline: store?.tagline || "",
+      description: store?.description || "",
+      pickupAddress: pickup?.pickup_address || "",
+      pincode: pickup?.pincode || "",
+      city: pickup?.city || "",
+      state: pickup?.state || "",
+    }));
+
+    setStoreImageUrl(store?.store_image || "");
+    setStoreLogoUrl(store?.store_logo || "");
+  }
+}, [store, pickup]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -194,11 +189,9 @@ export default function VendorStoreDetailsPage() {
 
     try {
       await dispatch(saveStoreDetails({
-        store_name: form.storeName,
-        store_type: form.storeType,
         tagline: form.tagline,
         description: form.description,
-        pickup_address: form.pickupAddress,
+        address: form.pickupAddress,
         pincode: form.pincode,
         city: form.city,
         state: form.state,
@@ -206,7 +199,6 @@ export default function VendorStoreDetailsPage() {
         store_logo: storeLogoUrl,
       })).unwrap();
 
-      // Navigate to next step or dashboard
       router.push("/vendor");
     } catch (err) {
       console.error("Save failed:", err);
