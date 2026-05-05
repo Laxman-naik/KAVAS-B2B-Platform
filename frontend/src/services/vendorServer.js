@@ -65,7 +65,7 @@ export const getBankAPI = () => authapi.get("/api/vendor/getbank");
 
 export const upsertStoreDetailsAPI = (data) => authapi.post("/api/vendor/store-details", data);
 
-export const getStoreDetailsAPI = () =>authapi.get("/api/vendor/getstore",)
+export const getStoreDetailsAPI = () => authapi.get("/api/vendor/getstore",)
 
 export const getOnboardingStateAPI = () => authapi.get("/api/vendor/state");
 

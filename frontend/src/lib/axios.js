@@ -46,9 +46,7 @@ import axios from "axios";
 const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
 const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
 
-// -------------------------------
-// Session ID (safe init)
-// -------------------------------
+// session init
 if (typeof window !== "undefined") {
   if (!localStorage.getItem("sessionId")) {
     localStorage.setItem("sessionId", crypto.randomUUID());
@@ -56,7 +54,15 @@ if (typeof window !== "undefined") {
 }
 
 // -------------------------------
-// AXIOS INSTANCES
+// TOKEN (SIMPLE - FIXED)
+// -------------------------------
+const getToken = () => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("accessToken");
+};
+
+// -------------------------------
+// AXIOS INSTANCE
 // -------------------------------
 export const authapi = axios.create({
   baseURL: AUTH_BASE_URL,
@@ -67,24 +73,18 @@ export const productapi = axios.create({
 });
 
 // -------------------------------
-// REQUEST INTERCEPTOR (STRICT)
+// REQUEST INTERCEPTOR (FIXED)
 // -------------------------------
 const attachHeaders = (config) => {
   config.headers = config.headers || {};
 
-  const token = localStorage.getItem("accessToken");
+  const token = getToken();
 
-  // ❗ HARD FAIL instead of silent request
-  if (!config.skipAuth) {
-    if (!token) {
-      console.error("❌ No access token → blocking request:", config.url);
-      return Promise.reject(new Error("No access token"));
-    }
-
+  // ✅ DO NOT BLOCK REQUESTS
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // session tracking
   const sessionId = localStorage.getItem("sessionId");
   if (sessionId) {
     config.headers["x-session-id"] = sessionId;
@@ -94,41 +94,26 @@ const attachHeaders = (config) => {
 };
 
 // -------------------------------
-// RESPONSE INTERCEPTOR (HANDLE EXPIRED TOKEN)
+// RESPONSE INTERCEPTOR
 // -------------------------------
-const handleResponseError = async (error) => {
-  const originalRequest = error.config;
+const handleError = (error) => {
+  if (error.response?.status === 401) {
+    console.warn("🔒 Unauthorized - clearing token");
 
-  // 🔥 If unauthorized → force logout (or refresh logic later)
-  if (error.response?.status === 401 && !originalRequest._retry) {
-    console.error("🔒 Unauthorized / Token expired");
-
-    // prevent infinite loop
-    originalRequest._retry = true;
-
-    // ❗ simple approach: clear and redirect
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
 
     if (typeof window !== "undefined") {
-      window.location.href = "/vendor/vendorlogin";
+      window.dispatchEvent(new Event("auth:expired"));
     }
   }
 
   return Promise.reject(error);
 };
 
-// -------------------------------
-// APPLY INTERCEPTORS
-// -------------------------------
-authapi.interceptors.request.use(attachHeaders, (err) => Promise.reject(err));
-productapi.interceptors.request.use(attachHeaders, (err) => Promise.reject(err));
+// apply interceptors
+authapi.interceptors.request.use(attachHeaders);
+productapi.interceptors.request.use(attachHeaders);
 
-authapi.interceptors.response.use(
-  (res) => res,
-  handleResponseError
-);
-
-productapi.interceptors.response.use(
-  (res) => res,
-  handleResponseError
-);
+authapi.interceptors.response.use((res) => res, handleError);
+productapi.interceptors.response.use((res) => res, handleError);

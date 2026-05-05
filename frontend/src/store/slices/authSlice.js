@@ -36,6 +36,9 @@ export const loadUserThunk = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
     try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return rejectWithValue("No token");
+
       const res = await getMe();
       return res;
     } catch (err) {
