@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {BadgeCheck, CheckCircle2, ChevronDown, Circle, HelpCircle, ImagePlus, MapPin, Phone, Store, Lightbulb, Upload, X,} from "lucide-react";
-import {fetchVendorme,saveStoreDetails,fetchStoreDetails,logoutLocal,} from "@/store/slices/vendorSlice";
+import { BadgeCheck, CheckCircle2, ChevronDown, Circle, HelpCircle, ImagePlus, MapPin, Phone, Store, Lightbulb, Upload, X, } from "lucide-react";
+import { fetchVendorme, saveStoreDetails, fetchStoreDetails, logoutLocal, } from "@/store/slices/vendorSlice";
 
 export default function VendorStoreDetailsPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function VendorStoreDetailsPage() {
   const storeLogoInputRef = useRef(null);
   const storeInfoRef = useRef(null);
   const pickupAddressRef = useRef(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Redux state
   const vendor = useSelector((state) => state.vendor.vendor);
@@ -62,9 +63,9 @@ export default function VendorStoreDetailsPage() {
   const requiredPickupFields = useMemo(() => ["pickupAddress", "pincode", "city", "state"], []);
 
   const storeInfoComplete = useMemo(
-  () => Boolean(storeImageUrl) && Boolean(storeLogoUrl),
-  [storeImageUrl, storeLogoUrl]
-);
+    () => Boolean(storeImageUrl) && Boolean(storeLogoUrl),
+    [storeImageUrl, storeLogoUrl]
+  );
 
   const pickupAddressComplete = useMemo(
     () => requiredPickupFields.every((k) => isFilled(k)),
@@ -117,21 +118,21 @@ export default function VendorStoreDetailsPage() {
 
   // Populate form with store data if available
   useEffect(() => {
-  if (store || pickup) {
-    setForm(prev => ({
-      ...prev,
-      tagline: store?.tagline || "",
-      description: store?.description || "",
-      pickupAddress: pickup?.pickup_address || "",
-      pincode: pickup?.pincode || "",
-      city: pickup?.city || "",
-      state: pickup?.state || "",
-    }));
+    if (store || pickup) {
+      setForm(prev => ({
+        ...prev,
+        tagline: store?.tagline || "",
+        description: store?.description || "",
+        pickupAddress: pickup?.pickup_address || "",
+        pincode: pickup?.pincode || "",
+        city: pickup?.city || "",
+        state: pickup?.state || "",
+      }));
 
-    setStoreImageUrl(store?.store_image || "");
-    setStoreLogoUrl(store?.store_logo || "");
-  }
-}, [store, pickup]);
+      setStoreImageUrl(store?.store_image || "");
+      setStoreLogoUrl(store?.store_logo || "");
+    }
+  }, [store, pickup]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -200,6 +201,7 @@ export default function VendorStoreDetailsPage() {
       })).unwrap();
 
       router.push("/vendor");
+      setShowSuccess(true);
     } catch (err) {
       console.error("Save failed:", err);
       alert("Failed to save store details");
@@ -217,7 +219,7 @@ export default function VendorStoreDetailsPage() {
         <div className="w-full px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link href="/vendor" className="flex items-center gap-2">
             <Image src="/LOGOKAVAS.png" alt="KAVAS" width={150} height={48} className="h-9 w-auto" priority />
-           
+
           </Link>
 
           <div className="hidden md:flex items-center gap-3">
@@ -407,8 +409,8 @@ export default function VendorStoreDetailsPage() {
                               onClick={() => removeFile("store_image")}
                               disabled={!storeImageUrl}
                               className={`h-9 rounded-md px-4 text-[11px] font-semibold inline-flex items-center gap-2 ${storeImageUrl
-                                  ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
-                                  : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                                ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
+                                : "border border-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
                               <X size={14} />
@@ -470,8 +472,8 @@ export default function VendorStoreDetailsPage() {
                               onClick={() => removeFile("store_logo")}
                               disabled={!storeLogoUrl}
                               className={`h-9 rounded-md px-4 text-[11px] font-semibold inline-flex items-center gap-2 ${storeLogoUrl
-                                  ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
-                                  : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                                ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
+                                : "border border-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
                               <X size={14} />
@@ -602,11 +604,10 @@ export default function VendorStoreDetailsPage() {
                   <button
                     type="submit"
                     disabled={!(storeInfoComplete && pickupAddressComplete)}
-                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${
-                      storeInfoComplete && pickupAddressComplete
+                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${storeInfoComplete && pickupAddressComplete
                         ? "bg-[#0B1F3A]"
                         : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     Submit
                   </button>
@@ -677,6 +678,20 @@ export default function VendorStoreDetailsPage() {
           </aside>
         </div>
       </main>
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[90%] max-w-md text-center">
+
+            <h2 className="text-lg font-bold text-[#0B1F3A]">
+              Registration Successful 🎉
+            </h2>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Your account is pending. Please wait for admin approval.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
