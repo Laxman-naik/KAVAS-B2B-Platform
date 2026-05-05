@@ -7,8 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
-import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal } from "@/store/slices/vendorSlice";
-import { upsertBusinessAPI, upsertBankAPI } from "@/services/vendorServer";
+import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal, updateOnboardingStep  } from "@/store/slices/vendorSlice";
 
 export default function VendorBusinessDetailsPage() {
   const router = useRouter();
@@ -87,8 +86,8 @@ const verificationItems = useMemo(() => {
   return [
     { label: "Mobile Verification", done: v?.phone_verified === true },
     { label: "Email Verification", done: v?.email_verified === true },
-    { label: "ID Verification", done: v?.id_verified === true },
-    { label: "Signature Verification", done: v?.signature_verified === true },
+    // { label: "ID Verification", done: v?.id_verified === true },
+    // { label: "Signature Verification", done: v?.signature_verified === true },
   ];
 }, [vendor]);
 
@@ -199,6 +198,8 @@ const verificationItems = useMemo(() => {
       ifsc_code: form.ifsc,
     })).unwrap();
 
+    await dispatch(updateOnboardingStep(2)).unwrap();
+
     // 3. Move to next step only after success
     router.push("/vendor/vendorstoredetails");
 
@@ -269,22 +270,6 @@ const handleLogout = () => {
                   {verificationItems.slice(0, 2).map((x) => (
                     <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
                       {x.done ? (<CheckCircle2 size={14} className="text-[#0B1F3A]" />) : (<Circle size={14} className="text-gray-300" />)}
-                      <div className="font-semibold">{x.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="text-xs font-bold text-[#0B1F3A]">ID &amp; Signature Verification</div>
-                <div className="mt-3 grid gap-2">
-                  {verificationItems.slice(2).map((x) => (
-                    <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      {x.done ? (
-                        <CheckCircle2 size={14} className="text-[#0B1F3A]" />
-                      ) : (
-                        <Circle size={14} className="text-gray-300" />
-                      )}
                       <div className="font-semibold">{x.label}</div>
                     </div>
                   ))}

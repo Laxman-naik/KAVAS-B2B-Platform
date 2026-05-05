@@ -95,7 +95,7 @@ export default function VendorLoginPage() {
       }
 
       if (onboarding_step === 2) {
-        router.push("/vendor/vendorbank");
+        router.push("/vendor/vendorstoredetails");
         return;
       }
 

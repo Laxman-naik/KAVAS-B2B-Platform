@@ -446,91 +446,6 @@ export const getVendorProfile = async (req, res) => {
   res.json(result.rows[0]);
 };
 
-// export const upsertBusinessDetails = async (req, res) => {
-//   try {
-//     console.log("BUSINESS DETAILS REQUEST - req.user:", req.user);
-//     console.log("BUSINESS DETAILS REQUEST - req.body:", req.body);
-    
-//     const onboarding_id = req.user?.onboarding_id;
-//     const {
-//       business_name,
-//       business_type,
-//       registered_name,
-//       pan,
-//       gstin,
-//       registration_number,
-//       address,
-//       pincode,
-//       city,
-//       state,
-//     } = req.body;
-
-//     if (!onboarding_id) {
-//       return res.status(400).json({ message: "Onboarding ID missing" });
-//     }
-
-//     // basic validation (don’t rely only on frontend)
-//     if (!business_name || !business_type || !pan || !address) {
-//       return res.status(400).json({
-//         message: "Required business fields missing",
-//       });
-//     }
-
-//     const query = `
-//       INSERT INTO vendor_business_details (
-//         onboarding_id,
-//         business_name,
-//         business_type,
-//         registered_name,
-//         pan,
-//         gstin,
-//         registration_number,
-//         address,
-//         pincode,
-//         city,
-//         state
-//       )
-//       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-//       ON CONFLICT (onboarding_id)
-//       DO UPDATE SET
-//         business_name = EXCLUDED.business_name,
-//         business_type = EXCLUDED.business_type,
-//         registered_name = EXCLUDED.registered_name,
-//         pan = EXCLUDED.pan,
-//         gstin = EXCLUDED.gstin,
-//         registration_number = EXCLUDED.registration_number,
-//         address = EXCLUDED.address,
-//         pincode = EXCLUDED.pincode,
-//         city = EXCLUDED.city,
-//         state = EXCLUDED.state
-//       RETURNING *;
-//     `;
-
-//     const values = [
-//       onboarding_id,
-//       business_name,
-//       business_type,
-//       registered_name,
-//       pan,
-//       gstin,
-//       registration_number,
-//       address,
-//       pincode,
-//       city,
-//       state,
-//     ];
-
-//     const result = await db.query(query, values);
-
-//     return res.status(200).json({
-//       message: "Business details saved",
-//       data: result.rows[0],
-//     });
-//   } catch (err) {
-//     console.error("Business Details Error:", err);
-//     return res.status(500).json({ message: "Server error" });
-//   }
-// };
 export const upsertBusinessDetails = async (req, res) => {
   try {
     console.log("👉 BUSINESS DETAILS REQUEST - user:", req.user);
@@ -711,6 +626,160 @@ export const getBankDetails = async (req, res) => {
     return res.json(result.rows[0] || null);
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const upsertStoreAndPickup = async (req, res) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const onboarding_id = req.user?.onboarding_id;
+
+    if (!onboarding_id) {
+      return res.status(400).json({
+        message: "Onboarding ID missing",
+      });
+    }
+
+    const {
+      store_image,
+      store_logo,
+      tagline,
+      description,
+      address,
+      pincode,
+      city,
+      state,
+      is_store_address = true,
+    } = req.body;
+
+    // 🔴 Validation
+    if (!address || !pincode || !city || !state) {
+      return res.status(400).json({
+        message: "Pickup address fields are required",
+      });
+    }
+
+    // ---------------- STORE UPSERT ----------------
+    const storeQuery = `
+      INSERT INTO vendor_store_details (
+        onboarding_id,
+        store_image,
+        store_logo,
+        tagline,
+        description
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      ON CONFLICT (onboarding_id)
+      DO UPDATE SET
+        store_image = EXCLUDED.store_image,
+        store_logo = EXCLUDED.store_logo,
+        tagline = EXCLUDED.tagline,
+        description = EXCLUDED.description
+      RETURNING *;
+    `;
+
+    const storeValues = [
+      onboarding_id,
+      store_image || null,
+      store_logo || null,
+      tagline || null,
+      description || null,
+    ];
+
+    const storeResult = await client.query(storeQuery, storeValues);
+
+    // ---------------- PICKUP UPSERT ----------------
+    const pickupQuery = `
+      INSERT INTO vendor_pickup_addresses (
+        onboarding_id,
+        address,
+        pincode,
+        city,
+        state,
+        is_store_address
+      )
+      VALUES ($1,$2,$3,$4,$5,$6)
+      ON CONFLICT (onboarding_id)
+      DO UPDATE SET
+        address = EXCLUDED.address,
+        pincode = EXCLUDED.pincode,
+        city = EXCLUDED.city,
+        state = EXCLUDED.state,
+        is_store_address = EXCLUDED.is_store_address
+      RETURNING *;
+    `;
+
+    const pickupValues = [
+      onboarding_id,
+      address,
+      pincode,
+      city,
+      state,
+      is_store_address,
+    ];
+
+    const pickupResult = await client.query(pickupQuery, pickupValues);
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      message: "Store & pickup details saved successfully",
+      data: {
+        store: storeResult.rows[0],
+        pickup: pickupResult.rows[0],
+      },
+    });
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Store + Pickup Error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  } finally {
+    client.release();
+  }
+};
+
+export const getStoreAndPickup = async (req, res) => {
+  try {
+    const onboarding_id = req.user?.onboarding_id;
+
+    if (!onboarding_id) {
+      return res.status(400).json({
+        message: "Onboarding ID missing",
+      });
+    }
+
+    const storeQuery = `
+      SELECT * FROM vendor_store_details
+      WHERE onboarding_id = $1
+    `;
+
+    const pickupQuery = `
+      SELECT * FROM vendor_pickup_addresses
+      WHERE onboarding_id = $1
+    `;
+
+    const [storeResult, pickupResult] = await Promise.all([
+      db.query(storeQuery, [onboarding_id]),
+      db.query(pickupQuery, [onboarding_id]),
+    ]);
+
+    return res.status(200).json({
+      store: storeResult.rows[0] || null,
+      pickup: pickupResult.rows[0] || null,
+    });
+
+  } catch (err) {
+    console.error("Fetch Store + Pickup Error:", err);
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 

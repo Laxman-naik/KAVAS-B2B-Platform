@@ -147,6 +147,8 @@ import {
   upsertBankAPI,
   getBankAPI,
   getOnboardingStateAPI,
+  upsertStoreDetailsAPI,
+  getStoreDetailsAPI,
   updateOnboardingStepAPI,
   refreshTokenAPI,
   logoutVendorAPI,
@@ -321,6 +323,32 @@ export const updateOnboardingStep = createAsyncThunk(
   }
 );
 
+/* ================= STORE ================= */
+
+export const fetchStoreDetails = createAsyncThunk(
+  "vendor/storeGet",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getStoreDetailsAPI(); 
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const saveStoreDetails = createAsyncThunk(
+  "vendor/storeSave",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await upsertStoreDetailsAPI(data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 /* ================= STATE ================= */
 
 const initialState = {
@@ -356,6 +384,8 @@ const initialState = {
   onboarding: null,
   business: null,
   bank: null,
+  store: null,
+  pickup: null,
 
   otp: {
     email: false,
@@ -380,6 +410,8 @@ const vendorSlice = createSlice({
       state.onboarding = null;
       state.business = null;
       state.bank = null;
+      state.store = null;
+      state.pickup = null;
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("accessToken");
@@ -461,6 +493,8 @@ const vendorSlice = createSlice({
         state.onboarding = action.payload?.onboarding || null;
         state.business = action.payload?.business || null;
         state.bank = action.payload?.bank || null;
+        state.store = action.payload?.store || null;
+        state.pickup = action.payload?.pickup || null;
       })
 
       /* ================= BUSINESS ================= */
@@ -479,17 +513,32 @@ const vendorSlice = createSlice({
         state.bank = action.payload?.data || null;
       })
 
+      /* ================= STORE ================= */
+      .addCase(fetchStoreDetails.fulfilled, (state, action) => {
+  state.store = action.payload?.store || null;
+  state.pickup = action.payload?.pickup || null;
+})
+      .addCase(saveStoreDetails.fulfilled, (state, action) => {
+  state.store = action.payload?.data?.store || null;
+  state.pickup = action.payload?.data?.pickup || null;
+})
+
       /* ================= ONBOARDING ================= */
       .addCase(fetchOnboardingState.fulfilled, (state, action) => {
         state.onboarding = action.payload || null;
       })
 
       .addCase(updateOnboardingStep.fulfilled, (state, action) => {
-        const step = action.payload?.data?.current_step;
-        if (step !== undefined) {
-          state.onboarding.current_step = step;
-        }
-      })
+  const step =
+    action.payload?.data?.current_step ||
+    action.payload?.current_step ||
+    action.meta.arg; // fallback
+
+  if (step !== undefined) {
+    if (!state.onboarding) state.onboarding = {};
+    state.onboarding.current_step = step;
+  }
+})
 
       /* ================= GLOBAL HANDLERS ================= */
       .addMatcher(

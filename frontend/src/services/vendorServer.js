@@ -1,14 +1,11 @@
 import { authapi } from "../lib/axios";
 
 
-export const sendVendorOtpAPI = (data) =>
-  authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
+export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
 
-export const verifyVendorOtpAPI = (data) =>
-  authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
+export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
 
-export const registerVendorAPI = (data) =>
-  authapi.post("/api/vendor/register", data, { skipAuth: true });
+export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data, { skipAuth: true });
 
 export const loginVendorAPI = async (data) => {
   try {
@@ -54,34 +51,27 @@ export const refreshTokenAPI = async () => {
   return res.data;
 };
 
-export const logoutVendorAPI = (refreshToken) =>
-  authapi.post("/api/vendor/logout", { refreshToken });
+export const logoutVendorAPI = (refreshToken) => authapi.post("/api/vendor/logout", { refreshToken });
 
+export const getVendorProfileAPI = (id) => authapi.get(`/api/vendor/${id}`, { skipAuth: true });
 
-export const getVendorProfileAPI = (id) =>
-  authapi.get(`/api/vendor/${id}`, { skipAuth: true });
+export const upsertBusinessAPI = (data) => authapi.post("/api/vendor/business", data);
 
+export const getBusinessAPI = () => authapi.get("/api/vendor/getbusiness");
 
-export const upsertBusinessAPI = (data) =>
-  authapi.post("/api/vendor/business", data);
+export const upsertBankAPI = (data) => authapi.post("/api/vendor/bank", data);
 
-export const getBusinessAPI = () =>
-  authapi.get("/api/vendor/getbusiness");
+export const getBankAPI = () => authapi.get("/api/vendor/getbank");
 
-export const upsertBankAPI = (data) =>
-  authapi.post("/api/vendor/bank", data);
+export const upsertStoreDetailsAPI = (data) => authapi.post("/api/vendor/store-details", data);
 
-export const getBankAPI = () =>
-  authapi.get("/api/vendor/getbank");
+export const getStoreDetailsAPI = () =>authapi.get("/api/vendor/getstore",)
 
-export const getOnboardingStateAPI = () =>
-  authapi.get("/api/vendor/state");
+export const getOnboardingStateAPI = () => authapi.get("/api/vendor/state");
 
-export const updateOnboardingStepAPI = (step) =>
-  authapi.patch("/api/vendor/step", { step });
+export const updateOnboardingStepAPI = (step) => authapi.patch("/api/vendor/step", { step });
 
-export const getVendorProfileSelfAPI = () =>
-  authapi.get("/api/vendor/me", {
+export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me", {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
     },
