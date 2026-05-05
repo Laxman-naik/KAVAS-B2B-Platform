@@ -78,8 +78,8 @@ export default function VendorLoginPage() {
       return;
     }
 
-    if (status === "submitted") {
-      setError("Your application is under review");
+    if (status === "in_review") {
+      alert("Your application is under review")
       return;
     }
 
@@ -96,11 +96,6 @@ export default function VendorLoginPage() {
 
       if (onboarding_step === 2) {
         router.push("/vendor/vendorstoredetails");
-        return;
-      }
-
-      if (onboarding_step === 3) {
-        router.push("/vendor/vendorreview");
         return;
       }
 

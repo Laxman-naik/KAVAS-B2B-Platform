@@ -17,7 +17,7 @@ const {
   getOnboardingState,
   updateOnboardingStep,
   getMe,
-  getStoreAndPickup
+  getStoreAndPickup,
 } = require("../controllers/vendorController");
 
 const authMiddleware = require("../middleware/vendorMiddleware");

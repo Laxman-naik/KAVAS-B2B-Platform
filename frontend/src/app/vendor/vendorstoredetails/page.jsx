@@ -199,8 +199,6 @@ export default function VendorStoreDetailsPage() {
         store_image: storeImageUrl,
         store_logo: storeLogoUrl,
       })).unwrap();
-
-      router.push("/vendor");
       setShowSuccess(true);
     } catch (err) {
       console.error("Save failed:", err);
@@ -689,6 +687,13 @@ export default function VendorStoreDetailsPage() {
             <p className="mt-3 text-sm text-gray-600">
               Your account is pending. Please wait for admin approval.
             </p>
+
+            <button
+              onClick={() => router.push("/vendor")}
+              className="mt-5 w-full h-10 bg-[#0B1F3A] text-white rounded-md font-semibold"
+            >
+              Ok
+            </button>
           </div>
         </div>
       )}
