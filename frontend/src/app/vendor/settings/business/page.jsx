@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function BusinessPage() {
-  const [form, setForm] = useState({
+  const initialData = {
     legalName: "Sharma Traders Pvt Ltd",
     displayName: "Sharma Traders",
     gstin: "07AABCS1234A1Z5",
@@ -14,16 +14,21 @@ export default function BusinessPage() {
     city: "Delhi",
     state: "Delhi",
     pin: "110020",
-  });
+  };
 
+  const [form, setForm] = useState(initialData);
   const [saved, setSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // ✅ NEW
 
   const handleChange = (e) => {
+    if (!isEditing) return;
     setForm({ ...form, [e.target.name]: e.target.value });
     setSaved(false);
   };
 
   const handleSave = () => {
+    if (!isEditing) return;
+
     if (!form.legalName || !form.gstin) {
       alert("Please fill required fields");
       return;
@@ -31,11 +36,20 @@ export default function BusinessPage() {
 
     console.log("Saved Business Data:", form);
     setSaved(true);
+    setIsEditing(false); // lock again
   };
 
   return (
-    <div className=" rounded-sm min-h-screen p-3 md:p-6">
-      <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm max-w-6xl mx-auto">
+    <div className="rounded-sm min-h-screen p-3 md:p-6">
+      <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm max-w-6xl mx-auto relative">
+
+        {/* ✅ EDIT BUTTON WITH ICON */}
+        <button
+          onClick={() => setIsEditing(true)}
+          className="absolute top-4 right-4 flex items-center gap-1 text-sm bg-[#1E2A38] text-white px-4 py-1.5 rounded-md hover:bg-[#2d3b4f] transition"
+        >
+          ✏️ Edit
+        </button>
 
         <h2 className="text-lg md:text-xl font-semibold text-gray-800">
           Business Information
@@ -66,20 +80,35 @@ export default function BusinessPage() {
 
           <div>
             <label className="text-sm text-gray-600">Business Legal Name</label>
-            <input name="legalName" value={form.legalName} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="legalName"
+              value={form.legalName}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
           </div>
 
           <div>
             <label className="text-sm text-gray-600">Display Name on Store</label>
-            <input name="displayName" value={form.displayName} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="displayName"
+              value={form.displayName}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
           </div>
 
           <div>
             <label className="text-sm text-gray-600">GSTIN</label>
-            <input name="gstin" value={form.gstin} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="gstin"
+              value={form.gstin}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
             <p className="text-xs text-gray-400 mt-1">
               15-character GST Identification Number
             </p>
@@ -87,14 +116,24 @@ export default function BusinessPage() {
 
           <div>
             <label className="text-sm text-gray-600">PAN Number</label>
-            <input name="pan" value={form.pan} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="pan"
+              value={form.pan}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
           </div>
 
           <div>
             <label className="text-sm text-gray-600">Business Type</label>
-            <select name="businessType" value={form.businessType} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]">
+            <select
+              name="businessType"
+              value={form.businessType}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            >
               <option>Private Limited</option>
               <option>Partnership</option>
               <option>Sole Proprietor</option>
@@ -103,16 +142,27 @@ export default function BusinessPage() {
 
           <div>
             <label className="text-sm text-gray-600">Established Year</label>
-            <input name="year" value={form.year} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="year"
+              value={form.year}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
           </div>
 
           <div className="md:col-span-2">
             <label className="text-sm text-gray-600">Website (Optional)</label>
-            <input name="website" value={form.website} onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+            <input
+              name="website"
+              value={form.website}
+              onChange={handleChange}
+              disabled={!isEditing}
+              className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+            />
           </div>
         </div>
+
         <div className="mt-6 border-t pt-4">
           <h3 className="font-semibold text-gray-800 mb-3">Registered Address</h3>
 
@@ -120,20 +170,35 @@ export default function BusinessPage() {
 
             <div className="md:col-span-2">
               <label className="text-sm text-gray-600">Street Address</label>
-              <input name="address" value={form.address} onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+              <input
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+              />
             </div>
 
             <div>
               <label className="text-sm text-gray-600">City</label>
-              <input name="city" value={form.city} onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+              <input
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+              />
             </div>
 
             <div>
               <label className="text-sm text-gray-600">State</label>
-              <select name="state" value={form.state} onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]">
+              <select
+                name="state"
+                value={form.state}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+              >
                 <option>Delhi</option>
                 <option>Maharashtra</option>
                 <option>Karnataka</option>
@@ -142,8 +207,13 @@ export default function BusinessPage() {
 
             <div>
               <label className="text-sm text-gray-600">PIN Code</label>
-              <input name="pin" value={form.pin} onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-[#1E2A38]" />
+              <input
+                name="pin"
+                value={form.pin}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className="w-full border rounded-lg px-3 py-2 mt-1 disabled:bg-gray-100 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#1E2A38]"
+              />
             </div>
           </div>
         </div>
@@ -151,7 +221,10 @@ export default function BusinessPage() {
         <div className="flex justify-end mt-6">
           <button
             onClick={handleSave}
-            className="bg-[#1E2A38] text-white px-5 py-2 rounded-lg hover:bg-[#2d3b4f] transition-all duration-300 hover:scale-105"
+            className={`px-5 py-2 rounded-lg transition-all duration-300 
+            ${isEditing 
+              ? "bg-[#1E2A38] text-white hover:bg-[#2d3b4f] hover:scale-105" 
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
           >
             Save Changes
           </button>

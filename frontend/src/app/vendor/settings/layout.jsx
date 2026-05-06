@@ -14,10 +14,10 @@ import {
 const menu = [
   { name: "Profile", desc: "Personal details", path: "/vendor/settings/profile", icon: User },
   { name: "Business", desc: "Company info & KYC", path: "/vendor/settings/business", icon: Building2 },
-  { name: "Warehouses", desc: "Storage locations", path: "/vendor/settings/warehouses", icon: Warehouse },
+  // { name: "Warehouses", desc: "Storage locations", path: "/vendor/settings/warehouses", icon: Warehouse },
   { name: "Notifications", desc: "Alert preferences", path: "/vendor/settings/notifications", icon: Bell },
   { name: "Security", desc: "Password & 2FA", path: "/vendor/settings/security", icon: Shield },
-  { name: "Payouts", desc: "Payment config", path: "/vendor/settings/payouts", icon: Wallet },
+  // { name: "Payouts", desc: "Payment config", path: "/vendor/settings/payouts", icon: Wallet },
 ];
 
 export default function SettingsLayout({ children }) {

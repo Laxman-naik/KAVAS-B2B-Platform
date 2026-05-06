@@ -95,7 +95,7 @@ export default function SecuritySettings() {
 
             <button
               onClick={handleSubmit}
-              className="flex items-center gap-2 bg-gray-300 text-white px-5 py-2 rounded-lg hover:bg-gray-500 transition"
+              className="flex items-center gap-2 bg-gray-300 cursor-pointer text-white px-5 py-2 rounded-lg hover:bg-gray-500 transition"
             >
               <Lock size={16} />
               Update Password
@@ -103,7 +103,7 @@ export default function SecuritySettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 flex justify-between items-center hover:shadow-lg transition duration-300">
+        {/* <div className="bg-white rounded-xl shadow-md p-6 flex justify-between items-center hover:shadow-lg transition duration-300">
           <div>
             <h2 className="font-semibold">Two-Factor Authentication</h2>
             <p className="text-sm text-gray-500">
@@ -119,7 +119,7 @@ export default function SecuritySettings() {
           >
             {twoFA ? "Enabled" : "Enable 2FA"}
           </button>
-        </div>
+        </div> */}
 
         <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-300">
           <div className="flex justify-between mb-4">
@@ -155,7 +155,7 @@ export default function SecuritySettings() {
                 </div>
 
                 {!s.current && (
-                  <button className="text-sm text-blue-600 hover:underline">
+                  <button className="text-sm cursor-pointer text-blue-600 hover:underline">
                     Logout
                   </button>
                 )}

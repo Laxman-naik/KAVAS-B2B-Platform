@@ -33,7 +33,7 @@ const AllProducts = () => {
 
   return (
     <div className="bg-white">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <div className="flex items-center justify-between">
          
   <div>

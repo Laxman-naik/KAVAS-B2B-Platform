@@ -184,7 +184,7 @@ export default function NotificationPage() {
       </div>
 
       <div className="flex justify-end mt-6">
-        <button className="bg-[#1F2937] text-white px-6 py-3 rounded-sm hover:bg-black transition">
+        <button className="bg-[#1F2937] cursor-pointer text-white px-6 py-3 rounded-sm hover:bg-black transition">
           Save Preferences
         </button>
       </div>
