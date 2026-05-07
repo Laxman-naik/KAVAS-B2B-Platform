@@ -239,27 +239,50 @@ const approveVendor = async (req, res) => {
       return res.status(400).json({ message: "status is required" });
     }
 
+    // 1. Get onboarding data first
+    const onboardingRes = await pool.query(
+      `SELECT * FROM vendor_onboarding WHERE id = $1`,
+      [onboarding_id]
+    );
+
+    if (onboardingRes.rowCount === 0) {
+      return res.status(404).json({ message: "Vendor onboarding not found" });
+    }
+
+    const onboarding = onboardingRes.rows[0];
+
+    let organization_id = onboarding.organization_id;
+
+    // 2. CREATE ORGANIZATION ONLY IF APPROVED
+    if (status === "approved" && !organization_id) {
+      const orgRes = await pool.query(
+        `INSERT INTO organizations (name, type)
+         VALUES ($1, 'both')
+         RETURNING id`,
+        [onboarding.business_name]
+      );
+
+      organization_id = orgRes.rows[0].id;
+    }
+
+    // 3. UPDATE ONBOARDING
     const result = await pool.query(
       `
       UPDATE vendor_onboarding
       SET 
         status = $2,
+        organization_id = COALESCE($3, organization_id),
         reviewed_at = NOW()
       WHERE id = $1
       RETURNING *
       `,
-      [onboarding_id, status]
+      [onboarding_id, status, organization_id]
     );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({
-        message: "Vendor onboarding not found",
-      });
-    }
 
     return res.json({
       message: `Vendor status updated to ${status}`,
       data: result.rows[0],
+      organization_id,
     });
 
   } catch (err) {

@@ -318,15 +318,17 @@ export default function VendorsTable() {
                       console.error(err);
                     }
                   }}
-                  disabled={selectedVendor.status === "rejected"}
-                  className={`px-4 py-2 rounded text-white ${selectedVendor.status === "rejected"
-                    ? "bg-red-400 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
+                  disabled={
+                    selectedVendor.status === "approved" ||
+                    selectedVendor.status === "rejected"
+                  }
+                  className={`px-4 py-2 rounded text-white ${selectedVendor.status === "approved" ||
+                      selectedVendor.status === "rejected"
+                      ? "bg-red-400 cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700"
                     }`}
                 >
-                  {selectedVendor.status === "rejected"
-                    ? "Rejected"
-                    : "Reject"}
+                  Reject
                 </button>
 
               </div>

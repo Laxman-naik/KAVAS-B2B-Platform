@@ -16,6 +16,7 @@ export default function VendorLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const blockedStatuses = ["in_review", "pending", "kyc_pending"];
 
   const leftItems = useMemo(
     () => [
@@ -39,86 +40,97 @@ export default function VendorLoginPage() {
   );
 
   const onSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    const payload = {
-      password,
-      ...(identifier.includes("@")
-        ? { email: identifier }
-        : { phone: identifier }),
-    };
+    try {
+      const payload = {
+        password,
+        ...(identifier.includes("@")
+          ? { email: identifier }
+          : { phone: identifier }),
+      };
 
-    const data = await dispatch(loginVendor(payload)).unwrap();
+      const data = await dispatch(loginVendor(payload)).unwrap();
 
-    console.log("LOGIN RESPONSE:", data);
+      console.log("LOGIN RESPONSE:", data);
 
-    if (!data) {
-      setError("Empty response from server");
-      return;
-    }
+      if (!data) {
+        setError("Empty response from server");
+        return;
+      }
 
-    const {
-      status,
-      onboarding_step,
-      next_action,
-      vendor,
-      message,
-    } = data;
+      const {
+        status,
+        onboarding_step,
+        next_action,
+        vendor,
+        message,
+      } = data;
 
-    // optional debug
-    console.log({ status, onboarding_step, next_action, vendor });
+      // 🚨 safety guard
+      if (!status) {
+        setError("Missing status from backend response");
+        return;
+      }
 
-    // 🚨 safety guard
-    if (!status) {
-      setError("Missing status from backend response");
-      return;
-    }
+      if (status === "in_review") {
+        alert("Your application is under review. Please wait for admin approval.");
+        return;
+      }
 
-    if (status === "in_review") {
-      alert("Your application is under review")
-      return;
-    }
+      if (status === "kyc_pending") {
+        alert("Your KYC is pending. admin will contact you.");
+        return;
+      }
 
-    if (status === "rejected") {
-      router.push("/vendor/rejected");
-      return;
-    }
+      if (status === "rejected") {
+        alert(`Your application was rejected. Reason: ${rejection_reason || "Not provided"}`);
+        return;
+      }
 
-    if (status === "draft") {
-      if (onboarding_step === 1) {
+      if (status === "approved") {
+        router.push("/vendor/dashboard");
+      }
+
+      if (status === "rejected") {
+        router.push("/vendor/rejected");
+        return;
+      }
+
+      if (status === "draft") {
+        if (onboarding_step === 1) {
+          router.push("/vendor/vendorbusinessdetails");
+          return;
+        }
+
+        if (onboarding_step === 2) {
+          router.push("/vendor/vendorstoredetails");
+          return;
+        }
+
         router.push("/vendor/vendorbusinessdetails");
         return;
       }
 
-      if (onboarding_step === 2) {
-        router.push("/vendor/vendorstoredetails");
-        return;
-      }
+      router.push("/vendor/dashboard");
 
-      router.push("/vendor/vendorbusinessdetails");
-      return;
+    } catch (err) {
+
+      const msg =
+        err?.data?.message ||
+        err?.payload?.message ||
+        err?.message ||
+        err ||
+        null;
+
+      setError(msg || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/vendor/dashboard");
-
-  } catch (err) {
-
-  const msg =
-    err?.data?.message ||
-    err?.payload?.message ||
-    err?.message ||
-    err ||
-    null;
-
-  setError(msg || "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-white">
