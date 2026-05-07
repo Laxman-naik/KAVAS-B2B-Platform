@@ -1,24 +1,36 @@
 "use client";
 import React, { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { loadAdminThunk } from "@/store/slices/authSlice";
-import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchOrders } from "@/store/slices/orderSlice";
+
+const statusStyles = {
+  fulfilled: "bg-green-500/20 text-green-400",
+  pending: "bg-yellow-500/20 text-yellow-400",
+  disputed: "bg-red-500/20 text-red-400",
+};
 
 export default function DashboardBody() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { isAuthenticated, loading, initialized } = useSelector((state) => state.auth);
+  const { orders = [] } = useSelector((state) => state.order);
+  const latestOrders = orders.slice(0, 10);
 
-useEffect(() => {
-  dispatch(loadAdminThunk());
-}, [dispatch]);
+  useEffect(() => {
+    dispatch(loadAdminThunk());
+  }, [dispatch]);
 
-useEffect(() => {
-  if (initialized && !isAuthenticated) {
-    router.push("/admin/login");
-  }
-}, [initialized, isAuthenticated]);
+  useEffect(() => {
+    dispatch(fetchOrders());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (initialized && !isAuthenticated) {
+      router.push("/admin/login");
+    }
+  }, [initialized, isAuthenticated]);
   return (
     <div className="space-y-6  p-15 min-h-screen text-white  bg-[#0b1220]">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -84,53 +96,19 @@ useEffect(() => {
               </tr>
             </thead>
 
-            <tbody className="space-y-2">
-              {[
-                {
-                  id: "#10482",
-                  buyer: "Acme Corp",
-                  value: "₹14,200",
-                  status: "Fulfilled",
-                  color: "bg-green-500/20 text-green-400",
-                },
-                {
-                  id: "#10481",
-                  buyer: "BuildMart",
-                  value: "₹8,750",
-                  status: "Pending",
-                  color: "bg-yellow-500/20 text-yellow-400",
-                },
-                {
-                  id: "#10480",
-                  buyer: "TechSource",
-                  value: "₹31,000",
-                  status: "Fulfilled",
-                  color: "bg-green-500/20 text-green-400",
-                },
-                {
-                  id: "#10479",
-                  buyer: "GlobeTraders",
-                  value: "₹5,200",
-                  status: "Disputed",
-                  color: "bg-red-500/20 text-red-400",
-                },
-              ].map((row, i) => (
-                <tr
-                  key={i}
-                  className="border-t border-gray-700 hover:bg-[#1B2A45] transition"
-                >
-                  <td className="py-3">{row.id}</td>
-                  <td>{row.buyer}</td>
-                  <td>{row.value}</td>
-                  <td>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${row.color}`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+            <tbody>
+              {orders.length === 0 ? (
+                <tr><td colSpan="4" className="py-4 text-center">No orders found</td></tr>
+              ) : (
+                latestOrders.map((order) => (
+                  <tr key={order.id} className="border-t border-gray-700 hover:bg-[#1B2A45] transition">
+                    <td className="py-3">#{order.id.slice(0, 6)}</td>
+                    <td>{order.buyer_name || "N/A"}</td>
+                    <td>₹{order.total_amount}</td>
+                    <td><span className={`text-xs px-2 py-1 rounded-full ${statusStyles[order.status] || "bg-gray-500/20"}`}>{order.status}</span></td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

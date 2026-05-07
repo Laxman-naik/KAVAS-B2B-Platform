@@ -4,7 +4,6 @@ exports.createOrderFromCart = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    /* 1. AUTH GUARD */
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -18,7 +17,6 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("BEGIN");
 
-    /* 2. ADDRESS CHECK */
     const addressRes = await client.query(
       `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
       [userId]
@@ -33,7 +31,6 @@ exports.createOrderFromCart = async (req, res) => {
 
     const shippingAddressId = addressRes.rows[0].id;
 
-    /* 3. IDEMPOTENCY CHECK */
     const existingOrder = await client.query(
       `SELECT * FROM orders WHERE idempotency_key = $1`,
       [idempotency_key]
@@ -47,7 +44,6 @@ exports.createOrderFromCart = async (req, res) => {
       });
     }
 
-    /* 4. GET CART */
     const cartRes = await client.query(
       `SELECT id FROM carts WHERE user_id = $1`,
       [userId]
@@ -59,7 +55,6 @@ exports.createOrderFromCart = async (req, res) => {
 
     const cartId = cartRes.rows[0].id;
 
-    /* 5. GET CART ITEMS */
     const itemsRes = await client.query(
       `SELECT 
          ci.*, 
@@ -78,32 +73,24 @@ exports.createOrderFromCart = async (req, res) => {
 
     const items = itemsRes.rows;
 
-    /* 6. VALIDATION */
     for (const item of items) {
       if (!item.product_id) {
         throw new Error("Invalid product in cart");
       }
 
       if (!item.organization_id) {
-        throw new Error(
-          `Product ${item.product_id} missing organization_id`
-        );
+        throw new Error(`Product ${item.product_id} missing organization_id`);
       }
 
       if (!item.price || item.price <= 0) {
-        throw new Error(
-          `Invalid price for product ${item.product_id}`
-        );
+        throw new Error(`Invalid price for product ${item.product_id}`);
       }
 
       if (item.stock < item.quantity) {
-        throw new Error(
-          `Insufficient stock for product ${item.product_id}`
-        );
+        throw new Error(`Insufficient stock for product ${item.product_id}`);
       }
     }
 
-    /* 7. GROUP BY SUPPLIER */
     const grouped = {};
 
     for (const item of items) {
@@ -116,7 +103,6 @@ exports.createOrderFromCart = async (req, res) => {
       grouped[orgId].push(item);
     }
 
-    /* 8. CREATE ORDERS */
     const createdOrders = [];
     let grandTotal = 0;
 
@@ -124,8 +110,7 @@ exports.createOrderFromCart = async (req, res) => {
       const supplierItems = grouped[supplierOrgId];
 
       const totalAmount = supplierItems.reduce(
-        (sum, item) =>
-          sum + Number(item.price) * Number(item.quantity),
+        (sum, item) => sum + Number(item.price) * Number(item.quantity),
         0
       );
 
@@ -148,7 +133,6 @@ exports.createOrderFromCart = async (req, res) => {
 
       const order = orderRes.rows[0];
 
-      /* 9. ORDER ITEMS + STOCK UPDATE */
       for (const item of supplierItems) {
         await client.query(
           `INSERT INTO order_items 
@@ -165,7 +149,6 @@ exports.createOrderFromCart = async (req, res) => {
         );
       }
 
-      /* 10. STATUS HISTORY */
       await client.query(
         `INSERT INTO order_status_history (order_id, status)
          VALUES ($1, $2)`,
@@ -177,13 +160,11 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("COMMIT");
 
-    /* 11. RESPONSE */
     return res.status(201).json({
       message: "Orders created successfully",
       orders: createdOrders,
-      totalAmount: grandTotal, 
+      totalAmount: grandTotal,
     });
-
   } catch (err) {
     await client.query("ROLLBACK");
 
@@ -199,15 +180,20 @@ exports.createOrderFromCart = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    // No filtering anymore (since buyer removed)
-    const result = await pool.query(
-      `SELECT * FROM orders 
-       ORDER BY created_at DESC`
-    );
+    const result = await pool.query(`
+      SELECT 
+        o.*,
+        u.full_name AS buyer_name
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+    `);
 
-    res.json(result.rows);
-
+    res.json({
+      orders: result.rows,
+    });
   } catch (err) {
+    console.error("GET ORDERS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -242,7 +228,6 @@ exports.getOrderDetails = async (req, res) => {
       items: itemsRes.rows,
       history: historyRes.rows,
     });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -257,21 +242,31 @@ exports.updateOrderStatus = async (req, res) => {
 
     await client.query("BEGIN");
 
-    await client.query(
-      `UPDATE orders SET status = $1 WHERE id = $2`,
-      [status, id]
+    const orderRes = await client.query(
+      `UPDATE orders 
+       SET status = $1 
+       WHERE id = $2
+       RETURNING *`,
+      [String(status).toLowerCase(), id]
     );
+
+    if (!orderRes.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ message: "Order not found" });
+    }
 
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
        VALUES ($1, $2)`,
-      [id, status]
+      [id, String(status).toLowerCase()]
     );
 
     await client.query("COMMIT");
 
-    res.json({ message: "Order status updated" });
-
+    res.json({
+      message: "Order status updated",
+      order: orderRes.rows[0],
+    });
   } catch (err) {
     await client.query("ROLLBACK");
     res.status(500).json({ message: err.message });
@@ -296,18 +291,22 @@ exports.createOrder = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 1. create order
     const orderRes = await client.query(
       `INSERT INTO orders 
-      (supplier_org_id, total_amount, status, shipping_address_id, idempotency_key)
-      VALUES ($1, $2, 'pending', $3, $4)
+      (user_id, supplier_org_id, total_amount, status, shipping_address_id, idempotency_key)
+      VALUES ($1, $2, $3, 'pending', $4, $5)
       RETURNING *`,
-      [supplier_org_id, total_amount, shipping_address_id, idempotency_key]
+      [
+        userId,
+        supplier_org_id,
+        total_amount,
+        shipping_address_id,
+        idempotency_key,
+      ]
     );
 
     const order = orderRes.rows[0];
 
-    // 2. insert order items
     for (const item of items) {
       await client.query(
         `INSERT INTO order_items 
@@ -317,7 +316,6 @@ exports.createOrder = async (req, res) => {
       );
     }
 
-    // 3. status history
     await client.query(
       `INSERT INTO order_status_history (order_id, status)
        VALUES ($1, 'pending')`,
@@ -349,8 +347,5 @@ exports.clearCartAfterOrder = async (userId, client) => {
 
   const cartId = cartRes.rows[0].id;
 
-  await client.query(
-    `DELETE FROM cart_items WHERE cart_id = $1`,
-    [cartId]
-  );
+  await client.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cartId]);
 };

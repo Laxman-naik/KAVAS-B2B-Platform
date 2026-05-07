@@ -1,6 +1,8 @@
 "use client";
-import VendorRegister from "../../components/vendor/VendorRegister";
+import VendorLanding from "../../components/vendor/VendorLanding";
+
 
 export default function Page() {
-  return <VendorRegister />;
+  return <VendorLanding />;
+ 
 }

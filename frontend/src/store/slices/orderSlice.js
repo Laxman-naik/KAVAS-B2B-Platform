@@ -7,15 +7,9 @@ import {
   updateOrderStatusAPI,
 } from "@/services/orderService";
 
-/* ================= ERROR HELPER ================= */
 const normalizeError = (err) =>
-  err?.response?.data?.message ||
-  err?.message ||
-  "Something went wrong";
+  err?.response?.data?.message || err?.message || "Something went wrong";
 
-/* ================= THUNKS ================= */
-
-/* CREATE ORDER FROM CART (CHECKOUT) */
 export const createOrderFromCart = createAsyncThunk(
   "order/createFromCart",
   async (data, thunkAPI) => {
@@ -23,17 +17,13 @@ export const createOrderFromCart = createAsyncThunk(
       const res = await createOrderFromCartAPI(data);
       return res.data;
     } catch (err) {
-  console.error("THUNK ERROR:", err);
-  console.error("SERVER ERROR:", err?.response?.data);
-
-  return thunkAPI.rejectWithValue(
-    err?.response?.data?.message || err.message
-  );
-}
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || err.message
+      );
+    }
   }
 );
 
-/* MANUAL ORDER CREATE (optional) */
 export const createOrder = createAsyncThunk(
   "order/create",
   async (payload, thunkAPI) => {
@@ -46,20 +36,18 @@ export const createOrder = createAsyncThunk(
   }
 );
 
-/* GET ALL ORDERS */
 export const fetchOrders = createAsyncThunk(
   "order/fetchAll",
   async (_, thunkAPI) => {
     try {
       const res = await getUserOrdersAPI();
-      return res;
+      return res.orders;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
     }
   }
 );
 
-/* GET SINGLE ORDER */
 export const fetchOrderDetails = createAsyncThunk(
   "order/fetchOne",
   async (orderId, thunkAPI) => {
@@ -72,13 +60,12 @@ export const fetchOrderDetails = createAsyncThunk(
   }
 );
 
-/* UPDATE ORDER STATUS (payment/webhook/admin) */
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
   async ({ orderId, status }, thunkAPI) => {
     try {
       const res = await updateOrderStatusAPI(orderId, status);
-      return { orderId, status, data: res };
+      return res; // IMPORTANT CHANGE
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
     }
@@ -135,7 +122,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload || [];
+        state.orders = action.payload;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
@@ -149,13 +136,20 @@ const orderSlice = createSlice({
 
       /* ================= STATUS UPDATE ================= */
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        const { orderId, status } = action.payload;
+        const updatedOrder = action.payload?.order;
 
-        const order = state.orders.find((o) => o.id === orderId);
-        if (order) order.status = status;
+        if (!updatedOrder) return;
 
-        if (state.currentOrder?.id === orderId) {
-          state.currentOrder.status = status;
+        const index = state.orders.findIndex(
+          (o) => o.id === updatedOrder.id
+        );
+
+        if (index !== -1) {
+          state.orders[index] = updatedOrder;
+        }
+
+        if (state.currentOrder?.id === updatedOrder.id) {
+          state.currentOrder = updatedOrder;
         }
       });
   },

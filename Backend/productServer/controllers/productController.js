@@ -1,32 +1,112 @@
 const pool = require("../config/db");
 
+const slugify = (value) => {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+};
+
+const normalizeImages = (images) => {
+  if (!Array.isArray(images)) return [];
+  return images
+    .map((img) => {
+      if (typeof img === "string") return { image_url: img };
+      if (img && typeof img === "object" && typeof img.image_url === "string") {
+        return { image_url: img.image_url };
+      }
+      return null;
+    })
+    .filter(Boolean);
+};
+
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
     const {
       name,
+      sku,
       slug,
       organizationId,
       price,
       mrp,
       minOrderQty,
+      moq,
       stock,
       unit,
       weight,
       dispatchTimeDays,
       description,
       isActive,
+      status,
+      gst,
       isFeatured,
       isTopProduct,
       parentProductId,
       categories = [],
+      category,
       images = [],
       specifications = [],
       pricingTiers = [],
     } = req.body;
 
+    if (!String(name || "").trim()) {
+      return res.status(400).json({ message: "name is required" });
+    }
+
+    const resolvedOrganizationId =
+      organizationId ?? req.user?.organization_id ?? req.user?.organizationId;
+
+    if (!resolvedOrganizationId) {
+      return res.status(400).json({ message: "organizationId is required" });
+    }
+
+    const resolvedSlug = String(slug || "").trim() || slugify(name);
+    const resolvedMoq = minOrderQty ?? moq;
+    const resolvedIsActive =
+      typeof isActive === "boolean"
+        ? isActive
+        : !String(status || "").trim()
+          ? true
+          : String(status)
+              .trim()
+              .toLowerCase() === "active";
+
+    const normalizedImages = normalizeImages(images);
+    const mergedSpecifications = Array.isArray(specifications)
+      ? [...specifications]
+      : [];
+
+    if (String(sku || "").trim()) {
+      mergedSpecifications.push({ key: "sku", value: String(sku).trim() });
+    }
+    if (gst !== undefined && gst !== null && String(gst).trim() !== "") {
+      mergedSpecifications.push({ key: "gst", value: String(gst).trim() });
+    }
+
     await client.query("BEGIN");
+
+    let resolvedCategoryIds = Array.isArray(categories) ? [...categories] : [];
+
+    if (
+      resolvedCategoryIds.length === 0 &&
+      typeof category === "string" &&
+      category.trim()
+    ) {
+      const categoryName = category.trim();
+      const categorySlug = slugify(categoryName);
+
+      const categoryResult = await client.query(
+        `SELECT id FROM categories WHERE name = $1 OR slug = $2 LIMIT 1`,
+        [categoryName, categorySlug]
+      );
+
+      if (categoryResult.rows.length) {
+        resolvedCategoryIds = [categoryResult.rows[0].id];
+      }
+    }
 
     const productResult = await client.query(
       `INSERT INTO products (
@@ -38,17 +118,17 @@ exports.createProduct = async (req, res) => {
       RETURNING *`,
       [
         name,
-        slug,
-        organizationId,
+        resolvedSlug,
+        resolvedOrganizationId,
         price,
         mrp,
-        minOrderQty,
+        resolvedMoq,
         stock,
         unit,
         weight,
         dispatchTimeDays,
         description,
-        isActive ?? true,
+        resolvedIsActive,
         isFeatured ?? false,
         isTopProduct ?? false,
         parentProductId || null,
@@ -57,7 +137,7 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    for (const categoryId of categories) {
+    for (const categoryId of resolvedCategoryIds) {
       await client.query(
         `INSERT INTO product_categories (product_id, category_id)
          VALUES ($1, $2)`,
@@ -65,7 +145,7 @@ exports.createProduct = async (req, res) => {
       );
     }
 
-    for (const img of images) {
+    for (const img of normalizedImages) {
       await client.query(
         `INSERT INTO product_images (product_id, image_url)
          VALUES ($1, $2)`,
@@ -73,7 +153,7 @@ exports.createProduct = async (req, res) => {
       );
     }
 
-    for (const spec of specifications) {
+    for (const spec of mergedSpecifications) {
       await client.query(
         `INSERT INTO product_specifications (product_id, key, value)
          VALUES ($1, $2, $3)`,
@@ -203,21 +283,15 @@ exports.deleteProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const parsedPage = Number(page);
-    const parsedLimit = Number(limit);
-    const offset = (parsedPage - 1) * parsedLimit;
-
     const result = await pool.query(
       `SELECT * FROM products
        WHERE is_active = true
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [parsedLimit, offset]
+       ORDER BY created_at DESC`
     );
 
-    res.json(result.rows);
+    res.json({
+      products: result.rows,
+    });
   } catch (err) {
     console.error("getProducts error:", err);
     res.status(500).json({ message: err.message });

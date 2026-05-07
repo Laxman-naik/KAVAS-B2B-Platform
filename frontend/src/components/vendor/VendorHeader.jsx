@@ -1,52 +1,59 @@
 "use client";
 
-import React from "react";
-import { Bell, Search } from "lucide-react";
+import React, { useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { Bell, ChevronDown, HelpCircle, Search } from "lucide-react";
+import { vendorNavItems } from "./vendorNavConfig";
 
-const Header = () => {
+const VendorHeader = () => {
+  const pathname = usePathname();
+
+  const pageTitle = useMemo(() => {
+    if (!pathname) return "";
+    const match = vendorNavItems.find((x) => pathname === x.href || pathname.startsWith(`${x.href}/`));
+    return match?.label || "Dashboard";
+  }, [pathname]);
+
   return (
-    <header className="fixed top-0 left-0 md:left-64 right-0 z-40 bg-white border-b border-[#E5E5E5] h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-      
-      {/* LEFT SECTION */}
-      <div>
-        <h1 className="text-lg sm:text-xl font-bold text-[#1A1A1A]">
-          Dashboard
-        </h1>
-        <p className="text-xs text-gray-500 hidden sm:block">
-          Welcome back, Rajesh! Here's your business overview.
-        </p>
-      </div>
+    <header className="fixed top-0 right-0 z-30 h-16 w-[calc(100%-16rem)] bg-white border-b border-[#E5E5E5]">
+      <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        <div className="text-base sm:text-lg font-extrabold text-[#0B1F3A]">{pageTitle}</div>
 
-      {/* RIGHT SECTION */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center bg-[#FFF8EC] border border-[#E5E5E5] rounded-full px-3 py-2 w-64 lg:w-80 transition focus-within:ring-2 focus-within:ring-[#D4AF37]">
-          <Search size={16} className="text-gray-500" />
-          <input
-            type="text"
-            placeholder="Search Products, Orders..."
-            className="bg-transparent outline-none px-2 text-sm w-full"
-          />
-        </div>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 rounded-md border border-[#E5E5E5] px-3 h-10 w-[280px] bg-white">
+            <Search size={16} className="text-gray-400" />
+            <input
+              placeholder="Search..."
+              className="w-full text-sm outline-none text-[#1A1A1A]"
+            />
+          </div>
 
-        {/* Mobile Search Icon */}
-        <button className="md:hidden p-2 rounded-full hover:bg-[#FFF8EC] transition">
-          <Search size={18} />
-        </button>
+          <button
+            type="button"
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC]"
+            aria-label="Notifications"
+          >
+            <Bell size={16} className="text-gray-700" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
+          </button>
 
-        {/* Notification */}
-        <button className="relative p-2 rounded-full hover:bg-[#FFF8EC] transition">
-          <Bell size={18} className="text-[#1A1A1A]" />
-          
-          {/* Notification Dot */}
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[#D4AF37] rounded-full"></span>
-        </button>
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC]"
+            aria-label="Help"
+          >
+            <HelpCircle size={16} className="text-gray-700" />
+          </button>
 
-        {/* Profile */}
-        <div className="flex items-center gap-2 cursor-pointer group">
-          <div className="w-9 h-9 flex items-center justify-center bg-[#D4AF37] text-white rounded-full text-sm font-semibold group-hover:scale-105 transition">
-            RS
+          <div className="flex items-center gap-3 pl-1">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F3A] text-white text-xs font-bold">
+              RS
+            </div>
+            <div className="hidden sm:block leading-tight">
+              <div className="text-sm font-bold text-[#0B1F3A]">Rahul Sharma</div>
+              <div className="text-[11px] text-gray-500">Seller Account</div>
+            </div>
+            <ChevronDown size={16} className="text-gray-500" />
           </div>
         </div>
       </div>
@@ -54,4 +61,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default VendorHeader;

@@ -34,16 +34,33 @@ export const fetchSingleProduct = createAsyncThunk(
 );
 
 // Create product
+// export const addProduct = createAsyncThunk(
+//   "products/create",
+//   async (data, thunkAPI) => {
+//     try {
+//       const res = await createProduct(data);
+//       return res.data;
+//     } catch (err) {
+//       return thunkAPI.rejectWithValue(
+//         err.response?.data || err.message
+//       );
+//     }
+//   }
+// );
 export const addProduct = createAsyncThunk(
-  "products/create",
-  async (data, thunkAPI) => {
+  "products/add",
+  async (formData, { rejectWithValue }) => {
     try {
-      const res = await createProduct(data);
-      return res.data;
+      const res = await fetch("/api/products", {
+        method: "POST",
+        body: formData, // ✅ important
+      });
+
+      if (!res.ok) throw new Error("Failed");
+
+      return await res.json();
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return rejectWithValue(err.message);
     }
   }
 );

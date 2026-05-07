@@ -1,311 +1,602 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Eye, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Search,
+  Eye,
+  Download,
+  Printer,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  RefreshCcw,
+  Truck,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
+
+import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
-  const ordersData = [
-    {
-      id: "ORD-2024-8821",
-      buyer: "Sharma Industries Pvt Ltd",
-      email: "procurement@sharmaind.com",
-      product: "Industrial Grade Bearings x 500",
-      amount: 124000,
-      status: "Pending",
-      payment: "Pending",
-      date: "2026-04-21",
-    },
-    {
-      id: "ORD-2024-8820",
-      buyer: "Mehta Traders",
-      email: "orders@mehtatraders.in",
-      product: "Stainless Steel Fasteners x 2000",
-      amount: 56500,
-      status: "Shipped",
-      payment: "Paid",
-      date: "2026-04-20",
-    },
-    {
-      id: "ORD-2024-8819",
-      buyer: "Gupta Manufacturing Co.",
-      email: "purchase@guptamfg.com",
-      product: "HDPE Pipes 50mm x 1000m",
-      amount: 210000,
-      status: "Delivered",
-      payment: "Paid",
-      date: "2026-04-19",
-    },
-    {
-      id: "ORD-2024-8818",
-      buyer: "Patel Enterprises",
-      email: "buy@patelent.com",
-      product: "Copper Wire 2.5mm x 500kg",
-      amount: 88750,
-      status: "Cancelled",
-      payment: "Refunded",
-      date: "2026-04-18",
-    },
-    {
-      id: "ORD-2024-8817",
-      buyer: "Rajesh Steel Works",
-      email: "admin@rajeshsteel.in",
-      product: "Hydraulic Seals Kit x 100",
-      amount: 345200,
-      status: "Delivered",
-      payment: "Paid",
-      date: "2026-04-17",
-    },
-  ];
+  const dispatch = useDispatch();
 
-  const [orders, setOrders] = useState(ordersData);
+  const { orders = [], loading, error } = useSelector((state) => state.order);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("All Payments");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
-  /* ================= STATS ================= */
+  useEffect(() => {
+    dispatch(fetchOrders());
 
-  const stats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === "Pending").length,
-    shipped: orders.filter(o => o.status === "Shipped").length,
-    delivered: orders.filter(o => o.status === "Delivered").length,
-    cancelled: orders.filter(o => o.status === "Cancelled").length,
+    const interval = setInterval(() => {
+      dispatch(fetchOrders());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
+  const stats = useMemo(() => {
+    const total = orders.length;
+    const pending = orders.filter((o) => o.status === "pending").length;
+    const processing = orders.filter((o) => o.status === "processing").length;
+    const shipped = orders.filter((o) => o.status === "shipped").length;
+    const delivered = orders.filter((o) => o.status === "delivered").length;
+    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+
+    const deliveredRevenue = orders
+      .filter((o) => o.status === "delivered")
+      .reduce((acc, o) => acc + Number(o.total_amount || 0), 0);
+
+    const needAttention = pending + processing;
+
+    return {
+      total,
+      pending,
+      processing,
+      shipped,
+      delivered,
+      cancelled,
+      deliveredRevenue,
+      needAttention,
+    };
+  }, [orders]);
+
+  const filteredOrders = useMemo(() => {
+    const q = String(search || "").trim().toLowerCase();
+
+    return orders.filter((o) => {
+      const matchSearch =
+        !q ||
+        String(o.id).toLowerCase().includes(q) ||
+        String(o.buyer_name || "").toLowerCase().includes(q);
+
+      const matchStatus =
+        statusFilter === "All" || o.status === statusFilter;
+
+      const paymentValue = o.payment_status || o.payment || "pending";
+
+      const matchPayment =
+        paymentFilter === "All Payments" ||
+        paymentValue.toLowerCase() === paymentFilter.toLowerCase();
+
+      return matchSearch && matchStatus && matchPayment;
+    });
+  }, [orders, search, statusFilter, paymentFilter]);
+
+  const totalFiltered = filteredOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+
+  const pagedOrders = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, safePage]);
+
+  const rangeText = useMemo(() => {
+    if (totalFiltered === 0) return "Showing 0 of 0";
+    const start = (safePage - 1) * pageSize + 1;
+    const end = Math.min(totalFiltered, safePage * pageSize);
+    return `Showing ${start}-${end} of ${totalFiltered}`;
+  }, [safePage, totalFiltered]);
+
+  const statusLabel = (status) => {
+    if (!status) return "Pending";
+    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
   };
-
-  /* ================= FILTER ================= */
-
-  const filteredOrders = orders.filter((o) => {
-    const matchSearch =
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.buyer.toLowerCase().includes(search.toLowerCase());
-
-    const matchStatus =
-      statusFilter === "All" || o.status === statusFilter;
-
-    const matchDate =
-      (!fromDate || new Date(o.date) >= new Date(fromDate)) &&
-      (!toDate || new Date(o.date) <= new Date(toDate));
-
-    return matchSearch && matchStatus && matchDate;
-  });
-
-  /* ================= ACTIONS ================= */
-
-  const handleApprove = (id) => {
-    setOrders(prev =>
-      prev.map(o =>
-        o.id === id ? { ...o, status: "Shipped" } : o
-      )
-    );
-  };
-
-  const handleCancel = (id) => {
-    setOrders(prev =>
-      prev.map(o =>
-        o.id === id ? { ...o, status: "Cancelled" } : o
-      )
-    );
-  };
-
-  /* ================= STYLES ================= */
 
   const statusStyle = (status) => {
     switch (status) {
-      case "Pending":
-        return "bg-yellow-100 text-yellow-600";
-      case "Shipped":
-        return "bg-purple-100 text-purple-600";
-      case "Delivered":
-        return "bg-green-100 text-green-600";
-      case "Cancelled":
-        return "bg-red-100 text-red-600";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "processing":
+        return "bg-blue-100 text-blue-700";
+      case "shipped":
+        return "bg-purple-100 text-purple-700";
+      case "delivered":
+        return "bg-green-100 text-green-700";
+      case "cancelled":
+        return "bg-red-100 text-red-700";
       default:
         return "bg-gray-100";
     }
   };
 
   const paymentStyle = (payment) => {
-    return payment === "Paid"
-      ? "bg-green-100 text-green-600"
-      : payment === "Refunded"
+    const value = String(payment || "pending").toLowerCase();
+
+    return value === "paid"
+      ? "bg-green-100 text-green-700"
+      : value === "refunded"
       ? "bg-gray-200 text-gray-600"
-      : "bg-yellow-100 text-yellow-600";
+      : "bg-yellow-100 text-yellow-700";
   };
 
+  const tabs = useMemo(
+    () => [
+      { key: "All", label: "All Orders", icon: null, count: stats.total },
+      { key: "pending", label: "Pending", icon: Clock, count: stats.pending },
+      {
+        key: "processing",
+        label: "Processing",
+        icon: RefreshCcw,
+        count: stats.processing,
+      },
+      { key: "shipped", label: "Shipped", icon: Truck, count: stats.shipped },
+      {
+        key: "delivered",
+        label: "Delivered",
+        icon: CheckCircle2,
+        count: stats.delivered,
+      },
+      {
+        key: "cancelled",
+        label: "Cancelled",
+        icon: XCircle,
+        count: stats.cancelled,
+      },
+    ],
+    [stats]
+  );
+
   return (
-    <div className="p-4 md:p-5 bg-[#FFF8EC] min-h-screen">
-
-      {/* ================= STATS CARDS ================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 text-center lg:grid-cols-5 h-20   gap-4 mb-4">
-
-        <StatCard title="Total Orders" value={stats.total} color="bg-blue-500" />
-        <StatCard title="Pending" value={stats.pending} color="bg-yellow-500" />
-        <StatCard title="Shipped" value={stats.shipped} color="bg-purple-500" />
-        <StatCard title="Delivered" value={stats.delivered} color="bg-green-500" />
-        <StatCard title="Cancelled" value={stats.cancelled} color="bg-red-500" />
-
-      </div>
-
-      {/* ================= SEARCH ================= */}
-      <div className="flex flex-col lg:flex-row gap-2 mb-4">
-
-        <div className="flex flex-wrap gap-2 w-full">
-
-          <div className="flex items-center bg-white border border-[#E5E5E5] rounded-md px-2 w-full sm:w-64">
-            <Search size={14} className="text-gray-400" />
-            <input
-              placeholder="Search order ID, buyer..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-8 py-1.5 text-sm outline-none"
-            />
+    <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
+            Orders
           </div>
+          <div className="mt-1 text-sm text-gray-500">
+            {stats.total} total orders · {stats.needAttention} need attention
+          </div>
+        </div>
 
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="border border-[#E5E5E5] rounded-md px-10  py-1.5 text-sm"
-          />
-
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="border border-[#E5E5E5] rounded-md px-10 py-1.5 text-sm"
-          />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="h-10 rounded-lg border border-[#E5E5E5] bg-white px-4 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC] inline-flex items-center gap-2"
+          >
+            <Download size={16} />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            className="h-10 rounded-lg border border-[#E5E5E5] bg-white px-4 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC] inline-flex items-center gap-2"
+          >
+            <Printer size={16} />
+            Print All
+          </button>
         </div>
       </div>
 
-      {/* ================= TABS ================= */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {["All", "Pending", "Shipped", "Delivered", "Cancelled"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setStatusFilter(tab)}
-            className={`px-22 py-1.5 text-sm rounded-md cursor-pointer transition ${
-              statusFilter === tab
-                ? "bg-[#D4AF37] text-white"
-                : "bg-yellow-100 border border-[#E5E5E5]"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      {loading && (
+        <div className="mt-4 text-sm font-semibold text-[#0B1F3A]">
+          Loading orders...
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-semibold">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl bg-[#0B1F3A] text-white p-5">
+          <div className="text-xs text-white/70">Total Revenue</div>
+          <div className="mt-2 text-2xl font-extrabold">
+            ₹{Math.round(stats.deliveredRevenue / 100000) / 10}L
+          </div>
+          <div className="mt-1 text-xs text-[#D4AF37] font-bold">
+            from {stats.delivered} delivered orders
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-5">
+          <div className="flex items-center justify-between">
+            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+              <Clock size={18} className="text-yellow-700" />
+            </div>
+            <div className="text-lg font-extrabold text-yellow-700">
+              {stats.pending}
+            </div>
+          </div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Pending
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EAF3FF] p-5">
+          <div className="flex items-center justify-between">
+            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+              <RefreshCcw size={18} className="text-blue-700" />
+            </div>
+            <div className="text-lg font-extrabold text-blue-700">
+              {stats.processing}
+            </div>
+          </div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Processing
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
+          <div className="flex items-center justify-between">
+            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+              <Truck size={18} className="text-purple-700" />
+            </div>
+            <div className="text-lg font-extrabold text-purple-700">
+              {stats.shipped}
+            </div>
+          </div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Shipped
+          </div>
+        </div>
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="hidden md:block bg-white border border-[#E5E5E5] rounded-lg overflow-hidden">
+      <div className="mt-5 flex flex-col lg:flex-row gap-3">
+        <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-105">
+          <Search size={16} className="text-gray-400" />
+          <input
+            placeholder="Search order ID, buyer..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="w-full px-2 text-sm outline-none bg-transparent"
+          />
+        </div>
+
+        <select
+          value={paymentFilter}
+          onChange={(e) => {
+            setPaymentFilter(e.target.value);
+            setPage(1);
+          }}
+          className="h-11 w-full lg:w-47.5 rounded-xl border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
+        >
+          {["All Payments", "paid", "pending", "refunded"].map((x) => (
+            <option key={x} value={x}>
+              {x === "All Payments" ? x : statusLabel(x)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-[#E5E5E5] bg-white p-2 overflow-x-auto">
+        <div className="flex items-center gap-2 min-w-max">
+          {tabs.map((t) => {
+            const active = statusFilter === t.key;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => {
+                  setStatusFilter(t.key);
+                  setPage(1);
+                }}
+                className={`h-10 rounded-xl px-4 text-sm font-extrabold inline-flex items-center gap-2 border transition ${
+                  active
+                    ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                    : "bg-white text-[#0B1F3A] border-transparent hover:bg-[#FFF8EC]"
+                }`}
+              >
+                {Icon ? <Icon size={16} /> : <span className="inline-block w-4" />}
+                {t.label}
+                <span
+                  className={`ml-1 rounded-full px-2 py-0.5 text-xs font-extrabold ${
+                    active ? "bg-white/15" : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 hidden md:block bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-[#FFF8EC]">
             <tr>
-              <th className="p-3 text-left">Order ID</th>
-              <th className="p-3 text-left">Buyer</th>
-              <th className="p-3">Products</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Payment</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Actions</th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ORDER ID
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                BUYER
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ITEMS
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                AMOUNT
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                PAYMENT
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                STATUS
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                DATE
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ACTIONS
+              </th>
             </tr>
           </thead>
 
           <tbody>
-            {filteredOrders.map((o) => (
-              <tr key={o.id} className="border-t hover:bg-gray-50 transition">
-                <td className="p-3">{o.id}</td>
+            {pagedOrders.map((o) => {
+              const paymentValue = o.payment_status || o.payment || "pending";
 
-                <td className="p-3">
-                  <p>{o.buyer}</p>
-                  <p className="text-xs text-gray-400">{o.email}</p>
-                </td>
+              const actionLabel =
+                o.status === "pending"
+                  ? "Mark Processing"
+                  : o.status === "processing"
+                  ? "Mark Shipped"
+                  : o.status === "shipped"
+                  ? "Mark Delivered"
+                  : null;
 
-                <td className="p-3">{o.product}</td>
+              const actionNext =
+                o.status === "pending"
+                  ? "processing"
+                  : o.status === "processing"
+                  ? "shipped"
+                  : o.status === "shipped"
+                  ? "delivered"
+                  : null;
 
-                <td className="p-3 font-medium">
-                  ₹{o.amount.toLocaleString()}
-                </td>
+              return (
+                <tr
+                  key={o.id}
+                  className="border-t border-[#E5E5E5] hover:bg-[#FFF8EC] transition"
+                >
+                  <td className="p-4">
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      {o.id}
+                    </div>
+                  </td>
 
-                <td className="p-3">
-                  <span className={`px-2 py-1 text-xs rounded-full ${statusStyle(o.status)}`}>
-                    {o.status}
-                  </span>
-                </td>
+                  <td className="p-4">
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      {o.buyer_name || "Unknown Buyer"}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      Buyer ID: {o.user_id || "-"}
+                    </div>
+                  </td>
 
-                <td className="p-3">
-                  <span className={`px-2 py-1 text-xs rounded-full ${paymentStyle(o.payment)}`}>
-                    {o.payment}
-                  </span>
-                </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex -space-x-2">
+                        <div className="h-8 w-8 rounded-lg bg-gray-100 border border-white flex items-center justify-center text-sm">
+                          📦
+                        </div>
+                      </div>
 
-                <td className="p-3">
-                  {new Date(o.date).toLocaleDateString()}
-                </td>
+                      <div>
+                        <div className="text-sm font-extrabold text-[#0B1F3A]">
+                          Order Items
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          View details
+                        </div>
+                      </div>
+                    </div>
+                  </td>
 
-                <td className="p-3 flex gap-2 justify-center">
-                  <button className="p-1 bg-gray-100 rounded hover:bg-gray-200">
-                    <Eye size={14} />
-                  </button>
+                  <td className="p-4">
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {o.payment_method || "-"}
+                    </div>
+                  </td>
 
-                  {o.status === "Pending" && (
-                    <>
+                  <td className="p-4">
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${paymentStyle(
+                        paymentValue
+                      )}`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          String(paymentValue).toLowerCase() === "paid"
+                            ? "bg-green-600"
+                            : String(paymentValue).toLowerCase() === "refunded"
+                            ? "bg-gray-500"
+                            : "bg-yellow-600"
+                        }`}
+                      />
+                      {statusLabel(paymentValue)}
+                    </span>
+                  </td>
+
+                  <td className="p-4">
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${statusStyle(
+                        o.status
+                      )}`}
+                    >
+                      {statusLabel(o.status)}
+                    </span>
+                  </td>
+
+                  <td className="p-4">
+                    <div className="text-sm font-extrabold text-[#0B1F3A]">
+                      {o.created_at
+                        ? new Date(o.created_at).toLocaleDateString()
+                        : "-"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {o.created_at
+                        ? new Date(o.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                    </div>
+                  </td>
+
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleApprove(o.id)}
-                        className="p-1 bg-green-100 text-green-600 rounded hover:bg-green-200"
+                        type="button"
+                        className="h-10 w-10 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
+                        aria-label="View"
                       >
-                        <Check size={14} />
+                        <Eye size={16} className="text-gray-600" />
                       </button>
 
-                      <button
-                        onClick={() => handleCancel(o.id)}
-                        className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                      >
-                        <X size={14} />
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
+                      {actionLabel && actionNext ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            dispatch(
+                              updateOrderStatus({
+                                orderId: o.id,
+                                status: actionNext,
+                              })
+                            )
+                          }
+                          className="h-10 rounded-xl bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95"
+                        >
+                          {actionLabel}
+                        </button>
+                      ) : (
+                        <div className="h-10" />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* ================= MOBILE ================= */}
       <div className="md:hidden space-y-3">
-        {filteredOrders.map((o) => (
-          <div key={o.id} className="bg-white border rounded-lg p-3">
-            <div className="flex justify-between">
-              <p className="font-medium">{o.id}</p>
-              <span className={`text-xs px-2 py-1 rounded ${statusStyle(o.status)}`}>
-                {o.status}
-              </span>
-            </div>
+        {pagedOrders.map((o) => {
+          const paymentValue = o.payment_status || o.payment || "pending";
 
-            <p className="text-sm mt-1">{o.buyer}</p>
-            <p className="text-xs text-gray-400">{o.product}</p>
+          return (
+            <div key={o.id} className="bg-white border rounded-lg p-3">
+              <div className="flex justify-between">
+                <p className="font-medium">{o.id}</p>
+                <span className={`text-xs px-2 py-1 rounded ${statusStyle(o.status)}`}>
+                  {statusLabel(o.status)}
+                </span>
+              </div>
 
-            <div className="flex justify-between mt-2 text-sm">
-              <span>₹{o.amount.toLocaleString()}</span>
-              <span className={`px-2 py-1 rounded text-xs ${paymentStyle(o.payment)}`}>
-                {o.payment}
-              </span>
-            </div>
+              <p className="text-sm mt-1">{o.buyer_name || "Unknown Buyer"}</p>
+              <p className="text-xs text-gray-400">Order Items</p>
 
-            <div className="flex gap-2 mt-3">
-              <button className="flex-1 bg-gray-100 py-1 rounded text-sm">
-                View
-              </button>
+              <div className="flex justify-between mt-2 text-sm">
+                <span>
+                  ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                </span>
+                <span className={`px-2 py-1 rounded text-xs ${paymentStyle(paymentValue)}`}>
+                  {statusLabel(paymentValue)}
+                </span>
+              </div>
+
+              <div className="flex gap-2 mt-3">
+                <button className="flex-1 bg-gray-100 py-1 rounded text-sm">
+                  View
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-gray-500">
+        <div>{rangeText}</div>
+
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage <= 1}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage <= 1
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages })
+            .slice(0, 5)
+            .map((_, idx) => {
+              const p = idx + 1;
+              const active = p === safePage;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${
+                    active
+                      ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                      : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage >= totalPages}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage >= totalPages
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
+            aria-label="Next page"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
-/* ================= COMPONENT ================= */
 
 function StatCard({ title, value, color }) {
   return (

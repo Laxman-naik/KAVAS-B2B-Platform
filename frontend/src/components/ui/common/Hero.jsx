@@ -1,161 +1,141 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  ChevronRight,
-  ChevronLeft,
-} from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { BadgeCheck, ChevronLeft, ChevronRight, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const Hero = () => {
-
-  const slides = [
-    {
-      title: "Source Smarter.",
-      highlight: "Buy Wholesale.",
-      desc: "500+ verified vendors across 50+ categories. Best bulk prices — all in one place.",
-    },
-    {
-      title: "Grow Faster.",
-      highlight: "Sell Smarter.",
-      desc: "Reach thousands of buyers across India with ease.",
-    },
-    {
-      title: "Best Prices.",
-      highlight: "Guaranteed.",
-      desc: "Compare suppliers and get unbeatable deals instantly.",
-    },
-    {
-      title: "Trusted Vendors.",
-      highlight: "Only Verified.",
-      desc: "Every supplier is verified for quality and reliability.",
-    },
-    {
-      title: "Fast Delivery.",
-      highlight: "Pan India.",
-      desc: "Quick and reliable shipping across the country.",
-    },
-  ];
-
-  const slideImages = [
-    "/electronics.jpg",
-    "/agriculture.jpg",
-    "/healthcare.jpg",
-    "/furniture.jpg",
-    "/shop.jpg",
-  ];
+  const slides = useMemo(
+    () => [
+      {
+        id: "slide-1",
+        image: "/herobanner.png",
+        top: "Your Trusted Partner for",
+        titleHighlight: "Quality Products",
+        titleRest: "at Wholesale Prices",
+        subtitle: "Bulk. Quality. Trust. Delivered.",
+      },
+      {
+        id: "slide-2",
+        image: "/herobanner.png",
+        top: "Buy Direct from",
+        titleHighlight: "Verified Sellers",
+        titleRest: "Across India",
+        subtitle: "Discover categories, compare suppliers, order with confidence.",
+      },
+      {
+        id: "slide-3",
+        image: "/herobanner.png",
+        top: "Grow Your Business with",
+        titleHighlight: "Best Wholesale",
+        titleRest: "Deals Everyday",
+        subtitle: "Fast delivery, secure payments, and unbeatable pricing.",
+      },
+    ],
+    []
+  );
 
   const [current, setCurrent] = useState(0);
-useEffect(() => {
-  const interval = setInterval(() => {
-    setCurrent((prev) =>
-      prev === slides.length - 1 ? 0 : prev + 1
-    );
-  }, 5000);
 
-  return () => clearInterval(interval); // cleanup
-}, [slides.length]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % slides.length);
+    }, 10000);
 
-  const nextSlide = () => {
-    setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-  };
+    return () => clearInterval(interval);
+  }, [slides.length]);
 
-  const prevSlide = () => {
-    setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-  };
+  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
+  const prevSlide = () =>
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="bg-white  overflow-x-hidden">
-      <div className="max-w-350 mx-auto px-3 sm:px-4 md:px-6 pt-4 pb-2 sm:py-6 space-y-4 sm:space-y-6">
-        <div className="relative z-10 w-full overflow-hidden h-70 sm:h-100 md:h-125 lg:h-137.5 rounded-xl">
-          
+    <div className="bg-white overflow-x-hidden">
+      <div className="w-full">
+        <div className="relative overflow-hidden bg-[#0B1F3A]">
           <div
-            className="flex transition-transform duration-500 h-full"
+            className="flex w-full transition-transform duration-700"
             style={{ transform: `translateX(-${current * 100}%)` }}
           >
-            {slides.map((slide, index) => (
-              <div key={index} className="min-w-full h-full">
-                <div className="relative h-full flex overflow-hidden">
+            {slides.map((slide) => (
+              <div key={slide.id} className="relative w-full shrink-0">
+                <img
+                  src={slide.image}
+                  alt="KAVAS Wholesale Hub"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0B1F3A]/95 via-[#0B1F3A]/80 to-[#0B1F3A]/25" />
 
-                  <img
-                    src={slideImages[index]}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    alt="slide"
-                  />
-
-                  <div className="absolute inset-0 bg-black/50"></div>
-
-                  <div className="relative z-10 flex flex-col justify-center px-4 sm:px-6 md:px-16 text-white max-w-3xl">
-                    <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold leading-tight">
-                      {slide.title} <br />
-                      <span className="text-blue-300">{slide.highlight}</span>
+                <div className="relative z-10 max-w-350 mx-auto px-5 sm:px-8 lg:px-10 py-10 sm:py-14">
+                  <div className="max-w-2xl">
+                    <div className="text-white/90 text-2xl font-bold">
+                      {slide.top}
+                    </div>
+                    <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.12] text-white">
+                      <span className="text-[#D4AF37]">
+                        {slide.titleHighlight}
+                        <br />
+                        {slide.titleRest}
+                      </span>
                     </h1>
-
-                    <p className="mt-2 sm:mt-3 text-gray-200 text-sm sm:text-base">
-                      {slide.desc}
+                    <p className="mt-4 text-white/85 text-sm sm:text-base max-w-xl">
+                      {slide.subtitle}
                     </p>
 
-                    <Button className="mt-4 sm:mt-5 bg-white text-orange-500 w-fit text-sm sm:text-base">
-                      🚀 Start sourcing free
-                    </Button>
-                  </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                      <Link href="/allproducts">
+                        <Button className="bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#caa734] p-5 font-semibold rounded-sm">
+                          Shop Now
+                        </Button>
+                      </Link>
+                     <Link href="/vendor" target="_blank" rel="noopener noreferrer">
+  <Button
+    variant="outline"
+    className="border-[#D4AF37]/55 bg-[#0B1F3A]/50 p-5 text-white hover:bg-[#0B1F3A]/70 hover:border-[#D4AF37]/70 font-semibold rounded-sm hover:text-[#D4AF37]"
+  >
+    Become a Seller
+  </Button>
+</Link>
+                    </div>
 
+                    <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs sm:text-sm text-white/85">
+                      <div className="inline-flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 text-[#D4AF37]" />
+                        100% Secure Payments
+                      </div>
+                      <span className="hidden sm:inline-block h-4 w-px bg-white/20" />
+                      <div className="inline-flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-[#D4AF37]" />
+                        Pan India Delivery
+                      </div>
+                      <span className="hidden sm:inline-block h-4 w-px bg-white/20" />
+                      <div className="inline-flex items-center gap-2">
+                        <BadgeCheck className="h-4 w-4 text-[#D4AF37]" />
+                        Best Prices Guaranteed
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+
           <button
+            type="button"
             onClick={prevSlide}
-            className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full"
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-sm border border-white/15 bg-black/25 p-2 text-white hover:bg-black/35"
+            aria-label="Previous slide"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
+            type="button"
             onClick={nextSlide}
-            className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-sm border border-white/15 bg-black/25 p-2 text-white hover:bg-black/35"
+            aria-label="Next slide"
           >
-            <ChevronRight size={20} />
+            <ChevronRight className="h-5 w-5" />
           </button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="rounded-xl relative overflow-hidden hover:scale-[1.01] h-45 sm:h-55 md:h-45">
-            <video
-              className="absolute inset-0 w-full h-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            >
-              <source src="/videos/sale.mp4" />
-            </video>
-
-            <div className="relative z-10 p-4 sm:p-6 text-white">
-              <Link href="/vendor">
-                <Button className="mt-16 sm:mt-20 bg-white text-red-500 text-sm sm:text-base cursor-pointer">
-                  Flashdeals
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <div className="rounded-xl relative overflow-hidden hover:scale-[1.01] h-45 sm:h-55 md:h-45">
-            <video
-              className="absolute inset-0 w-full h-full object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            >
-              <source src="/videos/apple.mp4" />
-            </video>
-
-            <div className="relative z-10 p-4 sm:p-6 text-white">
-              <Link href="/vendor">
-                <Button className="mt-16 sm:mt-20 bg-white text-red-500 text-sm sm:text-base cursor-pointer">
-                  Apple 17 pro
-                </Button>
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </div>

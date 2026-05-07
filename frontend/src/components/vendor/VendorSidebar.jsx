@@ -1,226 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // ✅ ADDED
-import {
-  LayoutDashboard,
-  Building2,
-  Box,
-  ShoppingCart,
-  Package,
-  CreditCard,
-  Users,
-  BarChart3,
-  Star,
-  Settings,
-  Headphones,
-  ChevronDown,
-  Menu,
-  X,
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
+import { vendorNavItems } from "./vendorNavConfig";
 
-const Sidebar = () => {
-  const [open, setOpen] = useState(false);
-  const [productOpen, setProductOpen] = useState(true);
+const VendorSidebar = () => {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
-  const pathname = usePathname(); // ✅ ADDED
+  const navItems = useMemo(() => vendorNavItems, []);
 
-  const menu = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/vendor/dashboard" },
-    { name: "Company Profile", icon: Building2, href: "/vendor/company" },
-  ];
-
-  const others = [
-    { name: "Orders", icon: ShoppingCart, href: "/vendor/orders" },
-    { name: "Inventory", icon: Package, href: "/vendor/inventory" },
-    { name: "Payments", icon: CreditCard, href: "/vendor/payments" },
-    { name: "Buyers", icon: Users, href: "/vendor/buyers" },
-    { name: "Analytics", icon: BarChart3, href: "/vendor/analytics" },
-    { name: "Reviews", icon: Star, href: "/vendor/reviews" },
-  ];
-
-  const bottom = [
-    { name: "Support", icon: Headphones, href: "/vendor/support" },
-    { name: "Settings", icon: Settings, href: "/vendor/settings" },
-  ];
+  const isActive = (href) => {
+    if (!pathname) return false;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
-    <>
-      {/* Mobile Toggle */}
-      <div className="md:hidden p-4">
-        <button onClick={() => setOpen(true)}>
-          <Menu />
-        </button>
-      </div>
-
-      {/* Overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 z-50 h-screen w-64 bg-[#0B1F3A] text-gray-300
-        transform ${open ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0 transition-all duration-300 flex flex-col justify-between`}
-      >
-        {/* TOP */}
-        <div>
-          {/* Logo */}
-          <div className="px-5 py-4 border-b border-[#E5E5E5]/20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.png"
-                alt="logo"
-                className="w-10 h-10 rounded-lg bg-white p-1"
-              />
-              <div>
-                <h1 className="text-white font-semibold text-lg">
-                  VendorHub
-                </h1>
-                <span className="text-[10px] bg-[#D4AF37] text-white px-2 py-[2px] rounded-full">
-                  Verified Supplier
-                </span>
-              </div>
+    <aside
+      className={`fixed left-0 top-0 z-40 h-screen ${collapsed ? "w-20" : "w-64"} bg-[#0B1F3A] text-white transition-[width] duration-200`}
+    >
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between px-4 py-5">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4AF37] text-[#0B1F3A] text-lg font-extrabold">
+              K
             </div>
-
-            <button className="md:hidden" onClick={() => setOpen(false)}>
-              <X />
-            </button>
+            {!collapsed && (
+              <div className="leading-tight">
+                <div className="text-lg font-extrabold">KAVAS</div>
+                <div className="text-xs text-white/70">Seller Hub</div>
+              </div>
+            )}
           </div>
 
-          {/* Menu */}
-          <div className="px-3 py-4 space-y-1">
+          <button
+            type="button"
+            onClick={() => setCollapsed((s) => !s)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/15"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <ChevronLeft className={`${collapsed ? "rotate-180" : ""} transition-transform`} size={18} />
+          </button>
+        </div>
 
-            {/* Main */}
-            {menu.map((item, i) => (
-              <Link
-                key={i}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer
-                ${
-                  pathname === item.href
-                    ? "bg-[#D4AF37] text-white"
-                    : "hover:bg-[#D4AF37] hover:text-white"
-                }
-                transition-all duration-300`}
-              >
-                <item.icon size={18} />
-                <span className="text-sm">{item.name}</span>
-              </Link>
-            ))}
+        <div className="px-3 py-3">
+          <div className="h-px w-full bg-white/10" />
+        </div>
 
-            {/* Products */}
-            <div>
-              <div
-                onClick={() => setProductOpen(!productOpen)}
-                className={`flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer
-                ${
-                  pathname.startsWith("/vendor/products")
-                    ? "bg-[#D4AF37] text-white"
-                    : "hover:bg-[#D4AF37] hover:text-white"
-                }
-                transition-all duration-300`}
-              >
-                <div className="flex items-center gap-3">
-                  <Box size={18} />
-                  <span className="text-sm">Products</span>
-                </div>
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform ${
-                    productOpen ? "rotate-180" : ""
+        <nav className="flex-1 overflow-y-auto px-2 pb-4">
+          <div className="grid gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors ${
+                    active ? "bg-white/10 text-[#D4AF37]" : "text-white/85 hover:bg-white/10"
                   }`}
-                />
-              </div>
+                  title={collapsed ? item.label : undefined}
+                >
+                  <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${active ? "bg-[#D4AF37]/15" : "bg-white/5 group-hover:bg-white/10"}`}>
+                    <Icon size={18} className={active ? "text-[#D4AF37]" : "text-white/75"} />
+                  </span>
 
-              {productOpen && (
-                <div className="ml-8 mt-1 space-y-1">
-                  <Link
-                    href="/vendor/products"
-                    className={`block text-xs px-3 py-2 rounded-md cursor-pointer
-                    ${
-                      pathname === "/vendor/products"
-                        ? "bg-[#D4AF37] text-white"
-                        : "hover:text-white hover:bg-[#1A1A1A]/40"
-                    }`}
-                  >
-                    All Products
-                  </Link>
+                  {!collapsed && (
+                    <div className="flex flex-1 items-center justify-between">
+                      <span>{item.label}</span>
+                      {active && <span className="h-2 w-2 rounded-full bg-[#D4AF37]" />}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
 
-                  <Link
-                    href="/vendor/products/add"
-                    className={`block text-xs px-3 py-2 rounded-md cursor-pointer
-                    ${
-                      pathname === "/vendor/products/add"
-                        ? "bg-[#D4AF37] text-white"
-                        : "hover:text-white hover:bg-[#1A1A1A]/40"
-                    }`}
-                  >
-                    Add Product
-                  </Link>
+        <div className="p-3">
+          <div className="rounded-2xl bg-white/5 p-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#D4AF37]/20" />
+              {!collapsed && (
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-bold">Sharma Traders</div>
+                  <div className="truncate text-xs text-white/70">Gold Supplier</div>
                 </div>
               )}
             </div>
-
-            {/* Other */}
-            {others.map((item, i) => (
-              <Link
-                key={i}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer
-                ${
-                  pathname === item.href
-                    ? "bg-[#D4AF37] text-white"
-                    : "hover:bg-[#D4AF37] hover:text-white"
-                }
-                transition-all duration-300`}
-              >
-                <item.icon size={18} />
-                <span className="text-sm">{item.name}</span>
-              </Link>
-            ))}
           </div>
         </div>
-
-        {/* BOTTOM */}
-        <div className="px-3 pb-4 space-y-2 border-t border-[#E5E5E5]/20">
-
-          {bottom.map((item, i) => (
-            <Link
-              key={i}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer
-              ${
-                pathname === item.href
-                  ? "bg-[#D4AF37] text-white"
-                  : "hover:bg-[#D4AF37] hover:text-white"
-              }
-              transition-all duration-300`}
-            >
-              <item.icon size={18} />
-              <span className="text-sm">{item.name}</span>
-            </Link>
-          ))}
-
-          {/* Profile */}
-          <div className="flex items-center gap-3 mt-3 px-3 py-2 bg-[#1A1A1A]/40 rounded-lg">
-            <div className="w-9 h-9 flex items-center justify-center bg-[#D4AF37] text-white rounded-full text-sm font-semibold">
-              RS
-            </div>
-            <div>
-              <p className="text-sm text-white">Rajesh Sharma</p>
-              <p className="text-xs text-gray-400">rajesh@email.com</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 };
 
-export default Sidebar;
+export default VendorSidebar;

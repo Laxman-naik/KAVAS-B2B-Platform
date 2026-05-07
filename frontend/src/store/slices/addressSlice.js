@@ -1,54 +1,65 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getAddresses, createAddress, updateAddress, deleteAddress,} from "@/services/addressService";
+import {
+  getAddresses,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+} from "@/services/addressService";
 
-/* ================= THUNKS ================= */
+/* ---------------- NORMALIZER ---------------- */
+const normalize = (a) => ({
+  id: a.id,
+  address_line1: a.address_line1 || "",
+  address_line2: a.address_line2 || "",
+  city: a.city || "",
+  state: a.state || "",
+  country: a.country || "",
+  postal_code: a.postal_code || "",
+  label: a.label || "Address",
+  phone: a.phone || "",
+  type: a.type || "other",
+  is_default: Boolean(a.is_default),
+  active: a.active !== undefined ? Boolean(a.active) : true,
+});
 
-// GET all addresses
+/* ---------------- THUNKS ---------------- */
 export const fetchAddresses = createAsyncThunk(
   "address/fetchAll",
   async (_, thunkAPI) => {
     try {
       const res = await getAddresses();
-      return res.data;
+      return res.data.map(normalize);
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// CREATE address
 export const addAddress = createAsyncThunk(
   "address/create",
   async (data, thunkAPI) => {
     try {
       const res = await createAddress(data);
-      return res.data;
+      return normalize(res.data);
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// UPDATE address
 export const editAddress = createAsyncThunk(
   "address/update",
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateAddress(id, data);
-      return res.data;
+      return normalize(res.data);
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-// DELETE address
 export const removeAddress = createAsyncThunk(
   "address/delete",
   async (id, thunkAPI) => {
@@ -56,15 +67,25 @@ export const removeAddress = createAsyncThunk(
       await deleteAddress(id);
       return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-/* ================= SLICE ================= */
+export const changeDefaultAddress = createAsyncThunk(
+  "address/setDefault",
+  async (id, thunkAPI) => {
+    try {
+      const res = await setDefaultAddress(id);
+      console.log("SET DEFAULT RESPONSE:", res.data);
+      return normalize(res.data);
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
 
+/* ---------------- SLICE ---------------- */
 const addressSlice = createSlice({
   name: "address",
   initialState: {
@@ -72,19 +93,20 @@ const addressSlice = createSlice({
     loading: false,
     error: null,
   },
+
   reducers: {
-    // optional: reset (useful on logout)
     clearAddresses: (state) => {
       state.addresses = [];
+      state.error = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
 
-      /* ===== FETCH ===== */
+      /* -------- FETCH -------- */
       .addCase(fetchAddresses.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchAddresses.fulfilled, (state, action) => {
         state.loading = false;
@@ -95,28 +117,38 @@ const addressSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* ===== CREATE ===== */
+      /* -------- ADD -------- */
       .addCase(addAddress.fulfilled, (state, action) => {
-        // API should return created address
         state.addresses.unshift(action.payload);
       })
 
-      /* ===== UPDATE ===== */
+      /* -------- EDIT -------- */
       .addCase(editAddress.fulfilled, (state, action) => {
+        const updated = action.payload;
+
         state.addresses = state.addresses.map((addr) =>
-          addr.id === action.payload.id ? action.payload : addr
+          addr.id === updated.id ? updated : addr
         );
       })
 
-      /* ===== DELETE ===== */
+      /* -------- DELETE -------- */
       .addCase(removeAddress.fulfilled, (state, action) => {
         state.addresses = state.addresses.filter(
           (addr) => addr.id !== action.payload
         );
+      })
+
+      /* -------- SET DEFAULT (IMPORTANT FIX) -------- */
+      .addCase(changeDefaultAddress.fulfilled, (state, action) => {
+        const updated = action.payload;
+
+        state.addresses = state.addresses.map((addr) => ({
+          ...addr,
+          is_default: addr.id === updated.id,
+        }));
       });
   },
 });
 
 export const { clearAddresses } = addressSlice.actions;
-
 export default addressSlice.reducer;
