@@ -8,6 +8,75 @@ import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
 
 const otpStore = new Map();
 
+// export const sendOtp = async (req, res) => {
+//   try {
+//     const { email, phone } = req.body;
+
+//     if (!email && !phone) {
+//       return res.status(400).json({ message: "Email or phone required" });
+//     }
+
+//     const expires = Date.now() + 5 * 60 * 1000;
+
+//     // ================= PHONE OTP =================
+//     if (phone) {
+//       const phoneOtp = Math.floor(100000 + Math.random() * 900000);
+//       const key = `phone:${phone}`;
+
+//       otpStore.set(key, {
+//         otp: phoneOtp,
+//         expires,
+//         verified: false,
+//       });
+
+//       await axios.post(
+//         "https://www.fast2sms.com/dev/bulkV2",
+//         {
+//           route: "q",
+//           message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
+//           language: "english",
+//           numbers: phone,
+//         },
+//         {
+//           headers: {
+//             authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+//           },
+//         }
+//       );
+
+//       console.log("PHONE OTP SENT:", key, phoneOtp);
+//     }
+
+//     // ================= EMAIL OTP =================
+//     if (email) {
+//       const emailOtp = Math.floor(100000 + Math.random() * 900000);
+//       const key = `email:${email}`;
+
+//       otpStore.set(key, {
+//         otp: emailOtp,
+//         expires,
+//         verified: false,
+//       });
+
+//       try {
+//   const info = await sendEmailOtp(email, emailOtp);
+//   console.log("EMAIL SENT:", info.messageId);
+//   emailSent = true;
+// } catch (err) {
+//   console.error("EMAIL FAILED FULL:", err);
+//   emailSent = false;
+// }
+
+//       console.log("EMAIL OTP SENT:", key, emailOtp);
+//     }
+
+//     return res.json({ message: "OTP sent successfully" });
+
+//   } catch (err) {
+//     console.error("SEND OTP ERROR:", err);
+//     return res.status(500).json({ message: err });
+//   }
+// };
 export const sendOtp = async (req, res) => {
   try {
     const { email, phone } = req.body;
@@ -17,6 +86,9 @@ export const sendOtp = async (req, res) => {
     }
 
     const expires = Date.now() + 5 * 60 * 1000;
+
+    let emailSent = false;
+    let phoneSent = false;
 
     // ================= PHONE OTP =================
     if (phone) {
@@ -29,22 +101,28 @@ export const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      await axios.post(
-        "https://www.fast2sms.com/dev/bulkV2",
-        {
-          route: "q",
-          message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
-          language: "english",
-          numbers: phone,
-        },
-        {
-          headers: {
-            authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+      try {
+        await axios.post(
+          "https://www.fast2sms.com/dev/bulkV2",
+          {
+            route: "q",
+            message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
+            language: "english",
+            numbers: phone,
           },
-        }
-      );
+          {
+            headers: {
+              authorization: process.env.FAST2SMS_KEY,
+            },
+          }
+        );
 
-      console.log("PHONE OTP SENT:", key, phoneOtp);
+        phoneSent = true;
+      } catch (smsErr) {
+        console.error("SMS FAILED FULL:", smsErr);
+      }
+
+      console.log("PHONE OTP GENERATED:", key, phoneOtp);
     }
 
     // ================= EMAIL OTP =================
@@ -59,22 +137,28 @@ export const sendOtp = async (req, res) => {
       });
 
       try {
-  const info = await sendEmailOtp(email, emailOtp);
-  console.log("EMAIL SENT:", info.messageId);
-  emailSent = true;
-} catch (err) {
-  console.error("EMAIL FAILED FULL:", err); // NOT message only
-  emailSent = false;
-}
+        const info = await sendEmailOtp(email, emailOtp);
+        console.log("EMAIL SENT:", info.messageId);
+        emailSent = true;
+      } catch (err) {
+        console.error("EMAIL FAILED FULL:", err);
+      }
 
-      console.log("EMAIL OTP SENT:", key, emailOtp);
+      console.log("EMAIL OTP GENERATED:", key, emailOtp);
     }
 
-    return res.json({ message: "OTP sent successfully" });
+    return res.status(200).json({
+      message: "OTP process completed",
+      emailSent,
+      phoneSent,
+    });
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      message: err.message || "Internal server error",
+    });
   }
 };
 
