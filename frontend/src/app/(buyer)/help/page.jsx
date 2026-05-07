@@ -121,12 +121,7 @@ const Page = () => {
       <div className="bg-[#0B1F3A]">
         <div className="w-full mx-auto px-6 sm:px-8 ">
 
-          {/* Breadcrumb */}
-          {/* <p className="text-xs text-white/70 mb-3">
-            <span className="hover:text-[#D4AF37] cursor-pointer">Home</span>
-            <span className="mx-1">››</span>
-            <span className="text-white font-semibold">Help & Support</span>
-          </p> */}
+          
           <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] items-center">
             <div>
               <div className="text-[#D4AF37] text-[11px] font-semibold tracking-wider">
@@ -179,7 +174,7 @@ const Page = () => {
 
           </div>
         </div>
-      </div>
+      </div>        
 
       <div className="w-full px-4 sm:px-6 py-10">
         <div className="text-center">

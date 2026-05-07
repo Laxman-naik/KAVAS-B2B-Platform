@@ -69,18 +69,25 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               Login to your account and continue shopping with the best wholesale prices.
             </p>
 
-           <div className="mt-6 flex justify-center">
+           <div className="flex justify-center">
   <Image
-    src="/Lock1.png"
+    src="/Lock3.png"
     alt="lock"
-    width={300}
-    height={120}
-    className="w-[220px] sm:w-[260px] md:w-[300px] h-auto object-cover"
+    width={320}
+    height={420}
     priority
+    className="
+      h-55
+      sm:h-65
+      md:h-75
+      w-auto
+      object-contain
+      drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)]
+    "
   />
 </div>
 
-            <div className="mt-6">
+            <div className="">
               <div className="text-sm font-semibold text-[#D4AF37]">Why Login?</div>
               <ul className="mt-3 space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-3">
