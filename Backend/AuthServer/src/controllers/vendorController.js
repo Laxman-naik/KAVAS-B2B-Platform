@@ -58,7 +58,14 @@ export const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      await sendEmailOtp(email, emailOtp);
+      try {
+  const info = await sendEmailOtp(email, emailOtp);
+  console.log("EMAIL SENT:", info.messageId);
+  emailSent = true;
+} catch (err) {
+  console.error("EMAIL FAILED FULL:", err); // NOT message only
+  emailSent = false;
+}
 
       console.log("EMAIL OTP SENT:", key, emailOtp);
     }

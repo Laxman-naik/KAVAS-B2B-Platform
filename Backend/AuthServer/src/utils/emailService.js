@@ -6,17 +6,27 @@ const nodemailer = require("nodemailer");
 //     user: "laxmannaikbhukya143@gmail.com",
 //     pass: "rlrc qhhw snqi pyhu",
 //   },
+//   pool: true,
+//   maxConnections: 1,
+//   rateLimit: true,
 // });
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: "laxmannaikbhukya143@gmail.com",
     pass: "rlrc qhhw snqi pyhu",
   },
-  pool: true,
-  maxConnections: 1,
-  rateLimit: true,
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("SMTP NOT WORKING:", error);
+  } else {
+    console.log("SMTP READY");
+  }
 });
 
 const sendEmailOtp = async (email, otp) => {
