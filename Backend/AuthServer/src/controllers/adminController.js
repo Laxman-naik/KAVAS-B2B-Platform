@@ -229,6 +229,8 @@ const getAllOnboardingVendors = async (req, res) => {
 
 const approveVendor = async (req, res) => {
   try {
+    console.log(req.body);
+
     const { onboarding_id, status } = req.body;
 
     if (!onboarding_id) {
@@ -243,20 +245,30 @@ const approveVendor = async (req, res) => {
       });
     }
 
-    await pool.query(
+    const result = await pool.query(
       `
       UPDATE vendor_onboarding
       SET 
         status = $2,
         reviewed_at = NOW()
-      WHERE id = $1
+      WHERE onboarding_id = $1
+      RETURNING *
       `,
       [onboarding_id, status]
     );
 
-    return res.json({
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "Vendor not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
       message: `Vendor status updated to ${status}`,
+      vendor: result.rows[0],
     });
+
   } catch (err) {
     console.error(err);
 

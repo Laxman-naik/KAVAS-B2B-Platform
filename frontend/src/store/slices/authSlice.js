@@ -434,26 +434,32 @@ export const fetchOnboardingVendorsThunk = createAsyncThunk(
   }
 );
 
-// UPDATE VENDOR STATUS
+// ================= UPDATE VENDOR STATUS =================
+
 export const updateVendorStatusThunk = createAsyncThunk(
   "admin/updateVendorStatus",
-  async ({ onboarding_id, status }, { rejectWithValue }) => {
+  async (
+    { onboarding_id, status, rejection_reason },
+    { rejectWithValue }
+  ) => {
     try {
       const res = await approveVendorAPI({
         onboarding_id,
         status,
+        rejection_reason,
       });
 
       return {
         onboarding_id,
         status,
+        rejection_reason,
         message: res.message,
       };
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update vendor status"
+          err.message ||
+          "Failed to update vendor status"
       );
     }
   }

@@ -104,7 +104,6 @@ export default function VendorsTable() {
         ...prev,
         status: nextStatus,
       }));
-      dispatch(fetchOnboardingVendorsThunk());
     } catch (err) {
       console.error(err);
     }
@@ -183,10 +182,13 @@ export default function VendorsTable() {
 
                 <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs ${statusStyles[v.status] || "bg-gray-500/20 text-gray-400"
+                    className={`px-3 py-1 rounded-full text-xs ${statusStyles[v.status] ||
+                      "bg-gray-500/20 text-gray-400"
                       }`}
                   >
-                    {v.status}
+                    {v.status
+                      ?.replaceAll("_", " ")
+                      ?.replace(/\b\w/g, (c) => c.toUpperCase())}
                   </span>
                 </td>
                 <td className="px-6 py-4 flex gap-2">
@@ -223,7 +225,7 @@ export default function VendorsTable() {
               <p className="text-sm text-gray-500">{selectedVendor.email} • {selectedVendor.phone}</p>
             </div>
             <Section title="Basic Info">
-              <Info label="Status" value={selectedVendor.status?.replaceAll("_", " ")?.replace(/\b\w/g, (c) => c.toUpperCase())}/> 
+              <Info label="Status" value={selectedVendor.status?.replaceAll("_", " ")?.replace(/\b\w/g, (c) => c.toUpperCase())} />
               <Info label="City" value={selectedVendor.city} />
               <Info label="State" value={selectedVendor.state} />
               <Info label="Pincode" value={selectedVendor.pincode} />
@@ -293,6 +295,11 @@ export default function VendorsTable() {
 
                 <button
                   onClick={async () => {
+                    if (!rejectReason.trim()) {
+                      alert("Please enter rejection reason");
+                      return;
+                    }
+
                     try {
                       await dispatch(
                         updateVendorStatusThunk({
@@ -311,9 +318,15 @@ export default function VendorsTable() {
                       console.error(err);
                     }
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                  disabled={selectedVendor.status === "rejected"}
+                  className={`px-4 py-2 rounded text-white ${selectedVendor.status === "rejected"
+                    ? "bg-red-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                    }`}
                 >
-                  Reject
+                  {selectedVendor.status === "rejected"
+                    ? "Rejected"
+                    : "Reject"}
                 </button>
 
               </div>
