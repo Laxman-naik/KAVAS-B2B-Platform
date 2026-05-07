@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -27,6 +26,19 @@ export default function Page() {
   const { addresses } = useSelector((state) => state.address);
   const dispatch = useDispatch();
   const router = useRouter();
+<<<<<<< HEAD
+
+  const fullName =
+    authUser?.full_name || authUser?.fullName || authUser?.name || "";
+  const [firstName = "", ...rest] = String(fullName)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const user = {
+    firstName: authUser?.firstName || firstName,
+    lastName: authUser?.lastName || rest.join(" "),
+    email: authUser?.email || "",
+=======
   const fullName = authUser?.full_name || authUser?.fullName || authUser?.name || "";
   const [firstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
   const user = { firstName: authUser?.firstName || firstName, lastName: authUser?.lastName || rest.join(" "), email: authUser?.email || "", };
@@ -68,11 +80,114 @@ export default function Page() {
 
   const handleDelete = async (id) => {
     await dispatch(removeAddress(id));
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
   };
 
   useEffect(() => {
     dispatch(fetchAddresses());
   }, [dispatch]);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    tag: "Home",
+    name: "",
+    phone: "",
+    addressLine: "",
+    isDefault: false,
+    active: true,
+  });
+
+  // ADD THESE FUNCTIONS inside your Page() component
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const openAddModal = () => {
+    setIsEdit(false);
+    setSelectedId(null);
+
+    setFormData({
+      title: "",
+      tag: "Home",
+      name: "",
+      phone: "",
+      addressLine: "",
+      isDefault: false,
+      active: true,
+    });
+
+    setShowModal(true);
+  };
+
+  const openEditModal = (address) => {
+    setIsEdit(true);
+    setSelectedId(address.id);
+
+    setFormData({
+      title: address.title,
+      tag: address.tag,
+      name: address.name,
+      phone: address.phone,
+      addressLine: address.addressLine,
+      isDefault: address.isDefault,
+      active: address.active,
+    });
+
+    setShowModal(true);
+  };
+
+  const handleSaveAddress = () => {
+    if (
+      !formData.title ||
+      !formData.name ||
+      !formData.phone ||
+      !formData.addressLine
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (isEdit) {
+      setLocalAddresses((prev) =>
+        prev.map((item) =>
+          item.id === selectedId
+            ? {
+                ...item,
+                ...formData,
+              }
+            : item,
+        ),
+      );
+    } else {
+      const newAddress = {
+        id: `addr_${Date.now()}`,
+        ...formData,
+      };
+
+      setLocalAddresses((prev) => [...prev, newAddress]);
+    }
+
+    setShowModal(false);
+  };
+
+  const handleDeleteAddress = (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this address?",
+    );
+
+    if (confirmDelete) {
+      setLocalAddresses((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
 
   const handleEditClick = (addr) => {
     setEditId(addr.id);
@@ -149,14 +264,33 @@ export default function Page() {
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">My Addresses</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
+                  My Addresses
+                </h1>
                 <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+<<<<<<< HEAD
+                  <Link href="/" className="hover:underline">
+                    Home
+                  </Link>
+                  <ChevronRight size={14} />
+                  <span className="text-[#0B1F3A]">My Addresses</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={openAddModal}
+                className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto"
+              >
+                <Plus size={16} className="mr-2" />
+                Add New Address
+=======
                   <Link href="/" className="hover:underline">Home</Link><ChevronRight size={14} />
                   <span className="text-[#0B1F3A]">My Addresses</span>
                 </div>
               </div>
               <Button onClick={() => setOpen(true)} className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto">
                 <Plus size={16} className="mr-2" /> Add New Address
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
               </Button>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -167,7 +301,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Total Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.total}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.total}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -179,7 +315,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Default Address</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.defaultCount}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.defaultCount}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -191,7 +329,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Active Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.active}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.active}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -203,29 +343,54 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Inactive Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.inactive}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.inactive}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             <div>
-              <h2 className="font-semibold text-[#0B1F3A] text-sm mb-3">Saved Addresses</h2>
+              <h2 className="font-semibold text-[#0B1F3A] text-sm mb-3">
+                Saved Addresses
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<<<<<<< HEAD
+                {localAddresses.map((a) => (
+                  <Card
+                    key={a.id}
+                    className="rounded-sm border border-[#E5E5E5]"
+                  >
+=======
                 {normalizedAddresses.map((a) => (
                   <Card key={a.id} className="rounded-sm border border-[#E5E5E5]">
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             {a.isDefault ? (
+<<<<<<< HEAD
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
+                                Default
+                              </span>
+                            ) : null}
+                            <p className="font-semibold text-[#0B1F3A] text-sm truncate">
+                              {a.title}
+                            </p>
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}
+                            >
+=======
                               <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-semibold">Default</span>
                             ) : (
                               <Button  variant="outline" className="h-8 text-xs"  onClick={async () => {await dispatch(changeDefaultAddress(a.id)); dispatch(fetchAddresses());}}>Set Default</Button>
                             )}
                             <p className="font-semibold text-[#0B1F3A] text-sm truncate">{a.title}</p>
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${tagStyles[a.tag] || "bg-gray-100 text-gray-700"}`}>
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                               {a.tag}
                             </span>
                           </div>
@@ -233,10 +398,19 @@ export default function Page() {
                         <Switch
                           checked={Boolean(a.active)}
                           onCheckedChange={(checked) =>
+<<<<<<< HEAD
+                            setLocalAddresses((prev) =>
+                              prev.map((x) =>
+                                x.id === a.id ? { ...x, active: checked } : x,
+                              ),
+                            )
+                          }
+=======
                             dispatch(editAddress({
                               id: a.id,
                               data: { ...a, active: checked, },
                             }))}
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                         />
                       </div>
                       <div className="mt-3 space-y-2">
@@ -254,11 +428,29 @@ export default function Page() {
                       </div>
 
                       <div className="mt-4 flex items-center justify-end gap-2">
+<<<<<<< HEAD
+                        <Button
+                          variant="outline"
+                          onClick={() => openEditModal(a)}
+                          className="rounded-sm border-[#E5E5E5] h-8 text-xs"
+                        >
+                          <Pencil size={14} className="mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDeleteAddress(a.id)}
+                          className="rounded-sm border-[#E5E5E5] h-8 text-xs text-red-600 hover:text-red-600"
+                        >
+                          <Trash2 size={14} className="mr-1" />
+                          Delete
+=======
                         <Button variant="outline" onClick={() => handleEditClick(a)} className="rounded-sm border-[#E5E5E5] h-8 text-xs">
                           <Pencil size={14} className="mr-1" /> Edit
                         </Button>
                         <Button variant="outline" onClick={() => handleDelete(a.id)} className="rounded-sm border-[#E5E5E5] h-8 text-xs text-red-600 hover:text-red-600">
                           <Trash2 size={14} className="mr-1" /> Delete
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                         </Button>
                       </div>
                     </CardContent>
@@ -270,24 +462,125 @@ export default function Page() {
                     <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
                       <Plus size={20} className="text-gray-700" />
                     </div>
+<<<<<<< HEAD
+                    <p className="mt-3 font-semibold text-[#0B1F3A]">
+                      Add New Address
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 max-w-[220px]">
+                      Save multiple addresses and ship to your convenience
+                    </p>
+                    <Button
+                      onClick={openAddModal}
+                      className="mt-4 bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95"
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Add Address
+=======
                     <p className="mt-3 font-semibold text-[#0B1F3A]">Add New Address</p>
                     <p className="mt-1 text-xs text-gray-500 max-w-55">
                       Save multiple addresses and ship to your convenience
                     </p>
                     <Button onClick={() => setOpen(true)} className="mt-4 bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95">
                       <Plus size={16} className="mr-2" /> Add Address
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f
                     </Button>
                   </CardContent>
                 </Card>
               </div>
 
               <div className="mt-4 text-xs text-gray-500">
-                You can set any address as default from the edit option. Default address will be used for checkout.
+                You can set any address as default from the edit option. Default
+                address will be used for checkout.
               </div>
             </div>
           </div>
         </div>
       </div>
+<<<<<<< HEAD
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg p-6 space-y-4 shadow-xl">
+            <h2 className="text-xl font-bold text-[#0B1F3A]">
+              {isEdit ? "Edit Address" : "Add New Address"}
+            </h2>
+
+            <input
+              type="text"
+              name="title"
+              placeholder="Address Title"
+              value={formData.title}
+              onChange={handleInputChange}
+              className="w-full border p-3 rounded-md"
+            />
+
+            <select
+              name="tag"
+              value={formData.tag}
+              onChange={handleInputChange}
+              className="w-full border p-3 rounded-md"
+            >
+              <option>Home</option>
+              <option>Work</option>
+              <option>Other</option>
+              <option>Billing</option>
+            </select>
+
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleInputChange}
+              className="w-full border p-3 rounded-md"
+            />
+
+            <input
+              type="text"
+              name="phone"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={handleInputChange}
+              className="w-full border p-3 rounded-md"
+            />
+
+            <textarea
+              name="addressLine"
+              placeholder="Full Address"
+              value={formData.addressLine}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full border p-3 rounded-md"
+            />
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="isDefault"
+                checked={formData.isDefault}
+                onChange={handleInputChange}
+              />
+              <label>Set as Default Address</label>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+
+              <Button
+                onClick={handleSaveAddress}
+                className="bg-[#0B1F3A] text-white"
+              >
+                {isEdit ? "Update Address" : "Save Address"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+=======
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="rounded-2xl w-[95%] sm:max-w-md">
           <DialogHeader><DialogTitle>{editId ? "Edit Address" : "Add Address"}</DialogTitle></DialogHeader>
@@ -316,3 +609,4 @@ export default function Page() {
     </div>
   );
 }
+>>>>>>> a05eaaddb555d85b76ac13324540d59861e4b78f

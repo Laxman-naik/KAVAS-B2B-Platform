@@ -33,7 +33,11 @@ const AllProducts = () => {
 
   return (
     <div className="bg-white">
+<<<<<<< HEAD
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+=======
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+>>>>>>> c1a46cb5e2e45166a85883e9fa6cf59c1aa16a83
         <div className="flex items-center justify-between">
          
   <div>
