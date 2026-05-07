@@ -112,7 +112,7 @@ export const sendOtp = async (req, res) => {
           },
           {
             headers: {
-              authorization: process.env.FAST2SMS_KEY,
+              authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
             },
           }
         );
