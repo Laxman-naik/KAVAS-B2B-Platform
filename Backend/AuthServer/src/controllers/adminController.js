@@ -253,8 +253,29 @@ const approveVendor = async (req, res) => {
 
     let organization_id = onboarding.organization_id;
 
-    // 2. CREATE ORGANIZATION ONLY WHEN APPROVED
+    // 2. Fetch BUSINESS DETAILS (IMPORTANT FIX)
+    const businessRes = await pool.query(
+      `SELECT * FROM vendor_business_details WHERE onboarding_id = $1`,
+      [onboarding_id]
+    );
+
+    if (businessRes.rowCount === 0) {
+      return res.status(400).json({
+        message: "Business details not found for this onboarding"
+      });
+    }
+
+    const business = businessRes.rows[0];
+
+    // 3. CREATE ORGANIZATION ONLY WHEN APPROVED
     if (status === "approved" && !organization_id) {
+
+      if (!business.business_name || !business.business_type) {
+        return res.status(400).json({
+          message: "Missing business_name or business_type in business details"
+        });
+      }
+
       const orgRes = await pool.query(
         `
         INSERT INTO organizations (name, business_type)
@@ -262,15 +283,15 @@ const approveVendor = async (req, res) => {
         RETURNING id
         `,
         [
-          onboarding.business_name,
-          onboarding.business_type
+          business.business_name,
+          business.business_type
         ]
       );
 
       organization_id = orgRes.rows[0].id;
     }
 
-    // 3. UPDATE onboarding
+    // 4. UPDATE onboarding
     const updated = await pool.query(
       `
       UPDATE vendor_onboarding
@@ -286,15 +307,15 @@ const approveVendor = async (req, res) => {
 
     return res.json({
       message: `Vendor status updated to ${status}`,
-      data: updated.rows[0],
       organization_id,
+      data: updated.rows[0]
     });
 
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       message: err,
-      error: err.message,
+      error: err.message
     });
   }
 };
