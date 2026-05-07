@@ -69,11 +69,44 @@ export const getOnboardingVendorsAPI = async (params = {}) => {
       params,
     });
 
-    return res.data; // { vendors }
+    return res.data;
   } catch (err) {
     throw (
       err.response?.data || {
         message: "Failed to fetch onboarding vendors",
+      }
+    );
+  }
+};
+
+export const approveVendorAPI = async (onboarding_id) => {
+  try {
+    const res = await authapi.put("/api/admin/approve-vendor", {
+      onboarding_id,
+    });
+
+    return res.data;
+  } catch (err) {
+    throw (
+      err.response?.data || {
+        message: "Failed to approve vendor",
+      }
+    );
+  }
+};
+
+export const rejectVendorAPI = async (onboarding_id, reason) => {
+  try {
+    const res = await authapi.put("/api/admin/reject-vendor", {
+      onboarding_id,
+      reason,
+    });
+
+    return res.data;
+  } catch (err) {
+    throw (
+      err.response?.data || {
+        message: "Failed to reject vendor",
       }
     );
   }
