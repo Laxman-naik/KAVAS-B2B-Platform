@@ -69,14 +69,16 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               Login to your account and continue shopping with the best wholesale prices.
             </p>
 
-            <div className="mt-6 flex justify-center">
-              <img
-                src="https://images.unsplash.com/photo-1658851665036-10a9982f9b2d?auto=format&fit=crop&w=520&q=80"
-                alt="Login Security"
-                className="w-full max-w-90 h-40 object-cover rounded-xl border border-white/10"
-                loading="lazy"
-              />
-            </div>
+           <div className="mt-6 flex justify-center">
+  <Image
+    src="/Lock1.png"
+    alt="lock"
+    width={300}
+    height={120}
+    className="w-[220px] sm:w-[260px] md:w-[300px] h-auto object-cover"
+    priority
+  />
+</div>
 
             <div className="mt-6">
               <div className="text-sm font-semibold text-[#D4AF37]">Why Login?</div>
@@ -165,7 +167,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                   <input
                     type="checkbox"
                     required
-                    checked={rememberMe}
+                    
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 accent-[#D4AF37]"
                   />

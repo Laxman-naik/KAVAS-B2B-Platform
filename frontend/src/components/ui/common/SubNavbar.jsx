@@ -180,7 +180,7 @@ const SubNavbar = () => {
 
   return (
     <div className="hidden lg:block border-t border-t-white/10 border-b border-b-[#D4AF37] bg-[#0B1F3A]/95 backdrop-blur">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+      <div className="w-full  px-6 lg:px-10">
         <div className="flex items-center gap-6 h-14">
           <div className="relative" ref={categoryRef}>
             <button
@@ -200,7 +200,7 @@ const SubNavbar = () => {
             {categoryOpen && (
               <div
                 className={`absolute left-0 top-full mt-3 bg-white rounded-lg shadow-2xl border border-[#E5E5E5] z-50 overflow-hidden transition-[width] duration-200 ease-out ${
-                  activeCategory ? "w-[780px]" : "w-[260px]"
+                  activeCategory ? "w-195" : "w-65"
                 }`}
                 onMouseLeave={() => setActiveCategory(null)}
               >
@@ -210,7 +210,7 @@ const SubNavbar = () => {
                   }`}
                 >
                   <div
-                    className={`bg-[#FFF8EC]/40 py-2 max-h-[420px] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+                    className={`bg-[#FFF8EC]/40 py-2 max-h-105 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
                       activeCategory ? "border-r border-[#E5E5E5]" : ""
                     }`}
                   >
@@ -239,7 +239,7 @@ const SubNavbar = () => {
                   </div>
 
                   {activeCategory && (
-                    <div className="relative p-5 pb-16 max-h-[420px] overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="relative p-5 pb-16 max-h-105 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                       <div className="text-base font-semibold text-[#0B1F3A]">
                         {activeCategory.name}
                       </div>
@@ -296,7 +296,7 @@ const SubNavbar = () => {
               className="relative hover:text-[#D4AF37] text-white/80 group"
             >
               Home
-              <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#D4AF37] transition-all duration-300 group-hover:w-full" />
+              <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-[#D4AF37] transition-all duration-300 group-hover:w-full" />
             </Link>
 
             {[
@@ -312,12 +312,10 @@ const SubNavbar = () => {
                 className="relative text-white/80 hover:text-[#D4AF37] transition group"
               >
                 {item.name}
-                <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-[#D4AF37] transition-all duration-300 group-hover:w-full" />
+                <span className="absolute left-0 -bottom-1 h-0.5 w-0 bg-[#D4AF37] transition-all duration-300 group-hover:w-full" />
               </Link>
             ))}
           </nav>
-
-          {/* RIGHT SPACER */}
           <div className="w-72" />
         </div>
       </div>

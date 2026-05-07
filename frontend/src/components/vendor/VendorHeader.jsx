@@ -1,26 +1,45 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { usePathname } from "next/navigation";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, HelpCircle, Search } from "lucide-react";
 import { vendorNavItems } from "./vendorNavConfig";
 
 const VendorHeader = () => {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const pageTitle = useMemo(() => {
     if (!pathname) return "";
-    const match = vendorNavItems.find((x) => pathname === x.href || pathname.startsWith(`${x.href}/`));
+    const match = vendorNavItems.find(
+      (x) => pathname === x.href || pathname.startsWith(`${x.href}/`)
+    );
     return match?.label || "Dashboard";
   }, [pathname]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="fixed top-0 right-0 z-30 h-16 w-[calc(100%-16rem)] bg-white border-b border-[#E5E5E5]">
       <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-        <div className="text-base sm:text-lg font-extrabold text-[#0B1F3A]">{pageTitle}</div>
+        <div className="text-base sm:text-lg font-extrabold text-[#0B1F3A]">
+          {pageTitle}
+        </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 rounded-md border border-[#E5E5E5] px-3 h-10 w-[280px] bg-white">
+          <div className="hidden sm:flex items-center gap-2 rounded-md border border-[#E5E5E5] px-3 h-10 w-70 bg-white">
             <Search size={16} className="text-gray-400" />
             <input
               placeholder="Search..."
@@ -45,15 +64,80 @@ const VendorHeader = () => {
             <HelpCircle size={16} className="text-gray-700" />
           </button>
 
-          <div className="flex items-center gap-3 pl-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F3A] text-white text-xs font-bold">
-              RS
+          {/* Profile Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <div
+              onClick={() => setOpen(!open)}
+              className="flex items-center gap-3 pl-1 cursor-pointer"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F3A] text-white text-xs font-bold">
+                RS
+              </div>
+
+              <div className="hidden sm:block leading-tight">
+                <div className="text-sm font-bold text-[#0B1F3A]">
+                  Rahul Sharma
+                </div>
+                <div className="text-[11px] text-gray-500">
+                  Seller Account
+                </div>
+              </div>
+
+              <ChevronDown
+                size={16}
+                className={`text-gray-500 transition ${
+                  open ? "rotate-180" : ""
+                }`}
+              />
             </div>
-            <div className="hidden sm:block leading-tight">
-              <div className="text-sm font-bold text-[#0B1F3A]">Rahul Sharma</div>
-              <div className="text-[11px] text-gray-500">Seller Account</div>
-            </div>
-            <ChevronDown size={16} className="text-gray-500" />
+
+            {/* Dropdown Menu */}
+            {open && (
+              <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg border z-50">
+                <ul className="py-2 text-sm text-gray-700">
+                  <li
+                    onClick={() => {
+                      router.push("/profile");
+                      setOpen(false);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Profile
+                  </li>
+
+                  <li
+                    onClick={() => {
+                      router.push("/settings");
+                      setOpen(false);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Settings
+                  </li>
+
+                  <li
+                    onClick={() => {
+                      router.push("/support");
+                      setOpen(false);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Support
+                  </li>
+
+                  <li
+                    onClick={() => {
+                      // logout logic here
+                      console.log("Logout clicked");
+                      setOpen(false);
+                    }}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-500"
+                  >
+                    Logout
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

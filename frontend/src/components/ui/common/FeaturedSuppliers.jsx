@@ -98,7 +98,7 @@ const FeaturedSuppliers = () => {
 
   return (
     <section className="w-full py-8">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-sm border border-[#E5E5E5] shadow-sm px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -167,7 +167,7 @@ const FeaturedSuppliers = () => {
                             className="h-full w-full object-cover"
                             loading="lazy"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/0 to-black/0" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/25 via-black/0 to-black/0" />
                           <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full bg-white/90 text-gray-700 border border-[#E5E5E5]">
                             {status}
                           </span>
@@ -182,7 +182,7 @@ const FeaturedSuppliers = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#0B1F3A] text-white pt-8 pb-4 px-4 min-h-[118px] flex flex-col">
+                        <div className="bg-[#0B1F3A] text-white pt-8 pb-4 px-4 min-h-29.5 flex flex-col">
                           <div className="text-sm font-semibold truncate">
                             {supplier.name}
                           </div>

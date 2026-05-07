@@ -23,8 +23,8 @@ const FlashDeals = () => {
 
   return (
     <div className="py-3 bg-white">
-      <div className="max-w-[1400px] mx-auto px-4">
-        <div className="rounded-xl overflow-hidden bg-gradient-to-r from-[#071a33] via-[#0b2a55] to-[#04101f] text-white shadow">
+      <div className="w-full  px-4">
+        <div className="rounded-xl overflow-hidden bg-linear-to-r from-[#071a33] via-[#0b2a55] to-[#04101f] text-white shadow">
 
           <div className="grid lg:grid-cols-2 items-center px-5 py-4 md:px-8 md:py-5">
 
@@ -71,7 +71,7 @@ const FlashDeals = () => {
 
             {/* RIGHT IMAGES */}
             {/* RIGHT IMAGES */}
-            <div className="hidden lg:flex justify-center relative h-[170px]">
+            <div className="hidden lg:flex justify-center relative h-42.5">
 
               {/* glow */}
               <div className="absolute bottom-0 w-56 h-12 bg-[#D4AF37] blur-xl opacity-30 rounded-full"></div>
