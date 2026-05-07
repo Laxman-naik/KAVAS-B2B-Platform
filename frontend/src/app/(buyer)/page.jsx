@@ -41,7 +41,7 @@ export default function BuyerHome() {
        <TrendingProducts />
        <FlashDeals />
       <NewArrivals />
-      <TrustedSlide />
+      {/* <TrustedSlide /> */}
       <WhyChoose />
      
       <AllProducts />
