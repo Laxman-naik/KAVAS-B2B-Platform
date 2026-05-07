@@ -61,46 +61,30 @@ export default function VendorRegisterPage() {
     setForm((s) => ({ ...s, [key]: value }));
   };
 
-  const sendOtp = async (channel) => {
-  const email = form.email.trim();
-  const phone = form.mobile.trim();
-
-  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(phone)) {
-    console.log("❌ Invalid mobile:", phone);
-    return;
-  }
-
-  if (channel === "email" && !/^\S+@\S+\.\S+$/.test(email)) {
-    console.log("❌ Invalid email:", email);
-    return;
-  }
+const sendOtp = async (channel) => {
+  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(form.mobile)) return;
+  if (channel === "email" && !/^\S+@\S+\.\S+$/.test(form.email)) return;
 
   const payload =
     channel === "mobile"
-      ? { phone }
-      : { email };
+      ? { phone: form.mobile }
+      : { email: form.email };
 
-  console.log("🚀 Sending OTP payload:", payload);
+  const res = await dispatch(sendVendorOtp(payload));
 
-  try {
-    const res = await dispatch(sendVendorOtp(payload));
+  console.log("🔥 FULL DISPATCH RESULT:", res);
 
-    console.log("📦 Dispatch result:", res);
-    console.log("📡 Backend response payload:", res?.payload);
+  if (res.meta.requestStatus === "fulfilled") {
+    console.log("✅ OTP API SUCCESS:", res.payload);
 
-    if (res.meta.requestStatus !== "fulfilled") {
-      console.log("❌ OTP request failed");
-      return;
-    }
-
-    console.log("✅ OTP sent successfully to:", payload);
-  } catch (err) {
-    console.log("🔥 OTP send error:", err);
+    console.log("📩 EMAIL USED:", form.email);
+  } else {
+    console.log("❌ OTP FAILED:", res.payload);
   }
 
   setOtpDigits((s) => ({
     ...s,
-    [channel]: Array(6).fill(""),
+    [channel]: Array(6).fill("")
   }));
 };
 
