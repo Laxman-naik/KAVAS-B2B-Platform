@@ -38,54 +38,34 @@
 
 const nodemailer = require("nodemailer");
 
-// IMPORTANT: use explicit SMTP config (NOT service: "gmail")
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // TLS
+  port: 465,
+  secure: true, // IMPORTANT (SSL)
   auth: {
     user: "laxmannaikbhukya143@gmail.com",
-    pass: "rlrc qhhw snqi pyhu", // Gmail App Password ONLY
+    pass: "rlrc qhhw snqi pyhu",
   },
   tls: {
     rejectUnauthorized: false,
   },
-});
-
-// optional: verify connection on server start
-transporter.verify((error) => {
-  if (error) {
-    console.log("❌ SMTP ERROR:", error);
-  } else {
-    console.log("✅ SMTP READY");
-  }
+  connectionTimeout: 15000,
+  socketTimeout: 15000,
 });
 
 const sendEmailOtp = async (email, otp) => {
   try {
-    console.log("📨 Sending OTP email to:", email);
-
-    const mailOptions = {
-      from: `"Kavas" <${process.env.EMAIL_USER || "laxmannaikbhukya143@gmail.com"}>`,
+    const info = await transporter.sendMail({
+      from: `"Kavas" <laxmannaikbhukya143@gmail.com>`,
       to: email,
-      subject: "Kavas OTP Verification",
-      html: `
-        <div style="font-family: Arial; padding: 10px;">
-          <h2>OTP Verification</h2>
-          <p>Your OTP is:</p>
-          <h1 style="color:#2d89ef">${otp}</h1>
-          <p>This OTP is valid for 5 minutes.</p>
-        </div>
-      `,
-    };
+      subject: "OTP Verification",
+      html: `<h1>Your OTP: ${otp}</h1>`,
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-
-    console.log("✅ EMAIL SENT SUCCESSFULLY:", info.response || info.messageId);
-
+    console.log("✅ EMAIL SENT:", info.messageId);
     return info;
   } catch (err) {
-    console.error("❌ EMAIL SEND FAILED FULL ERROR:", err);
+    console.log("❌ EMAIL ERROR FULL:", err);
     throw err;
   }
 };
