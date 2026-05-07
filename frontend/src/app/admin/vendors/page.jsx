@@ -1,12 +1,13 @@
 "use client"
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOnboardingVendorsThunk } from "@/store/slices/authSlice";
+import { fetchOnboardingVendorsThunk, updateVendorStatusThunk, } from "@/store/slices/authSlice";
 
 const statusStyles = {
-  Approved: "bg-green-500/20 text-green-400",
-  "Pending KYC": "bg-yellow-500/20 text-yellow-400",
-  Flagged: "bg-red-500/20 text-red-400",
+  in_review: "bg-blue-500/20 text-blue-400",
+  kyc_pending: "bg-yellow-500/20 text-yellow-400",
+  approved: "bg-green-500/20 text-green-400",
+  rejected: "bg-red-500/20 text-red-400",
 };
 
 export default function VendorsTable() {
@@ -30,6 +31,11 @@ export default function VendorsTable() {
     message: "",
   });
 
+  const handleView = (vendor) => {
+    setSelectedVendor(vendor);
+    setShowEditModal(true);
+  };
+
   useEffect(() => {
     dispatch(fetchOnboardingVendorsThunk());
   }, [dispatch]);
@@ -52,7 +58,7 @@ export default function VendorsTable() {
       status: "Pending KYC",
     };
 
-    setVendors([newVendor, ...vendors]);
+    console.log(newVendor);
     setShowModal(false);
 
     setForm({
@@ -68,9 +74,45 @@ export default function VendorsTable() {
     });
   };
 
+  const handleStatusChange = async () => {
+    if (!selectedVendor) return;
+
+    let nextStatus = "";
+
+    switch (selectedVendor.status) {
+      case "in_review":
+        nextStatus = "kyc_pending";
+        break;
+
+      case "kyc_pending":
+        nextStatus = "approved";
+        break;
+
+      default:
+        return;
+    }
+
+    try {
+      await dispatch(
+        updateVendorStatusThunk({
+          onboarding_id: selectedVendor.onboarding_id,
+          status: nextStatus,
+        })
+      ).unwrap();
+
+      setSelectedVendor((prev) => ({
+        ...prev,
+        status: nextStatus,
+      }));
+      dispatch(fetchOnboardingVendorsThunk());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleString("en-IN", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",});
+    return new Date(date).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", });
   };
 
   return (
@@ -140,7 +182,10 @@ export default function VendorsTable() {
                 </td>
 
                 <td className="px-6 py-4">
-                  <span className="px-3 py-1 rounded-full text-xs bg-blue-500/20 text-blue-400">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs ${statusStyles[v.status] || "bg-gray-500/20 text-gray-400"
+                      }`}
+                  >
                     {v.status}
                   </span>
                 </td>
@@ -178,7 +223,7 @@ export default function VendorsTable() {
               <p className="text-sm text-gray-500">{selectedVendor.email} • {selectedVendor.phone}</p>
             </div>
             <Section title="Basic Info">
-              <Info label="Status" value={selectedVendor.status} />
+              <Info label="Status" value={selectedVendor.status?.replaceAll("_", " ")?.replace(/\b\w/g, (c) => c.toUpperCase())}/> 
               <Info label="City" value={selectedVendor.city} />
               <Info label="State" value={selectedVendor.state} />
               <Info label="Pincode" value={selectedVendor.pincode} />
@@ -230,8 +275,47 @@ export default function VendorsTable() {
             <div className="border-t pt-4 mt-6 space-y-3">
               <textarea className="w-full border rounded p-2 text-sm" placeholder="Rejection reason" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
               <div className="flex gap-3">
-                <button onClick={() => approveVendor(selectedVendor.onboarding_id)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">{selectedVendor.status}</button>
-                <button onClick={() => rejectVendor(selectedVendor.onboarding_id)} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Reject</button>
+
+                <button
+                  onClick={handleStatusChange}
+                  disabled={selectedVendor.status === "approved"}
+                  className={`px-4 py-2 rounded text-white ${selectedVendor.status === "approved"
+                    ? "bg-green-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                    }`}
+                >
+                  {selectedVendor.status === "in_review"
+                    ? "Move to KYC"
+                    : selectedVendor.status === "kyc_pending"
+                      ? "Approve Vendor"
+                      : "Approved"}
+                </button>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      await dispatch(
+                        updateVendorStatusThunk({
+                          onboarding_id: selectedVendor.onboarding_id,
+                          status: "rejected",
+                          rejection_reason: rejectReason,
+                        })
+                      ).unwrap();
+
+                      setSelectedVendor((prev) => ({
+                        ...prev,
+                        status: "rejected",
+                        rejection_reason: rejectReason,
+                      }));
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                >
+                  Reject
+                </button>
+
               </div>
             </div>
           </div>
