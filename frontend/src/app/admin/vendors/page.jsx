@@ -40,8 +40,6 @@ export default function VendorsTable() {
     dispatch(fetchOnboardingVendorsThunk());
   }, [dispatch]);
 
-  console.log(onboardingVendors)
-
   const filtered = onboardingVendors.filter((v) =>
     v.business_name?.toLowerCase().includes(search.toLowerCase())
   );

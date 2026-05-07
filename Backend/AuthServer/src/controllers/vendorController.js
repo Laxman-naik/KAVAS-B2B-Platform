@@ -67,7 +67,7 @@ export const sendOtp = async (req, res) => {
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
-    return res.status(500).json({ message: "Failed to send OTP" });
+    return res.status(500).json({ message: err });
   }
 };
 
@@ -123,7 +123,7 @@ export const verifyOtp = async (req, res) => {
 
   } catch (err) {
     console.error("VERIFY OTP ERROR:", err);
-    return res.status(500).json({ message: "Verification failed" });
+    return res.status(500).json({ message: err });
   }
 };
 
