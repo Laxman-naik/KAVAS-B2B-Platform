@@ -229,20 +229,14 @@ const getAllOnboardingVendors = async (req, res) => {
 
 const approveVendor = async (req, res) => {
   try {
-    console.log(req.body);
-
     const { onboarding_id, status } = req.body;
 
     if (!onboarding_id) {
-      return res.status(400).json({
-        message: "onboarding_id is required",
-      });
+      return res.status(400).json({ message: "onboarding_id is required" });
     }
 
     if (!status) {
-      return res.status(400).json({
-        message: "status is required",
-      });
+      return res.status(400).json({ message: "status is required" });
     }
 
     const result = await pool.query(
@@ -251,7 +245,7 @@ const approveVendor = async (req, res) => {
       SET 
         status = $2,
         reviewed_at = NOW()
-      WHERE onboarding_id = $1
+      WHERE id = $1
       RETURNING *
       `,
       [onboarding_id, status]
@@ -259,21 +253,20 @@ const approveVendor = async (req, res) => {
 
     if (result.rowCount === 0) {
       return res.status(404).json({
-        message: "Vendor not found",
+        message: "Vendor onboarding not found",
       });
     }
 
-    return res.status(200).json({
-      success: true,
+    return res.json({
       message: `Vendor status updated to ${status}`,
-      vendor: result.rows[0],
+      data: result.rows[0],
     });
 
   } catch (err) {
     console.error(err);
 
     return res.status(500).json({
-      message: err,
+      message: "Error updating vendor status",
     });
   }
 };
