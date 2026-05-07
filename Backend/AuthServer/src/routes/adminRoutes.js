@@ -27,26 +27,10 @@ router.post("/login", adminController.login);
 router.post("/refresh", adminController.refreshTokenHandler);
 router.post("/logout", adminController.logout);
 
-// Protected Admin Routes
-router.get(
-  "/me",
-  authMiddleware,
-  authorizeRoles("admin"),
-  adminController.getMe
-);
+router.get("/me",authMiddleware,authorizeRoles("admin"),adminController.getMe);
 
-router.get(
-  "/users",
-  authMiddleware,
-  authorizeRoles("admin"),
-  adminController.getAllUsers
-);
+router.get( "/users", authMiddleware, authorizeRoles("admin"), adminController.getAllUsers);
 
-router.get(
-  "/onboarding-vendors",
-  authMiddleware,
-  authorizeRoles("admin"),
-  adminController.getAllOnboardingVendors
-);
+router.get("/onboarding-vendors", authMiddleware, authorizeRoles("admin"), adminController.getAllOnboardingVendors);
 
 module.exports = router;
