@@ -120,26 +120,26 @@ export const sendOtp = async (req, res) => {
 
     // ================= EMAIL OTP =================
     if (email) {
-      const emailOtp = Math.floor(100000 + Math.random() * 900000);
-      const key = `email:${email}`;
+  const emailOtp = Math.floor(100000 + Math.random() * 900000);
+  const key = `email:${email}`;
 
-      otpStore.set(key, {
-        otp: emailOtp,
-        expires,
-        verified: false,
-      });
+  otpStore.set(key, {
+    otp: emailOtp,
+    expires,
+    verified: false,
+  });
 
-      try {
-        await sendEmailOtp(email, emailOtp);
-        emailSent = true;
-      } catch (mailErr) {
-        console.error("EMAIL FAILED:", mailErr.message);
-        // DO NOT THROW → important fix
-      }
+  console.log("📨 EMAIL OTP GENERATED:", emailOtp);
 
-      console.log("EMAIL OTP GENERATED:", key, emailOtp);
-    }
+  try {
+    const result = await sendEmailOtp(email, emailOtp);
 
+    console.log("✅ EMAIL SENT:", result?.messageId);
+    emailSent = true;
+  } catch (err) {
+    console.error("❌ EMAIL ERROR FULL:", err);
+  }
+}
     return res.status(200).json({
       message: "OTP process completed",
       emailSent,
