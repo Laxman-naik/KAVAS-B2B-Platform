@@ -1,56 +1,7 @@
 "use client"
-import { useState } from "react";
-
-const vendorsData = [
-  {
-    name: "NovaParts Ltd",
-    category: "Electronics",
-    rating: 4.8,
-    orders: 340,
-    revenue: "₹420K",
-    status: "Approved",
-  },
-  {
-    name: "SteelWorks Co",
-    category: "Raw Materials",
-    rating: 4.5,
-    orders: 210,
-    revenue: "₹185K",
-    status: "Approved",
-  },
-  {
-    name: "ChemFirst Inc",
-    category: "Chemicals",
-    rating: 3.9,
-    orders: 88,
-    revenue: "₹76K",
-    status: "Pending KYC",
-  },
-  {
-    name: "TexLine Group",
-    category: "Textiles",
-    rating: 4.1,
-    orders: 157,
-    revenue: "₹98K",
-    status: "Approved",
-  },
-  {
-    name: "MachTech",
-    category: "Machinery",
-    rating: 2.8,
-    orders: 44,
-    revenue: "₹32K",
-    status: "Flagged",
-  },
-  {
-    name: "GreenSource",
-    category: "Organic",
-    rating: 4.7,
-    orders: 73,
-    revenue: "₹54K",
-    status: "Pending KYC",
-  },
-];
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchOnboardingVendorsThunk } from "@/store/slices/authSlice";
 
 const statusStyles = {
   Approved: "bg-green-500/20 text-green-400",
@@ -59,10 +10,13 @@ const statusStyles = {
 };
 
 export default function VendorsTable() {
+  const dispatch = useDispatch();
   const [search, setSearch] = useState("");
-
-  // 🔥 NEW STATES
   const [showModal, setShowModal] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const { onboardingVendors = [], loading } = useSelector((state) => state.auth);
 
   const [form, setForm] = useState({
     name: "",
@@ -76,14 +30,16 @@ export default function VendorsTable() {
     message: "",
   });
 
-  const [vendors, setVendors] = useState(vendorsData);
+  useEffect(() => {
+    dispatch(fetchOnboardingVendorsThunk());
+  }, [dispatch]);
 
-  // 🔥 FILTER
-  const filtered = vendors.filter((v) =>
-    v.name.toLowerCase().includes(search.toLowerCase())
+  console.log(onboardingVendors)
+
+  const filtered = onboardingVendors.filter((v) =>
+    v.business_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🔥 SUBMIT FUNCTION
   const handleSubmit = () => {
     if (!form.name || !form.category) return;
 
@@ -112,13 +68,15 @@ export default function VendorsTable() {
     });
   };
 
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleString("en-IN", {day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",});
+  };
+
   return (
     <div className="p-4 md:p-8 min-h-screen bg-[#0b1220] text-white">
-
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-semibold">Vendors</h1>
-
         <div className="flex gap-3">
           <input
             type="text"
@@ -132,7 +90,6 @@ export default function VendorsTable() {
             Export
           </button>
 
-          {/* 🔥 UPDATED BUTTON */}
           <button
             onClick={() => setShowModal(true)}
             className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 transition duration-200"
@@ -142,18 +99,17 @@ export default function VendorsTable() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-gray-800">
         <table className="min-w-full text-sm">
           <thead className="bg-[#111827] text-gray-400">
             <tr>
               {[
                 "Vendor",
-                "Category",
-                "Rating",
+                "Business Type",
                 "Orders",
                 "Revenue",
                 "Status",
+                "Actions"
               ].map((h) => (
                 <th key={h} className="px-6 py-4 text-left font-medium ">
                   {h}
@@ -161,30 +117,51 @@ export default function VendorsTable() {
               ))}
             </tr>
           </thead>
-
           <tbody>
-            {filtered.map((v, i) => (
+            {filtered.map((v) => (
               <tr
-                key={i}
-                className="border-t border-gray-800 hover:bg-[#0d1424] transition duration-200 bg-[#111827]"
+                key={v.onboarding_id}
+                className="border-t border-gray-800 hover:bg-[#0d1424] bg-[#111827]"
               >
-                <td className="px-6 py-4 font-medium">{v.name}</td>
-                <td className="px-6 py-4 text-gray-300">{v.category}</td>
-                <td
-                  className={`px-6 py-4 font-medium flex items-center gap-1 ${
-                    v.rating < 3 ? "text-red-400" : "text-yellow-400"
-                  }`}
-                >
-                  ★ {v.rating}
+                <td className="px-6 py-4 font-medium">
+                  {v.business_name}
                 </td>
-                <td className="px-6 py-4">{v.orders}</td>
-                <td className="px-6 py-4">{v.revenue}</td>
+
+                <td className="px-6 py-4 text-gray-300">
+                  {v.business_type}
+                </td>
+
                 <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${statusStyles[v.status]}`}
-                  >
+                  {v.orders || "-"}
+                </td>
+
+                <td className="px-6 py-4">
+                  ₹{v.revenue || "0"}
+                </td>
+
+                <td className="px-6 py-4">
+                  <span className="px-3 py-1 rounded-full text-xs bg-blue-500/20 text-blue-400">
                     {v.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 flex gap-2">
+
+                  <button
+                    onClick={() => handleView(v)}
+                    className="px-3 py-1 text-xs rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedVendor(v);
+                      setShowEditModal(true);
+                    }}
+                    className="px-3 py-1 text-xs rounded bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
+                  >
+                    Edit
+                  </button>
                 </td>
               </tr>
             ))}
@@ -192,7 +169,74 @@ export default function VendorsTable() {
         </table>
       </div>
 
-      {/* 🔥 MODAL */}
+      {showEditModal && selectedVendor && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl p-6 relative">
+            <button onClick={() => setShowEditModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-black text-xl">✕</button>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">{selectedVendor.business_name}</h2>
+              <p className="text-sm text-gray-500">{selectedVendor.email} • {selectedVendor.phone}</p>
+            </div>
+            <Section title="Basic Info">
+              <Info label="Status" value={selectedVendor.status} />
+              <Info label="City" value={selectedVendor.city} />
+              <Info label="State" value={selectedVendor.state} />
+              <Info label="Pincode" value={selectedVendor.pincode} />
+              {/* <Info label="Created At" value={selectedVendor.created_at} /> */}
+              <Info label="Submitted At" value={formatDate(selectedVendor.submitted_at)} />
+            </Section>
+            <Section title="Business Details">
+              <Info label="Business Name" value={selectedVendor.business_name} />
+              <Info label="Registered Name" value={selectedVendor.registered_name} />
+              <Info label="Type" value={selectedVendor.business_type} />
+              <Info label="Registration No" value={selectedVendor.registration_number} />
+              <Info label="PAN" value={selectedVendor.pan} />
+              <Info label="GST" value={selectedVendor.gstin} />
+              <Info label="Address" value={selectedVendor.business_address} />
+            </Section>
+            <Section title="Contact">
+              <Info label="Email" value={selectedVendor.email} />
+              <Info label="Email Verified" value={String(selectedVendor.email_verified)} />
+              <Info label="Phone" value={selectedVendor.phone} />
+              <Info label="Phone Verified" value={String(selectedVendor.phone_verified)} />
+            </Section>
+            <Section title="Bank Details">
+              <Info label="Account Holder" value={selectedVendor.account_holder_name} />
+              <Info label="Account Number" value={selectedVendor.account_number} />
+              <Info label="IFSC" value={selectedVendor.ifsc_code} />
+              <Info label="Bank Verified" value={String(selectedVendor.bank_verified)} />
+            </Section>
+            <Section title="Store Details">
+              <Info label="Tagline" value={selectedVendor.tagline} />
+              <Info label="Description" value={selectedVendor.description} />
+              <div className="flex gap-4 mt-3">
+                {selectedVendor.store_image && (<img src={selectedVendor.store_image} className="w-40 h-24 object-cover rounded border" />)}
+                {selectedVendor.store_logo && (<img src={selectedVendor.store_logo} className="w-20 h-20 object-contain border rounded" />)}
+              </div>
+            </Section>
+            <Section title="Pickup Address">
+              <Info label="Address" value={selectedVendor.pickup_address} />
+              <Info label="City" value={selectedVendor.pickup_city} />
+              <Info label="State" value={selectedVendor.pickup_state} />
+              <Info label="Pincode" value={selectedVendor.pickup_pincode} />
+            </Section>
+            <Section title="System Flags">
+              <Info label="Is Active" value={String(selectedVendor.is_active)} />
+              <Info label="Is Store Address" value={String(selectedVendor.is_store_address)} />
+              <Info label="Vendor ID" value={selectedVendor.vendor_id} />
+              <Info label="Onboarding ID" value={selectedVendor.onboarding_id} />
+              <Info label="Rejection Reason" value={selectedVendor.rejection_reason || "-"} />
+            </Section>
+            <div className="border-t pt-4 mt-6 space-y-3">
+              <textarea className="w-full border rounded p-2 text-sm" placeholder="Rejection reason" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
+              <div className="flex gap-3">
+                <button onClick={() => approveVendor(selectedVendor.onboarding_id)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">{selectedVendor.status}</button>
+                <button onClick={() => rejectVendor(selectedVendor.onboarding_id)} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Reject</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-2">
           <div className="w-full max-w-2xl bg-[#0F1E33] rounded-2xl p-6 text-white shadow-xl">
@@ -298,3 +342,23 @@ export default function VendorsTable() {
     </div>
   );
 }
+
+const Info = ({ label, value }) => (
+  <div className="flex flex-col">
+    <span className="text-gray-500 text-xs">{label}</span>
+    <span className="font-medium text-gray-800 wrap-break-words">
+      {value ?? "-"}
+    </span>
+  </div>
+);
+
+const Section = ({ title, children }) => (
+  <div className="mb-6">
+    <h3 className="font-semibold text-gray-700 mb-3 border-b pb-1">
+      {title}
+    </h3>
+    <div className="grid grid-cols-2 gap-4 text-sm">
+      {children}
+    </div>
+  </div>
+);

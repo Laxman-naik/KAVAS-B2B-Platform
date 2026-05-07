@@ -5,24 +5,20 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  BadgeCheck,
-  Building2,
-  CheckCircle2,
-  ChevronDown,
-  Circle,
-  HelpCircle,
-  Landmark,
-  Lock,
-  MapPin,
-  Phone,
-  ShieldCheck,
-} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
+import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal, updateOnboardingStep  } from "@/store/slices/vendorSlice";
 
 export default function VendorBusinessDetailsPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const businessInfoRef = useRef(null);
   const bankDetailsRef = useRef(null);
+  const vendor = useSelector((state) => state.vendor.vendor);
+const business = useSelector((state) => state.vendor.business);
+const bank = useSelector((state) => state.vendor.bank);
+const vendorId = vendor?.id;
+  
 
   const [form, setForm] = useState({
     businessName: "",
@@ -42,19 +38,58 @@ export default function VendorBusinessDetailsPage() {
 
   const [activeSection, setActiveSection] = useState("business_info");
 
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!vendorId || !token) return;
+
+  dispatch(fetchVendorProfile(vendorId));
+  dispatch(fetchBusinessDetails());
+  dispatch(fetchBankDetails());
+}, [vendorId, dispatch]);
+
+useEffect(() => {
+  if (business) {
+    setForm(prev => ({
+      ...prev,
+      businessName: business.business_name || "",
+      businessType: business.business_type || "",
+      registeredBusinessName: business.registered_name || "",
+      businessPan: business.pan || "",
+      gstin: business.gstin || "",
+      businessRegNo: business.registration_number || "",
+      businessAddress: business.address || "",
+      pincode: business.pincode || "",
+      city: business.city || "",
+      state: business.state || "",
+    }));
+  }
+}, [business]);
+
+useEffect(() => {
+  if (bank) {
+    setForm(prev => ({
+      ...prev,
+      accountHolderName: bank.account_holder_name || "",
+      bankAccountNumber: bank.account_number || "",
+      ifsc: bank.ifsc_code || "",
+    }));
+  }
+}, [bank]);
+
   const setValue = (key) => (e) => {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-  const verificationItems = useMemo(
-    () => [
-      { label: "Mobile Verification", done: false },
-      { label: "Email Verification", done: false },
-      { label: "ID Verification", done: false },
-      { label: "Signature Verification", done: false },
-    ],
-    []
-  );
+const verificationItems = useMemo(() => {
+  const v = vendor; 
+  return [
+    { label: "Mobile Verification", done: v?.phone_verified === true },
+    { label: "Email Verification", done: v?.email_verified === true },
+    // { label: "ID Verification", done: v?.id_verified === true },
+    // { label: "Signature Verification", done: v?.signature_verified === true },
+  ];
+}, [vendor]);
 
   const requiredBusinessFields = useMemo(
     () => [
@@ -132,17 +167,52 @@ export default function VendorBusinessDetailsPage() {
         setActiveSection("business_info");
       }
     };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
     if (!(businessInfoComplete && bankDetailsComplete)) return;
+
+    // 1. Save business details
+    await dispatch(saveBusinessDetails({
+      business_name: form.businessName,
+      business_type: form.businessType,
+      registered_name: form.registeredBusinessName,
+      pan: form.businessPan,
+      gstin: form.gstin,
+      registration_number: form.businessRegNo,
+      address: form.businessAddress,
+      pincode: form.pincode,
+      city: form.city,
+      state: form.state,
+    })).unwrap();
+
+    // 2. Save bank details
+    await dispatch(saveBankDetails({
+      account_holder_name: form.accountHolderName,
+      account_number: form.bankAccountNumber,
+      ifsc_code: form.ifsc,
+    })).unwrap();
+
+    await dispatch(updateOnboardingStep(2)).unwrap();
+
+    // 3. Move to next step only after success
     router.push("/vendor/vendorstoredetails");
-  };
+
+  } catch (err) {
+    console.error("Save failed:", err);
+    alert("Failed to save details");
+  }
+};
+
+const handleLogout = () => {
+  dispatch(logoutLocal());
+  router.push("/vendor/vendorlogin");
+};
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
@@ -176,7 +246,7 @@ export default function VendorBusinessDetailsPage() {
             </div>
           </div>
 
-          <div className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
+          <div onClick={handleLogout} className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
         </div>
       </header>
 
@@ -199,27 +269,7 @@ export default function VendorBusinessDetailsPage() {
                 <div className="mt-3 grid gap-2">
                   {verificationItems.slice(0, 2).map((x) => (
                     <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      {x.done ? (
-                        <CheckCircle2 size={14} className="text-[#0B1F3A]" />
-                      ) : (
-                        <Circle size={14} className="text-gray-300" />
-                      )}
-                      <div className="font-semibold">{x.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="text-xs font-bold text-[#0B1F3A]">ID &amp; Signature Verification</div>
-                <div className="mt-3 grid gap-2">
-                  {verificationItems.slice(2).map((x) => (
-                    <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      {x.done ? (
-                        <CheckCircle2 size={14} className="text-[#0B1F3A]" />
-                      ) : (
-                        <Circle size={14} className="text-gray-300" />
-                      )}
+                      {x.done ? (<CheckCircle2 size={14} className="text-[#0B1F3A]" />) : (<Circle size={14} className="text-gray-300" />)}
                       <div className="font-semibold">{x.label}</div>
                     </div>
                   ))}
@@ -260,21 +310,6 @@ export default function VendorBusinessDetailsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="text-xs font-bold text-[#0B1F3A]">Listing &amp; Stock Availability</div>
-                <div className="mt-3 grid gap-2">
-                  {[
-                    "Listing Created",
-                    "Stock Added",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      <Circle size={14} className="text-gray-300" />
-                      <div className="font-semibold">{x}</div>
-                    </div>
-                  ))}
-                </div>
-              </div> */}
             </div>
           </aside>
 
@@ -294,7 +329,7 @@ export default function VendorBusinessDetailsPage() {
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        Business / Store Name <span className="text-red-500">*</span>
+                        Business holder Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         value={form.businessName}
@@ -338,7 +373,7 @@ export default function VendorBusinessDetailsPage() {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        Business PAN <span className="text-red-500">*</span>
+                        PAN <span className="text-red-500">*</span>
                       </label>
                       <input
                         value={form.businessPan}
@@ -350,7 +385,7 @@ export default function VendorBusinessDetailsPage() {
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        GSTIN <span className="text-red-500">*</span>
+                        GSTIN (Optional)
                       </label>
                       <div className="mt-2 relative">
                         <input
@@ -359,12 +394,6 @@ export default function VendorBusinessDetailsPage() {
                           placeholder="Enter GSTIN"
                           className="w-full h-11 rounded-md border border-[#E5E5E5] px-3 pr-28 text-sm outline-none focus:border-[#0B1F3A]"
                         />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-extrabold text-[#0B1F3A] hover:underline"
-                        >
-                          Verify GSTIN
-                        </button>
                       </div>
                     </div>
 
