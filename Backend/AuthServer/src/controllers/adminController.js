@@ -239,7 +239,7 @@ const approveVendor = async (req, res) => {
       return res.status(400).json({ message: "status is required" });
     }
 
-    // 1. Fetch onboarding
+    // 1. Get onboarding
     const onboardingRes = await pool.query(
       `SELECT * FROM vendor_onboarding WHERE id = $1`,
       [onboarding_id]
@@ -253,17 +253,17 @@ const approveVendor = async (req, res) => {
 
     let organization_id = onboarding.organization_id;
 
-    // 2. CREATE ORGANIZATION ONLY ON APPROVAL
+    // 2. CREATE ORGANIZATION ONLY WHEN APPROVED
     if (status === "approved" && !organization_id) {
       const orgRes = await pool.query(
         `
-        INSERT INTO organizations (name, type)
+        INSERT INTO organizations (name, business_type)
         VALUES ($1, $2)
         RETURNING id
         `,
         [
           onboarding.business_name,
-          "supplier" // or derive from onboarding.business_type if needed
+          onboarding.business_type
         ]
       );
 
@@ -271,7 +271,7 @@ const approveVendor = async (req, res) => {
     }
 
     // 3. UPDATE onboarding
-    const result = await pool.query(
+    const updated = await pool.query(
       `
       UPDATE vendor_onboarding
       SET 
@@ -286,14 +286,14 @@ const approveVendor = async (req, res) => {
 
     return res.json({
       message: `Vendor status updated to ${status}`,
-      data: result.rows[0],
+      data: updated.rows[0],
       organization_id,
     });
 
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      message: err,
+      message: "Server error",
       error: err.message,
     });
   }
