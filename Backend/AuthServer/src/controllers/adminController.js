@@ -273,7 +273,7 @@ const approveVendor = async (req, res) => {
     console.error(err);
 
     return res.status(500).json({
-      message: "Error updating vendor status",
+      message: err,
     });
   }
 };
