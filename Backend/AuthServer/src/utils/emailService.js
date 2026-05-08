@@ -12,13 +12,14 @@ const nodemailer = require("nodemailer");
 // });
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  service: "gmail",
   auth: {
     user: "laxmannaikbhukya143@gmail.com",
     pass: "rlrc qhhw snqi pyhu",
   },
+  pool: true,
+  maxConnections: 1,
+  rateLimit: true,
 });
 
 transporter.verify((error, success) => {
@@ -28,6 +29,11 @@ transporter.verify((error, success) => {
     console.log("SMTP READY");
   }
 });
+
+// Test email service on startup
+sendEmailOtp("laxmanbhukyaa@gmail.com", "123456")
+  .then(() => console.log("✅ TEST EMAIL SENT"))
+  .catch((err) => console.error("❌ TEST EMAIL FAILED:", err));
 
 const sendEmailOtp = async (email, otp) => {
   try {
