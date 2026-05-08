@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -11,45 +10,42 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
- const handleSubmit = async (data) => {
-  try {
-    const formData = new FormData();
+  const handleSubmit = async (data) => {
+    try {
+      const orgId = localStorage.getItem("organizationId");
 
-    formData.append("name", data.name);
-    formData.append("sku", data.sku);
-    formData.append("category", data.category);
-    formData.append("unit", data.unit);
-    formData.append("status", data.status);
-    formData.append("description", data.description);
-    formData.append("price", Number(data.price));
-    formData.append("mrp", Number(data.mrp));
-    formData.append("gst", Number(data.gst || 0));
-    formData.append("moq", Number(data.moq));
-    formData.append("stock", Number(data.stock));
+      if (!orgId) {
+        alert("Organization ID missing");
+        return;
+      }
 
-    // ✅ FIX UUID ISSUE HERE
-    const orgId = localStorage.getItem("organizationId");
-    if (!orgId) {
-      alert("Organization ID missing");
-      return;
+      const payload = {
+        name: data.name,
+        sku: data.sku,
+        category: data.category,
+        unit: data.unit,
+        status: data.status,
+        description: data.description,
+        price: Number(data.price),
+        mrp: Number(data.mrp),
+        gst: Number(data.gst || 0),
+        moq: Number(data.moq),
+        stock: Number(data.stock),
+        organizationId: orgId,
+
+        // backend currently accepts image URLs only, not file uploads
+        images: [],
+      };
+
+      await dispatch(addProduct(payload)).unwrap();
+
+      alert("✅ Product Added");
+      router.push("/vendor/products");
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "❌ Failed to add product");
     }
-    formData.append("organizationId", orgId);
-
-    // ✅ FIX IMAGE UPLOAD HERE
-    data.images.forEach((file) => {
-      formData.append("images", file);
-    });
-
-    await dispatch(addProduct(formData)).unwrap();
-
-    alert("✅ Product Added");
-    router.push("/vendor/products");
-
-  } catch (err) {
-    console.error(err);
-    alert("❌ Failed to add product");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
