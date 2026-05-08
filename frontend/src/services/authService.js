@@ -1,13 +1,17 @@
 import { authapi } from "../lib/axios";
 
 export const registerUserAPI = async (data) => {
-  const res = await authapi.post("/api/auth/register", data);
+  const res = await authapi.post("/api/auth/register", data, {
+    skipAuth: true,
+  });
   return res.data;
 };
 
 /* LOGIN */
 export const loginUser = async (data) => {
-  const res = await authapi.post("/api/auth/login", data);
+  const res = await authapi.post("/api/auth/login", data, {
+    skipAuth: true,
+  });
 
   localStorage.setItem("accessToken", res.data.accessToken);
   localStorage.setItem("refreshToken", res.data.refreshToken);
@@ -17,27 +21,21 @@ export const loginUser = async (data) => {
 
 /* GET ME */
 export const getMe = async () => {
-  const token = localStorage.getItem("accessToken");
-
-  const res = await authapi.get("/api/auth/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+  const res = await authapi.get("/api/auth/me");
   return res.data;
 };
 
 /* REFRESH */
-export const refreshToken = async () => {
-  const refreshToken = localStorage.getItem("refreshToken");
+export const refreshTokenAPI = async () => {
+  const token = localStorage.getItem("refreshToken");
 
-  const res = await authapi.post("/api/auth/refresh", {
-    refreshToken,
-  });
+  const res = await authapi.post(
+    "/api/auth/refresh",
+    { refreshToken: token },
+    { skipAuth: true }
+  );
 
   localStorage.setItem("accessToken", res.data.accessToken);
-
   return res.data.accessToken;
 };
 

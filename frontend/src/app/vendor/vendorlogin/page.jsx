@@ -5,12 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, TrendingUp, Boxes } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { loginVendor } from "@/store/slices/vendorSlice";
 
 export default function VendorLoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const blockedStatuses = ["in_review", "pending", "kyc_pending"];
 
   const leftItems = useMemo(
     () => [
@@ -33,9 +39,97 @@ export default function VendorLoginPage() {
     []
   );
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    router.push("/vendor/dashboard");
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const payload = {
+        password,
+        ...(identifier.includes("@")
+          ? { email: identifier }
+          : { phone: identifier }),
+      };
+
+      const data = await dispatch(loginVendor(payload)).unwrap();
+
+      console.log("LOGIN RESPONSE:", data);
+
+      if (!data) {
+        setError("Empty response from server");
+        return;
+      }
+
+      const {
+        status,
+        onboarding_step,
+        next_action,
+        vendor,
+        message,
+      } = data;
+
+      // 🚨 safety guard
+      if (!status) {
+        setError("Missing status from backend response");
+        return;
+      }
+
+      if (status === "in_review") {
+        alert("Your application is under review. Please wait for admin approval.");
+        return;
+      }
+
+      if (status === "kyc_pending") {
+        alert("Your KYC is pending. admin will contact you.");
+        return;
+      }
+
+      if (status === "rejected") {
+        alert(`Your application was rejected. Reason: ${rejection_reason || "Not provided"}`);
+        return;
+      }
+
+      if (status === "approved") {
+        router.push("/vendor/dashboard");
+      }
+
+      if (status === "rejected") {
+        router.push("/vendor/rejected");
+        return;
+      }
+
+      if (status === "draft") {
+        if (onboarding_step === 1) {
+          router.push("/vendor/vendorbusinessdetails");
+          return;
+        }
+
+        if (onboarding_step === 2) {
+          router.push("/vendor/vendorstoredetails");
+          return;
+        }
+
+        router.push("/vendor/vendorbusinessdetails");
+        return;
+      }
+
+      router.push("/vendor/dashboard");
+
+    } catch (err) {
+
+      const msg =
+        err?.data?.message ||
+        err?.payload?.message ||
+        err?.message ||
+        err ||
+        null;
+
+      setError(msg || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -179,26 +273,16 @@ export default function VendorLoginPage() {
 
                   <button
                     type="submit"
-                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold hover:opacity-90"
+                    disabled={loading}
+                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
                   >
-                    Login
+                    {loading ? "Logging in..." : "Login"}
                   </button>
-
-                  <div className="flex items-center gap-4">
-                    <div className="h-px flex-1 bg-[#E5E5E5]" />
-                    <div className="text-xs text-gray-500">or</div>
-                    <div className="h-px flex-1 bg-[#E5E5E5]" />
-                  </div>
-
-                  <button
-                    type="button"
-                    className="h-11 w-full rounded-sm border border-[#E5E5E5] bg-white text-sm font-semibold text-[#1A1A1A] hover:bg-[#FFF8EC]"
-                  >
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <span className="text-base">G</span>
-                      Login with Google
-                    </span>
-                  </button>
+                  {error && (
+                    <div className="mt-4 text-sm text-red-500 text-center">
+                      {error}
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
