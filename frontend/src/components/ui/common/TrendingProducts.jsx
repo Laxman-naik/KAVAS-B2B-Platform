@@ -18,7 +18,7 @@ export default function TrendingProducts() {
   return (
 
     <div className="bg-white">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -69,7 +69,7 @@ export default function TrendingProducts() {
                 <div className="text-[11px] text-gray-500 mt-0.5">
                   Min. {item.moq} units
                 </div>
-                <div className="flex items-center text-[11px] gap-1 mt-2 text-gray-600 mt-auto">
+                <div className="flex items-center text-[11px] gap-1  text-gray-600 mt-auto">
                   <span className="w-2 h-2 bg-[#D4AF37] rounded-full" />
                   <span className="truncate">{item.stock}</span>
                 </div>

@@ -79,43 +79,43 @@ const DashboardBody = () => {
     },
   ];
 
-  const topProducts = [
-    {
-      name: "Organic Turmeric Powder 500g",
-      sold: 1240,
-      stock: 450,
-      revenueK: 371,
-      trend: "up",
-    },
-    {
-      name: "Cold Pressed Coconut Oil 1L",
-      sold: 890,
-      stock: 320,
-      revenueK: 401,
-      trend: "up",
-    },
-    {
-      name: "Handwoven Jute Bags",
-      sold: 650,
-      stock: 180,
-      revenueK: 585,
-      trend: "down",
-    },
-    {
-      name: "Organic Basmati Rice 25kg",
-      sold: 520,
-      stock: 95,
-      revenueK: 780,
-      trend: "up",
-    },
-    {
-      name: "Amla Powder 1kg",
-      sold: 480,
-      stock: 210,
-      revenueK: 144,
-      trend: "stable",
-    },
-  ];
+  // const topProducts = [
+  //   {
+  //     name: "Organic Turmeric Powder 500g",
+  //     sold: 1240,
+  //     stock: 450,
+  //     revenueK: 371,
+  //     trend: "up",
+  //   },
+  //   {
+  //     name: "Cold Pressed Coconut Oil 1L",
+  //     sold: 890,
+  //     stock: 320,
+  //     revenueK: 401,
+  //     trend: "up",
+  //   },
+  //   {
+  //     name: "Handwoven Jute Bags",
+  //     sold: 650,
+  //     stock: 180,
+  //     revenueK: 585,
+  //     trend: "down",
+  //   },
+  //   {
+  //     name: "Organic Basmati Rice 25kg",
+  //     sold: 520,
+  //     stock: 95,
+  //     revenueK: 780,
+  //     trend: "up",
+  //   },
+  //   {
+  //     name: "Amla Powder 1kg",
+  //     sold: 480,
+  //     stock: 210,
+  //     revenueK: 144,
+  //     trend: "stable",
+  //   },
+  // ];
 
   /* ---------------- CALCULATIONS ---------------- */
 
@@ -153,8 +153,8 @@ const DashboardBody = () => {
       accent: "bg-green-100 text-green-700",
     },
     {
-      title: "Avg Order Value",
-      value: "Rs. 3,362",
+      title: "Cancelled Orders",
+      value: "20",
       change: "+3.8%",
       icon: BarChart3,
       accent: "bg-orange-100 text-orange-700",
@@ -355,10 +355,10 @@ const DashboardBody = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
 
         {/* RECENT ORDERS */}
-        <div className="lg:col-span-2 bg-white border border-[#E5E5E5] rounded-2xl shadow-sm overflow-hidden">
+        <div className="lg:col-span-2 max-w-full bg-white border border-[#E5E5E5] rounded-sm shadow-sm overflow-hidden">
           <div className="p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -425,8 +425,8 @@ const DashboardBody = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        {/* <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm"> */}
+          {/* <div className="flex items-center justify-between">
             <div>
               <div className="text-base font-extrabold text-[#0B1F3A]">Top Products</div>
               <div className="mt-1 text-xs text-gray-500">Best performing products this month</div>
@@ -434,9 +434,9 @@ const DashboardBody = () => {
             <a href="/vendor/products" className="text-xs font-bold text-[#D4AF37] hover:underline">
               View All
             </a>
-          </div>
+          </div> */}
 
-          <div className="mt-5 grid gap-4">
+          {/* <div className="mt-5 grid gap-4">
             {topProducts.map((p, idx) => {
               const trendLabel = p.trend === "up" ? "Trending up" : p.trend === "down" ? "Declining" : "Stable";
               const trendIcon = p.trend === "up" ? ArrowUpRight : p.trend === "down" ? ArrowDownRight : null;
@@ -468,9 +468,9 @@ const DashboardBody = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
-      </div>
+          </div> */}
+        {/* </div> */}
+      {/* </div> */}
     </div>
   );
 };

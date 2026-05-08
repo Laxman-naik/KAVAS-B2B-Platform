@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, Clock, Handshake, HelpCircle, Mail, MapPin, MessageCircle, Phone, ShieldCheck, Tag, Truck, Wrench, } from "lucide-react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, } from "react-icons/fa";
 
@@ -25,47 +26,69 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
-      <div className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80)",
-          }}
-        />
-        <div className="absolute inset-0 bg-[#0B1F3A] " />
+   
+  <div className="bg-[#0B1F3A] w-full px-4 sm:px-6 lg:px-8 overflow-hidden">
+  <div className="max-w-7xl mx-auto py-10 md:py-14">
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 text-white">
-          <p className="text-xs text-white/80 mb-3">
-            <Link href="/">
-              <span className="hover:text-[#D4AF37]">Home</span>
-            </Link>
-            <span className="mx-1">››</span>
-            <span className="font-semibold">Contact Us</span>
-          </p>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+    
+      <div className="text-white">
 
-          <div className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide">
-            WE'RE HERE TO HELP!
-          </div>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight">
+          Contact{" "}
+          <span className="text-[#D4AF37]">
+            Us
+          </span>
+        </h1>
 
-          <h1 className="mt-3 text-4xl md:text-5xl font-extrabold">Contact Us</h1>
+        <p className="mt-4 text-lg sm:text-xl font-bold text-[#D4AF37]">
+          Get in Touch with KAVAS Wholesale Hub
+        </p>
 
-          <p className="mt-2 text-[#D4AF37] text-lg font-bold">
-            Get in Touch with KAVAS Wholesale Hub
-          </p>
+        <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/75 leading-relaxed">
+          We are committed to supporting our customers and
+          business partners. Whether you have inquiries related
+          to bulk orders, wholesale partnerships, shipping,
+          or technical support, our team is here to assist you
+          with fast and reliable service.
+        </p>
 
-          <p className="mt-3 max-w-2xl text-sm text-white/80">
-            We are committed to supporting our customers and business partners.
-            Whether you have inquiries related to bulk orders, wholesale partnerships,
-            shipping, or technical support, our team is here to assist you.
-          </p>
+        <div className="mt-6 flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3 w-fit backdrop-blur-sm">
+          <ShieldCheck className="h-5 w-5 text-[#D4AF37] shrink-0 mt-0.5" />
 
-          <div className="mt-4 flex items-center gap-2 text-sm text-white/75">
-            <ShieldCheck className="h-4 w-4 text-[#D4AF37]" />
-            <span>Trusted by growing businesses across India for reliable wholesale sourcing.</span>
-          </div>
+          <span className="text-sm text-white/80">
+            Trusted by growing businesses across India
+            for reliable wholesale sourcing.
+          </span>
         </div>
       </div>
+      <div className="hidden lg:flex justify-end relative">
+        <div className="absolute inset-0 flex justify-end items-center">
+          <div className="w-85 h-85 bg-[#D4AF37]/15 rounded-full blur-3xl" />
+        </div>
+
+        <Image
+          src="/kavasbuilding.png"
+          alt="Contact Support"
+          width={450}
+          height={380}
+          priority
+          className="
+            relative
+            object-contain
+            -ml-20
+            drop-shadow-[0_20px_40px_rgba(212,175,55,0.18)]
+            hover:scale-105
+            transition-transform
+            duration-500
+          "
+        />
+      </div>
+
+    </div>
+  </div>
+</div>
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
@@ -323,62 +346,62 @@ export default function ContactPage() {
             </div>
           </div>
           <div className="bg-white rounded-sm shadow-sm p-4 hover:shadow-xl hover:-translate-y-1 transition h-full">
-  <h3 className="font-semibold text-gray-800 mb-1">
-    Connect With Us
-  </h3>
+            <h3 className="font-semibold text-gray-800 mb-1">
+              Connect With Us
+            </h3>
 
-  <p className="text-sm text-gray-500 mb-3">
-    Stay updated with our latest offers and announcements
-  </p>
+            <p className="text-sm text-gray-500 mb-3">
+              Stay updated with our latest offers and announcements
+            </p>
 
-  <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
 
-    {/* LinkedIn */}
-    <a
-      href="https://www.linkedin.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#0A66C2] hover:bg-[#EAF4FF] transition"
-    >
-      <FaLinkedinIn size={14} />
-      LinkedIn
-    </a>
+              {/* LinkedIn */}
+              <a
+                href="https://www.linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#0A66C2] hover:bg-[#EAF4FF] transition"
+              >
+                <FaLinkedinIn size={14} />
+                LinkedIn
+              </a>
 
-    {/* Facebook */}
-    <a
-      href="https://www.facebook.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#1877F2] hover:bg-[#EAF2FF] transition"
-    >
-      <FaFacebookF size={14} />
-      Facebook
-    </a>
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#1877F2] hover:bg-[#EAF2FF] transition"
+              >
+                <FaFacebookF size={14} />
+                Facebook
+              </a>
 
-    {/* Twitter (X) */}
-    <a
-      href="https://twitter.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-black hover:bg-gray-100 transition"
-    >
-      <FaTwitter size={14} />
-      Twitter (X)
-    </a>
+              {/* Twitter (X) */}
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-black hover:bg-gray-100 transition"
+              >
+                <FaTwitter size={14} />
+                Twitter (X)
+              </a>
 
-    {/* Instagram */}
-    <a
-      href="https://www.instagram.com"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#E4405F] hover:bg-pink-50 transition"
-    >
-      <FaInstagram size={14} />
-      Instagram
-    </a>
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 border border-[#E5E5E5] px-3 py-1.5 rounded text-sm text-[#E4405F] hover:bg-pink-50 transition"
+              >
+                <FaInstagram size={14} />
+                Instagram
+              </a>
 
-  </div>
-</div>
+            </div>
+          </div>
           <div className="bg-[#0B1F3A] text-white rounded-sm shadow-sm p-5 hover:shadow-xl hover:-translate-y-1 transition flex flex-col justify-between h-full">
             <div>
               <div className="flex items-center gap-2 mb-2">

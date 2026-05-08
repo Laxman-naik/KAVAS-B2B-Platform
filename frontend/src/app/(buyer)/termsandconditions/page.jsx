@@ -3,7 +3,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {Shield, Lock, FileText, ShieldCheck,Scale} from "lucide-react";
+import { Shield, Lock, FileText,BadgeCheck, ShieldCheck, Scale } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 const sections = [
@@ -11,7 +12,7 @@ const sections = [
         id: "01",
         title: "Introduction",
         content:
-           "These Terms and Conditions govern your use of the KAVAS Wholesale Hub website (https://kavaswholesalehub.com) and services. By accessing or using our platform, you agree to comply with these Terms." 
+            "These Terms and Conditions govern your use of the KAVAS Wholesale Hub website (https://kavaswholesalehub.com) and services. By accessing or using our platform, you agree to comply with these Terms."
     },
     {
         id: "02",
@@ -131,48 +132,46 @@ const sections = [
 const page = () => {
     return (
         <div className="bg-[#FFF8EC] min-h-screen">
-
-            {/* HEADER */}
-            <div className="bg-[#0B1F3A] text-white p-7">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div>
-                        <p className="text-xs mb-1">
-                            <Link href="/">
-                                <span className="text-gray-400 hover:text-[#D4AF37]">Home</span>
-                            </Link>
-                            <span className="mx-1">{">>"}</span>
-                            <span className="font-semibold">Terms & Conditions</span>
-                        </p>
-
-                        <h1 className="text-4xl font-bold">
-                            Terms & <span className="text-[#D4AF37]">Conditions</span>
-                        </h1>
-
-                        <p className="mt-2 text-[#D4AF37]">
-                            Clear Rules. Safe Business. Trusted Partnership.
-                        </p>
-
-                        <p className="mt-2 text-gray-500">
-                            Please read our Terms & Conditions carefully. These terms govern your use of the
-                            <br />KAVAS Wholesale Hub platform, website, and services.
-                        </p>
-
-                        <Badge className="mt-4 bg-[#0B1F3A] border border-white/20 px-4 rounded-2xl flex items-center py-2 gap-2 w-fit">
-                            <ShieldCheck size={16} className="text-[#D4AF37]" />
-                            Effective Date: 01 August 2025
-                        </Badge>
-                    </div>
-
-                    <div className="hidden md:flex gap-4">
-                        <Shield size={80} />
-                        <Lock size={80} />
-                        <FileText size={80} />
+            <div className="bg-[#0B1F3A] overflow-hidden">
+                <div className="w-full px-4 sm:px-6 lg:px-8 ">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <div className="text-white">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+                                Terms &{" "}
+                                <span className="text-[#D4AF37]">Conditions</span>
+                            </h1>
+                            <p className="mt-3 text-sm sm:text-base font-semibold text-[#D4AF37]">
+                                Clear Rules. Safe Business. Trusted Partnership.
+                            </p>
+                            <p className="mt-4 text-sm sm:text-base text-white/75 leading-relaxed max-w-xl">
+                                Please read our Terms & Conditions carefully. These terms
+                                govern your use of the KAVAS Wholesale Hub platform,
+                                website, and services.
+                            </p>
+                            <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-white/10 border border-white/10 px-4 py-2 text-xs text-white/85 backdrop-blur-sm">
+                <BadgeCheck className="h-4 w-4 text-[#D4AF37]" />
+                <span className="font-semibold">Last Updated:</span>
+                <span>01 August 2025</span>
+              </div>
+                        </div>
+                        <div className="hidden lg:flex justify-end relative">
+                            <div className="absolute inset-0 flex justify-end items-center">
+                                <div className="w-[320px] h-80 bg-[#D4AF37]/10 rounded-full blur-3xl" />
+                            </div>
+                            <Image
+                                src="/termsandconditions.png"
+                                alt="Terms & Conditions"
+                                width={430}
+                                height={360}
+                                priority
+                                className=" relative object-contain -ml-20 drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)] hover:scale-105 transition-transform duration-500 "
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl bg-white mt-3 rounded-sm mx-auto border p-6 space-y-4">
-
+            <div className="w-full bg-white mt-3 rounded-sm mx-auto border p-6 space-y-4">
                 <div className="bg-[#F5EBD7] border border-[#E5D3A3] rounded-xl p-4 flex items-center gap-3">
                     <div className="bg-[#0B1F3A] text-white p-3 rounded-lg">
                         <ShieldCheck />
