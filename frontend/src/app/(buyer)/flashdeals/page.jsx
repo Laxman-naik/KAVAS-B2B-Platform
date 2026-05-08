@@ -346,8 +346,8 @@ export default function FlashDealsPage() {
               onClick={() => setSelectedCategory(item)}
               variant="outline"
               className={`rounded-lg px-4 py-2 text-sm transition ${selectedCategory === item
-                  ? "border-[#D4AF37] bg-[#D4AF37] font-semibold text-[#0B1F3A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
-                  : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#D4AF37] hover:bg-white"
+                ? "border-[#D4AF37] bg-[#D4AF37] font-semibold text-[#0B1F3A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
+                : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#D4AF37] hover:bg-white"
                 }`}
             >
               {item}
@@ -419,10 +419,12 @@ export default function FlashDealsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setViewMode("list")}
+                  onClick={() =>
+                    setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
+                  }
                   className={`h-10 w-10 rounded-lg border p-0 ${viewMode === "list"
-                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
-                      : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
+                    ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                    : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
                     }`}
                 >
                   <List className="h-[18px] w-[18px]" />
@@ -550,8 +552,8 @@ export default function FlashDealsPage() {
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === 1
-                      ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
-                      : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                    ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
+                    : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
                     }`}
                 >
                   ‹
@@ -565,8 +567,8 @@ export default function FlashDealsPage() {
                       variant="outline"
                       onClick={() => handlePageChange(page)}
                       className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === page
-                          ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
-                          : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                        : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
                         }`}
                     >
                       {page}
@@ -580,8 +582,8 @@ export default function FlashDealsPage() {
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === totalPages
-                      ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
-                      : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                    ? "cursor-not-allowed border-[#E5E5E5] bg-gray-100 text-gray-400"
+                    : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
                     }`}
                 >
                   ›

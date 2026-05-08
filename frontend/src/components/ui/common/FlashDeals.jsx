@@ -70,8 +70,7 @@ const FlashDeals = () => {
             </div>
 
             {/* RIGHT IMAGES */}
-            {/* RIGHT IMAGES */}
-            <div className="hidden lg:flex justify-center relative h-42.5">
+            <div className="hidden lg:flex justify-center relative h-[170px]">
 
               {/* glow */}
               <div className="absolute bottom-0 w-56 h-12 bg-[#D4AF37] blur-xl opacity-30 rounded-full"></div>

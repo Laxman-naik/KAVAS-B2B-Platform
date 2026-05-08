@@ -1,104 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {Search, Eye, Download, Printer, ChevronLeft, ChevronRight, Clock, RefreshCcw,Truck,CheckCircle2, XCircle,} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Search,
+  Eye,
+  Download,
+  Printer,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  RefreshCcw,
+  Truck,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
+
+import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
-  const ordersData = [
-    {
-      id: "ORD-2024-8821",
-      buyer: "Sharma Industries Pvt Ltd",
-      email: "procurement@sharmaind.com",
-      buyerLocation: "Mumbai, Maharashtra",
-      itemsCount: 2,
-      units: 70,
-      product: "Industrial Grade Bearings x 500",
-      productThumbs: ["📦", "🧰"],
-      amount: 124000,
-      status: "Pending",
-      payment: "Pending",
-      paymentMethod: "NEFT",
-      date: "2026-04-21",
-    },
-    {
-      id: "ORD-2024-8820",
-      buyer: "Mehta Traders",
-      email: "orders@mehtatraders.in",
-      buyerLocation: "Pune, Maharashtra",
-      itemsCount: 1,
-      units: 30,
-      product: "Stainless Steel Fasteners x 2000",
-      productThumbs: ["🧴"],
-      amount: 56500,
-      status: "Processing",
-      payment: "Paid",
-      paymentMethod: "UPI",
-      date: "2026-04-20",
-    },
-    {
-      id: "ORD-2024-8819",
-      buyer: "Gupta Manufacturing Co.",
-      email: "purchase@guptamfg.com",
-      buyerLocation: "Bengaluru, Karnataka",
-      itemsCount: 1,
-      units: 20,
-      product: "HDPE Pipes 50mm x 1000m",
-      productThumbs: ["🛍️"],
-      amount: 210000,
-      status: "Delivered",
-      payment: "Paid",
-      paymentMethod: "RTGS",
-      date: "2026-04-19",
-    },
-    {
-      id: "ORD-2024-8818",
-      buyer: "Patel Enterprises",
-      email: "buy@patelent.com",
-      buyerLocation: "Ahmedabad, Gujarat",
-      itemsCount: 1,
-      units: 15,
-      product: "Copper Wire 2.5mm x 500kg",
-      productThumbs: ["🧴"],
-      amount: 88750,
-      status: "Cancelled",
-      payment: "Refunded",
-      paymentMethod: "Cheque",
-      date: "2026-04-18",
-    },
-    {
-      id: "ORD-2024-8817",
-      buyer: "Rajesh Steel Works",
-      email: "admin@rajeshsteel.in",
-      buyerLocation: "Surat, Gujarat",
-      itemsCount: 2,
-      units: 50,
-      product: "Hydraulic Seals Kit x 100",
-      productThumbs: ["📦", "🧰"],
-      amount: 345200,
-      status: "Shipped",
-      payment: "Paid",
-      paymentMethod: "Cheque",
-      date: "2026-04-17",
-    },
-  ];
+  const dispatch = useDispatch();
 
-  const [orders, setOrders] = useState(ordersData);
+  const { orders = [], loading, error } = useSelector((state) => state.order);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
+  useEffect(() => {
+    dispatch(fetchOrders());
+
+    const interval = setInterval(() => {
+      dispatch(fetchOrders());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
   const stats = useMemo(() => {
     const total = orders.length;
-    const pending = orders.filter((o) => o.status === "Pending").length;
-    const processing = orders.filter((o) => o.status === "Processing").length;
-    const shipped = orders.filter((o) => o.status === "Shipped").length;
-    const delivered = orders.filter((o) => o.status === "Delivered").length;
-    const cancelled = orders.filter((o) => o.status === "Cancelled").length;
+    const pending = orders.filter((o) => o.status === "pending").length;
+    const processing = orders.filter((o) => o.status === "processing").length;
+    const shipped = orders.filter((o) => o.status === "shipped").length;
+    const delivered = orders.filter((o) => o.status === "delivered").length;
+    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+
     const deliveredRevenue = orders
-      .filter((o) => o.status === "Delivered")
-      .reduce((acc, o) => acc + Number(o.amount || 0), 0);
+      .filter((o) => o.status === "delivered")
+      .reduce((acc, o) => acc + Number(o.total_amount || 0), 0);
+
     const needAttention = pending + processing;
 
     return {
@@ -113,7 +65,6 @@ export default function OrdersManagementBody() {
     };
   }, [orders]);
 
-
   const filteredOrders = useMemo(() => {
     const q = String(search || "").trim().toLowerCase();
 
@@ -121,12 +72,16 @@ export default function OrdersManagementBody() {
       const matchSearch =
         !q ||
         String(o.id).toLowerCase().includes(q) ||
-        String(o.buyer).toLowerCase().includes(q) ||
-        String(o.email).toLowerCase().includes(q);
+        String(o.buyer_name || "").toLowerCase().includes(q);
 
-      const matchStatus = statusFilter === "All" || o.status === statusFilter;
+      const matchStatus =
+        statusFilter === "All" || o.status === statusFilter;
 
-      const matchPayment = paymentFilter === "All Payments" || o.payment === paymentFilter;
+      const paymentValue = o.payment_status || o.payment || "pending";
+
+      const matchPayment =
+        paymentFilter === "All Payments" ||
+        paymentValue.toLowerCase() === paymentFilter.toLowerCase();
 
       return matchSearch && matchStatus && matchPayment;
     });
@@ -148,22 +103,22 @@ export default function OrdersManagementBody() {
     return `Showing ${start}-${end} of ${totalFiltered}`;
   }, [safePage, totalFiltered]);
 
-
-  const updateStatus = (id, next) => {
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: next } : o)));
+  const statusLabel = (status) => {
+    if (!status) return "Pending";
+    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
   };
 
   const statusStyle = (status) => {
     switch (status) {
-      case "Pending":
+      case "pending":
         return "bg-yellow-100 text-yellow-700";
-      case "Processing":
+      case "processing":
         return "bg-blue-100 text-blue-700";
-      case "Shipped":
+      case "shipped":
         return "bg-purple-100 text-purple-700";
-      case "Delivered":
+      case "delivered":
         return "bg-green-100 text-green-700";
-      case "Cancelled":
+      case "cancelled":
         return "bg-red-100 text-red-700";
       default:
         return "bg-gray-100";
@@ -171,9 +126,11 @@ export default function OrdersManagementBody() {
   };
 
   const paymentStyle = (payment) => {
-    return payment === "Paid"
+    const value = String(payment || "pending").toLowerCase();
+
+    return value === "paid"
       ? "bg-green-100 text-green-700"
-      : payment === "Refunded"
+      : value === "refunded"
       ? "bg-gray-200 text-gray-600"
       : "bg-yellow-100 text-yellow-700";
   };
@@ -181,11 +138,26 @@ export default function OrdersManagementBody() {
   const tabs = useMemo(
     () => [
       { key: "All", label: "All Orders", icon: null, count: stats.total },
-      { key: "Pending", label: "Pending", icon: Clock, count: stats.pending },
-      { key: "Processing", label: "Processing", icon: RefreshCcw, count: stats.processing },
-      { key: "Shipped", label: "Shipped", icon: Truck, count: stats.shipped },
-      { key: "Delivered", label: "Delivered", icon: CheckCircle2, count: stats.delivered },
-      { key: "Cancelled", label: "Cancelled", icon: XCircle, count: stats.cancelled },
+      { key: "pending", label: "Pending", icon: Clock, count: stats.pending },
+      {
+        key: "processing",
+        label: "Processing",
+        icon: RefreshCcw,
+        count: stats.processing,
+      },
+      { key: "shipped", label: "Shipped", icon: Truck, count: stats.shipped },
+      {
+        key: "delivered",
+        label: "Delivered",
+        icon: CheckCircle2,
+        count: stats.delivered,
+      },
+      {
+        key: "cancelled",
+        label: "Cancelled",
+        icon: XCircle,
+        count: stats.cancelled,
+      },
     ],
     [stats]
   );
@@ -194,7 +166,9 @@ export default function OrdersManagementBody() {
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">Orders</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
+            Orders
+          </div>
           <div className="mt-1 text-sm text-gray-500">
             {stats.total} total orders · {stats.needAttention} need attention
           </div>
@@ -217,11 +191,28 @@ export default function OrdersManagementBody() {
           </button>
         </div>
       </div>
+
+      {loading && (
+        <div className="mt-4 text-sm font-semibold text-[#0B1F3A]">
+          Loading orders...
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-semibold">
+          {error}
+        </div>
+      )}
+
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl bg-[#0B1F3A] text-white p-5">
           <div className="text-xs text-white/70">Total Revenue</div>
-          <div className="mt-2 text-2xl font-extrabold">₹{Math.round(stats.deliveredRevenue / 100000) / 10}L</div>
-          <div className="mt-1 text-xs text-[#D4AF37] font-bold">from {stats.delivered} delivered orders</div>
+          <div className="mt-2 text-2xl font-extrabold">
+            ₹{Math.round(stats.deliveredRevenue / 100000) / 10}L
+          </div>
+          <div className="mt-1 text-xs text-[#D4AF37] font-bold">
+            from {stats.delivered} delivered orders
+          </div>
         </div>
 
         <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-5">
@@ -229,9 +220,13 @@ export default function OrdersManagementBody() {
             <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
               <Clock size={18} className="text-yellow-700" />
             </div>
-            <div className="text-lg font-extrabold text-yellow-700">{stats.pending}</div>
+            <div className="text-lg font-extrabold text-yellow-700">
+              {stats.pending}
+            </div>
           </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">Pending</div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Pending
+          </div>
         </div>
 
         <div className="rounded-2xl border border-[#E5E5E5] bg-[#EAF3FF] p-5">
@@ -239,9 +234,13 @@ export default function OrdersManagementBody() {
             <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
               <RefreshCcw size={18} className="text-blue-700" />
             </div>
-            <div className="text-lg font-extrabold text-blue-700">{stats.processing}</div>
+            <div className="text-lg font-extrabold text-blue-700">
+              {stats.processing}
+            </div>
           </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">Processing</div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Processing
+          </div>
         </div>
 
         <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
@@ -249,11 +248,16 @@ export default function OrdersManagementBody() {
             <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
               <Truck size={18} className="text-purple-700" />
             </div>
-            <div className="text-lg font-extrabold text-purple-700">{stats.shipped}</div>
+            <div className="text-lg font-extrabold text-purple-700">
+              {stats.shipped}
+            </div>
           </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">Shipped</div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Shipped
+          </div>
         </div>
       </div>
+
       <div className="mt-5 flex flex-col lg:flex-row gap-3">
         <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-105">
           <Search size={16} className="text-gray-400" />
@@ -276,18 +280,14 @@ export default function OrdersManagementBody() {
           }}
           className="h-11 w-full lg:w-47.5 rounded-xl border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
         >
-          {[
-            "All Payments",
-            "Paid",
-            "Pending",
-            "Refunded",
-          ].map((x) => (
+          {["All Payments", "paid", "pending", "refunded"].map((x) => (
             <option key={x} value={x}>
-              {x}
+              {x === "All Payments" ? x : statusLabel(x)}
             </option>
           ))}
         </select>
       </div>
+
       <div className="mt-4 rounded-2xl border border-[#E5E5E5] bg-white p-2 overflow-x-auto">
         <div className="flex items-center gap-2 min-w-max">
           {tabs.map((t) => {
@@ -309,7 +309,11 @@ export default function OrdersManagementBody() {
               >
                 {Icon ? <Icon size={16} /> : <span className="inline-block w-4" />}
                 {t.label}
-                <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-extrabold ${active ? "bg-white/15" : "bg-gray-100 text-gray-600"}`}>
+                <span
+                  className={`ml-1 rounded-full px-2 py-0.5 text-xs font-extrabold ${
+                    active ? "bg-white/15" : "bg-gray-100 text-gray-600"
+                  }`}
+                >
                   {t.count}
                 </span>
               </button>
@@ -317,95 +321,151 @@ export default function OrdersManagementBody() {
           })}
         </div>
       </div>
+
       <div className="mt-4 hidden md:block bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-[#FFF8EC]">
             <tr>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">ORDER ID</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">BUYER</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">ITEMS</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">AMOUNT</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">PAYMENT</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">STATUS</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">DATE</th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">ACTIONS</th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ORDER ID
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                BUYER
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ITEMS
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                AMOUNT
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                PAYMENT
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                STATUS
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                DATE
+              </th>
+              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
+                ACTIONS
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {pagedOrders.map((o) => {
+              const paymentValue = o.payment_status || o.payment || "pending";
+
               const actionLabel =
-                o.status === "Pending"
+                o.status === "pending"
                   ? "Mark Processing"
-                  : o.status === "Processing"
+                  : o.status === "processing"
                   ? "Mark Shipped"
-                  : o.status === "Shipped"
+                  : o.status === "shipped"
                   ? "Mark Delivered"
                   : null;
 
               const actionNext =
-                o.status === "Pending"
-                  ? "Processing"
-                  : o.status === "Processing"
-                  ? "Shipped"
-                  : o.status === "Shipped"
-                  ? "Delivered"
+                o.status === "pending"
+                  ? "processing"
+                  : o.status === "processing"
+                  ? "shipped"
+                  : o.status === "shipped"
+                  ? "delivered"
                   : null;
 
               return (
-                <tr key={o.id} className="border-t border-[#E5E5E5] hover:bg-[#FFF8EC] transition">
+                <tr
+                  key={o.id}
+                  className="border-t border-[#E5E5E5] hover:bg-[#FFF8EC] transition"
+                >
                   <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">{o.id}</div>
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      {o.id}
+                    </div>
                   </td>
 
                   <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">{o.buyer}</div>
-                    <div className="mt-1 text-xs text-gray-500">{o.buyerLocation}</div>
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      {o.buyer_name || "Unknown Buyer"}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      Buyer ID: {o.user_id || "-"}
+                    </div>
                   </td>
 
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="flex -space-x-2">
-                        {(o.productThumbs || []).slice(0, 2).map((x, idx) => (
-                          <div
-                            key={idx}
-                            className="h-8 w-8 rounded-lg bg-gray-100 border border-white flex items-center justify-center text-sm"
-                          >
-                            {x}
-                          </div>
-                        ))}
+                        <div className="h-8 w-8 rounded-lg bg-gray-100 border border-white flex items-center justify-center text-sm">
+                          📦
+                        </div>
                       </div>
 
                       <div>
                         <div className="text-sm font-extrabold text-[#0B1F3A]">
-                          {o.itemsCount} {o.itemsCount === 1 ? "product" : "products"}
+                          Order Items
                         </div>
-                        <div className="text-xs text-gray-500">{o.units} units</div>
+                        <div className="text-xs text-gray-500">
+                          View details
+                        </div>
                       </div>
                     </div>
                   </td>
 
                   <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">₹{Number(o.amount || 0).toLocaleString("en-IN")}</div>
-                    <div className="text-xs text-gray-500">{o.paymentMethod}</div>
+                    <div className="font-extrabold text-[#0B1F3A]">
+                      ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {o.payment_method || "-"}
+                    </div>
                   </td>
 
                   <td className="p-4">
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${paymentStyle(o.payment)}`}>
-                      <span className={`h-2 w-2 rounded-full ${o.payment === "Paid" ? "bg-green-600" : o.payment === "Refunded" ? "bg-gray-500" : "bg-yellow-600"}`} />
-                      {o.payment}
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${paymentStyle(
+                        paymentValue
+                      )}`}
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          String(paymentValue).toLowerCase() === "paid"
+                            ? "bg-green-600"
+                            : String(paymentValue).toLowerCase() === "refunded"
+                            ? "bg-gray-500"
+                            : "bg-yellow-600"
+                        }`}
+                      />
+                      {statusLabel(paymentValue)}
                     </span>
                   </td>
 
                   <td className="p-4">
-                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${statusStyle(o.status)}`}>
-                      {o.status}
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${statusStyle(
+                        o.status
+                      )}`}
+                    >
+                      {statusLabel(o.status)}
                     </span>
                   </td>
 
                   <td className="p-4">
-                    <div className="text-sm font-extrabold text-[#0B1F3A]">{new Date(o.date).toLocaleDateString()}</div>
-                    <div className="text-xs text-gray-500">09:15 am</div>
+                    <div className="text-sm font-extrabold text-[#0B1F3A]">
+                      {o.created_at
+                        ? new Date(o.created_at).toLocaleDateString()
+                        : "-"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {o.created_at
+                        ? new Date(o.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                    </div>
                   </td>
 
                   <td className="p-4">
@@ -421,7 +481,14 @@ export default function OrdersManagementBody() {
                       {actionLabel && actionNext ? (
                         <button
                           type="button"
-                          onClick={() => updateStatus(o.id, actionNext)}
+                          onClick={() =>
+                            dispatch(
+                              updateOrderStatus({
+                                orderId: o.id,
+                                status: actionNext,
+                              })
+                            )
+                          }
                           className="h-10 rounded-xl bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95"
                         >
                           {actionLabel}
@@ -439,32 +506,38 @@ export default function OrdersManagementBody() {
       </div>
 
       <div className="md:hidden space-y-3">
-        {pagedOrders.map((o) => (
-          <div key={o.id} className="bg-white border rounded-lg p-3">
-            <div className="flex justify-between">
-              <p className="font-medium">{o.id}</p>
-              <span className={`text-xs px-2 py-1 rounded ${statusStyle(o.status)}`}>
-                {o.status}
-              </span>
-            </div>
+        {pagedOrders.map((o) => {
+          const paymentValue = o.payment_status || o.payment || "pending";
 
-            <p className="text-sm mt-1">{o.buyer}</p>
-            <p className="text-xs text-gray-400">{o.product}</p>
+          return (
+            <div key={o.id} className="bg-white border rounded-lg p-3">
+              <div className="flex justify-between">
+                <p className="font-medium">{o.id}</p>
+                <span className={`text-xs px-2 py-1 rounded ${statusStyle(o.status)}`}>
+                  {statusLabel(o.status)}
+                </span>
+              </div>
 
-            <div className="flex justify-between mt-2 text-sm">
-              <span>₹{Number(o.amount || 0).toLocaleString("en-IN")}</span>
-              <span className={`px-2 py-1 rounded text-xs ${paymentStyle(o.payment)}`}>
-                {o.payment}
-              </span>
-            </div>
+              <p className="text-sm mt-1">{o.buyer_name || "Unknown Buyer"}</p>
+              <p className="text-xs text-gray-400">Order Items</p>
 
-            <div className="flex gap-2 mt-3">
-              <button className="flex-1 bg-gray-100 py-1 rounded text-sm">
-                View
-              </button>
+              <div className="flex justify-between mt-2 text-sm">
+                <span>
+                  ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                </span>
+                <span className={`px-2 py-1 rounded text-xs ${paymentStyle(paymentValue)}`}>
+                  {statusLabel(paymentValue)}
+                </span>
+              </div>
+
+              <div className="flex gap-2 mt-3">
+                <button className="flex-1 bg-gray-100 py-1 rounded text-sm">
+                  View
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-gray-500">
@@ -476,38 +549,44 @@ export default function OrdersManagementBody() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
             className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage <= 1 ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
+              safePage <= 1
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
             }`}
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
           </button>
 
-          {Array.from({ length: totalPages }).slice(0, 5).map((_, idx) => {
-            const p = idx + 1;
-            const active = p === safePage;
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${
-                  active
-                    ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                    : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
-                }`}
-              >
-                {p}
-              </button>
-            );
-          })}
+          {Array.from({ length: totalPages })
+            .slice(0, 5)
+            .map((_, idx) => {
+              const p = idx + 1;
+              const active = p === safePage;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${
+                    active
+                      ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                      : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
 
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
             className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage >= totalPages ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
+              safePage >= totalPages
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
             }`}
             aria-label="Next page"
           >
@@ -518,8 +597,6 @@ export default function OrdersManagementBody() {
     </div>
   );
 }
-
-
 
 function StatCard({ title, value, color }) {
   return (

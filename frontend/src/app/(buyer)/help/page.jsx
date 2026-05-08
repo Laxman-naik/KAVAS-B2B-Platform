@@ -1,23 +1,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  ArrowRight,
-  Boxes,
-  ChevronDown,
-  Clock,
-  CreditCard,
-  Headphones,
-  Mail,
-  MessageCircle,
-  Minus,
-  Package,
-  Phone,
-  Plus,
-  RotateCcw,
-  Search,
-  User,
-} from "lucide-react";
+import {ArrowRight,Boxes,ChevronDown,Clock,CreditCard,Headphones,Mail,MessageCircle,Minus,Package,Phone, Plus, RotateCcw,Search, User,} from "lucide-react";
 
 const Page = () => {
   const [query, setQuery] = useState("");
@@ -118,63 +102,64 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
-      <div className="bg-[#0B1F3A]">
-        <div className="w-full mx-auto px-6 sm:px-8 ">
+      <div className="bg-[#0B1F3A] overflow-hidden">
+  <div className="w-full px-4 sm:px-6 lg:px-8">
+    
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+    
+      <div>
+        <p className="text-[#D4AF37] text-[11px] font-semibold tracking-[0.2em] uppercase">
+          Help Center
+        </p>
 
-          
-          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] items-center">
-            <div>
-              <div className="text-[#D4AF37] text-[11px] font-semibold tracking-wider">
-                HELP CENTER
-              </div>
+        <h1 className="mt-2 text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          How Can We{" "}
+          <span className="text-[#D4AF37]">Help You?</span>
+        </h1>
 
-              <h1 className="mt-1 text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                How Can We Help You?
-              </h1>
+        <p className="mt-4 text-sm sm:text-base text-white/80 max-w-xl leading-relaxed">
+          Find answers to your questions or reach out to us.
+          We’re here to support you 24/7 with trusted assistance.
+        </p>
+        <form onSubmit={onSearch} className="mt-6 max-w-xl">
+          <div className="flex items-stretch overflow-hidden rounded-md border border-white/15 bg-white shadow-lg">
 
-              <p className="mt-3 text-white/80 text-sm max-w-lg">
-                Find answers to your questions or reach out to us.
-              </p>
+            <div className="flex items-center gap-2 px-4 flex-1">
+              <Search size={18} className="text-gray-500" />
 
-              <p className="mt-1 text-white/70 text-sm max-w-lg">
-                We’re here to help you 24/7.
-              </p>
-              <form onSubmit={onSearch} className="mt-4 max-w-lg">
-                <div className="flex items-stretch rounded-sm overflow-hidden border border-white/15 bg-white">
-
-                  <div className="flex items-center gap-2 px-3 flex-1">
-                    <Search size={16} className="text-gray-500" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search help articles..."
-                      className="w-full h-10 text-sm outline-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-4 bg-[#D4AF37] text-[#0B1F3A] font-semibold text-sm"
-                  >
-                    Search
-                  </button>
-                </div>
-              </form>
-            </div>
-            <div className="hidden lg:flex justify-end">
-              <Image
-                src="/headphonesimage.png"
-                alt="Help Center"
-                width={350}
-                height={300}
-                priority
-                className="object-contain"
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search help articles..."
+                className=" w-full h-12 text-sm text-gray-700 outline-none bg-transparent "
               />
             </div>
 
+            <button
+              type="submit"
+              className=" px-5 bg-[#D4AF37] text-[#0B1F3A] font-semibold  text-sm hover:brightness-95 transition "
+            >
+              Search
+            </button>
           </div>
+        </form>
+      </div>
+      <div className="hidden lg:flex justify-end relative">
+        <div className="absolute inset-0 flex justify-end items-center">
+          <div className="w-[320px] h-80 bg-[#D4AF37]/10 rounded-full blur-3xl" />
         </div>
-      </div>        
+        <Image
+          src="/headphonesimage.png"
+          alt="Help Center"
+          width={420}
+          height={350}
+          priority
+          className="  relative object-contain -ml-16 drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)] hover:scale-105 transition-transform duration-500 "
+        />
+      </div>
+    </div>
+  </div>
+</div>        
 
       <div className="w-full px-4 sm:px-6 py-10">
         <div className="text-center">

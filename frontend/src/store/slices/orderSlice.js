@@ -1,7 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, } from "@/services/orderService";
+import {
+  createOrderFromCartAPI,
+  createOrderAPI,
+  getUserOrdersAPI,
+  getOrderDetailsAPI,
+  updateOrderStatusAPI,
+} from "@/services/orderService";
 
-const normalizeError = (err) => err?.response?.data?.message || err?.message || "Something went wrong";
+const normalizeError = (err) =>
+  err?.response?.data?.message || err?.message || "Something went wrong";
 
 export const createOrderFromCart = createAsyncThunk(
   "order/createFromCart",
@@ -10,10 +17,10 @@ export const createOrderFromCart = createAsyncThunk(
       const res = await createOrderFromCartAPI(data);
       return res.data;
     } catch (err) {
-  return thunkAPI.rejectWithValue(
-    err?.response?.data?.message || err.message
-  );
-}
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || err.message
+      );
+    }
   }
 );
 
@@ -58,7 +65,7 @@ export const updateOrderStatus = createAsyncThunk(
   async ({ orderId, status }, thunkAPI) => {
     try {
       const res = await updateOrderStatusAPI(orderId, status);
-      return { orderId, status, data: res };
+      return res; // IMPORTANT CHANGE
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
     }
@@ -129,13 +136,20 @@ const orderSlice = createSlice({
 
       /* ================= STATUS UPDATE ================= */
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        const { orderId, status } = action.payload;
+        const updatedOrder = action.payload?.order;
 
-        const order = state.orders.find((o) => o.id === orderId);
-        if (order) order.status = status;
+        if (!updatedOrder) return;
 
-        if (state.currentOrder?.id === orderId) {
-          state.currentOrder.status = status;
+        const index = state.orders.findIndex(
+          (o) => o.id === updatedOrder.id
+        );
+
+        if (index !== -1) {
+          state.orders[index] = updatedOrder;
+        }
+
+        if (state.currentOrder?.id === updatedOrder.id) {
+          state.currentOrder = updatedOrder;
         }
       });
   },

@@ -4,31 +4,20 @@ import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  Building2,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  Phone,
-  User,
-  Wallet,
-  BarChart3,
-  Headset,
-  BadgeCheck,
-  Quote,
-} from "lucide-react";
+import { Building2, Eye, EyeOff, Lock, Mail, Phone, Wallet, BarChart3, Headset, BadgeCheck, } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { sendVendorOtp, verifyVendorOtp, registerVendor, } from "../../../store/slices/vendorSlice";
 
 export default function VendorRegisterPage() {
   const router = useRouter();
   const step = 1;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [otp, setOtp] = useState({
-    mobile: { sent: false, verified: false, digits: Array(6).fill("") },
-    email: { sent: false, verified: false, digits: Array(6).fill("") },
-  });
+  const [otpDigits, setOtpDigits] = useState({ mobile: Array(6).fill(""), email: Array(6).fill("") });
   const otpRefs = useRef({ mobile: [], email: [] });
+  const dispatch = useDispatch();
+
+  const { loading, otp, error } = useSelector((state) => state.vendor);
 
   const [form, setForm] = useState({
     mobile: "",
@@ -72,24 +61,40 @@ export default function VendorRegisterPage() {
     setForm((s) => ({ ...s, [key]: value }));
   };
 
-  const sendOtp = (channel) => {
-    setOtp((s) => ({
-      ...s,
-      [channel]: { ...s[channel], sent: true, verified: false, digits: Array(6).fill("") },
-    }));
-    requestAnimationFrame(() => {
-      otpRefs.current?.[channel]?.[0]?.focus?.();
-    });
-  };
+const sendOtp = async (channel) => {
+  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(form.mobile)) return;
+  if (channel === "email" && !/^\S+@\S+\.\S+$/.test(form.email)) return;
+
+  const payload =
+    channel === "mobile"
+      ? { phone: form.mobile }
+      : { email: form.email };
+
+  const res = await dispatch(sendVendorOtp(payload));
+
+  console.log("🔥 FULL DISPATCH RESULT:", res);
+
+  if (res.meta.requestStatus === "fulfilled") {
+    console.log("✅ OTP API SUCCESS:", res.payload);
+
+    console.log("📩 EMAIL USED:", form.email);
+  } else {
+    console.log("❌ OTP FAILED:", res.payload);
+  }
+
+  setOtpDigits((s) => ({
+    ...s,
+    [channel]: Array(6).fill("")
+  }));
+};
 
   const onOtpChange = (channel, index) => (e) => {
-    const raw = e.target.value ?? "";
-    const val = String(raw).replace(/\D/g, "").slice(-1);
+    const val = e.target.value.replace(/\D/g, "").slice(-1);
 
-    setOtp((s) => {
-      const nextDigits = [...s[channel].digits];
-      nextDigits[index] = val;
-      return { ...s, [channel]: { ...s[channel], digits: nextDigits } };
+    setOtpDigits((prev) => {
+      const next = [...prev[channel]];
+      next[index] = val;
+      return { ...prev, [channel]: next };
     });
 
     if (val && index < 5) {
@@ -99,30 +104,54 @@ export default function VendorRegisterPage() {
 
   const onOtpKeyDown = (channel, index) => (e) => {
     if (e.key !== "Backspace") return;
-    if (otp[channel].digits[index]) return;
+    if (otpDigits[channel][index]) return;
     if (index === 0) return;
     otpRefs.current?.[channel]?.[index - 1]?.focus?.();
   };
 
-  const verifyOtp = (channel) => {
-    const code = otp[channel].digits.join("");
+  const verifyOtp = async (channel) => {
+    const code = otpDigits[channel].join("");
     if (code.length !== 6) return;
-    setOtp((s) => ({
-      ...s,
-      [channel]: { ...s[channel], verified: true },
-    }));
+
+    const payload =
+      channel === "mobile"
+        ? { phone: form.mobile, otp: code }
+        : { email: form.email, otp: code };
+
+    const res = await dispatch(verifyVendorOtp(payload));
+
+    if (res.meta.requestStatus !== "fulfilled") {
+      return;
+    }
   };
 
   const canContinue =
-    otp.mobile.verified &&
-    otp.email.verified &&
-    String(form.password).trim().length > 0 &&
-    String(form.confirmPassword).trim().length > 0 &&
-    form.password === form.confirmPassword;
+    otp.mobileVerified &&
+    otp.emailVerified &&
+    form.password &&
+    form.confirmPassword &&
+    form.password === form.confirmPassword &&
+    form.password.length >= 6;
 
-  const onContinue = (e) => {
-    e?.preventDefault?.();
-    router.push("/vendor/vendorbusinessdetails");
+  const onContinue = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      phone: form.mobile,
+      email: form.email,
+      password: form.password,
+      confirmPassword: form.confirmPassword,
+    };
+
+    const res = await dispatch(registerVendor(payload));
+
+    if (res.meta.requestStatus === "fulfilled") {
+      router.push("/vendor/vendorbusinessdetails");
+    }
+  };
+
+  const onBack = () => {
+    router.back();
   };
 
   const onSubmit = (e) => {
@@ -243,32 +272,31 @@ export default function VendorRegisterPage() {
                       <button
                         type="button"
                         onClick={() => sendOtp("mobile")}
-                        disabled={otp.mobile.verified || !String(form.mobile).trim()}
+                        disabled={loading.sendOtp || otp.mobileVerified || !form.mobile}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
-                        {otp.mobile.verified ? "Verified" : otp.mobile.sent ? "Resend OTP" : "Send OTP"}
+                        {otp.mobileVerified ? "Verified" : otp?.mobileSent ? "Resend OTP" : "Send OTP"}
                       </button>
                     </div>
 
-                    {otp.mobile.sent && !otp.mobile.verified && (
+                    {otp?.mobileSent && !otp.mobileVerified && (
                       <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
                           <button
                             type="button"
                             onClick={() => verifyOtp("mobile")}
-                            disabled={otp.mobile.digits.join("").length !== 6}
-                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${
-                              otp.mobile.digits.join("").length === 6
-                                ? "bg-[#0B1F3A] hover:opacity-95"
-                                : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                            }`}
+                            disabled={loading.verifyOtp || otpDigits.mobile.join("").length !== 6}
+                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${otpDigits.mobile.join("").length === 6
+                              ? "bg-[#0B1F3A] hover:opacity-95"
+                              : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                              }`}
                           >
                             Verify
                           </button>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
-                          {otp.mobile.digits.map((d, i) => (
+                          {otpDigits.mobile.map((d, i) => (
                             <input
                               key={i}
                               inputMode="numeric"
@@ -298,32 +326,31 @@ export default function VendorRegisterPage() {
                       <button
                         type="button"
                         onClick={() => sendOtp("email")}
-                        disabled={otp.email.verified || !String(form.email).trim()}
+                        disabled={otp.emailVerified || !String(form.email).trim()}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
-                        {otp.email.verified ? "Verified" : otp.email.sent ? "Resend OTP" : "Send OTP"}
+                        {otp.emailVerified ? "Verified" : otp.emailSent ? "Resend OTP" : "Send OTP"}
                       </button>
                     </div>
 
-                    {otp.email.sent && !otp.email.verified && (
+                    {otp.emailSent && !otp.emailVerified && (
                       <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
                           <button
                             type="button"
                             onClick={() => verifyOtp("email")}
-                            disabled={otp.email.digits.join("").length !== 6}
-                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${
-                              otp.email.digits.join("").length === 6
-                                ? "bg-[#0B1F3A] hover:opacity-95"
-                                : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                            }`}
+                            disabled={otpDigits.email.join("").length !== 6}
+                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${otpDigits.email.join("").length === 6
+                              ? "bg-[#0B1F3A] hover:opacity-95"
+                              : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                              }`}
                           >
                             Verify
                           </button>
                         </div>
                         <div className="mt-2 flex items-center gap-2">
-                          {otp.email.digits.map((d, i) => (
+                          {otpDigits.email.map((d, i) => (
                             <input
                               key={i}
                               inputMode="numeric"
@@ -396,14 +423,14 @@ export default function VendorRegisterPage() {
 
                     <button
                       type="submit"
-                      disabled={!canContinue}
-                      className={`mt-2 h-12 w-full rounded-md text-white text-sm font-bold flex items-center justify-center gap-2 ${
-                        canContinue ? "bg-[#0B1F3A] hover:opacity-95" : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                      }`}
+                      disabled={!canContinue || loading.register}
+                      className={`mt-2 h-12 w-full rounded-md text-white text-sm font-bold flex items-center justify-center gap-2 ${canContinue ? "bg-[#0B1F3A] hover:opacity-95" : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                        }`}
                     >
                       Register &amp; Continue
                       <span className="text-white/90">→</span>
                     </button>
+                    {error && (<div className="text-red-500 text-xs mt-2">{typeof error === "string" ? error : error?.message}</div>)}
                   </form>
                 ) : (
                   <form onSubmit={onSubmit} className="grid gap-4">
@@ -458,22 +485,6 @@ export default function VendorRegisterPage() {
             </section>
 
             <aside className="lg:col-span-5 bg-[#0B1F3A] p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5]">
-              {/* <div className="rounded-2xl bg-white border border-[#E5E5E5] shadow-sm p-5 flex gap-4 items-start">
-                <div className="h-12 w-12 rounded-full bg-[#0B1F3A]/10 flex items-center justify-center text-[#0B1F3A] font-extrabold">
-                  AV
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-[#0B1F3A]">
-                    <Quote size={18} className="text-[#0B1F3A]" />
-                    <div className="text-sm font-bold">Kavas Seller Hub helped me grow</div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-600 leading-relaxed">
-                    my business to more categories with consistent growth.
-                  </div>
-                  <div className="mt-2 text-[11px] text-gray-500">— Amit Verma, Kavas Seller</div>
-                </div>
-              </div> */}
-
               <div className="mt-6 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(13,38,76,0.18)] border border-[#0B1F3A]/15">
                 <div className="   relative">
                   <Link href="/vendor" className="flex items-center gap-3">
@@ -485,7 +496,7 @@ export default function VendorRegisterPage() {
                       className="h-14 w-auto"
                       priority
                     />
-                    
+
                   </Link>
                   <div className="mt-2 text-2xl font-extrabold leading-tight text-white">
                     GROW <span className="text-[#D4AF37]">FASTER</span>,

@@ -5,31 +5,29 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  BadgeCheck,
-  CheckCircle2,
-  ChevronDown,
-  Circle,
-  HelpCircle,
-  ImagePlus,
-  MapPin,
-  Phone,
-  Store,
-  Lightbulb,
-  Upload,
-  X,
-} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { BadgeCheck, CheckCircle2, ChevronDown, Circle, HelpCircle, ImagePlus, MapPin, Phone, Store, Lightbulb, Upload, X, } from "lucide-react";
+import { fetchVendorme, saveStoreDetails, fetchStoreDetails, logoutLocal, } from "@/store/slices/vendorSlice";
 
 export default function VendorStoreDetailsPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const storeImageInputRef = useRef(null);
   const storeLogoInputRef = useRef(null);
   const storeInfoRef = useRef(null);
   const pickupAddressRef = useRef(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Redux state
+  const vendor = useSelector((state) => state.vendor.vendor);
+  const store = useSelector((state) => state.vendor.store);
+  const business = useSelector((state) => state.vendor.business);
+  const bank = useSelector((state) => state.vendor.bank);
+  const loading = useSelector((state) => state.vendor.loading);
+  const error = useSelector((state) => state.vendor.error);
+  const pickup = useSelector((state) => state.vendor.pickup);
 
   const [form, setForm] = useState({
-    storeName: "",
-    storeType: "",
     tagline: "",
     description: "",
     pickupAddress: "",
@@ -49,24 +47,24 @@ export default function VendorStoreDetailsPage() {
     setForm((s) => ({ ...s, [key]: v }));
   };
 
-  const verificationItems = useMemo(
-    () => [
-      { label: "Mobile Verification", done: false },
-      { label: "Email Verification", done: false },
-      { label: "ID Verification", done: false },
-      { label: "Signature Verification", done: false },
-    ],
-    []
-  );
+  const verificationItems = useMemo(() => {
+    // Verification data is directly on vendor object
+    const v = vendor;
+
+    return [
+      { label: "Mobile Verification", done: v?.phone_verified === true },
+      { label: "Email Verification", done: v?.email_verified === true },
+    ];
+  }, [vendor]);
 
   const isFilled = (key) => String(form[key] ?? "").trim().length > 0;
 
-  const requiredStoreFields = useMemo(() => ["storeName", "storeType"], []);
+  const requiredStoreFields = useMemo(() => [], []);
   const requiredPickupFields = useMemo(() => ["pickupAddress", "pincode", "city", "state"], []);
 
   const storeInfoComplete = useMemo(
-    () => requiredStoreFields.every((k) => isFilled(k)) && Boolean(storeImageUrl) && Boolean(storeLogoUrl),
-    [form, requiredStoreFields, storeImageUrl, storeLogoUrl]
+    () => Boolean(storeImageUrl) && Boolean(storeLogoUrl),
+    [storeImageUrl, storeLogoUrl]
   );
 
   const pickupAddressComplete = useMemo(
@@ -78,8 +76,6 @@ export default function VendorStoreDetailsPage() {
     const sectionSteps = [
       { key: "mobile_verification", done: verificationItems[0]?.done },
       { key: "email_verification", done: verificationItems[1]?.done },
-      { key: "id_verification", done: verificationItems[2]?.done },
-      { key: "signature_verification", done: verificationItems[3]?.done },
       { key: "business_information", done: true },
       { key: "bank_details", done: true },
       { key: "store_information", done: storeInfoComplete },
@@ -93,12 +89,12 @@ export default function VendorStoreDetailsPage() {
 
   const navItems = useMemo(
     () => [
-      { id: "business_info", label: "Business Information", complete: true },
-      { id: "bank_details", label: "Bank Details", complete: true },
+      { id: "business_info", label: "Business Information", complete: !!business },
+      { id: "bank_details", label: "Bank Details", complete: !!bank },
       { id: "store_info", label: "Store Information", complete: storeInfoComplete },
       { id: "pickup_address", label: "Pickup Address", complete: pickupAddressComplete },
     ],
-    [pickupAddressComplete, storeInfoComplete]
+    [pickupAddressComplete, storeInfoComplete, business, bank]
   );
 
   const scrollToSection = (id) => {
@@ -112,6 +108,31 @@ export default function VendorStoreDetailsPage() {
     const el = id === "pickup_address" ? pickupAddressRef.current : storeInfoRef.current;
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  // Fetch vendor and store data on mount
+  useEffect(() => {
+    dispatch(fetchVendorme());
+    dispatch(fetchStoreDetails());
+    dispatch(saveStoreDetails());
+  }, [dispatch]);
+
+  // Populate form with store data if available
+  useEffect(() => {
+    if (store || pickup) {
+      setForm(prev => ({
+        ...prev,
+        tagline: store?.tagline || "",
+        description: store?.description || "",
+        pickupAddress: pickup?.pickup_address || "",
+        pincode: pickup?.pincode || "",
+        city: pickup?.city || "",
+        state: pickup?.state || "",
+      }));
+
+      setStoreImageUrl(store?.store_image || "");
+      setStoreLogoUrl(store?.store_logo || "");
+    }
+  }, [store, pickup]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -163,9 +184,31 @@ export default function VendorStoreDetailsPage() {
     }
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     if (!(storeInfoComplete && pickupAddressComplete)) return;
+
+    try {
+      await dispatch(saveStoreDetails({
+        tagline: form.tagline,
+        description: form.description,
+        address: form.pickupAddress,
+        pincode: form.pincode,
+        city: form.city,
+        state: form.state,
+        store_image: storeImageUrl,
+        store_logo: storeLogoUrl,
+      })).unwrap();
+      setShowSuccess(true);
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save store details");
+    }
+  };
+
+  const handleLogout = () => {
+    dispatch(logoutLocal());
+    router.push("/vendor/vendorlogin");
   };
 
   return (
@@ -174,7 +217,7 @@ export default function VendorStoreDetailsPage() {
         <div className="w-full px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link href="/vendor" className="flex items-center gap-2">
             <Image src="/LOGOKAVAS.png" alt="KAVAS" width={150} height={48} className="h-9 w-auto" priority />
-           
+
           </Link>
 
           <div className="hidden md:flex items-center gap-3">
@@ -200,7 +243,7 @@ export default function VendorStoreDetailsPage() {
             </div>
           </div>
 
-          <div className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
+          <div onClick={handleLogout} className="text-xs font-semibold text-[#0B1F3A] hover:underline cursor-pointer">LOGOUT</div>
         </div>
       </header>
 
@@ -222,22 +265,6 @@ export default function VendorStoreDetailsPage() {
                 <div className="text-xs font-bold text-[#0B1F3A]">Mobile &amp; Email Verification</div>
                 <div className="mt-3 grid gap-2">
                   {verificationItems.slice(0, 2).map((x) => (
-                    <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
-                      {x.done ? (
-                        <CheckCircle2 size={14} className="text-[#0B1F3A]" />
-                      ) : (
-                        <Circle size={14} className="text-gray-300" />
-                      )}
-                      <div className="font-semibold">{x.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 border-t border-[#E5E5E5] pt-5">
-                <div className="text-xs font-bold text-[#0B1F3A]">ID &amp; Signature Verification</div>
-                <div className="mt-3 grid gap-2">
-                  {verificationItems.slice(2).map((x) => (
                     <div key={x.label} className="flex items-center gap-2 text-[11px] text-gray-600">
                       {x.done ? (
                         <CheckCircle2 size={14} className="text-[#0B1F3A]" />
@@ -330,37 +357,6 @@ export default function VendorStoreDetailsPage() {
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700">
-                        Store Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        value={form.storeName}
-                        onChange={setValue("storeName")}
-                        placeholder="Enter store name"
-                        className="mt-2 w-full h-11 rounded-md border border-[#E5E5E5] px-3 text-sm outline-none focus:border-[#0B1F3A]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700">
-                        Store Type <span className="text-red-500">*</span>
-                      </label>
-                      <div className="mt-2 relative">
-                        <select
-                          value={form.storeType}
-                          onChange={setValue("storeType")}
-                          className="w-full h-11 appearance-none rounded-md border border-[#E5E5E5] bg-white px-3 pr-9 text-sm outline-none focus:border-[#0B1F3A]"
-                        >
-                          <option value="">Select store type</option>
-                          <option value="individual">Individual Store</option>
-                          <option value="chain">Store Chain</option>
-                          <option value="warehouse">Warehouse</option>
-                        </select>
-                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700">
                         Store Image <span className="text-red-500">*</span>
                       </label>
 
@@ -411,8 +407,8 @@ export default function VendorStoreDetailsPage() {
                               onClick={() => removeFile("store_image")}
                               disabled={!storeImageUrl}
                               className={`h-9 rounded-md px-4 text-[11px] font-semibold inline-flex items-center gap-2 ${storeImageUrl
-                                  ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
-                                  : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                                ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
+                                : "border border-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
                               <X size={14} />
@@ -474,8 +470,8 @@ export default function VendorStoreDetailsPage() {
                               onClick={() => removeFile("store_logo")}
                               disabled={!storeLogoUrl}
                               className={`h-9 rounded-md px-4 text-[11px] font-semibold inline-flex items-center gap-2 ${storeLogoUrl
-                                  ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
-                                  : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                                ? "border border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#F3F9FF]"
+                                : "border border-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}
                             >
                               <X size={14} />
@@ -606,11 +602,10 @@ export default function VendorStoreDetailsPage() {
                   <button
                     type="submit"
                     disabled={!(storeInfoComplete && pickupAddressComplete)}
-                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${
-                      storeInfoComplete && pickupAddressComplete
+                    className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${storeInfoComplete && pickupAddressComplete
                         ? "bg-[#0B1F3A]"
                         : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                    }`}
+                      }`}
                   >
                     Submit
                   </button>
@@ -681,6 +676,27 @@ export default function VendorStoreDetailsPage() {
           </aside>
         </div>
       </main>
+      {showSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[90%] max-w-md text-center">
+
+            <h2 className="text-lg font-bold text-[#0B1F3A]">
+              Registration Successful 🎉
+            </h2>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Your account is pending. Please wait for admin approval.
+            </p>
+
+            <button
+              onClick={() => router.push("/vendor")}
+              className="mt-5 w-full h-10 bg-[#0B1F3A] text-white rounded-md font-semibold"
+            >
+              Ok
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
