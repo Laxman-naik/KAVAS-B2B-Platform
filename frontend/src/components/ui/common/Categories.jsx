@@ -111,7 +111,7 @@ const Categories = () => {
           </div>
 
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
-            Top Categories
+            All Categories
           </div>
 
         </div>
