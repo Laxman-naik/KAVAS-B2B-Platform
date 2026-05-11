@@ -21,10 +21,190 @@ const normalizeImages = (images) => {
     .filter(Boolean);
 };
 
+// exports.createProduct = async (req, res) => {
+//   const client = await pool.connect();
+
+//   try {
+//     const {
+//       name,
+//       sku,
+//       slug,
+//       organizationId,
+//       price,
+//       mrp,
+//       minOrderQty,
+//       moq,
+//       stock,
+//       unit,
+//       weight,
+//       dispatchTimeDays,
+//       description,
+//       isActive,
+//       status,
+//       gst,
+//       isFeatured,
+//       isTopProduct,
+//       parentProductId,
+//       categories = [],
+//       category,
+//       images = [],
+//       specifications = [],
+//       pricingTiers = [],
+//     } = req.body;
+
+//     if (!String(name || "").trim()) {
+//       return res.status(400).json({ message: "name is required" });
+//     }
+
+//     const resolvedOrganizationId =
+//       organizationId ?? req.user?.organization_id ?? req.user?.organizationId;
+
+//     if (!resolvedOrganizationId) {
+//       return res.status(400).json({ message: "organizationId is required" });
+//     }
+
+//     const resolvedSlug = String(slug || "").trim() || slugify(name);
+//     const resolvedMoq = minOrderQty ?? moq;
+//     const resolvedIsActive =
+//       typeof isActive === "boolean"
+//         ? isActive
+//         : !String(status || "").trim()
+//           ? true
+//           : String(status)
+//               .trim()
+//               .toLowerCase() === "active";
+
+//     const normalizedImages = normalizeImages(images);
+//     const mergedSpecifications = Array.isArray(specifications)
+//       ? [...specifications]
+//       : [];
+
+//     if (String(sku || "").trim()) {
+//       mergedSpecifications.push({ key: "sku", value: String(sku).trim() });
+//     }
+//     if (gst !== undefined && gst !== null && String(gst).trim() !== "") {
+//       mergedSpecifications.push({ key: "gst", value: String(gst).trim() });
+//     }
+
+//     await client.query("BEGIN");
+
+//     let resolvedCategoryIds = Array.isArray(categories) ? [...categories] : [];
+
+//     if (
+//       resolvedCategoryIds.length === 0 &&
+//       typeof category === "string" &&
+//       category.trim()
+//     ) {
+//       const categoryName = category.trim();
+//       const categorySlug = slugify(categoryName);
+
+//       const categoryResult = await client.query(
+//         `SELECT id FROM categories WHERE name = $1 OR slug = $2 LIMIT 1`,
+//         [categoryName, categorySlug]
+//       );
+
+//       if (categoryResult.rows.length) {
+//         resolvedCategoryIds = [categoryResult.rows[0].id];
+//       }
+//     }
+
+//     const productResult = await client.query(
+//       `INSERT INTO products (
+//         name, slug, organization_id, price, mrp, moq, stock,
+//         unit, weight, dispatch_time_days, description,
+//         is_active, is_featured, is_top_product, parent_product_id
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+//       RETURNING *`,
+//       [
+//         name,
+//         resolvedSlug,
+//         resolvedOrganizationId,
+//         price,
+//         mrp,
+//         resolvedMoq,
+//         stock,
+//         unit,
+//         weight,
+//         dispatchTimeDays,
+//         description,
+//         resolvedIsActive,
+//         isFeatured ?? false,
+//         isTopProduct ?? false,
+//         parentProductId || null,
+//       ]
+//     );
+
+//     const product = productResult.rows[0];
+
+//     for (const categoryId of resolvedCategoryIds) {
+//       await client.query(
+//         `INSERT INTO product_categories (product_id, category_id)
+//          VALUES ($1, $2)`,
+//         [product.id, categoryId]
+//       );
+//     }
+
+//     for (const img of normalizedImages) {
+//       await client.query(
+//         `INSERT INTO product_images (product_id, image_url)
+//          VALUES ($1, $2)`,
+//         [product.id, img.image_url]
+//       );
+//     }
+
+//     for (const spec of mergedSpecifications) {
+//       await client.query(
+//         `INSERT INTO product_specifications (product_id, key, value)
+//          VALUES ($1, $2, $3)`,
+//         [product.id, spec.key, spec.value]
+//       );
+//     }
+
+//     for (const tier of pricingTiers) {
+//       await client.query(
+//         `INSERT INTO product_pricing_tiers (product_id, min_quantity, price, label)
+//          VALUES ($1, $2, $3, $4)`,
+//         [product.id, tier.min_quantity, tier.price, tier.label]
+//       );
+//     }
+
+//     await client.query("COMMIT");
+
+//     res.status(201).json({
+//       message: "Product created successfully",
+//       product,
+//     });
+//   } catch (err) {
+//     await client.query("ROLLBACK");
+//     console.error("createProduct error:", err);
+
+//     if (err.code === "23505") {
+//       return res.status(400).json({ message: "Duplicate entry" });
+//     }
+
+//     res.status(500).json({ message: err.message });
+//   } finally {
+//     client.release();
+//   }
+// };
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
+    // SAFE JSON PARSER
+    const safeParse = (value, fallback = []) => {
+      try {
+        if (Array.isArray(value)) return value;
+
+        return JSON.parse(
+          value || JSON.stringify(fallback)
+        );
+      } catch {
+        return fallback;
+      }
+    };
+
     const {
       name,
       sku,
@@ -45,145 +225,314 @@ exports.createProduct = async (req, res) => {
       isFeatured,
       isTopProduct,
       parentProductId,
-      categories = [],
       category,
-      images = [],
-      specifications = [],
-      pricingTiers = [],
     } = req.body;
 
+    // PARSE FORM-DATA ARRAYS
+    const categories = safeParse(
+      req.body.categories
+    );
+
+    const specifications = safeParse(
+      req.body.specifications
+    );
+
+    const pricingTiers = safeParse(
+      req.body.pricingTiers
+    );
+
+    // VALIDATION
     if (!String(name || "").trim()) {
-      return res.status(400).json({ message: "name is required" });
+      return res.status(400).json({
+        message: "name is required",
+      });
     }
 
+    // ORGANIZATION
     const resolvedOrganizationId =
-      organizationId ?? req.user?.organization_id ?? req.user?.organizationId;
+      organizationId ??
+      req.user?.organization_id ??
+      req.user?.organizationId;
 
     if (!resolvedOrganizationId) {
-      return res.status(400).json({ message: "organizationId is required" });
+      return res.status(400).json({
+        message: "organizationId is required",
+      });
     }
 
-    const resolvedSlug = String(slug || "").trim() || slugify(name);
-    const resolvedMoq = minOrderQty ?? moq;
+    // SLUG
+    const resolvedSlug =
+      String(slug || "").trim() ||
+      slugify(name);
+
+    // MOQ
+    const resolvedMoq =
+      minOrderQty ?? moq;
+
+    // ACTIVE STATUS
     const resolvedIsActive =
       typeof isActive === "boolean"
         ? isActive
         : !String(status || "").trim()
-          ? true
-          : String(status)
-              .trim()
-              .toLowerCase() === "active";
+        ? true
+        : String(status)
+            .trim()
+            .toLowerCase() === "active";
 
-    const normalizedImages = normalizeImages(images);
-    const mergedSpecifications = Array.isArray(specifications)
-      ? [...specifications]
-      : [];
+    // CLOUDINARY FILES
+    const uploadedMedia = (
+      req.files || []
+    ).map((file, index) => ({
+      image_url: file.path,
+      media_type:
+        file.mimetype.startsWith("video")
+          ? "video"
+          : "image",
+      public_id: file.filename,
+      sort_order: index,
+      is_primary: index === 0,
+    }));
 
-    if (String(sku || "").trim()) {
-      mergedSpecifications.push({ key: "sku", value: String(sku).trim() });
+    // SPECIFICATIONS
+    const mergedSpecifications =
+      Array.isArray(specifications)
+        ? [...specifications]
+        : [];
+
+    // ADD SKU SPEC
+    const hasSku =
+      mergedSpecifications.some(
+        (s) =>
+          s.key?.toLowerCase() === "sku"
+      );
+
+    if (
+      !hasSku &&
+      String(sku || "").trim()
+    ) {
+      mergedSpecifications.push({
+        key: "sku",
+        value: String(sku).trim(),
+      });
     }
-    if (gst !== undefined && gst !== null && String(gst).trim() !== "") {
-      mergedSpecifications.push({ key: "gst", value: String(gst).trim() });
+
+    // ADD GST SPEC
+    const hasGst =
+      mergedSpecifications.some(
+        (s) =>
+          s.key?.toLowerCase() === "gst"
+      );
+
+    if (
+      !hasGst &&
+      gst !== undefined &&
+      gst !== null &&
+      String(gst).trim() !== ""
+    ) {
+      mergedSpecifications.push({
+        key: "gst",
+        value: String(gst).trim(),
+      });
     }
 
     await client.query("BEGIN");
 
-    let resolvedCategoryIds = Array.isArray(categories) ? [...categories] : [];
+    // CATEGORY IDS
+    let resolvedCategoryIds =
+      Array.isArray(categories)
+        ? [...categories]
+        : [];
 
+    // CATEGORY FALLBACK
     if (
       resolvedCategoryIds.length === 0 &&
       typeof category === "string" &&
       category.trim()
     ) {
-      const categoryName = category.trim();
-      const categorySlug = slugify(categoryName);
+      const categoryName =
+        category.trim();
 
-      const categoryResult = await client.query(
-        `SELECT id FROM categories WHERE name = $1 OR slug = $2 LIMIT 1`,
-        [categoryName, categorySlug]
-      );
+      const categorySlug =
+        slugify(categoryName);
 
-      if (categoryResult.rows.length) {
-        resolvedCategoryIds = [categoryResult.rows[0].id];
+      const categoryResult =
+        await client.query(
+          `SELECT id
+           FROM categories
+           WHERE name = $1
+           OR slug = $2
+           LIMIT 1`,
+          [categoryName, categorySlug]
+        );
+
+      if (
+        categoryResult.rows.length
+      ) {
+        resolvedCategoryIds = [
+          categoryResult.rows[0].id,
+        ];
       }
     }
 
-    const productResult = await client.query(
-      `INSERT INTO products (
-        name, slug, organization_id, price, mrp, moq, stock,
-        unit, weight, dispatch_time_days, description,
-        is_active, is_featured, is_top_product, parent_product_id
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-      RETURNING *`,
-      [
-        name,
-        resolvedSlug,
-        resolvedOrganizationId,
-        price,
-        mrp,
-        resolvedMoq,
-        stock,
-        unit,
-        weight,
-        dispatchTimeDays,
-        description,
-        resolvedIsActive,
-        isFeatured ?? false,
-        isTopProduct ?? false,
-        parentProductId || null,
-      ]
-    );
+    // PRIMARY IMAGE
+    const primaryImage =
+      uploadedMedia.find(
+        (m) =>
+          m.media_type === "image"
+      )?.image_url || null;
 
-    const product = productResult.rows[0];
+    // INSERT PRODUCT
+    const productResult =
+      await client.query(
+        `INSERT INTO products (
+          name,
+          slug,
+          organization_id,
+          price,
+          mrp,
+          moq,
+          stock,
+          unit,
+          weight,
+          dispatch_time_days,
+          description,
+          is_active,
+          is_featured,
+          is_top_product,
+          parent_product_id,
+          image_url,
+          sku
+        )
+        VALUES (
+          $1,$2,$3,$4,$5,
+          $6,$7,$8,$9,$10,
+          $11,$12,$13,$14,$15,
+          $16,$17
+        )
+        RETURNING *`,
+        [
+          name,
+          resolvedSlug,
+          resolvedOrganizationId,
+          price,
+          mrp,
+          resolvedMoq,
+          stock,
+          unit,
+          weight,
+          dispatchTimeDays,
+          description,
+          resolvedIsActive,
+          isFeatured ?? false,
+          isTopProduct ?? false,
+          parentProductId || null,
+          primaryImage,
+          sku || null,
+        ]
+      );
 
+    const product =
+      productResult.rows[0];
+
+    // PRODUCT CATEGORIES
     for (const categoryId of resolvedCategoryIds) {
       await client.query(
-        `INSERT INTO product_categories (product_id, category_id)
-         VALUES ($1, $2)`,
+        `INSERT INTO product_categories (
+          product_id,
+          category_id
+        )
+        VALUES ($1, $2)`,
         [product.id, categoryId]
       );
     }
 
-    for (const img of normalizedImages) {
+    // PRODUCT MEDIA
+    for (const media of uploadedMedia) {
       await client.query(
-        `INSERT INTO product_images (product_id, image_url)
-         VALUES ($1, $2)`,
-        [product.id, img.image_url]
+        `INSERT INTO product_images (
+          product_id,
+          image_url,
+          media_type,
+          public_id,
+          sort_order,
+          is_primary
+        )
+        VALUES ($1,$2,$3,$4,$5,$6)`,
+        [
+          product.id,
+          media.image_url,
+          media.media_type,
+          media.public_id,
+          media.sort_order,
+          media.is_primary,
+        ]
       );
     }
 
+    // SPECIFICATIONS
     for (const spec of mergedSpecifications) {
       await client.query(
-        `INSERT INTO product_specifications (product_id, key, value)
-         VALUES ($1, $2, $3)`,
-        [product.id, spec.key, spec.value]
+        `INSERT INTO product_specifications (
+          product_id,
+          key,
+          value
+        )
+        VALUES ($1,$2,$3)`,
+        [
+          product.id,
+          spec.key,
+          spec.value,
+        ]
       );
     }
 
+    // PRICING TIERS
     for (const tier of pricingTiers) {
       await client.query(
-        `INSERT INTO product_pricing_tiers (product_id, min_quantity, price, label)
-         VALUES ($1, $2, $3, $4)`,
-        [product.id, tier.min_quantity, tier.price, tier.label]
+        `INSERT INTO product_pricing_tiers (
+          product_id,
+          min_quantity,
+          price,
+          label
+        )
+        VALUES ($1,$2,$3,$4)`,
+        [
+          product.id,
+          tier.min_quantity,
+          tier.price,
+          tier.label,
+        ]
       );
     }
 
     await client.query("COMMIT");
 
-    res.status(201).json({
-      message: "Product created successfully",
+    return res.status(201).json({
+      success: true,
+      message:
+        "Product created successfully",
       product,
+      media: uploadedMedia,
     });
+
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error("createProduct error:", err);
+
+    console.error(
+      "createProduct error:",
+      err
+    );
 
     if (err.code === "23505") {
-      return res.status(400).json({ message: "Duplicate entry" });
+      return res.status(400).json({
+        message: "Duplicate entry",
+      });
     }
 
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      message: err.message,
+    });
+
   } finally {
     client.release();
   }

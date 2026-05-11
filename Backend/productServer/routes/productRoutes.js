@@ -3,8 +3,9 @@ const router = express.Router();
 
 const productController = require("../controllers/productController");
 const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", productController.createProduct);
+router.post("/", authMiddleware, upload.array("images", 10), productController.createProduct);
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug", productController.getProductsByCategoryAndSubcategory);
