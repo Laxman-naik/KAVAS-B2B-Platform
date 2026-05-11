@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI, getTrendingProductsAPI } from "../../services/productService";
+import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI, getTrendingProductsAPI , getVendorProductsAPI} from "../../services/productService";
 
 /* ================= THUNKS ================= */
 
@@ -33,20 +33,6 @@ export const fetchSingleProduct = createAsyncThunk(
   }
 );
 
-// Create product
-// export const addProduct = createAsyncThunk(
-//   "products/create",
-//   async (data, thunkAPI) => {
-//     try {
-//       const res = await createProduct(data);
-//       return res.data;
-//     } catch (err) {
-//       return thunkAPI.rejectWithValue(
-//         err.response?.data || err.message
-//       );
-//     }
-//   }
-// );
 export const addProduct = createAsyncThunk(
   "products/add",
   async (formData, { rejectWithValue }) => {
@@ -121,6 +107,21 @@ export const fetchTrendingProducts = createAsyncThunk(
   }
 );
 
+export const fetchVendorProducts = createAsyncThunk(
+  "products/vendorProducts",
+  async (vendorId, thunkAPI) => {
+    try {
+      const res = await getVendorProductsAPI(vendorId);
+      return res.data;
+      console.log(data)
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
 /* ================= SLICE ================= */
 
 const productSlice = createSlice({
@@ -129,6 +130,7 @@ const productSlice = createSlice({
     products: [],
     newArrivals: [],
     trending: [], 
+    vendorProducts: [],
     product: null,
     loading: false,
     error: null,
@@ -213,6 +215,21 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      .addCase(fetchVendorProducts.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(fetchVendorProducts.fulfilled, (state, action) => {
+  state.loading = false;
+
+  // backend response: { success, products }
+  state.vendorProducts = action.payload?.products || [];
+})
+.addCase(fetchVendorProducts.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
   },
 });
 

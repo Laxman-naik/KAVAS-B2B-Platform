@@ -289,6 +289,25 @@ const approveVendor = async (req, res) => {
       );
 
       organization_id = orgRes.rows[0].id;
+
+      // 3a. CREATE VENDOR RECORD IN VENDORS TABLE
+      const vendorRes = await pool.query(
+        `
+        INSERT INTO vendors (user_id, organization_id, onboarding_id, status, is_live, approved_at, approved_by)
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+        RETURNING id
+        `,
+        [
+          onboarding.vendor_id,  // user_id from vendor_onboarding
+          organization_id,
+          onboarding_id,
+          'active',  // status in vendors table
+          true,        // is_live
+          req.user?.id, // approved_by (admin who approved)
+        ]
+      );
+
+      console.log("✅ VENDOR RECORD CREATED:", vendorRes.rows[0].id);
     }
 
     // 4. UPDATE onboarding

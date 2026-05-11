@@ -79,11 +79,12 @@ export const getOnboardingVendorsAPI = async (params = {}) => {
   }
 };
 
-export const approveVendorAPI = async ({ onboarding_id, status }) => {
+export const approveVendorAPI = async ({ onboarding_id, status, rejection_reason }) => {
   try {
     const res = await authapi.put("/api/admin/approve-vendor", {
       onboarding_id,
       status,
+      rejection_reason,
     });
 
     return res.data;
