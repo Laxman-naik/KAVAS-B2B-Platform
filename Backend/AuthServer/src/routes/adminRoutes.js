@@ -15,7 +15,7 @@ router.get( "/users", authMiddleware, authorizeRoles("admin"), adminController.g
 
 router.get("/onboarding-vendors", authMiddleware, authorizeRoles("admin"), adminController.getAllOnboardingVendors);
 
-router.put("/approve-vendor", authMiddleware, ("admin"), adminController.approveVendor);
+router.put("/approve-vendor", authMiddleware, authorizeRoles("admin"), adminController.approveVendor);
 
 router.put("/reject-vendor", authMiddleware, authorizeRoles("admin"), adminController.rejectVendor);
 

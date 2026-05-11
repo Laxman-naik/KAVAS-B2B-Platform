@@ -61,21 +61,32 @@ export default function VendorRegisterPage() {
     setForm((s) => ({ ...s, [key]: value }));
   };
 
-  const sendOtp = async (channel) => {
-    if (channel === "mobile" && !/^[6-9]\d{9}$/.test(form.mobile)) return;
-    if (channel === "email" && !/^\S+@\S+\.\S+$/.test(form.email)) return;
-    const payload =
-      channel === "mobile"
-        ? { phone: form.mobile }
-        : { email: form.email };
+const sendOtp = async (channel) => {
+  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(form.mobile)) return;
+  if (channel === "email" && !/^\S+@\S+\.\S+$/.test(form.email)) return;
 
-    await dispatch(sendVendorOtp(payload));
+  const payload =
+    channel === "mobile"
+      ? { phone: form.mobile }
+      : { email: form.email };
 
-    setOtpDigits((s) => ({
-      ...s,
-      [channel]: Array(6).fill("")
-    }));
-  };
+  const res = await dispatch(sendVendorOtp(payload));
+
+  console.log("🔥 FULL DISPATCH RESULT:", res);
+
+  if (res.meta.requestStatus === "fulfilled") {
+    console.log("✅ OTP API SUCCESS:", res.payload);
+
+    console.log("📩 EMAIL USED:", form.email);
+  } else {
+    console.log("❌ OTP FAILED:", res.payload);
+  }
+
+  setOtpDigits((s) => ({
+    ...s,
+    [channel]: Array(6).fill("")
+  }));
+};
 
   const onOtpChange = (channel, index) => (e) => {
     const val = e.target.value.replace(/\D/g, "").slice(-1);

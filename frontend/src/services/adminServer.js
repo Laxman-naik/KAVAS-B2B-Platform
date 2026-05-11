@@ -79,17 +79,18 @@ export const getOnboardingVendorsAPI = async (params = {}) => {
   }
 };
 
-export const approveVendorAPI = async (onboarding_id) => {
+export const approveVendorAPI = async ({ onboarding_id, status }) => {
   try {
     const res = await authapi.put("/api/admin/approve-vendor", {
       onboarding_id,
+      status,
     });
 
     return res.data;
   } catch (err) {
     throw (
       err.response?.data || {
-        message: "Failed to approve vendor",
+        message: "Failed to update vendor status",
       }
     );
   }

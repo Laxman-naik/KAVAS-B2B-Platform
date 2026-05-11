@@ -229,20 +229,94 @@ const getAllOnboardingVendors = async (req, res) => {
 
 const approveVendor = async (req, res) => {
   try {
-    const { onboarding_id } = req.body;
+    const { onboarding_id, status } = req.body;
 
-    await pool.query(`
+    if (!onboarding_id) {
+      return res.status(400).json({ message: "onboarding_id is required" });
+    }
+
+    if (!status) {
+      return res.status(400).json({ message: "status is required" });
+    }
+
+    // 1. Get onboarding
+    const onboardingRes = await pool.query(
+      `SELECT * FROM vendor_onboarding WHERE id = $1`,
+      [onboarding_id]
+    );
+
+    if (onboardingRes.rowCount === 0) {
+      return res.status(404).json({ message: "Vendor onboarding not found" });
+    }
+
+    const onboarding = onboardingRes.rows[0];
+
+    let organization_id = onboarding.organization_id;
+
+    // 2. Fetch BUSINESS DETAILS (IMPORTANT FIX)
+    const businessRes = await pool.query(
+      `SELECT * FROM vendor_business_details WHERE onboarding_id = $1`,
+      [onboarding_id]
+    );
+
+    if (businessRes.rowCount === 0) {
+      return res.status(400).json({
+        message: "Business details not found for this onboarding"
+      });
+    }
+
+    const business = businessRes.rows[0];
+
+    // 3. CREATE ORGANIZATION ONLY WHEN APPROVED
+    if (status === "approved" && !organization_id) {
+
+      if (!business.business_name || !business.business_type) {
+        return res.status(400).json({
+          message: "Missing business_name or business_type in business details"
+        });
+      }
+
+      const orgRes = await pool.query(
+        `
+        INSERT INTO organizations (name, business_type)
+        VALUES ($1, $2)
+        RETURNING id
+        `,
+        [
+          business.business_name,
+          business.business_type
+        ]
+      );
+
+      organization_id = orgRes.rows[0].id;
+    }
+
+    // 4. UPDATE onboarding
+    const updated = await pool.query(
+      `
       UPDATE vendor_onboarding
       SET 
-        status = 'approved',
+        status = $2,
+        organization_id = COALESCE($3, organization_id),
         reviewed_at = NOW()
       WHERE id = $1
-    `, [onboarding_id]);
+      RETURNING *
+      `,
+      [onboarding_id, status, organization_id]
+    );
 
-    return res.json({ message: "Vendor approved" });
+    return res.json({
+      message: `Vendor status updated to ${status}`,
+      organization_id,
+      data: updated.rows[0]
+    });
 
   } catch (err) {
-    return res.status(500).json({ message: "Error approving vendor" });
+    console.error(err);
+    return res.status(500).json({
+      message: err,
+      error: err.message
+    });
   }
 };
 

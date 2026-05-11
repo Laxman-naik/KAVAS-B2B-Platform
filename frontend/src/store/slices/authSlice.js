@@ -291,7 +291,6 @@ import {
   getAllUsersAPI,
   getOnboardingVendorsAPI,
   approveVendorAPI,
-  rejectVendorAPI,
 } from "@/services/adminServer";
 
 import { resetCart } from "./cartSlice";
@@ -435,46 +434,32 @@ export const fetchOnboardingVendorsThunk = createAsyncThunk(
   }
 );
 
-// APPROVE VENDOR
-export const approveVendorThunk = createAsyncThunk(
-  "admin/approveVendor",
-  async (onboarding_id, { rejectWithValue, dispatch }) => {
-    try {
-      const res = await approveVendorAPI(onboarding_id);
+// ================= UPDATE VENDOR STATUS =================
 
-      // refresh vendor list
-      dispatch(fetchOnboardingVendorsThunk());
+export const updateVendorStatusThunk = createAsyncThunk(
+  "admin/updateVendorStatus",
+  async (
+    { onboarding_id, status, rejection_reason },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await approveVendorAPI({
+        onboarding_id,
+        status,
+        rejection_reason,
+      });
 
       return {
         onboarding_id,
+        status,
+        rejection_reason,
         message: res.message,
       };
     } catch (err) {
       return rejectWithValue(
-        err.message || "Failed to approve vendor"
-      );
-    }
-  }
-);
-
-// REJECT VENDOR
-export const rejectVendorThunk = createAsyncThunk(
-  "admin/rejectVendor",
-  async ({ onboarding_id, reason }, { rejectWithValue, dispatch }) => {
-    try {
-      const res = await rejectVendorAPI(onboarding_id, reason);
-
-      // refresh vendor list
-      dispatch(fetchOnboardingVendorsThunk());
-
-      return {
-        onboarding_id,
-        reason,
-        message: res.message,
-      };
-    } catch (err) {
-      return rejectWithValue(
-        err.message || "Failed to reject vendor"
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to update vendor status"
       );
     }
   }
@@ -598,42 +583,27 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* APPROVE VENDOR */
-.addCase(approveVendorThunk.pending, (state) => {
+      /* UPDATE VENDOR STATUS */
+.addCase(updateVendorStatusThunk.pending, (state) => {
   state.loading = true;
 })
-.addCase(approveVendorThunk.fulfilled, (state, action) => {
+
+.addCase(updateVendorStatusThunk.fulfilled, (state, action) => {
   state.loading = false;
+
+  const { onboarding_id, status } = action.payload;
 
   state.onboardingVendors = state.onboardingVendors.map((vendor) =>
-    vendor.id === action.payload.onboarding_id
-      ? { ...vendor, status: "approved" }
-      : vendor
-  );
-})
-.addCase(approveVendorThunk.rejected, (state, action) => {
-  state.loading = false;
-  state.error = action.payload;
-})
-
-/* REJECT VENDOR */
-.addCase(rejectVendorThunk.pending, (state) => {
-  state.loading = true;
-})
-.addCase(rejectVendorThunk.fulfilled, (state, action) => {
-  state.loading = false;
-
-  state.onboardingVendors = state.onboardingVendors.map((vendor) =>
-    vendor.id === action.payload.onboarding_id
+    vendor.onboarding_id === onboarding_id
       ? {
           ...vendor,
-          status: "rejected",
-          rejection_reason: action.payload.reason,
+          status,
         }
       : vendor
   );
 })
-.addCase(rejectVendorThunk.rejected, (state, action) => {
+
+.addCase(updateVendorStatusThunk.rejected, (state, action) => {
   state.loading = false;
   state.error = action.payload;
 })
