@@ -246,7 +246,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                 </svg>
                 Google
               </button>
-              <button className="w-full border border-[#E5E5E5] py-2.5 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-[#FFF8EC]">
+              {/* <button className="w-full border border-[#E5E5E5] py-2.5 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-[#FFF8EC]">
                 <svg
                   width="18"
                   height="18"
@@ -257,7 +257,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                   <path d="M22 12.07C22 6.55 17.52 2.07 12 2.07C6.48 2.07 2 6.55 2 12.07C2 17.05 5.66 21.17 10.44 21.93V14.95H7.9V12.07H10.44V9.88C10.44 7.37 11.93 5.98 14.22 5.98C15.31 5.98 16.45 6.18 16.45 6.18V8.64H15.2C13.97 8.64 13.56 9.4 13.56 10.18V12.07H16.33L15.89 14.95H13.56V21.93C18.34 21.17 22 17.05 22 12.07Z" />
                 </svg>
                 Facebook
-              </button>
+              </button> */}
             </div>
 
             <p className="text-sm text-center mt-6 text-gray-600">
