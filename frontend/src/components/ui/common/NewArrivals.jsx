@@ -49,7 +49,7 @@ export default function NewArrivals() {
 
   return (
     <section className="py-10 bg-white">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="text-[11px] font-extrabold tracking-widest text-[#D4AF37] uppercase">
             Discover Our Latest Collection
@@ -62,10 +62,6 @@ export default function NewArrivals() {
             </h2>
             <span className="h-px w-10 bg-[#D4AF37]/60" />
           </div>
-
-          <p className="mt-2 text-sm text-[#0B1F3A]/70">
-            Fresh products, great quality, unbeatable prices.
-          </p>
         </div>
 
         <div className="mt-8">
@@ -127,7 +123,7 @@ export default function NewArrivals() {
                           {title}
                         </h3>
                       </Link>
-                      <div className="mt-2 flex items-center gap-1">
+                      <div className=" flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, i) => {
                           const filled = rating >= i + 1;
                           return (
@@ -144,7 +140,7 @@ export default function NewArrivals() {
                           ({Number.isFinite(rating) ? rating.toFixed(1) : "0.0"})
                         </span>
                       </div>
-                      <div className="mt-3">
+                      <div className="mt-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[#0B1F3A] font-extrabold text-lg">
                             ₹{item?.price ?? "0"}
@@ -161,7 +157,7 @@ export default function NewArrivals() {
                       <button
                         type="button"
                         onClick={() => onAddToCart(item)}
-                        className="mt-4 w-full h-11 rounded-sm bg-[#0B1F3A] hover:bg-[#07172b] text-[#FFF8EC] font-semibold text-sm flex items-center justify-center gap-2 mt-auto"
+                        className=" w-full h-11 rounded-sm bg-[#0B1F3A] hover:bg-[#07172b] text-[#FFF8EC] font-semibold text-sm flex items-center justify-center gap-2 mt-auto"
                       >
                         <ShoppingCart className="h-4 w-4 text-[#D4AF37]" />
                         Add to Cart

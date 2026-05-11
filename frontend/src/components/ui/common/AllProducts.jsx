@@ -29,11 +29,11 @@ const AllProducts = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const visibleProducts = Array.isArray(products) ? products.slice(0, 10) : [];
+  const visibleProducts = Array.isArray(products) ? products.slice(0, 12) : [];
 
   return (
     <div className="bg-white">
-      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <div className="flex items-center justify-between">
          
   <div>
@@ -88,7 +88,7 @@ const AllProducts = () => {
                     Min. {item.moq} units
                   </div>
 
-                  <div className="flex items-center text-[11px] gap-1 mt-2 text-gray-600 mt-auto">
+                  <div className="flex items-center text-[11px] gap-1  text-gray-600 mt-auto">
                     <span className="w-2 h-2 bg-[#D4AF37] rounded-full" />
                     <span className="truncate">Supplier</span>
                   </div>

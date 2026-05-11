@@ -221,7 +221,7 @@ const Navbar = () => {
     <>
       <div className="w-full sticky top-0 z-50 shadow-sm bg-[#0B1F3A] text-[#FFF8EC]">
         <div className="hidden lg:block border-b border-white/10">
-          <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-10 py-2 text-[12px]">
+          <div className="w-full px-4 sm:px-6 lg:px-10 py-2 text-[12px]">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 text-white/85">
                 <span className="inline-flex items-center gap-2">
@@ -253,7 +253,7 @@ const Navbar = () => {
         </div>
 
         <div className="w-full bg-[#0B1F3A]">
-          <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-10 py-3">
+          <div className="w-full px-4 sm:px-6 lg:px-10 py-3">
             <div className="flex items-center justify-between gap-3 lg:gap-6">
               <div className="flex items-center gap-3 lg:hidden shrink-0">
                 <button

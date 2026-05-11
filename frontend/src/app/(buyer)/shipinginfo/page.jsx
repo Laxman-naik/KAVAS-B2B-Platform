@@ -3,108 +3,53 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  AlertTriangle,
-  BadgeCheck,
-  BookOpen,
-  Box,
-  ClipboardList,
-  Clock,
-  Globe,
-  MapPin,
-  Package,
-  PhoneCall,
-  RefreshCw,
-  ShieldCheck,
-  Truck,
-  Wallet,
-  XCircle,
-  FileText,
-  Edit3, Mail
-} from "lucide-react";
-
+import Image from "next/image";
+import { AlertTriangle, BadgeCheck, BookOpen, Box, ClipboardList, Clock, Globe, MapPin, Package, PhoneCall, RefreshCw, ShieldCheck, Truck, Wallet, XCircle, FileText, Edit3, Mail } from "lucide-react";
 const page = () => {
   return (
     <div className="w-full min-h-screen bg-white">
-      <div className="bg-[#0B1F3A]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+      <div className="bg-[#0B1F3A] overflow-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8 ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
             <div className="text-white">
-              <p className="text-xs text-white/70 mb-2">
-                <Link href="/" className="hover:text-[#D4AF37]">Home</Link>
-                <span className="mx-1">››</span>
-                <span className="text-white font-semibold">Shipping & Returns Policy</span>
-              </p>
-
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
-                Shipping & Returns <span className="text-[#D4AF37]">Policy</span>
+                Shipping & Returns{" "}
+                <span className="text-[#D4AF37]">Policy</span>
               </h1>
-
               <p className="mt-2 text-sm sm:text-base text-[#D4AF37] font-bold">
                 Fast Delivery. Easy Returns. Trusted Support.
               </p>
-
-              <p className="mt-3 max-w-xl text-sm text-white/80">
-                We ensure safe and timely delivery of your orders. Please read our Shipping & Returns Policy carefully.
+              <p className="mt-3 max-w-xl text-sm text-white/80 leading-relaxed">
+                We ensure safe and timely delivery of your orders.
+                Please read our Shipping & Returns Policy carefully.
               </p>
-
-              <div className="mt-4 inline-flex items-center gap-2 rounded-sm bg-white/10 border border-white/10 px-3 py-2 text-xs text-white/85">
+              <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-white/10 border border-white/10 px-4 py-2 text-xs text-white/85 backdrop-blur-sm">
                 <BadgeCheck className="h-4 w-4 text-[#D4AF37]" />
                 <span className="font-semibold">Last Updated:</span>
                 <span>01 August 2025</span>
               </div>
             </div>
 
-            <div className="hidden lg:flex justify-end">
-              <div className="w-full max-w-md">
-                <svg width="420" height="180" viewBox="0 0 420 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-                  <defs>
-                    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0" stopColor="#D4AF37" stopOpacity="0.95" />
-                      <stop offset="1" stopColor="#D4AF37" stopOpacity="0.35" />
-                    </linearGradient>
-                    <filter id="shadow2" x="-20" y="-20" width="460" height="240" filterUnits="userSpaceOnUse">
-                      <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#000" floodOpacity="0.35" />
-                    </filter>
-                  </defs>
-
-                  <g filter="url(#shadow2)">
-                    <rect x="238" y="18" width="160" height="140" rx="12" fill="#FFFFFF" />
-                    <rect x="252" y="34" width="132" height="12" rx="6" fill="#E5E5E5" />
-                    <rect x="252" y="54" width="110" height="10" rx="5" fill="#E5E5E5" />
-                    <rect x="252" y="72" width="120" height="10" rx="5" fill="#E5E5E5" />
-                    <rect x="252" y="90" width="116" height="10" rx="5" fill="#E5E5E5" />
-                    <rect x="252" y="108" width="104" height="10" rx="5" fill="#E5E5E5" />
-                    <rect x="280" y="20" width="78" height="14" rx="7" fill="#D4AF37" />
-                    <path d="M265 60l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M265 78l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M265 96l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M265 114l5 5 10-12" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  </g>
-
-                  <g filter="url(#shadow2)">
-                    <rect x="24" y="78" width="210" height="70" rx="14" fill="#0B1F3A" stroke="url(#g2)" strokeWidth="2" />
-                    <rect x="40" y="92" width="86" height="18" rx="9" fill="#D4AF37" />
-                    <rect x="40" y="116" width="110" height="10" rx="5" fill="#FFFFFF" fillOpacity="0.25" />
-                    <circle cx="186" cy="146" r="12" fill="#1A1A1A" />
-                    <circle cx="86" cy="146" r="12" fill="#1A1A1A" />
-                    <circle cx="186" cy="146" r="6" fill="#D4AF37" />
-                    <circle cx="86" cy="146" r="6" fill="#D4AF37" />
-                    <rect x="170" y="90" width="44" height="22" rx="8" fill="#0F2D55" />
-                  </g>
-
-                  <g filter="url(#shadow2)">
-                    <path d="M325 132c20 0 36 16 36 36H289c0-20 16-36 36-36z" fill="#0B1F3A" stroke="url(#g2)" strokeWidth="2" />
-                    <path d="M325 146l10 10-10 10-10-10 10-10z" fill="#D4AF37" />
-                  </g>
-                </svg>
+            <div className="hidden lg:flex justify-end relative">
+              <div className="absolute inset-0 flex justify-end items-center">
+                <div className="w-[320px] h-80 bg-[#D4AF37]/10 rounded-full blur-3xl" />
               </div>
+
+              <Image
+                src="/returnpolicyimage.png"
+                alt="Shipping & Returns Policy"
+                width={420}
+                height={350}
+                priority
+                className=" relative object-contain -ml-16 drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)] hover:scale-105 transition-transform duration-500 "
+              />
             </div>
+
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-6 items-start">
           <div className="space-y-4">
             <Card id="order-processing" className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">

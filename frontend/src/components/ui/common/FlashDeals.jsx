@@ -23,8 +23,8 @@ const FlashDeals = () => {
 
   return (
     <div className="py-3 bg-white">
-      <div className="max-w-[1400px] mx-auto px-4">
-        <div className="rounded-xl overflow-hidden bg-gradient-to-r from-[#071a33] via-[#0b2a55] to-[#04101f] text-white shadow">
+      <div className="w-full  px-4">
+        <div className="rounded-xl overflow-hidden bg-linear-to-r from-[#071a33] via-[#0b2a55] to-[#04101f] text-white shadow">
 
           <div className="grid lg:grid-cols-2 items-center px-5 py-4 md:px-8 md:py-5">
 

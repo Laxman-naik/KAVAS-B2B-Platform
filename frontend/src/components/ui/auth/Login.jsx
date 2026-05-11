@@ -82,19 +82,26 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               wholesale prices.
             </p>
 
-            <div className="mt-6 flex justify-center">
-              <img
-                src="https://images.unsplash.com/photo-1658851665036-10a9982f9b2d?auto=format&fit=crop&w=520&q=80"
-                alt="Login Security"
-                className="w-full max-w-90 h-40 object-cover rounded-xl border border-white/10"
-                loading="lazy"
-              />
-            </div>
+           <div className="flex justify-center">
+  <Image
+    src="/Lock3.png"
+    alt="lock"
+    width={320}
+    height={420}
+    priority
+    className="
+      h-55
+      sm:h-65
+      md:h-75
+      w-auto
+      object-contain
+      drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)]
+    "
+  />
+</div>
 
-            <div className="mt-6">
-              <div className="text-sm font-semibold text-[#D4AF37]">
-                Why Login?
-              </div>
+            <div className="">
+              <div className="text-sm font-semibold text-[#D4AF37]">Why Login?</div>
               <ul className="mt-3 space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-3">
                   <ListOrdered className="h-4 w-4 mt-0.5 text-[#D4AF37]" />
@@ -180,7 +187,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                   <input
                     type="checkbox"
                     required
-                    checked={rememberMe}
+                    
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 accent-[#D4AF37]"
                   />

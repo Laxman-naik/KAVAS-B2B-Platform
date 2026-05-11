@@ -14,7 +14,7 @@ export const vendorNavItems = [
   { label: "Orders", href: "/vendor/orders", icon: ShoppingBag },
   { label: "Inventory", href: "/vendor/inventory", icon: Package },
   { label: "Payments", href: "/vendor/payments", icon: Wallet },
-  { label: "Analytics", href: "/vendor/analytics", icon: BarChart3 },
+  // { label: "Analytics", href: "/vendor/analytics", icon: BarChart3 },
   { label: "Settings", href: "/vendor/settings", icon: Settings },
   { label: "Support", href: "/vendor/support", icon: HelpCircle },
 ];

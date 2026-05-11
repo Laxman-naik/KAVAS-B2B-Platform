@@ -91,16 +91,16 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
               Join thousands of businesses that trust Kavas for the best wholesale deals.
             </p>
 
-            <div className="mt-6 flex justify-center">
+            <div className="flex justify-center">
               <img
-                src="https://images.unsplash.com/photo-1658851665036-10a9982f9b2d?auto=format&fit=crop&w=520&q=80"
+                src="/Lock3.png"
                 alt="Register Illustration"
-                className="w-full max-w-90 h-40 object-cover rounded-xl border border-white/10"
+                className="object-cover "
                 loading="lazy"
               />
             </div>
 
-            <div className="mt-6">
+            <div className="">
               <div className="text-sm font-semibold text-[#D4AF37]">Why Join Kavas?</div>
               <ul className="mt-3 space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-3">

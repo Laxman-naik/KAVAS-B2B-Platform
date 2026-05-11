@@ -98,7 +98,7 @@ const VendorReviews = () => {
 
   return (
     <section id="reviews" className="bg-[#FFF8EC] py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="text-xs font-semibold tracking-wide text-[#D4AF37] uppercase">
             Vendor Reviews
