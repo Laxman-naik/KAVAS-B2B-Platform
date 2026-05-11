@@ -436,28 +436,55 @@ export const refreshAccessToken = async (req, res) => {
       return res.status(401).json({ message: "No refresh token" });
     }
 
-    // 1. verify token
+    // 1. verify JWT refresh token
     const decoded = verifyRefreshToken(refreshToken);
 
-    // 2. check DB session
+    if (!decoded?.vendor_id) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // 2. check session in DB (STRICT validation)
     const session = await db.query(
-      `SELECT * FROM vendor_sessions 
-       WHERE refresh_token = $1 AND expires_at > NOW()`,
-      [refreshToken]
+      `SELECT * FROM sessions 
+       WHERE refresh_token = $1 
+         AND user_id = $2 
+         AND expires_at > NOW()
+         AND is_revoked = false`,
+      [refreshToken, decoded.vendor_id]
     );
 
     if (!session.rows.length) {
       return res.status(401).json({ message: "Invalid session" });
     }
 
-    // 3. issue new access token
+    const currentSession = session.rows[0];
+
+    // 3. generate new access token
     const accessToken = generateAccessToken({
       vendor_id: decoded.vendor_id,
     });
 
-    return res.json({ accessToken });
+    // 4. OPTIONAL BUT IMPORTANT → rotate refresh token (security upgrade)
+    const newRefreshToken = generateRefreshToken({
+      vendor_id: decoded.vendor_id,
+    });
+
+    // 5. update session (rotation + tracking)
+    await db.query(
+      `UPDATE sessions
+       SET refresh_token = $1,
+           last_used_at = NOW()
+       WHERE id = $2`,
+      [newRefreshToken, currentSession.id]
+    );
+
+    return res.json({
+      accessToken,
+      refreshToken: newRefreshToken, // send updated token
+    });
 
   } catch (err) {
+    console.error("Refresh error:", err);
     return res.status(401).json({ message: "Refresh failed" });
   }
 };
