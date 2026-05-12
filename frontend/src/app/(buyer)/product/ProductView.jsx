@@ -417,7 +417,9 @@ export default function ProductView() {
  
                   {/* Title */}
                   <h1 className="mt-3 text-2xl font-bold tracking-tight" style={{ color: C.text }}>{norm.title}</h1>
-                  <p className="mt-1 text-xs" style={{ color: C.muted }}>Wireless Over Ear Headphones with Active Noise Cancellation</p>
+                  <p className="mt-1 text-xs" style={{ color: C.muted }}>
+  {norm.description}
+</p>
  
                   {/* Meta */}
                   <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
