@@ -178,9 +178,6 @@ const refreshAccessToken = async () => {
   const role = getRole();
   const refreshToken = getRefreshToken();
 
-  console.log("ROLE:", role);
-  console.log("REFRESH TOKEN:", refreshToken);
-
   if (!role || !refreshToken) {
   console.warn("No active session found");
   return null;
