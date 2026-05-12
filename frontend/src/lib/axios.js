@@ -98,6 +98,14 @@ const setToken = (token) => {
   localStorage.setItem(`${role}_accessToken`, token);
 };
 
+/* ================= ROLE → REFRESH ROUTE MAP ================= */
+
+const refreshRoutes = {
+  buyer: `${AUTH_BASE_URL}/api/auth/refresh`,
+  vendor: `${AUTH_BASE_URL}/api/vendor/refresh`,
+  admin: `${AUTH_BASE_URL}/api/admin/refresh`,
+};
+
 /* ================= AXIOS ================= */
 
 export const authapi = axios.create({
@@ -121,7 +129,7 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-/* 🔥 ROLE-BASED REFRESH ENDPOINT */
+/* 🔥 FIXED ROLE-BASED REFRESH */
 const refreshAccessToken = async () => {
   const refreshToken = getRefreshToken();
   const role = getRole();
@@ -130,10 +138,13 @@ const refreshAccessToken = async () => {
     throw new Error("Missing refresh token or role");
   }
 
-  const res = await axios.post(
-    `${AUTH_BASE_URL}/api/${role}/refresh`,
-    { refreshToken }
-  );
+  const url = refreshRoutes[role];
+
+  if (!url) {
+    throw new Error(`No refresh route configured for role: ${role}`);
+  }
+
+  const res = await axios.post(url, { refreshToken });
 
   const newAccessToken = res.data?.accessToken;
 

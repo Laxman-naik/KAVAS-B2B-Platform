@@ -84,30 +84,81 @@ exports.login = async (req, res) => {
 /* ================= REFRESH ================= */
 exports.refreshTokenHandler = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.body?.refreshToken;
 
     if (!refreshToken) {
-      return res.status(401).json({ message: "No refresh token" });
+      return res.status(401).json({
+        message: "No refresh token",
+      });
     }
 
     let decoded;
+
     try {
-      decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-    } catch {
-      return res.status(403).json({ message: "Invalid refresh token" });
+      decoded = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_SECRET
+      );
+    } catch (err) {
+      return res.status(403).json({
+        message: "Invalid refresh token",
+      });
     }
 
-    const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
+    const sessionResult = await db.query(
+      `
+      SELECT * FROM sessions
+      WHERE refresh_token = $1
+      AND is_revoked = false
+      AND expires_at > NOW()
+      LIMIT 1
+      `,
+      [refreshToken]
+    );
 
-    if (!stored || stored !== refreshToken) {
-      return res.status(403).json({ message: "Session expired" });
+    const session = sessionResult.rows[0];
+
+    if (!session) {
+      return res.status(403).json({
+        message: "Session expired or revoked",
+      });
     }
 
-    const newAccessToken = generateAccessToken({ id: decoded.id });
+    if (session.user_id !== decoded.id) {
+      return res.status(403).json({
+        message: "Token mismatch",
+      });
+    }
 
-    return res.json({ accessToken: newAccessToken });
+    const newAccessToken = jwt.sign(
+      {
+        id: decoded.id,
+        role: "buyer",
+      },
+      process.env.ACCESS_SECRET,
+      {
+        expiresIn: "15m",
+      }
+    );
+
+    await db.query(
+      `
+      UPDATE sessions
+      SET last_used_at = NOW()
+      WHERE id = $1
+      `,
+      [session.id]
+    );
+
+    return res.json({
+      accessToken: newAccessToken,
+    });
   } catch (err) {
-    return res.status(500).json({ message: "Refresh failed" });
+    console.error("FULL REFRESH ERROR:", err);
+
+    return res.status(500).json({
+      message: err?.message || "Refresh failed",
+    });
   }
 };
 
