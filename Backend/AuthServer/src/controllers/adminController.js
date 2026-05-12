@@ -546,16 +546,83 @@ const getAllUsers = async (req, res) => {
 
 const getAllOnboardingVendors = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM vendor_onboarding ORDER BY created_at DESC`
-    );
+    const query = `
+      SELECT 
+        vo.id AS onboarding_id,
+        vo.status,
+        vo.current_step,
+        vo.submitted_at,
+        vo.created_at,
+        vo.rejection_reason,
 
-    return res.json({
-      message: "Fetched successfully",
+        vp.id AS vendor_id,
+        vp.email,
+        vp.phone,
+        vp.email_verified,
+        vp.phone_verified,
+        vp.is_active,
+
+        vb.business_name,
+        vb.business_type,
+        vb.registered_name,
+        vb.pan,
+        vb.gstin,
+        vb.registration_number,
+        vb.address AS business_address,
+        vb.city,
+        vb.state,
+        vb.pincode,
+
+        bk.account_holder_name,
+        bk.account_number,
+        bk.ifsc_code,
+        bk.verified AS bank_verified,
+
+        vs.store_image,
+        vs.store_logo,
+        vs.tagline,
+        vs.description,
+
+        pa.address AS pickup_address,
+        pa.city AS pickup_city,
+        pa.state AS pickup_state,
+        pa.pincode AS pickup_pincode,
+        pa.is_store_address
+
+      FROM vendor_onboarding vo
+
+      LEFT JOIN vendorprofile vp 
+        ON vp.id = vo.vendor_id
+
+      LEFT JOIN vendor_business_details vb 
+        ON vb.onboarding_id = vo.id
+
+      LEFT JOIN vendor_bank_details bk 
+        ON bk.onboarding_id = vo.id
+
+      LEFT JOIN vendor_store_details vs 
+        ON vs.onboarding_id = vo.id
+
+      LEFT JOIN vendor_pickup_addresses pa 
+        ON pa.onboarding_id = vo.id
+
+      ORDER BY vo.created_at DESC;
+    `;
+
+    const result = await pool.query(query);
+
+    return res.status(200).json({
+      message: "All onboarding vendors fetched successfully",
       data: result.rows,
     });
+
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("Admin Fetch Error:", err);
+
+    return res.status(500).json({
+      message: err.message,
+      error: err.code || null,
+    });
   }
 };
 
