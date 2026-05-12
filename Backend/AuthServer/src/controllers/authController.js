@@ -1,62 +1,322 @@
+// const pool = require("../config/db");
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+// const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+// const redis = require("../config/redis");
+
+// const REFRESH_PREFIX = "refresh:user:";
+
+// /* ================= REGISTER ================= */
+// exports.register = async (req, res) => {
+//   try {
+//     const { full_name, email, password, phone, role } = req.body || {};
+
+//     if (!full_name || !email || !password) {
+//       return res.status(400).json({
+//         message: "full_name, email and password are required",
+//       });
+//     }
+
+//     const hashed = await bcrypt.hash(password, 10);
+
+//     const result = await pool.query(
+//       `INSERT INTO users (full_name, email, password_hash, phone, role)
+//        VALUES ($1,$2,$3,$4,$5)
+//        RETURNING id, full_name, email, role`,
+//       [full_name, email, hashed, phone, role || "buyer"]
+//     );
+
+//     return res.json({ user: result.rows[0] });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
+
+// /* ================= LOGIN ================= */
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body || {};
+
+//     if (!req.body) {
+//       return res.status(400).json({
+//         message: "Request body missing. Send JSON with Content-Type: application/json",
+//       });
+//     }
+
+//     const result = await pool.query(
+//       "SELECT * FROM users WHERE email=$1",
+//       [email]
+//     );
+
+//     const user = result.rows[0];
+
+//     if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+//     const match = await bcrypt.compare(password, user.password_hash);
+//     if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+//     const accessToken = generateAccessToken(user);
+//     const refreshToken = generateRefreshToken(user);
+
+//     await redis.set(
+//       `${REFRESH_PREFIX}${user.id}`,
+//       refreshToken,
+//       "EX",
+//       7 * 24 * 60 * 60
+//     );
+
+//     return res.json({
+//       user: {
+//         id: user.id,
+//         full_name: user.full_name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//       accessToken,
+//       refreshToken,
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
+
+// /* ================= REFRESH ================= */
+// exports.refreshTokenHandler = async (req, res) => {
+//   try {
+//     const { refreshToken } = req.body;
+
+//     if (!refreshToken) {
+//       return res.status(401).json({ message: "No refresh token" });
+//     }
+
+//     let decoded;
+//     try {
+//       decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+//     } catch {
+//       return res.status(403).json({ message: "Invalid refresh token" });
+//     }
+
+//     const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
+
+//     if (!stored || stored !== refreshToken) {
+//       return res.status(403).json({ message: "Session expired" });
+//     }
+
+//     const newAccessToken = generateAccessToken({ id: decoded.id });
+
+//     return res.json({ accessToken: newAccessToken });
+//   } catch (err) {
+//     return res.status(500).json({ message: "Refresh failed" });
+//   }
+// };
+
+// /* ================= GET ME (JWT HEADER ONLY) ================= */
+// exports.getMe = async (req, res) => {
+//   try {
+//     const authHeader = req.headers.authorization;
+
+//     if (!authHeader) {
+//       return res.status(401).json({ user: null });
+//     }
+
+//     const token = authHeader.split(" ")[1];
+
+//     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
+
+//     const result = await pool.query(
+//       "SELECT id, full_name, email, role FROM users WHERE id=$1",
+//       [decoded.id]
+//     );
+
+//     return res.json({ user: result.rows[0] });
+//   } catch {
+//     return res.status(401).json({ user: null });
+//   }
+// };
+
+// /* ================= LOGOUT ================= */
+// exports.logout = async (req, res) => {
+//   try {
+//     const { refreshToken } = req.body;
+
+//     if (refreshToken) {
+//       const decoded = jwt.decode(refreshToken);
+//       if (decoded?.id) {
+//         await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
+//       }
+//     }
+
+//     return res.json({ message: "Logged out" });
+//   } catch {
+//     return res.status(500).json({ message: "Logout failed" });
+//   }
+// };
+
 const pool = require("../config/db");
+
 const bcrypt = require("bcryptjs");
+
 const jwt = require("jsonwebtoken");
-const { generateAccessToken, generateRefreshToken } = require("../utils/token");
-const redis = require("../config/redis");
 
-const REFRESH_PREFIX = "refresh:user:";
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../utils/token");
 
-/* ================= REGISTER ================= */
-exports.register = async (req, res) => {
+const redis =
+  require("../config/redis");
+
+const REFRESH_PREFIX =
+  "refresh:user:";
+
+exports.register = async (
+  req,
+  res
+) => {
   try {
-    const { full_name, email, password, phone, role } = req.body || {};
 
-    if (!full_name || !email || !password) {
+    const {
+      full_name,
+      email,
+      password,
+      phone,
+      role,
+    } = req.body || {};
+
+    if (
+      !full_name ||
+      !email ||
+      !password
+    ) {
       return res.status(400).json({
-        message: "full_name, email and password are required",
+        message:
+          "full_name, email and password are required",
       });
     }
 
-    const hashed = await bcrypt.hash(password, 10);
+    const existingUser =
+      await pool.query(
+        `
+        SELECT *
+        FROM users
+        WHERE email = $1
+        `,
+        [email]
+      );
 
-    const result = await pool.query(
-      `INSERT INTO users (full_name, email, password_hash, phone, role)
-       VALUES ($1,$2,$3,$4,$5)
-       RETURNING id, full_name, email, role`,
-      [full_name, email, hashed, phone, role || "buyer"]
-    );
+    if (
+      existingUser.rows.length > 0
+    ) {
+      return res.status(400).json({
+        message:
+          "Email already exists",
+      });
+    }
 
-    return res.json({ user: result.rows[0] });
+    const hashed =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+    const result =
+      await pool.query(
+        `
+        INSERT INTO users
+        (
+          full_name,
+          email,
+          password_hash,
+          phone,
+          role
+        )
+
+        VALUES
+        ($1,$2,$3,$4,$5)
+
+        RETURNING
+        id,
+        full_name,
+        email,
+        role
+        `,
+        [
+          full_name,
+          email,
+          hashed,
+          phone,
+          role || "buyer",
+        ]
+      );
+
+    return res.json({
+      user: result.rows[0],
+    });
+
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
-/* ================= LOGIN ================= */
-exports.login = async (req, res) => {
+exports.login = async (
+  req,
+  res
+) => {
   try {
-    const { email, password } = req.body || {};
+
+    const {
+      email,
+      password,
+    } = req.body || {};
 
     if (!req.body) {
       return res.status(400).json({
-        message: "Request body missing. Send JSON with Content-Type: application/json",
+        message:
+          "Request body missing",
       });
     }
 
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email=$1",
-      [email]
-    );
+    const result =
+      await pool.query(
+        `
+        SELECT *
+        FROM users
+        WHERE email = $1
+        `,
+        [email]
+      );
 
-    const user = result.rows[0];
+    const user =
+      result.rows[0];
 
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({
+        message:
+          "Invalid credentials",
+      });
+    }
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+    const match =
+      await bcrypt.compare(
+        password,
+        user.password_hash
+      );
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    if (!match) {
+      return res.status(401).json({
+        message:
+          "Invalid credentials",
+      });
+    }
+
+    const accessToken =
+      generateAccessToken(user);
+
+    const refreshToken =
+      generateRefreshToken(user);
 
     await redis.set(
       `${REFRESH_PREFIX}${user.id}`,
@@ -68,86 +328,160 @@ exports.login = async (req, res) => {
     return res.json({
       user: {
         id: user.id,
-        full_name: user.full_name,
+        full_name:
+          user.full_name,
         email: user.email,
         role: user.role,
       },
+
       accessToken,
+
       refreshToken,
     });
+
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
-/* ================= REFRESH ================= */
-exports.refreshTokenHandler = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      return res.status(401).json({ message: "No refresh token" });
-    }
-
-    let decoded;
+exports.refreshTokenHandler =
+  async (req, res) => {
     try {
-      decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-    } catch {
-      return res.status(403).json({ message: "Invalid refresh token" });
+
+      const {
+        refreshToken,
+      } = req.body;
+
+      if (!refreshToken) {
+        return res.status(401).json({
+          message:
+            "No refresh token",
+        });
+      }
+
+      let decoded;
+
+      try {
+
+        decoded = jwt.verify(
+          refreshToken,
+          process.env
+            .REFRESH_SECRET
+        );
+
+      } catch {
+
+        return res.status(403).json({
+          message:
+            "Invalid refresh token",
+        });
+      }
+
+      const stored =
+        await redis.get(
+          `${REFRESH_PREFIX}${decoded.id}`
+        );
+
+      if (
+        !stored ||
+        stored !== refreshToken
+      ) {
+        return res.status(403).json({
+          message:
+            "Session expired",
+        });
+      }
+
+      const newAccessToken =
+        generateAccessToken({
+          id: decoded.id,
+        });
+
+      return res.json({
+        accessToken:
+          newAccessToken,
+      });
+
+    } catch (err) {
+
+      return res.status(500).json({
+        message:
+          "Refresh failed",
+      });
     }
+  };
 
-    const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
-
-    if (!stored || stored !== refreshToken) {
-      return res.status(403).json({ message: "Session expired" });
-    }
-
-    const newAccessToken = generateAccessToken({ id: decoded.id });
-
-    return res.json({ accessToken: newAccessToken });
-  } catch (err) {
-    return res.status(500).json({ message: "Refresh failed" });
-  }
-};
-
-/* ================= GET ME (JWT HEADER ONLY) ================= */
-exports.getMe = async (req, res) => {
+exports.getMe = async (
+  req,
+  res
+) => {
   try {
-    const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
-      return res.status(401).json({ user: null });
-    }
+    const result =
+      await pool.query(
+        `
+        SELECT
+          id,
+          full_name,
+          email,
+          role
+        FROM users
+        WHERE id = $1
+        `,
+        [req.user.id]
+      );
 
-    const token = authHeader.split(" ")[1];
+    return res.json({
+      user: result.rows[0],
+    });
 
-    const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
-
-    const result = await pool.query(
-      "SELECT id, full_name, email, role FROM users WHERE id=$1",
-      [decoded.id]
-    );
-
-    return res.json({ user: result.rows[0] });
   } catch {
-    return res.status(401).json({ user: null });
+
+    return res.status(500).json({
+      message:
+        "Server error",
+    });
   }
 };
 
-/* ================= LOGOUT ================= */
-exports.logout = async (req, res) => {
+exports.logout = async (
+  req,
+  res
+) => {
   try {
-    const { refreshToken } = req.body;
+
+    const {
+      refreshToken,
+    } = req.body;
 
     if (refreshToken) {
-      const decoded = jwt.decode(refreshToken);
+
+      const decoded =
+        jwt.decode(
+          refreshToken
+        );
+
       if (decoded?.id) {
-        await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
+
+        await redis.del(
+          `${REFRESH_PREFIX}${decoded.id}`
+        );
       }
     }
 
-    return res.json({ message: "Logged out" });
+    return res.json({
+      message:
+        "Logged out",
+    });
+
   } catch {
-    return res.status(500).json({ message: "Logout failed" });
+
+    return res.status(500).json({
+      message:
+        "Logout failed",
+    });
   }
 };
