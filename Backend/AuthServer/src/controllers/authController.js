@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const crypto = require("crypto");
 const redis = require("../config/redis");
 
 const REFRESH_PREFIX = "refresh:user:";
@@ -123,12 +124,25 @@ exports.login = async (req, res) => {
 
     /* ================= SESSION ================= */
 
-    const sessionId =
-      req.headers["x-session-id"] || crypto.randomUUID();
+    const sessionId = req.headers["x-session-id"];
+
+if (!sessionId) {
+  return res.status(400).json({
+    message: "Missing session id",
+  });
+}
 
     const expiresAt = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     );
+
+    await pool.query(
+  `
+  DELETE FROM sessions
+  WHERE session_id = $1
+  `,
+  [sessionId]
+);
 
     await pool.query(
       `
@@ -290,17 +304,32 @@ exports.getMe = async (req, res) => {
 /* ================= LOGOUT ================= */
 exports.logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const sessionId = req.headers["x-session-id"];
 
-    if (refreshToken) {
-      const decoded = jwt.decode(refreshToken);
-      if (decoded?.id) {
-        await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
-      }
+    if (!sessionId) {
+      return res.status(400).json({
+        message: "Missing session id",
+      });
     }
 
-    return res.json({ message: "Logged out" });
-  } catch {
-    return res.status(500).json({ message: "Logout failed" });
+    await pool.query(
+      `
+      UPDATE sessions
+      SET is_revoked = true
+      WHERE session_id = $1
+      `,
+      [sessionId]
+    );
+
+    return res.json({
+      message: "Logged out successfully",
+    });
+
+  } catch (err) {
+    console.error("LOGOUT ERROR:", err);
+
+    return res.status(500).json({
+      message: "Logout failed",
+    });
   }
 };

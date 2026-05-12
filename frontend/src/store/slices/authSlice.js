@@ -326,12 +326,28 @@ export const loadUserThunk = createAsyncThunk(
   "auth/loadUser",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return rejectWithValue("No token");
+      const role = localStorage.getItem("role");
 
-      return await getMe(); // { user }
-    } catch {
-      return rejectWithValue("Not authenticated");
+      if (!role) {
+        return rejectWithValue("No role");
+      }
+
+      const token = localStorage.getItem(
+        `${role}_accessToken`
+      );
+
+      if (!token) {
+        return rejectWithValue("No token");
+      }
+
+      return await getMe();
+
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data?.message ||
+        err.message ||
+        "Not authenticated"
+      );
     }
   }
 );

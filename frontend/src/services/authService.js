@@ -115,8 +115,6 @@ export const refreshTokenAPI = async () => {
 
   const refreshRoutes = {
     buyer: "/api/auth/refresh",
-    vendor: "/api/vendor/refresh",
-    admin: "/api/admin/refresh",
   };
 
   const res = await authapi.post(

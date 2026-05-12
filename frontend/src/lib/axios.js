@@ -78,7 +78,7 @@ if (typeof window !== "undefined") {
 const getRole = () => {
   if (typeof window === "undefined") return null;
 
-  return localStorage.getItem("role"); // buyer | vendor | admin
+  return localStorage.getItem("role");
 };
 
 /* ================= TOKEN HELPERS ================= */
@@ -210,13 +210,33 @@ const refreshAccessToken = async () => {
 
   const newAccessToken = response.data?.accessToken;
 
-  if (!newAccessToken) {
-    throw new Error("No new access token returned");
-  }
+if (!newAccessToken) {
+  throw new Error("No new access token returned");
+}
 
-  setAccessToken(newAccessToken);
+/* PRINT TOKENS */
 
-  return newAccessToken;
+console.log("OLD REFRESH TOKEN:", refreshToken);
+
+console.log("NEW ACCESS TOKEN:", newAccessToken);
+
+/* SAVE ACCESS TOKEN */
+
+setAccessToken(newAccessToken);
+
+/* VERIFY STORAGE */
+
+console.log(
+  "STORED ACCESS TOKEN:",
+  localStorage.getItem(`${role}_accessToken`)
+);
+
+console.log(
+  "STORED REFRESH TOKEN:",
+  localStorage.getItem(`${role}_refreshToken`)
+);
+
+return newAccessToken;
 };
 
 /* ================= RESPONSE INTERCEPTOR ================= */
@@ -337,3 +357,4 @@ export const clearAuthData = () => {
 
   localStorage.removeItem("role");
 };
+
