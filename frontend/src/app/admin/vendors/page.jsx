@@ -18,7 +18,6 @@ export default function VendorsTable() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const { onboardingVendors = [], loading } = useSelector((state) => state.auth);
-  console.log(onboardingVendors)
 
   const [form, setForm] = useState({
     name: "",

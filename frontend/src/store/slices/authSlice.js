@@ -175,7 +175,6 @@ export const fetchOnboardingVendorsThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await getOnboardingVendorsAPI();
-      console.log(res)
       return res.data;
     } catch (err) {
       return rejectWithValue(
