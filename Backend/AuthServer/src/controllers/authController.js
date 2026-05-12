@@ -33,37 +33,129 @@ exports.register = async (req, res) => {
 };
 
 /* ================= LOGIN ================= */
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body || {};
+
+//     if (!req.body) {
+//       return res.status(400).json({
+//         message: "Request body missing. Send JSON with Content-Type: application/json",
+//       });
+//     }
+
+//     const result = await pool.query(
+//       "SELECT * FROM users WHERE email=$1",
+//       [email]
+//     );
+
+//     const user = result.rows[0];
+
+//     if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+//     const match = await bcrypt.compare(password, user.password_hash);
+//     if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+//     const accessToken = generateAccessToken(user);
+//     const refreshToken = generateRefreshToken(user);
+
+//     await redis.set(
+//       `${REFRESH_PREFIX}${user.id}`,
+//       refreshToken,
+//       "EX",
+//       7 * 24 * 60 * 60
+//     );
+
+//     return res.json({
+//       user: {
+//         id: user.id,
+//         full_name: user.full_name,
+//         email: user.email,
+//         role: user.role,
+//       },
+//       role:user.role,
+//       accessToken,
+//       refreshToken,
+//     });
+//   } catch (err) {
+//     return res.status(500).json({ message: err.message });
+//   }
+// };
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body || {};
 
     if (!req.body) {
       return res.status(400).json({
-        message: "Request body missing. Send JSON with Content-Type: application/json",
+        message:
+          "Request body missing. Send JSON with Content-Type: application/json",
       });
     }
 
     const result = await pool.query(
-      "SELECT * FROM users WHERE email=$1",
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
 
     const user = result.rows[0];
 
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+    const match = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!match) {
+      return res.status(401).json({
+        message: "Invalid credentials",
+      });
+    }
+
+    /* ================= TOKENS ================= */
 
     const accessToken = generateAccessToken(user);
+
     const refreshToken = generateRefreshToken(user);
 
-    await redis.set(
-      `${REFRESH_PREFIX}${user.id}`,
-      refreshToken,
-      "EX",
-      7 * 24 * 60 * 60
+    /* ================= SESSION ================= */
+
+    const sessionId =
+      req.headers["x-session-id"] || crypto.randomUUID();
+
+    const expiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
     );
+
+    await pool.query(
+      `
+      INSERT INTO sessions (
+        session_id,
+        user_id,
+        refresh_token,
+        ip_address,
+        user_agent,
+        expires_at,
+        is_revoked
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, false)
+      `,
+      [
+        sessionId,
+        user.id,
+        refreshToken,
+        req.ip ||
+          req.headers["x-forwarded-for"] ||
+          null,
+        req.headers["user-agent"] || null,
+        expiresAt,
+      ]
+    );
+
+    /* ================= RESPONSE ================= */
 
     return res.json({
       user: {
@@ -72,12 +164,20 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      role:user.role,
+
+      role: user.role,
+
       accessToken,
+
       refreshToken,
     });
+
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    console.error("LOGIN ERROR:", err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
