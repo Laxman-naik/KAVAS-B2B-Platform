@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,17 +26,15 @@ const page = () => {
 
   return (
     <div className="min-h-screen bg-white">
-
-      {/* HEADER */}
       <div className="relative overflow-hidden bg-[#0B1F3A]">
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
             <div className="text-white">
-              <p className="text-xs text-white/70 mb-2">
+              {/* <p className="text-xs text-white/70 mb-2">
                 <span className="hover:text-[#D4AF37] cursor-pointer">Home</span>
                 <span className="mx-1">››</span>
                 <span className="text-white font-semibold">FAQs</span>
-              </p>
+              </p> */}
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
                 Frequently Asked <span className="text-[#D4AF37]">Questions</span>
@@ -54,49 +53,21 @@ const page = () => {
             <div className="hidden lg:flex justify-end">
               <div className="w-full max-w-md">
                 <div className="flex items-center justify-end">
-                  <svg
-                    width="320"
-                    height="150"
-                    viewBox="0 0 320 150"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-full"
-                  >
-                    <defs>
-                      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0" stopColor="#D4AF37" stopOpacity="0.9" />
-                        <stop offset="1" stopColor="#D4AF37" stopOpacity="0.35" />
-                      </linearGradient>
-                      <filter id="shadow" x="-20" y="-20" width="360" height="210" filterUnits="userSpaceOnUse">
-                        <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#000" floodOpacity="0.35" />
-                      </filter>
-                    </defs>
 
-                    <g filter="url(#shadow)">
-                      <path
-                        d="M40 40C40 26.7452 50.7452 16 64 16H184C197.255 16 208 26.7452 208 40V96C208 109.255 197.255 120 184 120H110L82 138V120H64C50.7452 120 40 109.255 40 96V40Z"
-                        fill="#0B1F3A"
-                        stroke="url(#g1)"
-                        strokeWidth="2"
-                      />
-                      <text x="78" y="70" fill="#D4AF37" fontSize="34" fontWeight="800" fontFamily="Arial, sans-serif">
-                        FAQ
-                      </text>
-                    </g>
-
-                    <g filter="url(#shadow)">
-                      <rect x="210" y="22" width="86" height="110" rx="14" fill="#FFF" />
-                      <rect x="220" y="40" width="66" height="10" rx="5" fill="#E5E5E5" />
-                      <rect x="220" y="60" width="56" height="10" rx="5" fill="#E5E5E5" />
-                      <rect x="220" y="80" width="62" height="10" rx="5" fill="#E5E5E5" />
-                      <circle cx="225" cy="45" r="4" fill="#16A34A" />
-                      <circle cx="225" cy="65" r="4" fill="#16A34A" />
-                      <circle cx="225" cy="85" r="4" fill="#16A34A" />
-                      <rect x="238" y="28" width="30" height="10" rx="5" fill="#D4AF37" />
-                    </g>
-                  </svg>
+                  <div className="absolute inset-0 flex justify-end items-center">
+                    <div className="w-[320px] h-80 bg-[#D4AF37]/10 rounded-full blur-3xl" />
+                  </div>
+                  <Image
+                    src="/imagefaq.png"
+                    alt="Help Center"
+                    width={420}
+                    height={350}
+                    priority
+                    className="  relative object-contain -ml-16 drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)] hover:scale-105 transition-transform duration-500 "
+                  />
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -178,67 +149,67 @@ const page = () => {
           </div>
 
           <div className="lg:sticky lg:top-24">
-  <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
-    
-    <div className="bg-[#FFF1D6] px-5 py-6">
+            <Card className="rounded-sm border border-[#E5E5E5] shadow-sm overflow-hidden">
 
-      <div className="h-12 w-12 rounded-sm bg-white border border-[#E5E5E5] flex items-center justify-center">
-        <HelpCircle className="h-6 w-6 text-[#0B1F3A]" />
-      </div>
+              <div className="bg-[#FFF1D6] px-5 py-6">
 
-      <h3 className="mt-4 text-lg font-extrabold text-[#1A1A1A]">
-        Still Have <span className="text-[#D4AF37]">Questions?</span>
-      </h3>
+                <div className="h-12 w-12 rounded-sm bg-white border border-[#E5E5E5] flex items-center justify-center">
+                  <HelpCircle className="h-6 w-6 text-[#0B1F3A]" />
+                </div>
 
-      <p className="mt-1 text-sm text-gray-600 font-semibold">
-        We’re here to help!
-      </p>
+                <h3 className="mt-4 text-lg font-extrabold text-[#1A1A1A]">
+                  Still Have <span className="text-[#D4AF37]">Questions?</span>
+                </h3>
 
-      {/* CONTACT BOX */}
-      <div className="mt-4 bg-[#0B1F3A] rounded-sm">
+                <p className="mt-1 text-sm text-gray-600 font-semibold">
+                  We’re here to help!
+                </p>
 
-        <div className="flex items-center gap-3 px-4 py-3">
-          <PhoneCall className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Call Us</p>
-            <p className="text-sm font-semibold text-white">
-              +91 0000000000
-            </p>
+                {/* CONTACT BOX */}
+                <div className="mt-4 bg-[#0B1F3A] rounded-sm">
+
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <PhoneCall className="w-5 h-5 text-[#D4AF37]" />
+                    <div>
+                      <p className="text-xs text-gray-400">Call Us</p>
+                      <p className="text-sm font-semibold text-white">
+                        +91 0000000000
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <Mail className="w-5 h-5 text-[#D4AF37]" />
+                    <div>
+                      <p className="text-xs text-gray-400">Email</p>
+                      <p className="text-sm font-semibold text-white">
+                        info@kavaswholesalehub.com
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
+                    <div>
+                      <p className="text-xs text-gray-400">Live Chat</p>
+                      <p className="text-sm font-semibold text-white">
+                        During Business Hours
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* BUTTON AT BOTTOM */}
+                  <div className="px-4 pb-4 ">
+                    <Button className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">
+                      Contact Support
+                    </Button>
+                  </div>
+
+                </div>
+
+              </div>
+            </Card>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3 px-4 py-3">
-          <Mail className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Email</p>
-            <p className="text-sm font-semibold text-white">
-              info@kavaswholesalehub.com
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 px-4 py-3">
-          <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
-          <div>
-            <p className="text-xs text-gray-400">Live Chat</p>
-            <p className="text-sm font-semibold text-white">
-              During Business Hours
-            </p>
-          </div>
-        </div>
-
-        {/* BUTTON AT BOTTOM */}
-        <div className="px-4 pb-4 ">
-          <Button className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">
-            Contact Support
-          </Button>
-        </div>
-
-      </div>
-
-    </div>
-  </Card>
-</div>
         </div>
       </div>
 

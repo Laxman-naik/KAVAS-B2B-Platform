@@ -13,7 +13,6 @@ import profileReducer from "./slices/profileSlice";
 
 export const store = configureStore({
   reducer: {
-    products: productReducer,
     auth: authReducer,
     favourites: favouritesReducer,
     cart: cartReducer,

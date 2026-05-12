@@ -1,114 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
 import { createProduct as createProductAPI } from "../../../services/productService";
+import { useDispatch, useSelector } from "react-redux";
+import { productsData } from "@/app/(buyer)/product/productData";
+// import { fetchVendorProducts } from "../../../store/slices/productSlice";
 
 export default function ProductManagementBody() {
-  const productsData = [
-    {
-      id: 1,
-      name: "Industrial Grade Bearings",
-      sku: "BRG-001",
-      category: "Industrial Hardware",
-      price: 850,
-      moq: 100,
-      stock: 4200,
-      status: "Active",
-      image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789",
-    },
-    {
-      id: 2,
-      name: "Stainless Steel Fasteners Set",
-      sku: "FST-042",
-      category: "Industrial Hardware",
-      price: 320,
-      moq: 500,
-      stock: 18500,
-      status: "Pending Review",
-      image: "https://images.unsplash.com/photo-1604147706283-d7119b5b822c",
-    },
-    {
-      id: 3,
-      name: "HDPE Pipes 50mm Diameter",
-      sku: "PIP-017",
-      category: "Pipes & Fittings",
-      price: 145,
-      moq: 200,
-      stock: 320,
-      status: "Active",
-      image: "https://images.unsplash.com/photo-1581091012184-7e0cdfbb6791",
-    },
-    {
-      id: 4,
-      name: "Rubber O-Ring Set",
-      sku: "ORG-222",
-      category: "Industrial Hardware",
-      price: 90,
-      moq: 300,
-      stock: 0,
-      status: "Out of Stock",
-      image: "https://images.unsplash.com/photo-1615486511484-92e172cc4fe0",
-    },
-    {
-      id: 5,
-      name: "PVC Water Pipes",
-      sku: "PVC-111",
-      category: "Pipes & Fittings",
-      price: 200,
-      moq: 150,
-      stock: 980,
-      status: "Active",
-      image: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4",
-    },
-    {
-      id: 6,
-      name: "Hydraulic Valves",
-      sku: "VAL-009",
-      category: "Industrial Hardware",
-      price: 1200,
-      moq: 50,
-      stock: 150,
-      status: "Low Stock",
-      image: "https://images.unsplash.com/photo-1581091870627-3b5d3c7bdb6d",
-    },
-    {
-      id: 7,
-      name: "Copper Wiring Bundle",
-      sku: "CWR-555",
-      category: "Electrical",
-      price: 600,
-      moq: 200,
-      stock: 0,
-      status: "Out of Stock",
-      image: "https://images.unsplash.com/photo-1581092334442-9b8e7d8d3e7d",
-    },
-    {
-      id: 8,
-      name: "Aluminium Sheets",
-      sku: "ALM-876",
-      category: "Raw Materials",
-      price: 450,
-      moq: 300,
-      stock: 760,
-      status: "Active",
-      image: "https://images.unsplash.com/photo-1616627981155-5d7c6e7e0b8f",
-    },
-    {
-      id: 9,
-      name: "Industrial Lubricant Oil",
-      sku: "LUB-333",
-      category: "Chemicals",
-      price: 250,
-      moq: 100,
-      stock: 50,
-      status: "Low Stock",
-      image: "https://images.unsplash.com/photo-1581091014534-8987c1b8c9b6",
-    },
-  ];
-
-  const [products, setProducts] = useState(productsData);
+  const dispatch = useDispatch();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [status, setStatus] = useState("All Status");
@@ -116,6 +17,18 @@ export default function ProductManagementBody() {
   const [openAdd, setOpenAdd] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  const vendorId = useSelector((state) => state.vendor.vendor?.id);
+  const { vendorProducts, loading } = useSelector((state) => state.products);
+  console.log(vendorProducts);
+  console.log(vendorId);
+
+  useEffect(() => {
+    if (vendorId) {
+      dispatch(fetchVendorProducts(vendorId));
+    }
+  }, [vendorId]);
+
+  const products = vendorProducts;
 
   /* ================= FILTER LOGIC ================= */
 
@@ -259,7 +172,7 @@ export default function ProductManagementBody() {
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full sm:w-[340px]">
+            <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full sm:w-85">
               <Search size={16} className="text-gray-400" />
               <input
                 placeholder="Search products, SKU..."
@@ -308,9 +221,8 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                  viewMode === "grid" ? "bg-[#0B1F3A] text-white" : "text-gray-600 hover:bg-[#FFF8EC]"
-                }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "grid" ? "bg-[#0B1F3A] text-white" : "text-gray-600 hover:bg-[#FFF8EC]"
+                  }`}
                 aria-label="Grid view"
               >
                 <LayoutGrid size={16} />
@@ -318,9 +230,8 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                  viewMode === "list" ? "bg-[#0B1F3A] text-white" : "text-gray-600 hover:bg-[#FFF8EC]"
-                }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "list" ? "bg-[#0B1F3A] text-white" : "text-gray-600 hover:bg-[#FFF8EC]"
+                  }`}
                 aria-label="List view"
               >
                 <List size={16} />
@@ -450,9 +361,8 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage <= 1 ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
-            }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage <= 1 ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
+              }`}
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
@@ -466,11 +376,10 @@ export default function ProductManagementBody() {
                 key={p}
                 type="button"
                 onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${
-                  active
+                className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${active
                     ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
                     : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
-                }`}
+                  }`}
               >
                 {p}
               </button>
@@ -481,9 +390,8 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage >= totalPages ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
-            }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage >= totalPages ? "opacity-40 cursor-not-allowed" : "hover:bg-[#FFF8EC]"
+              }`}
             aria-label="Next page"
           >
             <ChevronRight size={16} />

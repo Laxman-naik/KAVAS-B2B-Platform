@@ -1,124 +1,135 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI, getTrendingProductsAPI } from "../../services/productService";
 
-const API_URL = "http://localhost:5002/api/products";
+/* ================= THUNKS ================= */
 
-/* =========================================
-   ADD PRODUCT
-========================================= */
-export const addProduct = createAsyncThunk(
-  "products/addProduct",
-  async (productData, { rejectWithValue }) => {
-    try {
-      console.log("SENDING PRODUCT:", productData);
-
-      const token = localStorage.getItem("accessToken");
-
-      console.log("TOKEN:", token);
-
-      const response = await axios.post(
-        API_URL,
-        productData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log("API RESPONSE:", response.data);
-
-      return response.data;
-    } catch (error) {
-      console.error("AXIOS ERROR:", error);
-
-      if (error.response) {
-        console.error("ERROR RESPONSE:", error.response.data);
-
-        return rejectWithValue(error.response.data);
-      }
-
-      return rejectWithValue({
-        message: error.message,
-      });
-    }
-  }
-);
-/* =========================================
-   FETCH ALL PRODUCTS
-========================================= */
+// Get all products
 export const fetchProducts = createAsyncThunk(
-  "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+  "products/fetchAll",
+  async (_, thunkAPI) => {
     try {
-      const response = await axios.get(API_URL);
-
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to fetch products",
-        }
+      const res = await getProducts();
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
       );
     }
   }
 );
 
-/* =========================================
-   FETCH NEW ARRIVALS
-========================================= */
+// FIXED: consistent naming
+export const fetchSingleProduct = createAsyncThunk(
+  "products/fetchOne",
+  async (id, thunkAPI) => {
+    try {
+      const res = await getSingleProduct(id);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
+// Create product
+export const addProduct = createAsyncThunk(
+  "products/create",
+  async (data, thunkAPI) => {
+    try {
+      const res = await createProduct(data);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+// export const addProduct = createAsyncThunk(
+//   "products/add",
+//   async (formData, { rejectWithValue }) => {
+//     try {
+//       const res = await fetch("/api/products", {
+//         method: "POST",
+//         body: formData, // ✅ important
+//       });
+
+//       if (!res.ok) throw new Error("Failed");
+
+//       return await res.json();
+//     } catch (err) {
+//       return rejectWithValue(err.message);
+//     }
+//   }
+// );
+
+// Update product
+export const editProduct = createAsyncThunk(
+  "products/update",
+  async ({ id, data }, thunkAPI) => {
+    try {
+      const res = await updateProduct(id, data);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
+// Delete product
+export const removeProduct = createAsyncThunk(
+  "products/delete",
+  async (id, thunkAPI) => {
+    try {
+      await deleteProduct(id);
+      return id;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
 export const fetchNewArrivals = createAsyncThunk(
-  "products/fetchNewArrivals",
-  async (_, { rejectWithValue }) => {
+  "products/newArrivals",
+  async (_, thunkAPI) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/new-arrivals`
-      );
-
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to fetch new arrivals",
-        }
-      );
+      const res = await getNewArrivalsAPI();
+      return res.data?.data || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
     }
   }
 );
 
-/* =========================================
-   FETCH TRENDING PRODUCTS
-========================================= */
 export const fetchTrendingProducts = createAsyncThunk(
-  "products/fetchTrendingProducts",
-  async (_, { rejectWithValue }) => {
+  "products/trending",
+  async (_, thunkAPI) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/trending`
-      );
-
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data || {
-          message: "Failed to fetch trending products",
-        }
+      const res = await getTrendingProductsAPI();
+      return res.data?.data || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
       );
     }
   }
 );
 
-/* =========================================
-   SLICE
-========================================= */
+/* ================= SLICE ================= */
+
 const productSlice = createSlice({
   name: "products",
-
   initialState: {
     products: [],
     newArrivals: [],
-    trendingProducts: [],
+    trending: [], 
+    product: null,
     loading: false,
     error: null,
   },
@@ -128,84 +139,80 @@ const productSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* =========================
-         ADD PRODUCT
-      ========================= */
-      .addCase(addProduct.pending, (state) => {
+      /* FETCH ALL */
+      .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
-      .addCase(addProduct.fulfilled, (state, action) => {
-        state.loading = false;
-
-        state.products.push(action.payload);
-      })
-
-      .addCase(addProduct.rejected, (state, action) => {
-        state.loading = false;
-
-        state.error = action.payload || action.error.message;
-
-        console.error("REDUX REJECTED:", action.payload);
-      })
-
-      /* =========================
-         FETCH PRODUCTS
-      ========================= */
-      .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
-      })
-
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
 
-        state.products = action.payload;
+        // ✅ safe handling (array OR object response)
+        state.products = action.payload?.products || action.payload;
       })
-
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
-
         state.error = action.payload;
       })
 
-      /* =========================
-         FETCH NEW ARRIVALS
-      ========================= */
-      .addCase(fetchNewArrivals.pending, (state) => {
+      /* FETCH ONE */
+      .addCase(fetchSingleProduct.pending, (state) => {
         state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSingleProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.product = action.payload;
+      })
+      .addCase(fetchSingleProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
+      /* CREATE */
+      .addCase(addProduct.fulfilled, (state, action) => {
+        state.products.unshift(action.payload);
+      })
+
+      /* UPDATE */
+      .addCase(editProduct.fulfilled, (state, action) => {
+        state.products = state.products.map((p) =>
+          p.id === action.payload.id ? action.payload : p
+        );
+      })
+
+      /* DELETE */
+      .addCase(removeProduct.fulfilled, (state, action) => {
+        state.products = state.products.filter(
+          (p) => p.id !== action.payload
+        );
+      })
+
+       .addCase(fetchNewArrivals.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchNewArrivals.fulfilled, (state, action) => {
         state.loading = false;
-
         state.newArrivals = action.payload;
       })
-
       .addCase(fetchNewArrivals.rejected, (state, action) => {
         state.loading = false;
-
         state.error = action.payload;
       })
-
-      /* =========================
-         FETCH TRENDING PRODUCTS
-      ========================= */
+      /* TRENDING */
       .addCase(fetchTrendingProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchTrendingProducts.fulfilled, (state, action) => {
         state.loading = false;
-
-        state.trendingProducts = action.payload;
+        state.trending = action.payload;
       })
-
       .addCase(fetchTrendingProducts.rejected, (state, action) => {
         state.loading = false;
-
         state.error = action.payload;
-      });
+      })
   },
 });
 

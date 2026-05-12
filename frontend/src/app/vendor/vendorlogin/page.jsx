@@ -133,9 +133,9 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FFF8EC]">
       <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#FFF8EC] ">
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#061A33] via-[#0B1F3A] to-[#061A33]">
           <div className="p-10">
             <div className="flex items-start gap-3">
               <Image
@@ -143,23 +143,23 @@ export default function VendorLoginPage() {
                 alt="KAVAS"
                 width={210}
                 height={72}
-                className="h-12 w-auto"
+                className="h-12 w-auto object-contain"
                 priority
               />
               <div className="pt-1">
-                <div className="text-sm font-semibold tracking-wide text-[#0B1F3A]">
+                <div className="text-sm font-semibold tracking-wide text-white/90">
                   SELLER HUB
                 </div>
               </div>
             </div>
 
-            <h1 className="mt-10 text-4xl font-extrabold leading-tight text-[#0B1F3A]">
+            <h1 className="mt-12 text-4xl font-extrabold leading-tight text-white">
               Grow Your Business
               <br />
               with Kavas
             </h1>
 
-            <p className="mt-4 max-w-md text-sm text-gray-600">
+            <p className="mt-4 max-w-md text-sm text-white/70">
               List your products, manage orders, track performance and grow your sales — all in one place.
             </p>
 
@@ -168,12 +168,12 @@ export default function VendorLoginPage() {
                 const Icon = x.icon;
                 return (
                   <div key={x.title} className="flex items-start gap-4">
-                    <div className="h-10 w-10 rounded-sm border border-[#E5E5E5] bg-white shadow-sm flex items-center justify-center">
-                      <Icon size={18} className="text-[#0B1F3A]" />
+                    <div className="h-10 w-10 rounded-sm border border-white/15 bg-white/10 shadow-sm flex items-center justify-center">
+                      <Icon size={18} className="text-[#D4AF37]" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-[#1A1A1A]">{x.title}</div>
-                      <div className="mt-1 text-xs leading-relaxed text-gray-600">{x.desc}</div>
+                      <div className="text-sm font-semibold text-white">{x.title}</div>
+                      <div className="mt-1 text-xs leading-relaxed text-white/70">{x.desc}</div>
                     </div>
                   </div>
                 );
@@ -181,24 +181,34 @@ export default function VendorLoginPage() {
             </div>
           </div>
 
-          <div className="p-10">
-            <div className="text-xs text-gray-500">© {new Date().getFullYear()} Kavas. All rights reserved.</div>
-          </div>
+          <div className="relative p-10">
+            <div className="absolute bottom-8 left-10 z-10 text-xs text-white/60">© {new Date().getFullYear()} Kavas. All rights reserved.</div>
 
-          <div className="pointer-events-none absolute -bottom-8 -right-10 opacity-[0.12]">
-            <Image src="/lotussymbol.png" alt="" width={520} height={520} className="h-auto w-130" />
+            <div className="pointer-events-none absolute bottom-0 right-10 opacity-95">
+              <div className="absolute right-6 bottom-12 h-32 w-52 opacity-60">
+                <div className="h-full w-full rounded-sm bg-[radial-gradient(circle,rgba(212,175,55,0.25)_1px,transparent_1px)] [background-size:10px_10px]" />
+              </div>
+
+              <Image
+                src="/vendorloginimage.png"
+                alt=""
+                width={860}
+                height={600}
+                className="h-80 w-auto object-contain"
+              />
+            </div>
           </div>
         </aside>
 
-        <main className="flex flex-col">
-          <div className="flex items-center justify-between px-6 sm:px-10 py-6">
+        <main className="flex flex-col bg-[#FFF8EC]">
+          <div className="flex items-center justify-between px-6 sm:px-10 py-5">
             <Link href="/vendor" className="lg:hidden flex items-center gap-2">
               <Image
                 src="/LOGOKAVAS.png"
                 alt="KAVAS"
                 width={160}
                 height={52}
-                className="h-10 w-auto"
+                className="h-10 w-auto object-contain"
                 priority
               />
             </Link>
@@ -207,19 +217,19 @@ export default function VendorLoginPage() {
               <div className="hidden sm:block text-xs text-gray-600">New to Kavas?</div>
               <Link
                 href="/vendor/vendorregister"
-                className="rounded-sm border border-[#E5E5E5] bg-white px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                className="rounded-sm bg-[#D4AF37] px-4 py-2 text-xs font-semibold text-[#1A1A1A] hover:opacity-95"
               >
                 Create Account
               </Link>
             </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-10">
+          <div className="flex-1 flex items-center justify-center px-6 sm:px-10 pb-8">
             <div className="w-full max-w-md">
-              <div className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm p-6 sm:p-8">
+              <div className="rounded-sm border border-[#E5E5E5] bg-white shadow-lg p-6 sm:p-8">
                 <div className="text-center">
-                  <h2 className="text-2xl font-bold text-[#0B1F3A]">Welcome Back!</h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <h2 className="text-2xl font-extrabold text-[#0B1F3A]">Welcome Back!</h2>
+                  <p className="mt-2 text-sm text-gray-600">
                     Login to your Kavas Seller Hub account
                   </p>
                 </div>
@@ -237,7 +247,7 @@ export default function VendorLoginPage() {
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
                         placeholder="Enter mobile number or email ID"
-                        className="w-full h-11 rounded-sm border border-[#E5E5E5] bg-white pl-10 pr-3 text-sm text-[#1A1A1A] outline-none focus:border-[#D4AF37]"
+                        className="w-full h-11 rounded-sm border border-[#E5E5E5] bg-white pl-10 pr-3 text-sm text-[#1A1A1A] outline-none transition focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/40"
                       />
                     </div>
                   </div>
@@ -253,7 +263,7 @@ export default function VendorLoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
-                        className="w-full h-11 rounded-sm border border-[#E5E5E5] bg-white pl-10 pr-10 text-sm text-[#1A1A1A] outline-none focus:border-[#D4AF37]"
+                        className="w-full h-11 rounded-sm border border-[#E5E5E5] bg-white pl-10 pr-10 text-sm text-[#1A1A1A] outline-none transition focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/40"
                       />
                       <button
                         type="button"
@@ -265,16 +275,21 @@ export default function VendorLoginPage() {
                       </button>
                     </div>
                     <div className="mt-2 text-right">
-                      <Link href="#" className="text-xs font-semibold text-[#0B1F3A] hover:underline">
+                      <a
+                        href="/forgotpassword"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-semibold text-[#D4AF37] hover:underline"
+                      >
                         Forgot Password?
-                      </Link>
+                      </a>
                     </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                    className="h-11 w-full rounded-sm bg-[#0B1F3A] text-white text-sm font-semibold transition hover:opacity-95 disabled:opacity-50"
                   >
                     {loading ? "Logging in..." : "Login"}
                   </button>

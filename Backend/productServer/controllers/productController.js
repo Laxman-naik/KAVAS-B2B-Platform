@@ -8,182 +8,360 @@ const slugify = (value) => {
     .replace(/(^-|-$)+/g, "");
 };
 
-const normalizeImages = (images) => {
-  if (!Array.isArray(images)) return [];
-  return images
-    .map((img) => {
-      if (typeof img === "string") return { image_url: img };
-      if (img && typeof img === "object" && typeof img.image_url === "string") {
-        return { image_url: img.image_url };
-      }
-      return null;
-    })
-    .filter(Boolean);
-};
-
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
+    // =====================================================
+    // HELPERS
+    // =====================================================
+
+    const safeParse = (value, fallback = []) => {
+      try {
+        if (Array.isArray(value)) return value;
+
+        return JSON.parse(
+          value || JSON.stringify(fallback)
+        );
+      } catch {
+        return fallback;
+      }
+    };
+
+    const slugifyText = (text) =>
+      String(text || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    // =====================================================
+    // BODY
+    // =====================================================
+
     const {
       name,
       sku,
-      slug,
-      organizationId,
+      description,
+      category,
+      subCategory,
       price,
       mrp,
-      minOrderQty,
-      moq,
       stock,
+      moq,
       unit,
-      weight,
-      dispatchTimeDays,
-      description,
-      isActive,
-      status,
-      gst,
-      isFeatured,
-      isTopProduct,
-      parentProductId,
-      categories = [],
-      category,
-      images = [],
-      specifications = [],
-      pricingTiers = [],
-    } = req.body;
+      organizationId,
+      specifications,
+      bulkPricing,
+      variants,
+      images,
+      videos,
+    } = req.body || {};
 
     if (!String(name || "").trim()) {
-      return res.status(400).json({ message: "name is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Product name required",
+      });
     }
 
     const resolvedOrganizationId =
-      organizationId ?? req.user?.organization_id ?? req.user?.organizationId;
+      organizationId || req.user?.organization_id;
 
     if (!resolvedOrganizationId) {
-      return res.status(400).json({ message: "organizationId is required" });
+      return res.status(400).json({
+        success: false,
+        message: "organizationId required",
+      });
     }
 
-    const resolvedSlug = String(slug || "").trim() || slugify(name);
-    const resolvedMoq = minOrderQty ?? moq;
-    const resolvedIsActive =
-      typeof isActive === "boolean"
-        ? isActive
-        : !String(status || "").trim()
-          ? true
-          : String(status)
-              .trim()
-              .toLowerCase() === "active";
-
-    const normalizedImages = normalizeImages(images);
-    const mergedSpecifications = Array.isArray(specifications)
-      ? [...specifications]
-      : [];
-
-    if (String(sku || "").trim()) {
-      mergedSpecifications.push({ key: "sku", value: String(sku).trim() });
-    }
-    if (gst !== undefined && gst !== null && String(gst).trim() !== "") {
-      mergedSpecifications.push({ key: "gst", value: String(gst).trim() });
-    }
+    // =====================================================
+    // TRANSACTION START
+    // =====================================================
 
     await client.query("BEGIN");
 
-    let resolvedCategoryIds = Array.isArray(categories) ? [...categories] : [];
+    // =====================================================
+    // CATEGORY LOGIC
+    // =====================================================
 
-    if (
-      resolvedCategoryIds.length === 0 &&
-      typeof category === "string" &&
-      category.trim()
-    ) {
-      const categoryName = category.trim();
-      const categorySlug = slugify(categoryName);
+    let parentCategoryId = null;
+    let subCategoryId = null;
 
-      const categoryResult = await client.query(
-        `SELECT id FROM categories WHERE name = $1 OR slug = $2 LIMIT 1`,
-        [categoryName, categorySlug]
-      );
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-      if (categoryResult.rows.length) {
-        resolvedCategoryIds = [categoryResult.rows[0].id];
+    if (category?.trim()) {
+      if (uuidRegex.test(category)) {
+        parentCategoryId = category;
+      } else {
+        const existing = await client.query(
+          `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+          [category]
+        );
+
+        if (existing.rows.length) {
+          parentCategoryId = existing.rows[0].id;
+        } else {
+          const created = await client.query(
+            `INSERT INTO categories (name,slug,parent_id)
+             VALUES ($1,$2,NULL) RETURNING id`,
+            [category, slugifyText(category)]
+          );
+
+          parentCategoryId = created.rows[0].id;
+        }
       }
     }
 
+    if (subCategory?.trim()) {
+      const existingSub = await client.query(
+        `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+        [subCategory]
+      );
+
+      if (existingSub.rows.length) {
+        subCategoryId = existingSub.rows[0].id;
+      } else {
+        const createdSub = await client.query(
+          `INSERT INTO categories (name,slug,parent_id)
+           VALUES ($1,$2,$3) RETURNING id`,
+          [subCategory, slugifyText(subCategory), parentCategoryId]
+        );
+
+        subCategoryId = createdSub.rows[0].id;
+      }
+    }
+
+    // =====================================================
+    // PRODUCT INSERT
+    // =====================================================
+
     const productResult = await client.query(
       `INSERT INTO products (
-        name, slug, organization_id, price, mrp, moq, stock,
-        unit, weight, dispatch_time_days, description,
-        is_active, is_featured, is_top_product, parent_product_id
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-      RETURNING *`,
-      [
+        organization_id,
         name,
-        resolvedSlug,
-        resolvedOrganizationId,
+        description,
         price,
         mrp,
-        resolvedMoq,
+        moq,
         stock,
-        unit,
-        weight,
-        dispatchTimeDays,
-        description,
-        resolvedIsActive,
-        isFeatured ?? false,
-        isTopProduct ?? false,
-        parentProductId || null,
+        is_active,
+        slug,
+        sku,
+        unit
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
+      RETURNING *`,
+      [
+        resolvedOrganizationId,
+        name,
+        description || null,
+        price || 0,
+        mrp || 0,
+        moq || 1,
+        stock || 0,
+        slugifyText(name),
+        sku || null,
+        unit || null,
       ]
     );
 
     const product = productResult.rows[0];
 
-    for (const categoryId of resolvedCategoryIds) {
+    // =====================================================
+    // PRODUCT CATEGORY MAP
+    // =====================================================
+
+    const categories = [];
+
+    if (parentCategoryId) {
       await client.query(
-        `INSERT INTO product_categories (product_id, category_id)
-         VALUES ($1, $2)`,
-        [product.id, categoryId]
+        `INSERT INTO product_categories (product_id,category_id)
+         VALUES ($1,$2)`,
+        [product.id, parentCategoryId]
       );
+
+      categories.push(parentCategoryId);
     }
 
-    for (const img of normalizedImages) {
+    if (subCategoryId) {
       await client.query(
-        `INSERT INTO product_images (product_id, image_url)
-         VALUES ($1, $2)`,
-        [product.id, img.image_url]
+        `INSERT INTO product_categories (product_id,category_id)
+         VALUES ($1,$2)`,
+        [product.id, subCategoryId]
       );
+
+      categories.push(subCategoryId);
     }
 
-    for (const spec of mergedSpecifications) {
+    // =====================================================
+    // IMAGES
+    // =====================================================
+
+    const parsedImages = safeParse(images);
+    const imageList = [];
+
+    for (let i = 0; i < parsedImages.length; i++) {
       await client.query(
-        `INSERT INTO product_specifications (product_id, key, value)
-         VALUES ($1, $2, $3)`,
-        [product.id, spec.key, spec.value]
+        `INSERT INTO product_images
+        (product_id,image_url,media_type,sort_order,is_primary)
+        VALUES ($1,$2,'image',$3,$4)`,
+        [product.id, parsedImages[i], i, i === 0]
       );
+
+      imageList.push({
+        image_url: parsedImages[i],
+        sort_order: i,
+        is_primary: i === 0,
+      });
     }
 
-    for (const tier of pricingTiers) {
+    // =====================================================
+    // VIDEOS
+    // =====================================================
+
+    const parsedVideos = safeParse(videos);
+    const videoList = [];
+
+    for (let i = 0; i < parsedVideos.length; i++) {
       await client.query(
-        `INSERT INTO product_pricing_tiers (product_id, min_quantity, price, label)
-         VALUES ($1, $2, $3, $4)`,
-        [product.id, tier.min_quantity, tier.price, tier.label]
+        `INSERT INTO product_images
+        (product_id,image_url,media_type,sort_order,is_primary)
+        VALUES ($1,$2,'video',$3,false)`,
+        [product.id, parsedVideos[i], i]
       );
+
+      videoList.push({
+        video_url: parsedVideos[i],
+        sort_order: i,
+      });
     }
+
+    // =====================================================
+    // SPECIFICATIONS
+    // =====================================================
+
+    const parsedSpecs = safeParse(specifications);
+    const specsList = [];
+
+    for (const spec of parsedSpecs) {
+      if (!spec?.name || !spec?.value) continue;
+
+      await client.query(
+        `INSERT INTO product_specifications
+        (product_id,key,value)
+        VALUES ($1,$2,$3)`,
+        [product.id, spec.name, spec.value]
+      );
+
+      specsList.push(spec);
+    }
+
+    // =====================================================
+    // BULK PRICING
+    // =====================================================
+
+    const parsedPricing = safeParse(bulkPricing);
+    const pricingList = [];
+
+    for (const tier of parsedPricing) {
+      await client.query(
+        `INSERT INTO product_pricing_tiers
+        (product_id,min_quantity,max_quantity,price)
+        VALUES ($1,$2,$3,$4)`,
+        [
+          product.id,
+          tier.minQty || 1,
+          tier.maxQty || null,
+          tier.pricePerUnit || 0,
+        ]
+      );
+
+      pricingList.push(tier);
+    }
+
+    // =====================================================
+    // VARIANTS
+    // =====================================================
+
+    const parsedVariants = safeParse(variants);
+    const variantList = [];
+
+    for (const v of parsedVariants) {
+      await client.query(
+        `INSERT INTO product_variants (
+          product_id,
+          variant_type,
+          variant_value,
+          variant_name,
+          sku,
+          price,
+          mrp,
+          stock,
+          unit,
+          image_url,
+          is_active
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+        [
+          product.id,
+          v.variant_type || null,
+          v.variant_value || null,
+          `${v.variant_type || ""} - ${v.variant_value || ""}`,
+          v.sku || null,
+          v.price || 0,
+          v.mrp || 0,
+          v.stock || 0,
+          v.unit || null,
+          v.image_url || null,
+        ]
+      );
+
+      variantList.push(v);
+    }
+
+    // =====================================================
+    // COMMIT
+    // =====================================================
 
     await client.query("COMMIT");
 
-    res.status(201).json({
+    // =====================================================
+    // FINAL RESPONSE (FIXED)
+    // =====================================================
+
+    return res.status(201).json({
+      success: true,
       message: "Product created successfully",
-      product,
+
+      product: {
+        ...product,
+
+        categories,
+        images: imageList,
+        videos: videoList,
+        specifications: specsList,
+        bulkPricing: pricingList,
+        variants: variantList,
+      },
     });
   } catch (err) {
     await client.query("ROLLBACK");
+
     console.error("createProduct error:", err);
 
     if (err.code === "23505") {
-      return res.status(400).json({ message: "Duplicate entry" });
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate SKU found",
+      });
     }
 
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   } finally {
     client.release();
   }
@@ -281,20 +459,142 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
+// exports.getProducts = async (req, res) => {
+//   try {
+//     const result = await pool.query(
+//       `SELECT * FROM products
+//        WHERE is_active = true
+//        ORDER BY created_at DESC`
+//     );
+
+//     res.json({
+//       products: result.rows,
+//     });
+//   } catch (err) {
+//     console.error("getProducts error:", err);
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 exports.getProducts = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM products
-       WHERE is_active = true
-       ORDER BY created_at DESC`
-    );
+    const result = await pool.query(`
+      SELECT 
+        p.*,
 
-    res.json({
+        -- categories
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', c.id,
+              'name', c.name,
+              'slug', c.slug
+            )
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'
+        ) AS categories,
+
+        -- images
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'image_url', pi.image_url,
+              'sort_order', pi.sort_order,
+              'is_primary', pi.is_primary
+            )
+          ) FILTER (WHERE pi.media_type = 'image'),
+          '[]'
+        ) AS images,
+
+        -- videos
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'video_url', pi.image_url,
+              'sort_order', pi.sort_order
+            )
+          ) FILTER (WHERE pi.media_type = 'video'),
+          '[]'
+        ) AS videos,
+
+        -- specifications
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'key', ps.key,
+              'value', ps.value
+            )
+          ) FILTER (WHERE ps.id IS NOT NULL),
+          '[]'
+        ) AS specifications,
+
+        -- pricing tiers
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'minQty', ppt.min_quantity,
+              'maxQty', ppt.max_quantity,
+              'price', ppt.price
+            )
+          ) FILTER (WHERE ppt.id IS NOT NULL),
+          '[]'
+        ) AS bulkPricing,
+
+        -- variants
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pv.id,
+              'type', pv.variant_type,
+              'value', pv.variant_value,
+              'price', pv.price,
+              'mrp', pv.mrp,
+              'stock', pv.stock,
+              'image_url', pv.image_url
+            )
+          ) FILTER (WHERE pv.id IS NOT NULL),
+          '[]'
+        ) AS variants
+
+      FROM products p
+
+      LEFT JOIN product_categories pc 
+        ON pc.product_id = p.id
+
+      LEFT JOIN categories c 
+        ON c.id = pc.category_id
+
+      LEFT JOIN product_images pi 
+        ON pi.product_id = p.id
+
+      LEFT JOIN product_specifications ps 
+        ON ps.product_id = p.id
+
+      LEFT JOIN product_pricing_tiers ppt 
+        ON ppt.product_id = p.id
+
+      LEFT JOIN product_variants pv 
+        ON pv.product_id = p.id
+
+      WHERE p.is_active = true
+
+      GROUP BY p.id
+
+      ORDER BY p.created_at DESC
+    `);
+
+    return res.json({
+      success: true,
       products: result.rows,
     });
   } catch (err) {
     console.error("getProducts error:", err);
-    res.status(500).json({ message: err.message });
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -557,6 +857,168 @@ exports.getNewArrivals = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch new arrivals",
+    });
+  }
+};
+
+exports.getVendorProducts = async (req, res) => {
+  try {
+    const { vendorId } = req.params;
+
+    if (!vendorId) {
+      return res.status(400).json({
+        success: false,
+        message: "vendorId is required",
+      });
+    }
+
+    // STEP 1: GET organization_id FROM vendor onboarding
+    const vendorResult = await pool.query(
+      `
+      SELECT 
+        vp.id AS vendor_id,
+        vo.organization_id
+      FROM vendorprofile vp
+      LEFT JOIN vendor_onboarding vo 
+        ON vo.vendor_id = vp.id
+      WHERE vp.id = $1
+      `,
+      [vendorId]
+    );
+
+    if (!vendorResult.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    const organizationId = vendorResult.rows[0].organization_id;
+
+    if (!organizationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Organization not assigned yet",
+      });
+    }
+
+    // STEP 2: GET ALL PRODUCTS (NO STATUS FILTER)
+    const result = await pool.query(
+      `
+      SELECT 
+        p.*,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', c.id,
+              'name', c.name,
+              'slug', c.slug
+            )
+          ) FILTER (WHERE c.id IS NOT NULL),
+          '[]'
+        ) AS categories,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'image_url', pi.image_url,
+              'sort_order', pi.sort_order,
+              'is_primary', pi.is_primary
+            )
+          ) FILTER (WHERE pi.media_type = 'image'),
+          '[]'
+        ) AS images,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pi.id,
+              'video_url', pi.image_url,
+              'sort_order', pi.sort_order
+            )
+          ) FILTER (WHERE pi.media_type = 'video'),
+          '[]'
+        ) AS videos,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'key', ps.key,
+              'value', ps.value
+            )
+          ) FILTER (WHERE ps.id IS NOT NULL),
+          '[]'
+        ) AS specifications,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'minQty', ppt.min_quantity,
+              'maxQty', ppt.max_quantity,
+              'price', ppt.price
+            )
+          ) FILTER (WHERE ppt.id IS NOT NULL),
+          '[]'
+        ) AS bulkPricing,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', pv.id,
+              'type', pv.variant_type,
+              'value', pv.variant_value,
+              'price', pv.price,
+              'mrp', pv.mrp,
+              'stock', pv.stock,
+              'image_url', pv.image_url
+            )
+          ) FILTER (WHERE pv.id IS NOT NULL),
+          '[]'
+        ) AS variants
+
+      FROM products p
+
+      LEFT JOIN product_categories pc 
+        ON pc.product_id = p.id
+
+      LEFT JOIN categories c 
+        ON c.id = pc.category_id
+
+      LEFT JOIN product_images pi 
+        ON pi.product_id = p.id
+
+      LEFT JOIN product_specifications ps 
+        ON ps.product_id = p.id
+
+      LEFT JOIN product_pricing_tiers ppt 
+        ON ppt.product_id = p.id
+
+      LEFT JOIN product_variants pv 
+        ON pv.product_id = p.id
+
+      WHERE p.organization_id = $1
+
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      `,
+      [organizationId]
+    );
+
+    return res.json({
+      success: true,
+      vendorId,
+      organizationId,
+      products: result.rows,
+    });
+
+  } catch (err) {
+    console.error("getVendorProducts error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
     });
   }
 };
