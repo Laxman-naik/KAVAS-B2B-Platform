@@ -105,7 +105,7 @@ exports.refreshTokenHandler = async (req, res) => {
       });
     }
 
-    const sessionResult = await db.query(
+    const sessionResult = await pool.query(
       `
       SELECT * FROM sessions
       WHERE refresh_token = $1
@@ -141,7 +141,7 @@ exports.refreshTokenHandler = async (req, res) => {
       }
     );
 
-    await db.query(
+    await pool.query(
       `
       UPDATE sessions
       SET last_used_at = NOW()
@@ -153,6 +153,7 @@ exports.refreshTokenHandler = async (req, res) => {
     return res.json({
       accessToken: newAccessToken,
     });
+
   } catch (err) {
     console.error("FULL REFRESH ERROR:", err);
 
