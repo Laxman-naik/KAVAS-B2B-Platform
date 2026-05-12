@@ -382,7 +382,7 @@ export const loginVendor = async (req, res) => {
         onboarding_id: vendor.onboarding_id,
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "60m" }
     );
 
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
@@ -414,6 +414,7 @@ export const loginVendor = async (req, res) => {
       next_action,
       onboarding_step,
       status: vendor.status,
+      role:"vendoe",
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,

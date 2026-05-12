@@ -71,23 +71,34 @@ if (typeof window !== "undefined") {
   }
 }
 
+/* ================= ROLE ================= */
+
+const getRole = () => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("role"); // vendor | buyer | admin
+};
+
 /* ================= TOKEN HELPERS ================= */
 
 const getToken = () => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("accessToken");
+  const role = getRole();
+  return role ? localStorage.getItem(`${role}_accessToken`) : null;
 };
 
 const getRefreshToken = () => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("refreshToken");
+  const role = getRole();
+  return role ? localStorage.getItem(`${role}_refreshToken`) : null;
 };
 
 const setToken = (token) => {
-  localStorage.setItem("accessToken", token);
+  const role = getRole();
+  if (!role) return;
+  localStorage.setItem(`${role}_accessToken`, token);
 };
 
-/* ================= AXIOS INSTANCES ================= */
+/* ================= AXIOS ================= */
 
 export const authapi = axios.create({
   baseURL: AUTH_BASE_URL,
@@ -103,22 +114,26 @@ let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(token);
+  failedQueue.forEach((p) => {
+    if (error) p.reject(error);
+    else p.resolve(token);
   });
-
   failedQueue = [];
 };
 
+/* 🔥 ROLE-BASED REFRESH ENDPOINT */
 const refreshAccessToken = async () => {
   const refreshToken = getRefreshToken();
+  const role = getRole();
 
-  if (!refreshToken) throw new Error("No refresh token");
+  if (!refreshToken || !role) {
+    throw new Error("Missing refresh token or role");
+  }
 
-  const res = await axios.post(`${AUTH_BASE_URL}/api/auth/refresh`, {
-    refreshToken,
-  });
+  const res = await axios.post(
+    `${AUTH_BASE_URL}/api/${role}/refresh`,
+    { refreshToken }
+  );
 
   const newAccessToken = res.data?.accessToken;
 
@@ -151,7 +166,7 @@ const attachHeaders = (config) => {
 authapi.interceptors.request.use(attachHeaders);
 productapi.interceptors.request.use(attachHeaders);
 
-/* ================= RESPONSE INTERCEPTOR (AUTO REFRESH) ================= */
+/* ================= RESPONSE INTERCEPTOR ================= */
 
 const handleError = async (error) => {
   const originalRequest = error.config;
@@ -162,12 +177,10 @@ const handleError = async (error) => {
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axios(originalRequest);
-        })
-        .catch((err) => Promise.reject(err));
+      }).then((token) => {
+        originalRequest.headers.Authorization = `Bearer ${token}`;
+        return axios(originalRequest);
+      });
     }
 
     isRefreshing = true;
@@ -183,8 +196,11 @@ const handleError = async (error) => {
     } catch (err) {
       processQueue(err, null);
 
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      const role = getRole();
+      if (role) {
+        localStorage.removeItem(`${role}_accessToken`);
+        localStorage.removeItem(`${role}_refreshToken`);
+      }
 
       window.dispatchEvent(new Event("auth:expired"));
 
