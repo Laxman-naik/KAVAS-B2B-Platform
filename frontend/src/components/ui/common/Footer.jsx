@@ -172,12 +172,12 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link
+                  {/* <Link
                     href="/signin"
                     className="hover:text-[#D4AF37] transition-colors"
                   >
                     Login / Register
-                  </Link>
+                  </Link> */}
                 </li>
               </ul>
             </div>

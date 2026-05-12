@@ -4,7 +4,7 @@ const router = express.Router();
 const productController = require("../controllers/productController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-router.post("/", productController.createProduct);
+router.post("/", authMiddleware, productController.createProduct);
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug", productController.getProductsByCategoryAndSubcategory);

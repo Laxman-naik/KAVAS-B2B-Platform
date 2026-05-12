@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from "react";
@@ -10,23 +9,40 @@ export default function AddNewProductPage() {
   const router = useRouter();
 
   const handleSubmit = async (data) => {
-    const payload = {
-      name: data?.name,
-      sku: data?.sku,
-      category: data?.category,
-      unit: data?.unit,
-      status: data?.status,
-      description: data?.description,
-      price: Number(data?.price || 0),
-      mrp: Number(data?.mrp || 0),
-      gst: data?.gst,
-      moq: Number(data?.moq || 0),
-      stock: Number(data?.stock || 0),
-      images: Array.isArray(data?.images) ? data.images.filter((x) => typeof x === "string" && x.trim()) : [],
-    };
+    try {
+      const orgId = localStorage.getItem("organizationId");
 
-    await createProductAPI(payload);
-    router.push("/vendor/products");
+      if (!orgId) {
+        alert("Organization ID missing");
+        return;
+      }
+
+      const payload = {
+        name: data.name,
+        sku: data.sku,
+        category: data.category,
+        unit: data.unit,
+        status: data.status,
+        description: data.description,
+        price: Number(data.price),
+        mrp: Number(data.mrp),
+        gst: Number(data.gst || 0),
+        moq: Number(data.moq),
+        stock: Number(data.stock),
+        organizationId: orgId,
+
+        // backend currently accepts image URLs only, not file uploads
+        images: [],
+      };
+
+      await dispatch(addProduct(payload)).unwrap();
+
+      alert("✅ Product Added");
+      router.push("/vendor/products");
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "❌ Failed to add product");
+    }
   };
 
   return (

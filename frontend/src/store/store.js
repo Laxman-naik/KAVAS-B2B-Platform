@@ -2,15 +2,18 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice"; 
 import favouritesReducer from "./slices/favouritesSlice";
 import cartReducer from "./slices/cartSlice";
-import productssclices from "./slices/productSlice"
+import productssclices from "./slices/productSlice";
+import productReducer from "./slices/productSlice";
 import categorySlice from "./slices/categorySlice";
 import addressSclice from "./slices/addressSlice";
 import paymentReducer from "./slices/paymentSlice"
 import orderReducer from "./slices/orderSlice"
 import vendorReducer from "./slices/vendorSlice";
+import profileReducer from "./slices/profileSlice";
 
 export const store = configureStore({
   reducer: {
+    products: productReducer,
     auth: authReducer,
     favourites: favouritesReducer,
     cart: cartReducer,
@@ -20,5 +23,6 @@ export const store = configureStore({
     payment: paymentReducer,
     order: orderReducer,
     vendor: vendorReducer,
+    profile: profileReducer,
   },
 });

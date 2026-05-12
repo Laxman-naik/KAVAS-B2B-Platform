@@ -300,9 +300,10 @@ const SubNavbar = () => {
             </Link>
 
             {[
+              { name: "Trending Products", href: "/trendingviewall" },
               { name: "Flash Deals", href: "/flashdeals" },
-              // { name: "Bulk Orders", href: "/help" },
-              { name: "Track Order", href: "/ordertracking" },
+              { name: "New Arrivals", href: "/newarrivalsviewall" },
+              { name: "All Products", href: "/allproducts" },
               { name: "About Us", href: "/aboutus" },
               { name: "Contact Us", href: "/contactus" },
             ].map((item) => (

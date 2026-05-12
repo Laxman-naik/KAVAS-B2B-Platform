@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import {fetchFavourites,removeFromFavourites,clearFavourites,getProductIdFromItem,} from "@/store/slices/favouritesSlice";
+import { fetchFavourites, removeFromFavourites, clearFavourites, getProductIdFromItem, } from "@/store/slices/favouritesSlice";
 import { fetchProducts } from "@/store/slices/productSlice";
 
 const Page = () => {
@@ -20,17 +20,16 @@ const Page = () => {
   const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
   const products = useSelector((state) => state.products.products || []);
   const [token, setToken] = React.useState(null);
-  const [selected, setSelected] = React.useState({});
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
 
   const productMap = useMemo(() => {
-  const map = {};
-  products.forEach((p) => {
-    map[p.id] = p;
-  });
-  return map;
-}, [products]);
+    const map = {};
+    products.forEach((p) => {
+      map[p.id] = p;
+    });
+    return map;
+  }, [products]);
 
   // const favouriteProducts = useMemo(() => {
   //   return favouriteIds.map((id) => productMap[id]).filter(Boolean);
@@ -52,21 +51,21 @@ const Page = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-    useEffect(() => {
-  const savedToken = localStorage.getItem("accessToken");
-  setToken(savedToken);
+  useEffect(() => {
+    const savedToken = localStorage.getItem("accessToken");
+    setToken(savedToken);
 
-  const handleStorageChange = () => {
-    const updatedToken = localStorage.getItem("accessToken");
-    setToken(updatedToken);
-  };
+    const handleStorageChange = () => {
+      const updatedToken = localStorage.getItem("accessToken");
+      setToken(updatedToken);
+    };
 
-  window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
-  return () => {
-    window.removeEventListener("storage", handleStorageChange);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (mounted && token) {
@@ -133,60 +132,43 @@ const Page = () => {
   // }, [favourites]);
 
   const normalized = useMemo(() => {
-  return favouriteIds
-    .map((id) => {
-      const product = productMap[id];
-      if (!product) return null;
+    return favouriteIds
+      .map((id) => {
+        const product = productMap[id];
+        if (!product) return null;
 
-      return {
-        productId: id,
-        image: product.image || "/placeholder.png",
-        name: product.name || "Product",
-        sku: product.sku || "",
-        color: product.color || "",
-        mrp: product.mrp || product.price || 0,
-        price: product.price || 0,
-        stockLabel: "In Stock",
-        stockNote: "Available",
-        addedOnDate: product.createdAt || "",
-        addedOnTime: "",
-      };
-    })
-    .filter(Boolean);
-}, [favouriteIds, productMap]);
+        return {
+          productId: id,
+          image: product.image || "/placeholder.png",
+          name: product.name || "Product",
+          sku: product.sku || "",
+          color: product.color || "",
+          mrp: Number(product.mrp || product.price || 0),
+          price: Number(product.price || 0),
+          stockLabel: "In Stock",
+          stockNote: "Available",
+          addedOnDate: product.createdAt || "",
+          addedOnTime: "",
+        };
+      })
+      .filter(Boolean);
+  }, [favouriteIds, productMap]);
 
   const totals = React.useMemo(() => {
     const totalItems = normalized.length;
-    const totalMrp = normalized.reduce((sum, x) => sum + (x.mrp || 0), 0);
-    const totalWholesale = normalized.reduce((sum, x) => sum + (x.price || 0), 0);
-    return { totalItems, totalMrp, totalWholesale };
+    const totalMrp = normalized.reduce(
+      (sum, x) => sum + Number(x.mrp || 0),
+      0
+    );
+
+    const totalWholesale = normalized.reduce(
+      (sum, x) => sum + Number(x.price || 0),
+      0
+    ); return { totalItems, totalMrp, totalWholesale };
   }, [normalized]);
 
   const totalPages = Math.max(1, Math.ceil(normalized.length / pageSize));
   const paged = normalized.slice((page - 1) * pageSize, page * pageSize);
-
-  const selectedIds = React.useMemo(
-    () => Object.keys(selected).filter((k) => selected[k]),
-    [selected]
-  );
-
-  const toggleAllOnPage = (checked) => {
-    const next = { ...selected };
-    paged.forEach((row) => {
-      next[String(row.productId)] = checked;
-    });
-    setSelected(next);
-  };
-
-  const removeSelected = () => {
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    selectedIds.forEach((id) => handleRemove(id));
-    setSelected({});
-  };
 
   if (!mounted) return null;
 
@@ -252,14 +234,14 @@ const Page = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  {/* <div className="flex flex-col sm:flex-row gap-2">
                     <Button className="bg-[#D4AF37] text-[#0B1F3A] rounded-sm hover:bg-[#caa734] font-semibold">
                       <ShoppingCart size={16} className="mr-2" /> Move All to Cart
                     </Button>
                     <Button variant="outline" className="rounded-sm border-[#E5E5E5]">
                       <Share2 size={16} className="mr-2" /> Share Wishlist
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>
@@ -284,17 +266,6 @@ const Page = () => {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-gray-50 text-xs text-gray-500">
-                          <th className="px-4 py-3 text-left">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4"
-                              onChange={(e) => toggleAllOnPage(e.target.checked)}
-                              checked={
-                                paged.length > 0 &&
-                                paged.every((r) => selected[String(r.productId)])
-                              }
-                            />
-                          </th>
                           <th className="px-4 py-3 text-left font-medium">Product</th>
                           <th className="px-4 py-3 text-left font-medium">Unit Price (Wholesale)</th>
                           <th className="px-4 py-3 text-left font-medium">Stock Status</th>
@@ -305,20 +276,6 @@ const Page = () => {
                       <tbody>
                         {paged.map((row) => (
                           <tr key={row.productId} className="border-t">
-                            <td className="px-4 py-4">
-                              <input
-                                type="checkbox"
-                                className="h-4 w-4"
-                                checked={Boolean(selected[String(row.productId)])}
-                                onChange={(e) =>
-                                  setSelected((prev) => ({
-                                    ...prev,
-                                    [String(row.productId)]: e.target.checked,
-                                  }))
-                                }
-                              />
-                            </td>
-
                             <td className="px-4 py-4">
                               <div className="flex items-center gap-3 min-w-70">
                                 <img
@@ -383,15 +340,6 @@ const Page = () => {
                   </div>
 
                   <div className="px-4 py-3 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-sm border-[#E5E5E5] h-9"
-                      onClick={removeSelected}
-                      disabled={selectedIds.length === 0}
-                    >
-                      <Trash2 size={16} className="mr-2" /> Remove Selected
-                    </Button>
 
                     <p className="text-xs text-gray-500 text-center">
                       Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, normalized.length)} of {normalized.length} items

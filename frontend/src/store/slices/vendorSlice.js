@@ -91,6 +91,7 @@ export const fetchVendorProfile = createAsyncThunk(
     try {
       const res = await getVendorProfileAPI(id);
       return res.data;
+
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }

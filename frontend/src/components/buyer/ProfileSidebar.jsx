@@ -27,9 +27,9 @@ const navItems = [
   { href: "/ordertracking", label: "Track Order", icon: Truck },
   { href: "/favourites", label: "Wishlist", icon: Heart },
   { href: "/myaddresses", label: "Addresses", icon: MapPin },
-  { href: "/paymentmethods", label: "Payment Methods", icon: CreditCard },
+  // { href: "/paymentmethods", label: "Payment Methods", icon: CreditCard },
   // { href: "/bulk-enquiry", label: "Bulk Enquiry", icon: MessageSquareText },
-  { href: "/notifications", label: "Notifications", icon: Bell, badge: 3 },
+  // { href: "/notifications", label: "Notifications", icon: Bell, badge: 3 },
   { href: "/changepassword", label: "Change Password", icon: KeyRound },
   // { href: "/help", label: "Help Centre", icon: Shield },
 ];
