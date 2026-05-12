@@ -434,6 +434,7 @@ const login = async (req, res) => {
         email: admin.email,
         role: admin.role,
       },
+      role: admin.role,
       accessToken,
       refreshToken,
       sessionId,
