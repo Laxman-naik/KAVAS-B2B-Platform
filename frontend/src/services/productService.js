@@ -13,3 +13,5 @@ export const deleteProduct = (id) => productapi.delete(`/api/products/${id}`);
 export const getNewArrivalsAPI = () =>  productapi.get("/api/products/new-arrivals?limit=25");
 
 export const getTrendingProductsAPI = () => productapi.get("/api/products/trending?limit=25")
+
+export const getVendorProductsAPI = (vendorId) => productapi.get(`/api/products/vendor/${vendorId}`, {skipAuth: true,});

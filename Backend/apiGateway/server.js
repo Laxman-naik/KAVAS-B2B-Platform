@@ -50,6 +50,48 @@ app.use(
   })
 );
 
+// PROFILE
+app.use(
+  "/api/profile",
+  createProxyMiddleware({
+    target: process.env.AUTH_SERVICE_URL,
+    changeOrigin: true,
+    secure: false,
+    cookieDomainRewrite: "",
+
+    onProxyReq: (proxyReq, req) => {
+      if (req.headers.cookie) {
+        proxyReq.setHeader("cookie", req.headers.cookie);
+      }
+
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
+  })
+);
+
+// ORDERS
+app.use(
+  "/api/orders",
+  createProxyMiddleware({
+    target: process.env.AUTH_SERVICE_URL,
+    changeOrigin: true,
+    secure: false,
+    cookieDomainRewrite: "",
+
+    onProxyReq: (proxyReq, req) => {
+      if (req.headers.cookie) {
+        proxyReq.setHeader("cookie", req.headers.cookie);
+      }
+
+      if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+      }
+    },
+  })
+);
+
 // ADMIN
 app.use(
   "/api/admin",

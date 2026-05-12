@@ -1,20 +1,12 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  Bell,
-  ClipboardList,
-  Package,
-  Receipt,
-  ShoppingBag,
-  Wallet,
-} from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BarChart3, Bell, ClipboardList, Package, Receipt, ShoppingBag, Wallet,} from "lucide-react";
+import { useSelector } from "react-redux";
 
 const DashboardBody = () => {
-
+  const vendor = useSelector((state) => state.vendor.vendor);
+  console.log(vendor)
   
   const [ordersFilter, setOrdersFilter] = useState("All");
 
@@ -78,44 +70,6 @@ const DashboardBody = () => {
       status: "Shipped",
     },
   ];
-
-  // const topProducts = [
-  //   {
-  //     name: "Organic Turmeric Powder 500g",
-  //     sold: 1240,
-  //     stock: 450,
-  //     revenueK: 371,
-  //     trend: "up",
-  //   },
-  //   {
-  //     name: "Cold Pressed Coconut Oil 1L",
-  //     sold: 890,
-  //     stock: 320,
-  //     revenueK: 401,
-  //     trend: "up",
-  //   },
-  //   {
-  //     name: "Handwoven Jute Bags",
-  //     sold: 650,
-  //     stock: 180,
-  //     revenueK: 585,
-  //     trend: "down",
-  //   },
-  //   {
-  //     name: "Organic Basmati Rice 25kg",
-  //     sold: 520,
-  //     stock: 95,
-  //     revenueK: 780,
-  //     trend: "up",
-  //   },
-  //   {
-  //     name: "Amla Powder 1kg",
-  //     sold: 480,
-  //     stock: 210,
-  //     revenueK: 144,
-  //     trend: "stable",
-  //   },
-  // ];
 
   /* ---------------- CALCULATIONS ---------------- */
 
@@ -247,7 +201,7 @@ const DashboardBody = () => {
 
       <div className="rounded-2xl bg-[#0B1F3A] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <div className="text-xl sm:text-2xl font-extrabold">Welcome back, Rahul!</div>
+          <div className="text-xl sm:text-2xl font-extrabold">Welcome back, {vendor?.name || "Vendor"}</div>
           <div className="mt-1 text-sm text-white/75">Here&apos;s what&apos;s happening with your store today.</div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-white/80">

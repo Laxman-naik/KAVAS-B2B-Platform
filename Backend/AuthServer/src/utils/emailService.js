@@ -1,12 +1,39 @@
 // const nodemailer = require("nodemailer");
 
+// // const transporter = nodemailer.createTransport({
+// //   service: "gmail",
+// //   auth: {
+// //     user: "laxmannaikbhukya143@gmail.com",
+// //     pass: "rlrc qhhw snqi pyhu",
+// //   },
+// //   pool: true,
+// //   maxConnections: 1,
+// //   rateLimit: true,
+// // });
+
 // const transporter = nodemailer.createTransport({
 //   service: "gmail",
 //   auth: {
 //     user: "laxmannaikbhukya143@gmail.com",
 //     pass: "rlrc qhhw snqi pyhu",
 //   },
+//   pool: true,
+//   maxConnections: 1,
+//   rateLimit: true,
 // });
+
+// transporter.verify((error, success) => {
+//   if (error) {
+//     console.error("SMTP NOT WORKING:", error);
+//   } else {
+//     console.log("SMTP READY");
+//   }
+// });
+
+// // Test email service on startup
+// sendEmailOtp("laxmanbhukyaa@gmail.com", "123456")
+//   .then(() => console.log("✅ TEST EMAIL SENT"))
+//   .catch((err) => console.error("❌ TEST EMAIL FAILED:", err));
 
 // const sendEmailOtp = async (email, otp) => {
 //   try {
@@ -36,38 +63,48 @@
 
 // module.exports = { sendEmailOtp };
 
+
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // IMPORTANT (SSL)
+  service: "gmail",
+
   auth: {
-    user: "laxmannaikbhukya143@gmail.com",
-    pass: "rlrc qhhw snqi pyhu",
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  connectionTimeout: 15000,
-  socketTimeout: 15000,
 });
 
-const sendEmailOtp = async (email, otp) => {
+const sendEmailOtp = async (
+  email,
+  otp
+) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"Kavas" <laxmannaikbhukya143@gmail.com>`,
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+
       to: email,
-      subject: "OTP Verification",
-      html: `<h1>Your OTP: ${otp}</h1>`,
+
+      subject: "Your OTP Code",
+
+      html: `
+        <h2>Your OTP</h2>
+        <p>${otp}</p>
+      `,
     });
 
-    console.log("✅ EMAIL SENT:", info.messageId);
-    return info;
+    console.log(
+      "OTP email sent successfully"
+    );
+
   } catch (err) {
-    console.log("❌ EMAIL ERROR FULL:", err);
-    throw err;
+    console.error(
+      "Email send error:",
+      err
+    );
   }
 };
 
-module.exports = { sendEmailOtp };
+module.exports = {
+  sendEmailOtp,
+};
