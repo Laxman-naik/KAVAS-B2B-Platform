@@ -48,6 +48,58 @@ export const fetchOrders = createAsyncThunk(
   }
 );
 
+export const fetchOrderStats = createAsyncThunk(
+  "order/fetchStats",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getUserOrdersAPI();
+      const orders = res.orders || [];
+
+      const totalOrders = orders.length;
+
+      const pendingOrders = orders.filter(
+        (o) =>
+          o.status === "Processing" ||
+          o.status === "Pending" ||
+          o.status === "Shipped"
+      ).length;
+
+      const deliveredOrders = orders.filter(
+        (o) => o.status === "Delivered"
+      ).length;
+
+      const totalSpent = orders.reduce(
+        (sum, o) =>
+          sum + Number(o.total_amount || o.totalAmount || o.amount || 0),
+        0
+      );
+
+      return {
+        totalOrders,
+        pendingOrders,
+        deliveredOrders,
+        totalSpent,
+      };
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
+export const fetchRecentOrders = createAsyncThunk(
+  "order/fetchRecent",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getUserOrdersAPI();
+      const orders = res.orders || [];
+
+      return orders.slice(0, 4);
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
 export const fetchOrderDetails = createAsyncThunk(
   "order/fetchOne",
   async (orderId, thunkAPI) => {
@@ -65,24 +117,30 @@ export const updateOrderStatus = createAsyncThunk(
   async ({ orderId, status }, thunkAPI) => {
     try {
       const res = await updateOrderStatusAPI(orderId, status);
-      return res; // IMPORTANT CHANGE
+      return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
     }
   }
 );
 
-/* ================= STATE ================= */
-
 const initialState = {
   orders: [],
+
+  recentOrders: [],
+
+  stats: {
+    totalOrders: 0,
+    pendingOrders: 0,
+    deliveredOrders: 0,
+    totalSpent: 0,
+  },
+
   currentOrder: null,
   loading: false,
   error: null,
   success: false,
 };
-
-/* ================= SLICE ================= */
 
 const orderSlice = createSlice({
   name: "order",
@@ -100,7 +158,6 @@ const orderSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ================= CREATE ORDER ================= */
       .addCase(createOrderFromCart.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -116,33 +173,36 @@ const orderSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* ================= FETCH ORDERS ================= */
       .addCase(fetchOrders.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = action.payload || [];
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* ================= SINGLE ORDER ================= */
+      .addCase(fetchOrderStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
+
+      .addCase(fetchRecentOrders.fulfilled, (state, action) => {
+        state.recentOrders = action.payload || [];
+      })
+
       .addCase(fetchOrderDetails.fulfilled, (state, action) => {
         state.currentOrder = action.payload?.order || null;
       })
 
-      /* ================= STATUS UPDATE ================= */
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const updatedOrder = action.payload?.order;
 
         if (!updatedOrder) return;
 
-        const index = state.orders.findIndex(
-          (o) => o.id === updatedOrder.id
-        );
+        const index = state.orders.findIndex((o) => o.id === updatedOrder.id);
 
         if (index !== -1) {
           state.orders[index] = updatedOrder;

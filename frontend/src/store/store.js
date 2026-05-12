@@ -8,6 +8,7 @@ import addressSclice from "./slices/addressSlice";
 import paymentReducer from "./slices/paymentSlice"
 import orderReducer from "./slices/orderSlice"
 import vendorReducer from "./slices/vendorSlice";
+import profileReducer from "./slices/profileSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
     payment: paymentReducer,
     order: orderReducer,
     vendor: vendorReducer,
+    profile: profileReducer,
   },
 });
