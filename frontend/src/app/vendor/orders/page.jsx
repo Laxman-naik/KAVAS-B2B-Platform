@@ -205,17 +205,8 @@ export default function OrdersManagementBody() {
       )}
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl bg-[#0B1F3A] text-white p-5">
-          <div className="text-xs text-white/70">Total Revenue</div>
-          <div className="mt-2 text-2xl font-extrabold">
-            ₹{Math.round(stats.deliveredRevenue / 100000) / 10}L
-          </div>
-          <div className="mt-1 text-xs text-[#D4AF37] font-bold">
-            from {stats.delivered} delivered orders
-          </div>
-        </div>
 
-        <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-5">
+        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
           <div className="flex items-center justify-between">
             <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
               <Clock size={18} className="text-yellow-700" />
@@ -256,6 +247,21 @@ export default function OrdersManagementBody() {
             Shipped
           </div>
         </div>
+        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
+          <div className="flex items-center justify-between">
+            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+              <Truck size={18} className="text-purple-700" />
+            </div>
+            <div className="text-lg font-extrabold text-purple-700">
+              {stats.shipped}
+            </div>
+          </div>
+          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
+            Delivered
+          </div>
+        </div>
+        
+        
       </div>
 
       <div className="mt-5 flex flex-col lg:flex-row gap-3">
