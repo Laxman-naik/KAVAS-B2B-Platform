@@ -216,12 +216,22 @@ export const fetchCart = createAsyncThunk(
 // ADD
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async (payload, thunkAPI) => {
+  async (cartData, thunkAPI) => {
     try {
-      const res = await addToCartAPI(payload);
-      return normalizeCart(res.data);
+      const response = await addToCartAPI(cartData);
+
+      return response;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeError(error));
+      console.error(
+        "ADD CART ERROR:",
+        error.response?.data || error.message
+      );
+
+      return thunkAPI.rejectWithValue(
+        error.response?.data || {
+          message: error.message,
+        }
+      );
     }
   }
 );
