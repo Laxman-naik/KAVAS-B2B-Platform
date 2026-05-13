@@ -452,11 +452,11 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    if (!product.organization_id) {
-      return res.status(400).json({
-        message: "Product missing organization_id",
-      });
-    }
+    // if (!product.organization_id) {
+    //   return res.status(400).json({
+    //     message: "Product missing organization_id",
+    //   });
+    // }
 
     const price = Number(product.price);
     const moq = Number(product.moq) || 1;

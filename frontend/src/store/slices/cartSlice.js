@@ -220,7 +220,10 @@ export const addToCart = createAsyncThunk(
     try {
       const response = await addToCartAPI(cartData);
 
-      return response;
+      console.log("ADD TO CART API RESPONSE:", response.data);
+
+      return response.data;
+
     } catch (error) {
       console.error(
         "ADD CART ERROR:",
@@ -321,8 +324,10 @@ const cartSlice = createSlice({
 
       /* ADD */
       .addCase(addToCart.fulfilled, (state, action) => {
-        state.items = action.payload;
-      })
+  if (action.payload?.cart?.items) {
+    state.items = action.payload.cart.items;
+  }
+})
 
       /* UPDATE */
       .addCase(updateCartItem.fulfilled, (state, action) => {

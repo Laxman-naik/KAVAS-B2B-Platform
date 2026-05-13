@@ -11,6 +11,7 @@ export default function NewArrivals() {
   const dispatch = useDispatch();
   const { newArrivals, loading } = useSelector((state) => state.products);
   const favouriteItems = useSelector((state) => state.favourites.items);
+  console.log(newArrivals)
 
   useEffect(() => {
     dispatch(fetchNewArrivals());
