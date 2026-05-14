@@ -20,6 +20,7 @@ const SpecRow = ({ label, value, isLast }) => (
     <span className="font-semibold" style={{ color: COLORS.text }}>
       {label}
     </span>
+
     <span className="text-right" style={{ color: COLORS.text, opacity: 0.75 }}>
       {value || "—"}
     </span>

@@ -1,9 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getProducts, getSingleProduct, createProduct, updateProduct, deleteProduct, getNewArrivalsAPI, getTrendingProductsAPI , getVendorProductsAPI} from "../../services/productService";
 
-/* ================= THUNKS ================= */
-
-// Get all products
 export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {

@@ -10,7 +10,9 @@ export default function ProductDetailsSection({ product }) {
 
   return (
     <section className="w-full rounded-sm border border-[#E5E5E5] bg-white p-6">
-      <h2 className="text-[22px] font-bold text-[#0B1F3A]">Product Details</h2>
+      <h2 className="text-[22px] font-bold text-[#0B1F3A]">
+        Product Details
+      </h2>
 
       <p className="mt-4 text-sm leading-7 text-[#4B5563]">
         {description}

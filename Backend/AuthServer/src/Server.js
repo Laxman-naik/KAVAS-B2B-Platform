@@ -132,7 +132,6 @@ app.listen(PORT, () => {
 //   })
 // );
 
-
 // app.get("/", (req, res) => {
 //   res.status(200).send("Server running 🚀");
 // });
@@ -174,7 +173,6 @@ app.listen(PORT, () => {
 //   .connect()
 //   .then((client) => {
 //     console.log("DB Connected");
-
 //     client.release();
 //   })
 //   .catch((err) => {

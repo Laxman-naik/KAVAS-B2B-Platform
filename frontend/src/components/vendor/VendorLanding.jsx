@@ -60,7 +60,7 @@ const VendorLanding = () => {
                 <div className="absolute inset-0 -z-10 blur-2xl opacity-40 bg-[#0B1F3A]/10" />
                 <div className="rounded-sm border border-[#E5E5E5] bg-white shadow-lg overflow-hidden">
                   <Image
-                    src="/help-hero.svg"
+                    src="/vendorlandingimage.png"
                     alt="Vendor dashboard"
                     width={1100}
                     height={700}

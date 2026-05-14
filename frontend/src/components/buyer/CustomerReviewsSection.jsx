@@ -19,7 +19,7 @@ const StarRow = ({ rating, size = 16 }) => {
   const rounded = Math.round(Number(rating || 0));
 
   return (
-    <div className="flex items-center gap-0.5" aria-label={`Rating ${rounded} out of 5`}>
+    <div className="flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
@@ -65,6 +65,7 @@ export default function CustomerReviewsSection({ product }) {
 
   const handleWriteReviewOpenChange = (open) => {
     setIsWriteReviewOpen(open);
+
     if (!open) resetWriteReview();
   };
 
@@ -72,7 +73,10 @@ export default function CustomerReviewsSection({ product }) {
 
   return (
     <>
-      <section className="rounded-sm border bg-white" style={{ borderColor: COLORS.border }}>
+      <section
+        className="rounded-sm border bg-white"
+        style={{ borderColor: COLORS.border }}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -131,7 +135,9 @@ export default function CustomerReviewsSection({ product }) {
               <div className="space-y-2">
                 {[5, 4, 3, 2, 1].map((star) => {
                   const count = ratingCounts[star] || 0;
-                  const percent = totalReviews ? (count / totalReviews) * 100 : 0;
+                  const percent = totalReviews
+                    ? (count / totalReviews) * 100
+                    : 0;
 
                   return (
                     <div
@@ -200,7 +206,9 @@ export default function CustomerReviewsSection({ product }) {
 
       <Dialog open={isWriteReviewOpen} onOpenChange={handleWriteReviewOpenChange}>
         <DialogContent className="sm:max-w-lg">
-          <DialogTitle className="text-base font-semibold">Write a review</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            Write a review
+          </DialogTitle>
 
           <div className="space-y-4">
             <div>
@@ -219,7 +227,6 @@ export default function CustomerReviewsSection({ product }) {
                       type="button"
                       onClick={() => setReviewRating(value)}
                       className="p-1"
-                      aria-label={`Rate ${value} star`}
                     >
                       <Star
                         className="h-7 w-7"
@@ -275,7 +282,6 @@ export default function CustomerReviewsSection({ product }) {
               onClick={() => setIsWriteReviewOpen(false)}
               className="absolute right-3 top-3 rounded-sm p-1"
               style={{ color: COLORS.text, opacity: 0.7 }}
-              aria-label="Close"
             >
               <XIcon className="h-4 w-4" />
             </button>

@@ -61,8 +61,11 @@ const Page = () => {
     role: profile?.role,
   };
 
-  const memberSince = profile?.createdAt || profile?.created_at || "-";
-
+const memberSince = profile?.createdAt || profile?.created_at
+  ? new Date(profile?.createdAt || profile?.created_at)
+      .toISOString()
+      .split("T")[0]
+  : "-";
   const handleLogout = async () => {
     await dispatch(logoutUserThunk());
     router.push("/login");
