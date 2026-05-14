@@ -30,12 +30,11 @@ const StarRow = ({ rating, size = 16 }) => {
   const rounded = Math.round(Number(rating || 0));
 
   return (
-    <div className="flex items-center gap-0.5" aria-label={`Rating ${rounded} out of 5`}>
+    <div className="flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
           style={{ height: size, width: size }}
-          className={i < rounded ? "" : ""}
           color={i < rounded ? COLORS.gold : COLORS.border}
           fill={i < rounded ? COLORS.gold : "transparent"}
         />
@@ -44,34 +43,7 @@ const StarRow = ({ rating, size = 16 }) => {
   );
 };
 
-const MOCK_REVIEWS = [
-  {
-    id: "r1",
-    name: "Rahul Agarwal",
-    verified: true,
-    rating: 5,
-    title: "Excellent sound quality!",
-    comment:
-      "The sound quality is amazing with deep bass and crystal clear calls. The noise cancellation works really well. Battery backup is also great.",
-    variant: "Pro Max / White",
-    timeAgo: "2 days ago",
-    helpful: 12,
-  },
-  {
-    id: "r2",
-    name: "Priya Sharma",
-    verified: true,
-    rating: 4,
-    title: "Very good product",
-    comment:
-      "Great product at this price. Comfortable to wear and easy to connect. Touch controls work smoothly.",
-    variant: "Pro Max / Black",
-    timeAgo: "1 week ago",
-    helpful: 8,
-  },
-];
-
-export default function CustomerReviewsSection() {
+export default function CustomerReviewsSection({ reviews = [] }) {
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -79,26 +51,37 @@ export default function CustomerReviewsSection() {
 
   const ratingCounts = useMemo(() => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    MOCK_REVIEWS.forEach((r) => {
+
+    reviews.forEach((r) => {
       const key = clamp(Math.round(Number(r.rating || 0)), 1, 5);
       counts[key] += 1;
     });
-    return counts;
-  }, []);
 
-  const totalReviews = useMemo(() => MOCK_REVIEWS.length, []);
+    return counts;
+  }, [reviews]);
+
+  const totalReviews = reviews.length;
 
   const averageRating = useMemo(() => {
     if (!totalReviews) return 0;
-    const sum = MOCK_REVIEWS.reduce((acc, r) => acc + Number(r.rating || 0), 0);
+
+    const sum = reviews.reduce(
+      (acc, r) => acc + Number(r.rating || 0),
+      0
+    );
+
     return sum / totalReviews;
-  }, [totalReviews]);
+  }, [reviews, totalReviews]);
 
   const recommendPercent = useMemo(() => {
     if (!totalReviews) return 0;
-    const recommend = MOCK_REVIEWS.filter((r) => Number(r.rating || 0) >= 4).length;
+
+    const recommend = reviews.filter(
+      (r) => Number(r.rating || 0) >= 4
+    ).length;
+
     return (recommend / totalReviews) * 100;
-  }, [totalReviews]);
+  }, [reviews, totalReviews]);
 
   const resetWriteReview = () => {
     setReviewRating(0);
@@ -108,6 +91,7 @@ export default function CustomerReviewsSection() {
 
   const handleWriteReviewOpenChange = (open) => {
     setIsWriteReviewOpen(open);
+
     if (!open) resetWriteReview();
   };
 
@@ -115,61 +99,119 @@ export default function CustomerReviewsSection() {
 
   return (
     <>
-      <section className="rounded-sm border bg-white" style={{ borderColor: COLORS.border }}>
+      <section
+        className="rounded-sm border bg-white"
+        style={{ borderColor: COLORS.border }}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: COLORS.cream }}>
-                <MessageSquareText className="h-5 w-5" style={{ color: COLORS.primary }} />
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-sm"
+                style={{ background: COLORS.cream }}
+              >
+                <MessageSquareText
+                  className="h-5 w-5"
+                  style={{ color: COLORS.primary }}
+                />
               </div>
+
               <h2 className="text-sm font-bold" style={{ color: COLORS.text }}>
                 Customer Reviews
               </h2>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsWriteReviewOpen(true)}
-                className="rounded-sm border px-4 py-2 text-xs font-semibold"
-                style={{ borderColor: COLORS.primary, color: COLORS.primary, background: COLORS.white }}
-              >
-                Write a review
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsWriteReviewOpen(true)}
+              className="rounded-sm border px-4 py-2 text-xs font-semibold"
+              style={{
+                borderColor: COLORS.primary,
+                color: COLORS.primary,
+                background: COLORS.white,
+              }}
+            >
+              Write a review
+            </button>
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[240px_240px_1fr]">
-            <div className="rounded-sm border p-5" style={{ borderColor: COLORS.border, background: COLORS.cream }}>
-              <p className="text-4xl font-extrabold" style={{ color: COLORS.primary }}>
+            <div
+              className="rounded-sm border p-5"
+              style={{
+                borderColor: COLORS.border,
+                background: COLORS.cream,
+              }}
+            >
+              <p
+                className="text-4xl font-extrabold"
+                style={{ color: COLORS.primary }}
+              >
                 {averageRating.toFixed(1)}
               </p>
+
               <div className="mt-2">
                 <StarRow rating={averageRating} size={14} />
               </div>
-              <p className="mt-2 text-xs" style={{ color: COLORS.text, opacity: 0.7 }}>
+
+              <p
+                className="mt-2 text-xs"
+                style={{ color: COLORS.text, opacity: 0.7 }}
+              >
                 {totalReviews} Ratings
               </p>
-              <p className="mt-2 text-xs" style={{ color: COLORS.text, opacity: 0.7 }}>
+
+              <p
+                className="mt-2 text-xs"
+                style={{ color: COLORS.text, opacity: 0.7 }}
+              >
                 {formatPercent(recommendPercent)} recommend this product
               </p>
             </div>
 
-            <div className="rounded-sm border p-5" style={{ borderColor: COLORS.border, background: COLORS.white }}>
+            <div
+              className="rounded-sm border p-5"
+              style={{
+                borderColor: COLORS.border,
+                background: COLORS.white,
+              }}
+            >
               <div className="space-y-2">
                 {[5, 4, 3, 2, 1].map((star) => {
                   const count = ratingCounts[star] || 0;
-                  const percent = totalReviews ? (count / totalReviews) * 100 : 0;
+                  const percent = totalReviews
+                    ? (count / totalReviews) * 100
+                    : 0;
 
                   return (
-                    <div key={star} className="grid grid-cols-[14px_1fr_42px] items-center gap-2">
-                      <div className="text-xs font-semibold" style={{ color: COLORS.text, opacity: 0.7 }}>
+                    <div
+                      key={star}
+                      className="grid grid-cols-[14px_1fr_42px] items-center gap-2"
+                    >
+                      <div
+                        className="text-xs font-semibold"
+                        style={{ color: COLORS.text, opacity: 0.7 }}
+                      >
                         {star}
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full" style={{ background: COLORS.border }}>
-                        <div className="h-2 rounded-full" style={{ width: `${percent}%`, background: COLORS.gold }} />
+
+                      <div
+                        className="h-2 overflow-hidden rounded-full"
+                        style={{ background: COLORS.border }}
+                      >
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${percent}%`,
+                            background: COLORS.gold,
+                          }}
+                        />
                       </div>
-                      <div className="text-right text-xs" style={{ color: COLORS.text, opacity: 0.7 }}>
+
+                      <div
+                        className="text-right text-xs"
+                        style={{ color: COLORS.text, opacity: 0.7 }}
+                      >
                         {formatPercent(percent)}
                       </div>
                     </div>
@@ -179,38 +221,86 @@ export default function CustomerReviewsSection() {
             </div>
 
             <div className="grid gap-3">
-              {MOCK_REVIEWS.slice(0, 2).map((r) => (
-                <div key={r.id} className="rounded-sm border p-4" style={{ borderColor: COLORS.border, background: COLORS.white }}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                        style={{ background: COLORS.cream, color: COLORS.primary }}
-                      >
-                        <span className="text-xs font-bold">{initialsFromName(r.name)}</span>
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <p className="text-xs font-semibold" style={{ color: COLORS.text }}>{r.name}</p>
-                          <p className="text-[11px] font-semibold" style={{ color: COLORS.text, opacity: 0.55 }}>
-                            Verified Buyer
+              {reviews.length > 0 ? (
+                reviews.slice(0, 2).map((r, index) => (
+                  <div
+                    key={r.id || index}
+                    className="rounded-sm border p-4"
+                    style={{
+                      borderColor: COLORS.border,
+                      background: COLORS.white,
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                          style={{
+                            background: COLORS.cream,
+                            color: COLORS.primary,
+                          }}
+                        >
+                          <span className="text-xs font-bold">
+                            {initialsFromName(r.name || r.user_name)}
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <p
+                              className="text-xs font-semibold"
+                              style={{ color: COLORS.text }}
+                            >
+                              {r.name || r.user_name || "Customer"}
+                            </p>
+
+                            {r.verified && (
+                              <p
+                                className="text-[11px] font-semibold"
+                                style={{
+                                  color: COLORS.text,
+                                  opacity: 0.55,
+                                }}
+                              >
+                                Verified Buyer
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="mt-1">
+                            <StarRow rating={r.rating} size={14} />
+                          </div>
+
+                          <p
+                            className="mt-2 text-xs"
+                            style={{ color: COLORS.text, opacity: 0.7 }}
+                          >
+                            {r.comment || r.review || r.text}
                           </p>
                         </div>
-                        <div className="mt-1">
-                          <StarRow rating={r.rating} size={14} />
-                        </div>
-                        <p className="mt-2 text-xs" style={{ color: COLORS.text, opacity: 0.7 }}>
-                          {r.comment}
-                        </p>
                       </div>
-                    </div>
 
-                    <p className="text-[11px]" style={{ color: COLORS.text, opacity: 0.6 }}>
-                      {r.timeAgo}
-                    </p>
+                      <p
+                        className="text-[11px]"
+                        style={{ color: COLORS.text, opacity: 0.6 }}
+                      >
+                        {r.timeAgo || r.created_at || ""}
+                      </p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div
+                  className="rounded-sm border p-4 text-sm"
+                  style={{
+                    borderColor: COLORS.border,
+                    color: COLORS.text,
+                    opacity: 0.7,
+                  }}
+                >
+                  No reviews yet.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -231,7 +321,9 @@ export default function CustomerReviewsSection() {
 
       <Dialog open={isWriteReviewOpen} onOpenChange={handleWriteReviewOpenChange}>
         <DialogContent className="sm:max-w-lg">
-          <DialogTitle className="text-base font-semibold">Write a review</DialogTitle>
+          <DialogTitle className="text-base font-semibold">
+            Write a review
+          </DialogTitle>
 
           <div className="space-y-4">
             <div>
@@ -250,7 +342,6 @@ export default function CustomerReviewsSection() {
                       type="button"
                       onClick={() => setReviewRating(value)}
                       className="p-1"
-                      aria-label={`Rate ${value} star`}
                     >
                       <Star
                         className="h-7 w-7"
@@ -306,7 +397,6 @@ export default function CustomerReviewsSection() {
               onClick={() => setIsWriteReviewOpen(false)}
               className="absolute right-3 top-3 rounded-sm p-1"
               style={{ color: COLORS.text, opacity: 0.7 }}
-              aria-label="Close"
             >
               <XIcon className="h-4 w-4" />
             </button>

@@ -12,7 +12,7 @@ router.get("/category/:categorySlug/:subcategorySlug", productController.getProd
 router.get("/category/:categorySlug", productController.getProductsByCategory);
 router.get("/trending", productController.getTrendingProducts);
 router.get("/new-arrivals", productController.getNewArrivals);
-router.get("/:vendorId", productController.getVendorProducts);
+router.get("/vendor/:vendorId", productController.getVendorProducts);
 router.get("/:id", productController.getSingleProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);

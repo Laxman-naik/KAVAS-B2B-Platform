@@ -6,7 +6,8 @@ import { useSelector } from "react-redux";
 
 const DashboardBody = () => {
   const vendor = useSelector((state) => state.vendor.vendor);
-  console.log(vendor)
+
+  const business = useSelector((state) => state.vendor.business);
   
   const [ordersFilter, setOrdersFilter] = useState("All");
 
@@ -71,7 +72,7 @@ const DashboardBody = () => {
     },
   ];
 
-  /* ---------------- CALCULATIONS ---------------- */
+ 
 
   const totalRevenue = useMemo(() => {
     return orders.reduce((sum, o) => sum + o.amount, 0);
@@ -201,7 +202,9 @@ const DashboardBody = () => {
 
       <div className="rounded-2xl bg-[#0B1F3A] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <div className="text-xl sm:text-2xl font-extrabold">Welcome back, {vendor?.name || "Vendor"}</div>
+         <div className="text-xl sm:text-2xl font-extrabold">
+  Welcome back, {business?.business_name || "Vendor"}
+</div>
           <div className="mt-1 text-sm text-white/75">Here&apos;s what&apos;s happening with your store today.</div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-white/80">
@@ -309,9 +312,7 @@ const DashboardBody = () => {
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
-
-        {/* RECENT ORDERS */}
+    
         <div className="lg:col-span-2 max-w-full bg-white border border-[#E5E5E5] rounded-sm shadow-sm overflow-hidden">
           <div className="p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
@@ -378,53 +379,6 @@ const DashboardBody = () => {
             </div>
           </div>
         </div>
-
-        {/* <div className="bg-white border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm"> */}
-          {/* <div className="flex items-center justify-between">
-            <div>
-              <div className="text-base font-extrabold text-[#0B1F3A]">Top Products</div>
-              <div className="mt-1 text-xs text-gray-500">Best performing products this month</div>
-            </div>
-            <a href="/vendor/products" className="text-xs font-bold text-[#D4AF37] hover:underline">
-              View All
-            </a>
-          </div> */}
-
-          {/* <div className="mt-5 grid gap-4">
-            {topProducts.map((p, idx) => {
-              const trendLabel = p.trend === "up" ? "Trending up" : p.trend === "down" ? "Declining" : "Stable";
-              const trendIcon = p.trend === "up" ? ArrowUpRight : p.trend === "down" ? ArrowDownRight : null;
-              const trendClass = p.trend === "up" ? "text-green-600" : p.trend === "down" ? "text-red-600" : "text-gray-400";
-
-              return (
-                <div key={p.name} className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="h-8 w-8 rounded-lg bg-[#0B1F3A] text-white text-xs font-extrabold flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-extrabold text-[#0B1F3A]">{p.name}</div>
-                      <div className="mt-1 text-xs text-gray-500">
-                        {p.sold} sold
-                        <span className="mx-2 text-gray-300">•</span>
-                        Stock: {p.stock}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-extrabold text-[#0B1F3A]">Rs. {p.revenueK}K</div>
-                    <div className={`mt-1 text-xs font-semibold ${trendClass} inline-flex items-center gap-1 justify-end`}>
-                      {trendIcon ? React.createElement(trendIcon, { size: 14 }) : <span className="inline-block w-[14px]" />}
-                      {trendLabel}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div> */}
-        {/* </div> */}
-      {/* </div> */}
     </div>
   );
 };

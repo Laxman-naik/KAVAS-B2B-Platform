@@ -36,7 +36,7 @@ export const addProduct = createAsyncThunk(
     try {
       const res = await fetch("/api/products", {
         method: "POST",
-        body: formData, // ✅ important
+        body: formData,
       });
 
       if (!res.ok) throw new Error("Failed");
