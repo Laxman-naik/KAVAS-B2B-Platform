@@ -125,9 +125,9 @@ const refreshAccessToken = async () => {
 
   console.log("REFRESH URL:", url);
 
-  if (!url) {
-    throw new Error(`No refresh route configured for role: ${role}`);
-  }
+  // if (!url) {
+  //   throw new Error(`No refresh route configured for role: ${role}`);
+  // }
 
   const response = await axios.post(
     url,

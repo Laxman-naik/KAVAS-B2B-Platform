@@ -72,7 +72,7 @@ app.listen(PORT, () => {
 // const passport = require("passport");
 
 // require("dotenv").config();
-
+// <<<<<<< HEAD
 // const pool = require("./config/db");
 // require("./config/passport");
 
@@ -82,9 +82,27 @@ app.listen(PORT, () => {
 // const vendorRoutes = require("./routes/vendorRoutes");
 // const orderRoutes = require("./routes/orderRoutes");
 // const profileRoutes = require("./routes/profileRoutes");
+// =======
+
+// <<<<<<< HEAD
+// const authRoutes = require("./routes/authRoutes");
+// const adminRoutes = require("./routes/adminRoutes");
+// const addressRoutes = require("./routes/addressRoutes");
+// const vendorRoutes = require("./routes/vendorRoutes");
+// const orderRoutes = require("./routes/orderRoutes")
+// const profileRoutes = require("./routes/profileRoutes")
+// =======
+// const pool =
+//   require("./config/db");
+
+// require("./config/passport");
+
+// const authRoutes =
+//   require("./routes/authRoutes");
+// >>>>>>> 141a9f0c4a0e0b84487e06cb2bc2f5266fb4315d
+// >>>>>>> ed3d426d631124719c0912378469a63881d3145a
 
 // const app = express();
-
 // app.set("trust proxy", 1);
 
 // app.use(helmet());
@@ -104,8 +122,12 @@ app.listen(PORT, () => {
 //       if (!origin || allowedOrigins.has(origin)) {
 //         return callback(null, true);
 //       }
-//       return callback(new Error("Not allowed by CORS"));
+
+//       return callback(
+//         new Error("Not allowed by CORS")
+//       );
 //     },
+
 //     credentials: true,
 //   })
 // );
@@ -114,9 +136,16 @@ app.listen(PORT, () => {
 //   res.status(200).send("Server running 🚀");
 // });
 
+// <<<<<<< HEAD
+// =======
+// <<<<<<< HEAD
+// >>>>>>> ed3d426d631124719c0912378469a63881d3145a
 // app.get("/ping", (req, res) => {
-//   res.json({ ok: true });
+//   res.json({
+//     ok: true,
+//   });
 // });
+
 
 // app.use("/api/auth", authRoutes);
 // app.use("/api/admin", adminRoutes);
@@ -124,9 +153,20 @@ app.listen(PORT, () => {
 // app.use("/api/vendor", vendorRoutes);
 // app.use("/api/profile", profileRoutes);
 // app.use("/api/orders", orderRoutes);
+// <<<<<<< HEAD
+// =======
+// =======
+// app.use(
+//   "/api/auth",
+//   authRoutes
+// );
+// >>>>>>> 141a9f0c4a0e0b84487e06cb2bc2f5266fb4315d
+// >>>>>>> ed3d426d631124719c0912378469a63881d3145a
 
 // app.use((req, res) => {
-//   res.status(404).json({ message: "Route not found" });
+//   res.status(404).json({
+//     message: "Route not found",
+//   });
 // });
 
 // pool

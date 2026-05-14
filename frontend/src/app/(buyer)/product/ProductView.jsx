@@ -256,7 +256,7 @@ export default function ProductView() {
 
   const dispatch = useDispatch();
   const { product, loading, error, products } = useSelector((s) => s.products);
-
+  useEffect(() => { if (id) dispatch(fetchSingleProduct(id)); }, [dispatch, id]);
   const p = product ?? {};
   const norm = useNormalized(p);
 

@@ -25,14 +25,17 @@ export const loginUserThunk = createAsyncThunk(
     try {
       const res = await loginUser(data);
 
-      // 🔥 store token in localStorage
-      if (res?.accessToken) {
-        localStorage.setItem("accessToken", res.accessToken);
-      }
+      const role = res.role;
 
-      if (res?.refreshToken) {
-        localStorage.setItem("refreshToken", res.refreshToken);
-      }
+if (res?.accessToken && role) {
+  localStorage.setItem(`${role}_accessToken`, res.accessToken);
+}
+
+if (res?.refreshToken && role) {
+  localStorage.setItem(`${role}_refreshToken`, res.refreshToken);
+}
+
+localStorage.setItem("role", role);
 
       return res; // send to reducer
     } catch (err) {
@@ -82,8 +85,14 @@ export const logoutUserThunk = createAsyncThunk(
       console.error(err);
     }
 
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    const role = localStorage.getItem("role");
+
+if (role) {
+  localStorage.removeItem(`${role}_accessToken`);
+  localStorage.removeItem(`${role}_refreshToken`);
+}
+
+localStorage.removeItem("role");
 
     dispatch(resetCart());
   }
@@ -149,8 +158,9 @@ export const logoutAdminThunk = createAsyncThunk(
       console.error(err);
     }
 
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("admin_accessToken");
+localStorage.removeItem("admin_refreshToken");
+localStorage.removeItem("role");
 
     dispatch(resetCart());
   }
@@ -237,15 +247,21 @@ const authSlice = createSlice({
   initialState,
 
   reducers: {
-    clearAuth: (state) => {
-      state.user = null;
-      state.role = null;
-      state.isAuthenticated = false;
+  clearAuth: (state) => {
+    state.user = null;
+    state.role = null;
+    state.isAuthenticated = false;
 
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    },
+    const role = localStorage.getItem("role");
+
+    if (role) {
+      localStorage.removeItem(`${role}_accessToken`);
+      localStorage.removeItem(`${role}_refreshToken`);
+    }
+
+    localStorage.removeItem("role");
   },
+},
 
   extraReducers: (builder) => {
     builder
@@ -258,7 +274,7 @@ const authSlice = createSlice({
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload?.user || null;
-        state.role = "user";
+        state.role = "buyer";
         state.isAuthenticated = !!action.payload?.user;
       })
       .addCase(loginUserThunk.rejected, (state, action) => {
@@ -269,7 +285,7 @@ const authSlice = createSlice({
       /* LOAD USER */
       .addCase(loadUserThunk.fulfilled, (state, action) => {
         state.user = action.payload?.user || null;
-        state.role = "user";
+        state.role = "buyer";
         state.isAuthenticated = true;
         state.initialized = true;
       })

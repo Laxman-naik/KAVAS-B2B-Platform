@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
 import { fetchFavourites, removeFromFavourites, clearFavourites, getProductIdFromItem, } from "@/store/slices/favouritesSlice";
 import { fetchProducts } from "@/store/slices/productSlice";
+import { addToCart, fetchCart } from "@/store/slices/cartSlice";
 
 const Page = () => {
   const router = useRouter();
@@ -19,9 +20,11 @@ const Page = () => {
   const [mounted, setMounted] = useState(false);
   const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
   const products = useSelector((state) => state.products.products || []);
+  const cartItems = useSelector((state) => state.cart.items || []);
   const [token, setToken] = React.useState(null);
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
+  const MAX_WISHLIST_ITEMS = 5;
 
   const productMap = useMemo(() => {
     const map = {};
@@ -30,6 +33,12 @@ const Page = () => {
     });
     return map;
   }, [products]);
+
+  const cartProductIds = useMemo(() => {
+    return new Set(
+      cartItems.map((item) => item.product_id || item.productId)
+    );
+  }, [cartItems]);
 
   // const favouriteProducts = useMemo(() => {
   //   return favouriteIds.map((id) => productMap[id]).filter(Boolean);
@@ -45,10 +54,11 @@ const Page = () => {
     email: authUser?.email || "",
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
     dispatch(fetchFavourites());
     dispatch(fetchProducts());
+    dispatch(fetchCart());
   }, [dispatch]);
 
   useEffect(() => {
@@ -67,7 +77,7 @@ const Page = () => {
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (mounted && token) {
       dispatch(fetchFavourites());
     }
@@ -94,65 +104,89 @@ const Page = () => {
     dispatch(removeFromFavourites(productId));
   };
 
-  // const normalized = React.useMemo(() => {
-  //   return (favourites || []).map((item, index) => {
-  //     const productId = getProductIdFromItem(item) || index;
-  //     const image =
-  //       item?.image ||
-  //       item?.image_url ||
-  //       item?.imageUrl ||
-  //       item?.product?.image ||
-  //       "/placeholder.png";
-  //     const price =
-  //       Number(item?.wholesalePrice ?? item?.priceValue ?? item?.price ?? item?.product?.price ?? 0) || 0;
-  //     const mrp =
-  //       Number(item?.mrp ?? item?.product?.mrp ?? item?.originalPrice ?? price) || 0;
-  //     const name = item?.name || item?.product?.name || "Product";
-  //     const sku = item?.sku || item?.product?.sku || "";
-  //     const color = item?.color || item?.product?.color || "";
-  //     const addedOnDate = item?.addedOnDate || item?.createdAt || "15 May 2024";
-  //     const addedOnTime = item?.addedOnTime || "02:30 PM";
-  //     const stockLabel = item?.stockLabel || "In Stock";
-  //     const stockNote = item?.stockNote || "250+ available";
+  const handleAddToCart = async (productId) => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-  //     return {
-  //       productId,
-  //       image,
-  //       name,
-  //       sku,
-  //       color,
-  //       mrp,
-  //       price,
-  //       stockLabel,
-  //       stockNote,
-  //       addedOnDate,
-  //       addedOnTime,
-  //     };
-  //   });
-  // }, [favourites]);
+    const product = productMap[productId];
+
+    if (!product) return;
+
+    const primaryImage =
+      product.images?.find((img) => img.is_primary)?.image_url ||
+      product.images?.[0]?.image_url ||
+      null;
+
+    try {
+      await dispatch(
+        addToCart({
+          productId: product.id,
+          quantity: product.moq || 1,
+          image_url: primaryImage,
+        })
+      ).unwrap();
+
+      alert("Added to cart");
+    } catch (err) {
+      console.error("ADD TO CART FAILED:", err);
+    }
+  };
+
+  // const normalized = useMemo(() => {
+  //   return favouriteIds
+  //     .map((id) => {
+  //       const product = productMap[id];
+  //       if (!product) return null;
+
+  //       return {
+  //         productId: id,
+  //         image: product.images?.find((img) => img.is_primary)?.image_url || product.images?.[0]?.image_url || "/placeholder.png",
+  //         name: product.name || "Product",
+  //         organization_id: product.organization_id,
+  //         sku: product.sku || "",
+  //         color: product.color || "",
+  //         mrp: Number(product.mrp || product.price || 0),
+  //         price: Number(product.price || 0),
+  //         stockLabel: "In Stock",
+  //         stockNote: "Available",
+  //         addedOnDate: product.createdAt || "",
+  //         addedOnTime: "",
+  //       };
+  //     })
+  //     .filter(Boolean);
+  // }, [favouriteIds, productMap]);
 
   const normalized = useMemo(() => {
-    return favouriteIds
-      .map((id) => {
-        const product = productMap[id];
-        if (!product) return null;
-
-        return {
-          productId: id,
-          image: product.image || "/placeholder.png",
-          name: product.name || "Product",
-          sku: product.sku || "",
-          color: product.color || "",
-          mrp: Number(product.mrp || product.price || 0),
-          price: Number(product.price || 0),
-          stockLabel: "In Stock",
-          stockNote: "Available",
-          addedOnDate: product.createdAt || "",
-          addedOnTime: "",
-        };
-      })
-      .filter(Boolean);
-  }, [favouriteIds, productMap]);
+  return favouriteIds
+    .map((id) => {
+      const product = productMap[id];
+      if (!product) return null;
+      return {
+        productId: id,
+        organization_id: product.organization_id,
+        image:
+          product.image_url ||
+          product.images?.find((img) => img.is_primary)?.image_url ||
+          product.images?.[0]?.image_url ||
+          "/placeholder.png",
+        name: product.name || "Product",
+        sku: product.sku || "",
+        color: product.color || "",
+        mrp: Number(product.mrp || product.price || 0),
+        price: Number(product.price || 0),
+        stockLabel: "In Stock",
+        stockNote: "Available",
+        addedOnDate:
+          product.createdAt ||
+          product.created_at ||
+          "",
+        addedOnTime: "",
+      };
+    })
+    .filter(Boolean);
+}, [favouriteIds, productMap]);
 
   const totals = React.useMemo(() => {
     const totalItems = normalized.length;
@@ -233,15 +267,6 @@ const Page = () => {
                       <p className="text-lg font-bold text-green-700">₹{totals.totalWholesale.toLocaleString()}</p>
                     </div>
                   </div>
-
-                  {/* <div className="flex flex-col sm:flex-row gap-2">
-                    <Button className="bg-[#D4AF37] text-[#0B1F3A] rounded-sm hover:bg-[#caa734] font-semibold">
-                      <ShoppingCart size={16} className="mr-2" /> Move All to Cart
-                    </Button>
-                    <Button variant="outline" className="rounded-sm border-[#E5E5E5]">
-                      <Share2 size={16} className="mr-2" /> Share Wishlist
-                    </Button>
-                  </div> */}
                 </div>
               </CardContent>
             </Card>
@@ -252,7 +277,7 @@ const Page = () => {
               </div>
             ) : error ? (
               <div className="text-center py-16 bg-white rounded-sm border border-[#E5E5E5]">
-                <p className="text-red-500">{error}</p>
+                <p className="text-yellow-500">Login to see Wishlist</p>
               </div>
             ) : normalized.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-sm border border-[#E5E5E5]">
@@ -269,72 +294,97 @@ const Page = () => {
                           <th className="px-4 py-3 text-left font-medium">Product</th>
                           <th className="px-4 py-3 text-left font-medium">Unit Price (Wholesale)</th>
                           <th className="px-4 py-3 text-left font-medium">Stock Status</th>
-                          <th className="px-4 py-3 text-left font-medium">Added On</th>
-                          <th className="px-4 py-3 text-left font-medium">Action</th>
+                          {/* <th className="px-4 py-3 text-left font-medium">Added On</th> */}
+                          <th className="px-4 py-3 text-right font-medium">Action</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {paged.map((row) => (
-                          <tr key={row.productId} className="border-t">
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-3 min-w-70">
-                                <img
-                                  src={row.image}
-                                  alt={row.name}
-                                  className="w-12 h-12 rounded-sm object-cover border"
-                                />
-                                <div className="min-w-0">
-                                  <p className="font-semibold text-[#0B1F3A] text-sm truncate">{row.name}</p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {row.sku ? `SKU: ${row.sku}` : null}
-                                    {row.sku && row.color ? "  |  " : null}
-                                    {row.color ? row.color : null}
-                                  </p>
+                        {paged.map((row) => {
+                          const isInCart = cartProductIds.has(row.productId);
+                          return (
+                            <tr key={row.productId} className="border-t">
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-3 min-w-70">
+                                  <img
+                                    src={row.image || "/placeholder.png"}
+                                    alt={row.name || "product"}
+                                    className="w-12 h-12 rounded-sm object-cover border"
+                                  />
+                                  <div className="min-w-0">
+                                    <p className="font-semibold text-[#0B1F3A] text-sm truncate">
+                                      {row.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {row.sku ? `SKU: ${row.sku}` : null}
+                                      {row.sku && row.color ? "  |  " : null}
+                                      {row.color ? row.color : null}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
-
-                            <td className="px-4 py-4">
-                              <div>
-                                <p className="font-semibold text-[#0B1F3A]">₹{row.price.toLocaleString()}</p>
-                                {row.mrp ? (
-                                  <p className="text-xs text-gray-500 line-through">₹{row.mrp.toLocaleString()}</p>
-                                ) : null}
-                                {row.mrp && row.price && row.mrp > row.price ? (
-                                  <p className="text-xs text-green-700 font-semibold">
-                                    ({Math.round(((row.mrp - row.price) / row.mrp) * 100)}% OFF)
+                              </td>
+                              <td className="px-4 py-4">
+                                <div>
+                                  <p className="font-semibold text-[#0B1F3A]">
+                                    ₹{row.price.toLocaleString()}
                                   </p>
-                                ) : null}
-                              </div>
-                            </td>
+                                  {row.mrp ? (
+                                    <p className="text-xs text-gray-500 line-through">
+                                      ₹{row.mrp.toLocaleString()}
+                                    </p>
+                                  ) : null}
+                                  {/* {row.mrp && row.price && row.mrp > row.price ? (
+                                    <p className="text-xs text-green-700 font-semibold">
+                                      (
+                                      {Math.round(
+                                        ((row.mrp - row.price) / row.mrp) * 100
+                                      )}
+                                      % OFF)
+                                    </p>
+                                  ) : null} */}
+                                </div>
+                              </td>
+                              <td className="px-4 py-4">
+                                <Badge className="bg-green-100 text-green-700">
+                                  {row.stockLabel}
+                                </Badge>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {row.stockNote}
+                                </p>
+                              </td>
+                              {/* <td className="px-4 py-4">
+                                <p className="text-xs text-gray-600">
+                                  {row.addedOnDate}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {row.addedOnTime}
+                                </p>
+                              </td> */}
+                              <td className="px-4 py-4">
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    variant={isInCart ? "secondary" : "outline"}
+                                    className="rounded-sm border-[#E5E5E5] h-8 px-3"
+                                    title={isInCart ? "Already in cart" : "Move to cart"}
+                                    disabled={isInCart}
+                                    onClick={() => handleAddToCart(row.productId)}
+                                  >
+                                    <ShoppingCart size={16} className="mr-1" />
+                                    {isInCart ? "In Cart" : "Add"}
+                                  </Button>
 
-                            <td className="px-4 py-4">
-                              <Badge className="bg-green-100 text-green-700">{row.stockLabel}</Badge>
-                              <p className="text-xs text-gray-500 mt-1">{row.stockNote}</p>
-                            </td>
-
-                            <td className="px-4 py-4">
-                              <p className="text-xs text-gray-600">{row.addedOnDate}</p>
-                              <p className="text-xs text-gray-500">{row.addedOnTime}</p>
-                            </td>
-
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-2">
-                                <Button variant="outline" className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0" title="Move to cart">
-                                  <ShoppingCart size={16} />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0"
-                                  title="Remove"
-                                  onClick={() => handleRemove(row.productId)}
-                                >
-                                  <Trash2 size={16} className="text-gray-700" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                  <Button
+                                    variant="outline"
+                                    className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0"
+                                    title="Remove"
+                                    onClick={() => handleRemove(row.productId)}
+                                  >
+                                    <Trash2 size={16} className="text-gray-700" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
