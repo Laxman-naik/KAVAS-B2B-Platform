@@ -34,15 +34,15 @@ const VendorHeader = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
- const handleLogout = async () => {
-  try {
-    await dispatch(logoutVendor()).unwrap();
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutVendor()).unwrap();
 
-    router.push("/vendor/vendorlogin");
-  } catch (err) {
-    console.error("Logout failed:", err);
-  }
-};
+      router.push("/vendor/vendorlogin");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   return (
     <header className="fixed top-0 right-0 z-30 h-16 w-[calc(100%-16rem)] bg-white border-b border-[#E5E5E5]">
@@ -84,7 +84,7 @@ const VendorHeader = () => {
               className="flex items-center gap-3 pl-1 cursor-pointer"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F3A] text-white text-xs font-bold">
-                RS
+                {vendor?.business?.business_name ?.split(" ") ?.map((word) => word[0]) ?.slice(0, 2) ?.join("") ?.toUpperCase()}
               </div>
 
               <div className="hidden sm:block leading-tight">
