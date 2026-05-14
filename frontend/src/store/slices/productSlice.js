@@ -35,18 +35,14 @@ export const fetchSingleProduct = createAsyncThunk(
 
 export const addProduct = createAsyncThunk(
   "products/add",
-  async (formData, { rejectWithValue }) => {
+  async (data, thunkAPI) => {
     try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        body: formData, // ✅ important
-      });
-
-      if (!res.ok) throw new Error("Failed");
-
-      return await res.json();
+      const res = await createProduct(data);
+      return res.data.product; 
     } catch (err) {
-      return rejectWithValue(err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || err.message
+      );
     }
   }
 );
