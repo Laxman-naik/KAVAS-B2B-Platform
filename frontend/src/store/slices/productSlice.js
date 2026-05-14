@@ -54,7 +54,21 @@ export const addProduct = createAsyncThunk(
   }
 );
 
-/* UPDATE PRODUCT */
+// export const addProduct = createAsyncThunk(
+//   "products/add",
+//   async (data, thunkAPI) => {
+//     try {
+//       const res = await createProduct(data);
+//       return res.data.product; 
+//     } catch (err) {
+//       return thunkAPI.rejectWithValue(
+//         err.response?.data || err.message
+//       );
+//     }
+//   }
+// );
+
+// Update product
 export const editProduct = createAsyncThunk(
   "products/update",
   async ({ id, data }, thunkAPI) => {
@@ -155,7 +169,16 @@ const productSlice = createSlice({
 
       /* ================= SINGLE PRODUCT ================= */
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
-        state.product = action.payload;
+  state.loading = false;
+
+  state.product =
+    action.payload?.product ||
+    action.payload?.data ||
+    action.payload;
+})
+      .addCase(fetchSingleProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       /* ================= CREATE ================= */

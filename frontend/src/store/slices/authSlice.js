@@ -247,15 +247,21 @@ const authSlice = createSlice({
   initialState,
 
   reducers: {
-    clearAuth: (state) => {
-      state.user = null;
-      state.role = null;
-      state.isAuthenticated = false;
+  clearAuth: (state) => {
+    state.user = null;
+    state.role = null;
+    state.isAuthenticated = false;
 
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-    },
+    const role = localStorage.getItem("role");
+
+    if (role) {
+      localStorage.removeItem(`${role}_accessToken`);
+      localStorage.removeItem(`${role}_refreshToken`);
+    }
+
+    localStorage.removeItem("role");
   },
+},
 
   extraReducers: (builder) => {
     builder
@@ -268,7 +274,7 @@ const authSlice = createSlice({
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload?.user || null;
-        state.role = "user";
+        state.role = "buyer";
         state.isAuthenticated = !!action.payload?.user;
       })
       .addCase(loginUserThunk.rejected, (state, action) => {
@@ -279,7 +285,7 @@ const authSlice = createSlice({
       /* LOAD USER */
       .addCase(loadUserThunk.fulfilled, (state, action) => {
         state.user = action.payload?.user || null;
-        state.role = "user";
+        state.role = "buyer";
         state.isAuthenticated = true;
         state.initialized = true;
       })
