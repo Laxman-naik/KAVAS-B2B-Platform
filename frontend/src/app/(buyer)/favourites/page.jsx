@@ -139,7 +139,7 @@ const Page = () => {
 
         return {
           productId: id,
-          image: product.image || "/placeholder.png",
+          image: product.images?.find((img) => img.is_primary)?.image_url || product.images?.[0]?.image_url || "/placeholder.png",
           name: product.name || "Product",
           sku: product.sku || "",
           color: product.color || "",
@@ -252,7 +252,7 @@ const Page = () => {
               </div>
             ) : error ? (
               <div className="text-center py-16 bg-white rounded-sm border border-[#E5E5E5]">
-                <p className="text-red-500">{error}</p>
+                <p className="text-yellow-500">Login to see Wishlist</p>
               </div>
             ) : normalized.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-sm border border-[#E5E5E5]">
@@ -269,8 +269,8 @@ const Page = () => {
                           <th className="px-4 py-3 text-left font-medium">Product</th>
                           <th className="px-4 py-3 text-left font-medium">Unit Price (Wholesale)</th>
                           <th className="px-4 py-3 text-left font-medium">Stock Status</th>
-                          <th className="px-4 py-3 text-left font-medium">Added On</th>
-                          <th className="px-4 py-3 text-left font-medium">Action</th>
+                          {/* <th className="px-4 py-3 text-left font-medium">Added On</th> */}
+                          <th className="px-4 py-3 text-right font-medium">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -278,11 +278,7 @@ const Page = () => {
                           <tr key={row.productId} className="border-t">
                             <td className="px-4 py-4">
                               <div className="flex items-center gap-3 min-w-70">
-                                <img
-                                  src={row.image}
-                                  alt={row.name}
-                                  className="w-12 h-12 rounded-sm object-cover border"
-                                />
+                                <img src={row.image || "/placeholder.png"} alt={row.name || "product"} className="w-12 h-12 rounded-sm object-cover border"/>
                                 <div className="min-w-0">
                                   <p className="font-semibold text-[#0B1F3A] text-sm truncate">{row.name}</p>
                                   <p className="text-xs text-gray-500 mt-1">

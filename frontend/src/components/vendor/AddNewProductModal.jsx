@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
 import { getMainCategoriesThunk, getSubcategoriesByParentThunk, clearSubcategories, } from "@/store/slices/categorySlice";
+import { addProduct } from "@/store/slices/productSlice";
+
 
 const Field = ({ label, required, children, className = "" }) => (
   <div className={`space-y-1.5 ${className}`}>
@@ -186,45 +188,65 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
   if (!open) return null;
   const handlePublishProduct = async () => {
-    if (!canSubmit) return;
+  if (!canSubmit) return;
 
-    try {
-      const payload = {
-        ...form,
+  const formData = new FormData();
 
-        price: Number(form.price),
-        mrp: Number(form.mrp || 0),
-        stock: Number(form.stock),
-        moq: Number(form.moq),
+  // ================= BASIC FIELDS =================
+  formData.append("name", form.name);
+  formData.append("sku", form.sku);
+  formData.append("category", form.category);
+  formData.append("subCategory", form.subCategory);
+  formData.append("brand", form.brand);
+  formData.append("price", Number(form.price));
+  formData.append("mrp", Number(form.mrp || 0));
+  formData.append("moq", Number(form.moq));
+  formData.append("stock", Number(form.stock));
+  formData.append("description", form.description);
+  formData.append("unit", form.unit || "");
 
-        specifications: form.specifications.filter((s) => s.name && s.value),
+  // ================= JSON FIELDS =================
+  formData.append(
+    "specifications",
+    JSON.stringify(form.specifications.filter(s => s.name && s.value))
+  );
 
-        variants: form.variants.filter((v) => v.variantName && v.value),
+  formData.append(
+    "variants",
+    JSON.stringify(form.variants.filter(v => v.variantName && v.value))
+  );
 
-        bulkPricing: form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit),
-      };
+  formData.append(
+    "bulkPricing",
+    JSON.stringify(form.bulkPricing.filter(b => b.minQty && b.pricePerUnit))
+  );
 
-      const resultAction = await dispatch(addProduct(payload));
+  // ================= IMAGES =================
+  form.images.forEach((url) => {
+    formData.append("images", url);
+  });
 
-      if (addProduct.fulfilled.match(resultAction)) {
-        console.log("Product Added Successfully");
+  // ================= VIDEOS =================
+  form.videos.forEach((url) => {
+    formData.append("videos", url);
+  });
 
-        if (typeof onSubmit === "function") {
-          onSubmit(resultAction.payload);
-        }
+  try {
+    const resultAction = await dispatch(addProduct(formData));
 
-        close();
-      } else {
-        console.error("FAILED ACTION:", resultAction);
+    if (addProduct.fulfilled.match(resultAction)) {
+      console.log("✅ Product Created");
 
-        console.error("FAILED PAYLOAD:", resultAction.payload);
-
-        alert(JSON.stringify(resultAction.payload, null, 2));
-      }
-    } catch (error) {
-      console.error(error);
+      onSubmit?.(resultAction.payload);
+      close();
+    } else {
+      console.error("❌ Failed:", resultAction.payload);
+      alert(JSON.stringify(resultAction.payload, null, 2));
     }
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <>
@@ -321,7 +343,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {mainCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}> {cat.name} </SelectItem>))}
+                              {mainCategories.map((cat) => (<SelectItem key={cat.id} value={String(cat.id)}> {cat.name} </SelectItem>))}
                             </SelectContent>
                           </Select>
                         </Field>
@@ -331,7 +353,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         <Field label="Sub Category" required>
                           <Select
                             value={form.subCategory}
-                            onValueChange={update("subCategory")}
+                            onValueChange={update("subCategory")("")}
                           >
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select sub category" />
