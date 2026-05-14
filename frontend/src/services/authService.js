@@ -16,6 +16,22 @@ export const registerUserAPI = async (data) => {
 
 /* ================= LOGIN ================= */
 
+// export const loginUser = async (data) => {
+//   const res = await authapi.post(
+//     "/api/auth/login",
+//     data,
+//     {
+//       skipAuth: true,
+//     }
+//   );
+//   saveAuthData({
+//     role: res.data.role,
+//     accessToken: res.data.accessToken,
+//     refreshToken: res.data.refreshToken,
+//   });
+
+//   return res.data;
+// };
 export const loginUser = async (data) => {
   const res = await authapi.post(
     "/api/auth/login",
@@ -25,13 +41,35 @@ export const loginUser = async (data) => {
 
   const role = res.data?.user?.role;
 
+  if (!role) {
+    throw new Error("Role missing from response");
+  }
+
   saveAuthData({
     role,
     accessToken: res.data.accessToken,
     refreshToken: res.data.refreshToken,
+
   });
 
-  return res.data;
+    console.log("LOGIN RESPONSE:", res.data);
+  console.log("LOCAL ROLE:", localStorage.getItem("role"));
+  console.log(
+    "ACCESS TOKEN:",
+    localStorage.getItem(`${role}_accessToken`)
+  );
+  console.log(
+    "REFRESH TOKEN:",
+    localStorage.getItem(`${role}_refreshToken`)
+  );
+
+
+  return {
+    user: res.data.user,
+    role,
+    accessToken: res.data.accessToken,
+    refreshToken: res.data.refreshToken,
+  };
 };
 
 /* ================= GET ME ================= */

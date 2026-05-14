@@ -25,19 +25,7 @@ export const loginUserThunk = createAsyncThunk(
     try {
       const res = await loginUser(data);
 
-      const role = res.role;
-
-if (res?.accessToken && role) {
-  localStorage.setItem(`${role}_accessToken`, res.accessToken);
-}
-
-if (res?.refreshToken && role) {
-  localStorage.setItem(`${role}_refreshToken`, res.refreshToken);
-}
-
-localStorage.setItem("role", role);
-
-      return res; // send to reducer
+      return res;
     } catch (err) {
       return rejectWithValue(err.message || "Login failed");
     }
@@ -274,8 +262,8 @@ const authSlice = createSlice({
       .addCase(loginUserThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload?.user || null;
-        state.role = "buyer";
-        state.isAuthenticated = !!action.payload?.user;
+        state.role = action.payload?.role || "buyer";
+        state.isAuthenticated = true;
       })
       .addCase(loginUserThunk.rejected, (state, action) => {
         state.loading = false;
