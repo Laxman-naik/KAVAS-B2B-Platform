@@ -83,6 +83,28 @@ export const refreshVendorToken = createAsyncThunk(
   }
 );
 
+/* ================= LOGOUT ================= */
+
+export const logoutVendor = createAsyncThunk(
+  "vendor/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      const refreshToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("vendor_refreshToken")
+          : null;
+
+      const res = await logoutVendorAPI({ refreshToken });
+
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
 /* ================= PROFILE ================= */
 
 export const fetchVendorProfile = createAsyncThunk(
@@ -90,6 +112,8 @@ export const fetchVendorProfile = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const res = await getVendorProfileAPI(id);
+      console.log(res);
+      console.log(res.data);
       return res.data;
 
     } catch (err) {
@@ -443,35 +467,20 @@ const initialState = {
 
   accessToken:
     typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
+      ? localStorage.getItem("vendor_accessToken")
       : null,
 
   refreshToken:
     typeof window !== "undefined"
-      ? localStorage.getItem("refreshToken")
+      ? localStorage.getItem("vendor_refreshToken")
       : null,
 
   isAuthenticated:
     typeof window !== "undefined"
-      ? !!localStorage.getItem("accessToken")
+      ? !!localStorage.getItem("vendor_accessToken")
       : false,
 
-  vendor: {
-    id: null,
-    email: null,
-    phone: null,
-    email_verified: false,
-    phone_verified: false,
-    id_verified: false,
-    signature_verified: false,
-    is_active: false,
-  },
-
-  onboarding: null,
-  business: null,
-  bank: null,
-  store: null,
-  pickup: null,
+  vendor: null,
 
   otp: {
     mobileSent: false,
@@ -495,11 +504,6 @@ const vendorSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.vendor = null;
-      state.onboarding = null;
-      state.business = null;
-      state.bank = null;
-      state.store = null;
-      state.pickup = null;
 
       state.otp = {
         mobileSent: false,
@@ -509,8 +513,9 @@ const vendorSlice = createSlice({
       };
 
       if (typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("vendor_accessToken");
+        localStorage.removeItem("vendor_refreshToken");
+        localStorage.removeItem("role");
       }
     },
   },
@@ -533,14 +538,19 @@ const vendorSlice = createSlice({
         state.refreshToken = payload.refreshToken || null;
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("accessToken", payload.accessToken);
+          localStorage.setItem("role", "vendor");
 
-          if (payload.refreshToken) {
-            localStorage.setItem(
-              "refreshToken",
-              payload.refreshToken
-            );
-          }
+localStorage.setItem(
+  "vendor_accessToken",
+  payload.accessToken
+);
+
+if (payload.refreshToken) {
+  localStorage.setItem(
+    "vendor_refreshToken",
+    payload.refreshToken
+  );
+}
         }
 
         state.vendor = payload.vendor || null;
@@ -561,6 +571,27 @@ const vendorSlice = createSlice({
         }
       })
 
+      /* ================= LOGOUT ================= */
+
+.addCase(logoutVendor.fulfilled, (state) => {
+  state.accessToken = null;
+  state.refreshToken = null;
+  state.isAuthenticated = false;
+  state.vendor = null;
+
+  state.otp = {
+    mobileSent: false,
+    emailSent: false,
+    mobileVerified: false,
+    emailVerified: false,
+  };
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("vendor_accessToken");
+    localStorage.removeItem("vendor_refreshToken");
+    localStorage.removeItem("role");
+  }
+})
       /* ================= OTP ================= */
 
       .addCase(sendVendorOtp.pending, (state) => {
@@ -622,21 +653,13 @@ const vendorSlice = createSlice({
 
       /* ================= PROFILE ================= */
       .addCase(fetchVendorProfile.fulfilled, (state, action) => {
-        state.vendor = {
-          ...state.vendor,
-          ...action.payload,
-        };
-      })
+  state.vendor = action.payload;
+})
 
       /* ================= SELF PROFILE ================= */
       .addCase(fetchVendorme.fulfilled, (state, action) => {
-        state.vendor = action.payload?.vendor || null;
-        state.onboarding = action.payload?.onboarding || null;
-        state.business = action.payload?.business || null;
-        state.bank = action.payload?.bank || null;
-        state.store = action.payload?.store || null;
-        state.pickup = action.payload?.pickup || null;
-      })
+  state.vendor = action.payload || null;
+})
 
       /* ================= BUSINESS ================= */
       .addCase(fetchBusinessDetails.fulfilled, (state, action) => {
@@ -721,7 +744,5 @@ const vendorSlice = createSlice({
   },
 });
 
-export const { resetVendorState, logoutLocal } =
-  vendorSlice.actions;
-
+export const { resetVendorState, logoutLocal } = vendorSlice.actions;
 export default vendorSlice.reducer;

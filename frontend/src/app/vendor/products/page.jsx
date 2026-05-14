@@ -1,17 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Download,
-  LayoutGrid,
-  List,
-  Pencil,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import {Search,Plus,MoreVertical,Download,LayoutGrid,List,Pencil,ChevronLeft,ChevronRight,} from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "../../../store/slices/productSlice";
@@ -25,10 +15,8 @@ export default function ProductManagementBody() {
   const [openAdd, setOpenAdd] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 8;
-  const vendorId = useSelector((state) => state.vendor.vendor?.id);
-  const { vendorProducts = [], loading } = useSelector(
-    (state) => state.products,
-  );
+  const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
+  const { vendorProducts, loading } = useSelector((state) => state.products);
   console.log(vendorProducts);
   console.log(vendorId);
 
@@ -41,7 +29,6 @@ export default function ProductManagementBody() {
   const products = useMemo(() => {
     return Array.isArray(vendorProducts) ? vendorProducts : [];
   }, [vendorProducts]);
-  /* ================= FILTER LOGIC ================= */
 
   const filteredProducts = useMemo(() => {
     const q = String(search || "")
@@ -126,8 +113,6 @@ export default function ProductManagementBody() {
     if (s === "Out of Stock") return "bg-red-100 text-red-700";
     return "bg-gray-100 text-gray-700";
   };
-
-  /* ================= UI ================= */
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">

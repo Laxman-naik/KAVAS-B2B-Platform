@@ -555,14 +555,106 @@ export const logoutVendor = async (req, res) => {
 };
 
 export const getVendorProfile = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const result = await db.query(
-    `SELECT email_verified, phone_verified FROM vendorprofile WHERE id = $1`,
-    [id]
-  );
+    // ================= VENDOR =================
+    const vendorResult = await db.query(
+      `
+      SELECT *
+      FROM vendorprofile
+      WHERE id = $1
+      `,
+      [id]
+    );
 
-  res.json(result.rows[0]);
+    if (vendorResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Vendor not found",
+      });
+    }
+
+    const vendor = vendorResult.rows[0];
+
+    // ================= ONBOARDING =================
+    const onboardingResult = await db.query(
+      `
+      SELECT *
+      FROM vendor_onboarding
+      WHERE vendor_id = $1
+      `,
+      [id]
+    );
+
+    const onboarding = onboardingResult.rows[0] || null;
+
+    let business = null;
+    let bank = null;
+    let store = null;
+
+    // ================= RELATED TABLES =================
+    if (onboarding?.id) {
+      // BUSINESS
+      const businessResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_business_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      business = businessResult.rows[0] || null;
+
+      // BANK
+      const bankResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_bank_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      bank = bankResult.rows[0] || null;
+
+      // STORE
+      const storeResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_store_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      store = storeResult.rows[0] || null;
+    }
+
+    // ================= MERGED RESPONSE =================
+    const mergedVendor = {
+      ...vendor,
+
+      onboarding,
+
+      business,
+
+      bank,
+
+      store,
+    };
+
+    return res.json({
+      vendor: mergedVendor,
+    });
+
+  } catch (err) {
+    console.error("GET VENDOR PROFILE ERROR:", err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
 };
 
 export const upsertBusinessDetails = async (req, res) => {

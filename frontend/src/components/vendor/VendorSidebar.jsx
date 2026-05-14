@@ -79,7 +79,7 @@ const VendorSidebar = () => {
           </div>
         </nav>
 
-        <div className="p-3">
+        {/* <div className="p-3">
           <div className="rounded-2xl bg-white/5 p-3">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-[#D4AF37]/20" />
@@ -91,7 +91,7 @@ const VendorSidebar = () => {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
   );
