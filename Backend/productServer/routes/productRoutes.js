@@ -13,9 +13,12 @@ router.get("/category/:categorySlug", productController.getProductsByCategory);
 router.get("/trending", productController.getTrendingProducts);
 router.get("/new-arrivals", productController.getNewArrivals);
 router.get("/vendor/:vendorId", productController.getVendorProducts);
+router.get("/:id/reviews", productController.getProductReviews);
+router.post("/:id/reviews", authMiddleware, productController.addProductReview);
 router.get("/:id", productController.getSingleProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
+
 
 
 

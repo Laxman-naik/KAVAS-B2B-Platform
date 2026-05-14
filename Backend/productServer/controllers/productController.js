@@ -747,6 +747,125 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
+exports.getProductReviews = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      SELECT
+        r.id,
+        r.rating,
+        r.comment,
+        r.created_at,
+        r.product_id,
+        r.user_id,
+        u.name AS user_name,
+        u.email AS user_email
+      FROM reviews r
+      LEFT JOIN users u
+        ON u.id = r.user_id
+      WHERE r.product_id = $1
+      ORDER BY r.created_at DESC
+      `,
+      [id]
+    );
+
+    const summaryResult = await pool.query(
+      `
+      SELECT
+        COALESCE(ROUND(AVG(rating)::numeric, 1), 0) AS avg_rating,
+        COUNT(*)::int AS total_reviews
+      FROM reviews
+      WHERE product_id = $1
+      `,
+      [id]
+    );
+
+    return res.json({
+      success: true,
+      reviews: result.rows,
+      summary: summaryResult.rows[0],
+    });
+  } catch (err) {
+    console.error("getProductReviews error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.addProductReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Login required to add review",
+      });
+    }
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be between 1 and 5",
+      });
+    }
+
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Review comment is required",
+      });
+    }
+
+    const productCheck = await pool.query(
+      `SELECT id FROM products WHERE id = $1 AND is_active = true`,
+      [id]
+    );
+
+    if (!productCheck.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      INSERT INTO reviews (product_id, user_id, rating, comment)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (user_id, product_id)
+      DO UPDATE SET
+        rating = EXCLUDED.rating,
+        comment = EXCLUDED.comment,
+        created_at = NOW()
+      RETURNING *
+      `,
+      [id, userId, rating, comment.trim()]
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Review saved successfully",
+      review: result.rows[0],
+    });
+  } catch (err) {
+    console.error("addProductReview error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 exports.getProductsByCategory = async (req, res) => {
   try {
     const { categorySlug } = req.params;

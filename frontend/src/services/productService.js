@@ -15,3 +15,8 @@ export const getNewArrivalsAPI = () =>  productapi.get("/api/products/new-arriva
 export const getTrendingProductsAPI = () => productapi.get("/api/products/trending?limit=25")
 
 export const getVendorProductsAPI = (vendorId) => productapi.get(`/api/products/vendor/${vendorId}`, {skipAuth: true,});
+export const getProductReviewsAPI = (productId) =>
+  productapi.get(`/api/products/${productId}/reviews`, { skipAuth: true });
+
+export const addProductReviewAPI = (productId, data) =>
+  productapi.post(`/api/products/${productId}/reviews`, data);
