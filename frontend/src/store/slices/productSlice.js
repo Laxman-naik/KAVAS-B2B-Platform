@@ -24,6 +24,8 @@ export const fetchSingleProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
+      console.log(res)
+      console.log(res.data)
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(
@@ -159,9 +161,15 @@ const productSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
-        state.loading = false;
-        state.product = action.payload;
-      })
+  state.loading = false;
+
+  console.log("PRODUCT PAYLOAD:", action.payload);
+
+  state.product =
+    action.payload?.product ||
+    action.payload?.data ||
+    action.payload;
+})
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

@@ -128,7 +128,7 @@ const Page = () => {
         })
       ).unwrap();
 
-      console.log("Added to cart");
+      alert("Added to cart");
     } catch (err) {
       console.error("ADD TO CART FAILED:", err);
     }
@@ -203,8 +203,6 @@ const Page = () => {
 
   const totalPages = Math.max(1, Math.ceil(normalized.length / pageSize));
   const paged = normalized.slice((page - 1) * pageSize, page * pageSize);
-
-  console.log(paged)
 
   if (!mounted) return null;
 
