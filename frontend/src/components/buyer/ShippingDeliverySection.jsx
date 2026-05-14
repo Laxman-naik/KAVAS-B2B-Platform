@@ -90,41 +90,32 @@ export default function ShippingDeliverySection({ product }) {
             style={{ borderColor: COLORS.border, background: COLORS.white }}
           >
             <div className="flex items-center gap-3">
-              <div
-                className="text-lg font-extrabold"
-                style={{ color: COLORS.text }}
-              >
-                {pincode} ({userName})
+              <div className="text-lg font-extrabold" style={{ color: COLORS.text }}>
+                Delivery location
               </div>
-
               <CircleCheck className="h-6 w-6" style={{ color: "#10B981" }} />
             </div>
 
-            <button
-              type="button"
-              className="text-sm font-extrabold"
-              style={{ color: COLORS.primary }}
-            >
+            <button type="button" className="text-sm font-extrabold" style={{ color: "#0B1F3A" }}>
               CHANGE
             </button>
           </div>
 
           <div className="mt-4 divide-y" style={{ borderColor: COLORS.border }}>
-            <Row Icon={Truck} title={`Get it by ${deliveryText}`} />
-
-            {payOnDelivery && (
-              <Row Icon={HandCoins} title="Pay on delivery available" />
-            )}
-
+            <Row
+              Icon={Truck}
+              title={`Dispatch in ${product?.dispatch_time_days || 3} days`}
+            />        
+            <Row Icon={HandCoins} title="Pay on delivery available" />
             <Row
               Icon={RefreshCcw}
-              title={`Easy ${returnDays} days return & exchange available`}
+              title="Easy 7 days return & exchange available"
               right={
                 <button
                   type="button"
                   onClick={() => setOpenMoreInfo(true)}
                   className="inline-flex items-center gap-1 text-sm font-extrabold"
-                  style={{ color: COLORS.primary }}
+                  style={{ color: "#0B1F3A" }}
                 >
                   MORE INFO
                   <ChevronRight className="h-5 w-5" />
@@ -133,11 +124,9 @@ export default function ShippingDeliverySection({ product }) {
             />
           </div>
 
-          {originalProduct && (
-            <div className="mt-6 text-lg" style={{ color: COLORS.text }}>
-              100% Original Products
-            </div>
-          )}
+          <div className="mt-6 text-lg" style={{ color: COLORS.text }}>
+            100% Original Products
+          </div>
         </div>
       </section>
 

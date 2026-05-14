@@ -2,12 +2,16 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
-import { createProduct as createProductAPI } from "../../../services/productService";
+import { addProduct } from "../../../redux/slices/productSlice";
 
 export default function AddNewProductPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
 
+<<<<<<< HEAD
   const handleSubmit = async (data) => {
 <<<<<<< HEAD
     const payload = {
@@ -28,41 +32,73 @@ export default function AddNewProductPage() {
     await createProductAPI(payload);
     router.push("/vendor/products");
 =======
+=======
+  const handleSubmit = async (form) => {
+>>>>>>> ed3d426d631124719c0912378469a63881d3145a
     try {
-      const orgId = localStorage.getItem("organizationId");
-
-      if (!orgId) {
-        alert("Organization ID missing");
-        return;
-      }
-
       const payload = {
-        name: data.name,
-        sku: data.sku,
-        category: data.category,
-        unit: data.unit,
-        status: data.status,
-        description: data.description,
-        price: Number(data.price),
-        mrp: Number(data.mrp),
-        gst: Number(data.gst || 0),
-        moq: Number(data.moq),
-        stock: Number(data.stock),
-        organizationId: orgId,
+        name: form.name?.trim(),
+        sku: form.sku?.trim(),
 
-        // backend currently accepts image URLs only, not file uploads
-        images: [],
+        categories: form.subCategoryId
+          ? [Number(form.subCategoryId)]
+          : form.categoryId
+            ? [Number(form.categoryId)]
+            : [],
+
+        category: form.subCategory || form.category,
+
+        unit: form.unit || "pcs",
+        status: "active",
+        description: form.description,
+
+        price: Number(form.price || 0),
+        mrp: Number(form.mrp || 0),
+        moq: Number(form.moq || 0),
+        stock: Number(form.stock || 0),
+
+        gst: form.taxClass || "",
+        brand: form.brand || "",
+        barcode: form.barcode || "",
+
+        weight: form.productWeight || null,
+        dispatchTimeDays: Number(form.expectedDispatchTime || 0),
+
+        images: Array.isArray(form.images)
+          ? form.images.filter((url) => typeof url === "string" && url.trim())
+          : [],
+
+        specifications: Array.isArray(form.specifications)
+          ? form.specifications
+            .filter((s) => s.name?.trim() && s.value?.trim())
+            .map((s) => ({
+              key: s.name.trim(),
+              value: s.value.trim(),
+            }))
+          : [],
+
+        pricingTiers: Array.isArray(form.bulkPricing)
+          ? form.bulkPricing
+            .filter((p) => p.minQty && p.pricePerUnit)
+            .map((p) => ({
+              min_quantity: Number(p.minQty),
+              price: Number(p.pricePerUnit),
+              label: p.maxQty ? `${p.minQty}-${p.maxQty}` : `${p.minQty}+`,
+            }))
+          : [],
       };
 
       await dispatch(addProduct(payload)).unwrap();
 
-      alert("✅ Product Added");
       router.push("/vendor/products");
-    } catch (err) {
-      console.error(err);
-      alert(err?.message || "❌ Failed to add product");
+    } catch (error) {
+      console.error("Product create failed:", error);
+      alert(error?.message || error?.message?.message || "Failed to create product");
     }
+<<<<<<< HEAD
 >>>>>>> dacb9434a2740621473dc5129e65304e26b294b7
+=======
+>>>>>>> ed3d426d631124719c0912378469a63881d3145a
   };
 
   return (

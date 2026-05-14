@@ -4,8 +4,8 @@ export default function ProductDetailsSection({ product }) {
   const description =
     product?.description || "No product description available.";
 
-  const highlights = Array.isArray(product?.highlights)
-    ? product.highlights
+  const highlights = Array.isArray(product?.specifications)
+    ? product.specifications.slice(0, 6)
     : [];
 
   return (
@@ -21,7 +21,9 @@ export default function ProductDetailsSection({ product }) {
       {highlights.length > 0 && (
         <ul className="mt-5 list-disc space-y-3 pl-5 text-sm text-[#374151]">
           {highlights.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index}>
+              <strong>{item.key}:</strong> {item.value}
+            </li>
           ))}
         </ul>
       )}

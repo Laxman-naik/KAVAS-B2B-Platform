@@ -69,7 +69,7 @@ const initials = (name) => {
 const discount = (mrp, price) =>
   mrp > 0 && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
-const normalizeMedia = (product) => {
+const normalizeMedia = (p) => {
   const seen = new Map();
 
   const add = (src, type = "image") => {
@@ -81,32 +81,25 @@ const normalizeMedia = (product) => {
     if (!seen.has(key)) seen.set(key, { src: s, type });
   };
 
-  (product?.images || []).forEach((item) => {
-    if (typeof item === "string") {
-      add(item, "image");
-    } else {
-      add(item.image_url || item.url || item.src, item.media_type || "image");
+  (p?.media ?? p?.mediaItems ?? p?.images ?? p?.productImages ?? []).forEach((m) => {
+    if (typeof m === "string") {
+      add(m);
+      return;
     }
+    add(m?.url ?? m?.src ?? m?.imageUrl ?? m?.image_url);
   });
 
-  (product?.videos || []).forEach((item) => {
-    if (typeof item === "string") {
-      add(item, "video");
-    } else {
-      add(item.video_url || item.image_url || item.url || item.src, "video");
-    }
-  });
+  add(p?.thumbnail);
+  add(p?.image);
+  add(p?.mainImage);
 
-  add(product?.image_url, "image");
-  add(product?.thumbnail, "image");
-  add(product?.mainImage, "image");
+  if (p?.video ?? p?.videoUrl) add(p.video ?? p.videoUrl, "video");
 
   const items = Array.from(seen.values());
-
   return items.length ? items : [{ src: "/placeholder.png", type: "image" }];
 };
 
-const Stars = ({ rating, size = 14 }) => {
+const Stars = ({ rating, size = 16 }) => {
   const n = clamp(Math.round(Number(rating) || 0), 0, 5);
 
   return (
@@ -165,149 +158,94 @@ const LoadingSkeleton = () => (
   </div>
 );
 
-const useNormalizedProduct = (product) =>
-  useMemo(() => {
-    const categories = Array.isArray(product?.categories)
-      ? product.categories
-      : [];
+const ErrorState = ({ message }) => (
+  <div className="rounded-sm border p-5" style={{ borderColor: C.border, background: C.cream }}>
+    <p className="font-semibold" style={{ color: C.primary }}>Failed to load product</p>
+    <p className="mt-1 text-sm" style={{ color: C.muted }}>{String(message)}</p>
+  </div>
+);
 
-    const variants = Array.isArray(product?.variants) ? product.variants : [];
-
-    return {
-      id: product?.id || product?._id,
-      title: str(product?.name, product?.title, "Product"),
-      description: str(product?.description, "No description available"),
-      brand: str(
-        product?.brand,
-        product?.manufacturer,
-        product?.organization_name,
-        product?.vendor_name,
-        "KAVAS"
-      ),
-      sku: str(product?.sku, "-"),
-      slug: str(product?.slug, ""),
-      unit: str(product?.unit, "unit"),
-      gtin: str(product?.gtin, "-"),
-      price: Number(product?.price || 0),
-      mrp: Number(product?.mrp || 0),
-      moq: Number(product?.moq || 1),
-      stock: Number(product?.stock || 0),
-      weight: Number(product?.weight || 0),
-      dispatchTimeDays: Number(product?.dispatch_time_days || 3),
-      avgRating: Number(product?.avg_rating || product?.rating || 0),
-      totalReviews: Number(
-        product?.total_reviews ||
-          product?.reviewsCount ||
-          product?.reviewCount ||
-          0
-      ),
-      status: str(product?.status, "pending"),
-      isActive: product?.is_active,
-      isFeatured: product?.is_featured,
-      isTopProduct: product?.is_top_product,
-      viewsCount: Number(product?.views_count || 0),
-      salesCount: Number(product?.sales_count || 0),
-      viewsLast7Days: Number(product?.views_last_7_days || 0),
-      salesLast7Days: Number(product?.sales_last_7_days || 0),
-      category: str(categories?.[0]?.name, product?.category, "Home"),
-      subCategory: str(categories?.[1]?.name, product?.subCategory, "-"),
-      categories,
-      variants,
-      specifications: Array.isArray(product?.specifications)
-        ? product.specifications
-        : [],
-      pricingTiers: Array.isArray(product?.pricingTiers)
-        ? product.pricingTiers
-        : Array.isArray(product?.bulkPricing)
-        ? product.bulkPricing
-        : [],
-      reviews: Array.isArray(product?.reviews) ? product.reviews : [],
-      colors:
-        variants.length > 0
-          ? [
-              ...new Set(
-                variants
-                  .filter((v) =>
-                    String(v.variant_type || v.type || "")
-                      .toLowerCase()
-                      .includes("color")
-                  )
-                  .map((v) => v.variant_value || v.value)
-                  .filter(Boolean)
-              ),
-            ]
-          : ["White", "Black", "Blue"],
+const useNormalized = (p) =>
+  useMemo(
+    () => ({
+      title: str(p?.title, p?.name, p?.productName, "Product"),
+      brand: str(p?.brand, p?.company, p?.manufacturer, "KAVAS"),
+      sku: str(p?.sku, p?.SKU, p?.code, "-"),
+      gtin: str(p?.gtin, p?.GTIN, "-"),
+      category: str(p?.category, p?.mainCategory, "Home"),
+      subCategory: str(p?.subCategory, p?.sub_category, "-"),
+      rating: Number(p?.rating ?? p?.averageRating ?? p?.avgRating ?? 0),
+      reviewCount:
+        Number(p?.reviewsCount ?? p?.reviewCount ?? p?.totalReviews) ||
+        (Array.isArray(p?.reviews) ? p.reviews.length : 0),
+      mrp: Number(p?.mrp ?? p?.compareAtPrice ?? p?.originalPrice ?? 0),
+      baseUnit: Number(p?.price ?? p?.sellingPrice ?? p?.unitPrice ?? 0),
+      unit: str(p?.unit, p?.unitType, "unit"),
+      minQty: Number(p?.minQty ?? p?.minimumOrderQty ?? p?.moq ?? 1) || 1,
+      stock: str(p?.stock, p?.availability, "In Stock"),
       sizes:
-        variants.length > 0
-          ? [
-              ...new Set(
-                variants
-                  .filter((v) => {
-                    const type = String(v.variant_type || v.type || "").toLowerCase();
-                    return type.includes("size") || type.includes("warranty");
-                  })
-                  .map((v) => v.variant_value || v.value)
-                  .filter(Boolean)
-              ),
-            ]
+        Array.isArray(p?.sizes) && p.sizes.length
+          ? p.sizes
           : ["Standard", "Premium"],
-    };
-  }, [product]);
+      colors:
+        Array.isArray(p?.colors) && p.colors.length
+          ? p.colors
+          : ["White", "Black", "Blue"],
+      warranty: str(p?.warranty, "1 Year Manufacturer"),
+      returnPolicy: str(p?.returnPolicy, "7 Days Replacement"),
+      supplier: p?.supplier ?? p?.vendor ?? null,
+      description: str(
+        p?.shortDescription,
+        p?.description,
+        p?.about,
+        "Designed for everyday use with reliable performance, bulk-friendly pricing, and support for business buying."
+      ),
+      specifications: p?.specifications ?? p?.specs ?? p?.attributes ?? [],
+      reviews: Array.isArray(p?.reviews) ? p.reviews : [],
+      isFeatured: Boolean(p?.isFeatured),
+      isTopProduct: Boolean(p?.isTopProduct),
+      status: str(p?.status),
+    }),
+    [p]
+  );
 
-const useTiers = (product, baseUnit, minQty) =>
+const useTiers = (pricingTiers, baseUnit, minQty) =>
   useMemo(() => {
-    const dbTiers = Array.isArray(product?.pricingTiers)
-      ? product.pricingTiers
-      : [];
-
-    const bulkPricing = Array.isArray(product?.bulkPricing)
-      ? product.bulkPricing
-      : [];
-
-    const source = dbTiers.length ? dbTiers : bulkPricing;
-
-    if (source.length) {
-      return source.map((tier, index, arr) => ({
-        min: Number(tier.min_quantity || tier.minQty || minQty),
-        max:
-          Number(tier.max_quantity || tier.maxQty) ||
-          (index < arr.length - 1
-            ? Number(arr[index + 1].min_quantity || arr[index + 1].minQty) - 1
-            : Infinity),
-        price: Number(tier.price || tier.pricePerUnit || baseUnit),
-        label: tier.label || "",
+    if (Array.isArray(pricingTiers) && pricingTiers.length > 0) {
+      return pricingTiers.map((tier) => ({
+        min: Number(tier.min_quantity ?? tier.min ?? minQty),
+        max: Number(tier.max_quantity ?? tier.max) || Infinity,
+        price: Number(tier.price ?? baseUnit),
+        label: tier.label,
       }));
     }
 
-    return [
-      { min: minQty, max: 99, price: baseUnit },
-      { min: 100, max: 499, price: baseUnit * 0.97 },
-      { min: 500, max: 999, price: baseUnit * 0.94 },
-      { min: 1000, max: Infinity, price: baseUnit * 0.9 },
-    ];
-  }, [product, baseUnit, minQty]);
+    return [{ min: minQty, max: Infinity, price: baseUnit }];
+  }, [pricingTiers, baseUnit, minQty]);
 
 const useSimilar = (products, currentId) =>
   useMemo(() => {
     const list = Array.isArray(products) ? products : [];
 
     return list
-      .filter((item) => (item?.id || item?._id) !== currentId)
+      .filter((item) => String(item?.id || item?._id) !== String(currentId))
       .slice(0, 4)
-      .map((item) => {
-        const price = Number(item?.price || 0);
-        const mrp = Number(item?.mrp || 0);
+      .map((x) => {
+        const price = Number(x?.price ?? x?.sellingPrice ?? x?.unitPrice ?? 0);
+        const mrp = Number(x?.mrp ?? x?.compareAtPrice ?? x?.originalPrice ?? 0);
 
         return {
-          id: item?.id || item?._id,
-          title: str(item?.name, item?.title, "Product"),
-          brand: str(item?.brand, item?.organization_name, "KAVAS"),
+          id: x?._id ?? x?.id,
+          title: str(x?.title, x?.name, "Product"),
+          brand: str(x?.brand, x?.company, "KAVAS"),
           price,
           off: discount(mrp, price),
-          minQty: Number(item?.moq || 1),
-          img: normalizeMedia(item)[0]?.src || "/placeholder.png",
-          rating: Number(item?.avg_rating || item?.rating || 0),
-          reviewCount: Number(item?.total_reviews || item?.reviewCount || 0),
+          minQty: Number(x?.minQty ?? x?.moq ?? 1) || 1,
+          img: normalizeMedia(x)[0]?.src ?? "/placeholder.png",
+          rating: Number(x?.rating ?? x?.averageRating ?? 0),
+          reviewCount:
+            Number(x?.reviewsCount ?? x?.reviewCount) ||
+            (Array.isArray(x?.reviews) ? x.reviews.length : 0),
         };
       });
   }, [products, currentId]);
@@ -317,21 +255,19 @@ export default function ProductView() {
   const id = params.id || params.Id;
 
   const dispatch = useDispatch();
-  const { product, products, loading } = useSelector((state) => state.products);
+  const { product, loading, error, products } = useSelector((s) => s.products);
 
-  const p = product || {};
-  const norm = useNormalizedProduct(p);
-  const mediaItems = useMemo(
-  () => normalizeMedia(p),
-  [p?.id, p?.updated_at]
-);
-  const tiers = useTiers(p, norm.price, norm.moq);
-  const similar = useSimilar(products, norm.id);
+  const p = product ?? {};
+  const norm = useNormalized(p);
+
+  const mediaItems = useMemo(() => normalizeMedia(p), [p]);
+  const tiers = useTiers(product?.pricingTiers, norm.baseUnit, norm.minQty);
+  const similar = useSimilar(products, p?._id ?? p?.id);
 
   const [selectedMedia, setSelectedMedia] = useState(mediaItems[0]);
-  const [qty, setQty] = useState(norm.moq);
-  const [selectedColor, setSelectedColor] = useState(norm.colors[0]);
+  const [qty, setQty] = useState(norm.minQty);
   const [selectedSize, setSelectedSize] = useState(norm.sizes[0]);
+  const [selectedColor, setSelectedColor] = useState(norm.colors[0]);
   const [wishlisted, setWishlisted] = useState(false);
 
   const thumbsRef = useRef(null);
@@ -341,80 +277,47 @@ export default function ProductView() {
     dispatch(fetchProducts());
   }, [dispatch, id]);
 
-useEffect(() => {
-  if (!selectedMedia?.src && mediaItems.length) {
+  useEffect(() => {
     setSelectedMedia(mediaItems[0]);
-  }
-}, [mediaItems, selectedMedia]);
+  }, [mediaItems]);
 
- useEffect(() => {
-  setQty((prev) => prev || norm.moq);
+  useEffect(() => {
+    setQty((prev) => prev || norm.minQty);
 
-  if (!selectedColor && norm.colors.length) {
-    setSelectedColor(norm.colors[0]);
-  }
+    if (!selectedSize && norm.sizes.length) {
+      setSelectedSize(norm.sizes[0]);
+    }
 
-  if (!selectedSize && norm.sizes.length) {
-    setSelectedSize(norm.sizes[0]);
-  }
-}, [norm.moq, norm.colors, norm.sizes, selectedColor, selectedSize]);
+    if (!selectedColor && norm.colors.length) {
+      setSelectedColor(norm.colors[0]);
+    }
+  }, [norm.minQty, norm.sizes, norm.colors, selectedSize, selectedColor]);
 
   const activeTier = useMemo(
     () => tiers.find((tier) => qty >= tier.min && qty <= tier.max) || tiers[0],
     [qty, tiers]
   );
 
-  const activeVariant = useMemo(() => {
-    if (!Array.isArray(norm.variants)) return null;
-
-    return (
-      norm.variants.find((v) => {
-        const value = v.variant_value || v.value;
-        return value === selectedColor || value === selectedSize;
-      }) || null
-    );
-  }, [norm.variants, selectedColor, selectedSize]);
-
-  const unitPrice = Number(activeVariant?.price || activeTier?.price || norm.price);
-  const finalMrp = Number(activeVariant?.mrp || norm.mrp);
-  const finalStock = Number(activeVariant?.stock ?? norm.stock);
-  const finalSku = activeVariant?.sku || norm.sku;
-  const discountPct = discount(finalMrp, unitPrice);
-  const bulkSavings = Math.max(0, (tiers[0]?.price - unitPrice) * qty);
-
-  const supplierName =
-    p?.vendor?.business_name ||
-    p?.supplier?.name ||
-    p?.organization?.name ||
-    p?.organization_name ||
-    p?.vendor_name ||
-    norm.brand;
-
-  const supplierRating = Number(
-    p?.vendor?.rating || p?.supplier?.rating || p?.supplier_rating || 4.6
-  );
-
-  const supplierReviewCount = Number(
-    p?.vendor?.reviewCount ||
-      p?.supplier?.reviewCount ||
-      p?.supplier_review_count ||
-      norm.totalReviews ||
-      1
-  );
+  const unitPrice = activeTier?.price ?? norm.baseUnit;
+  const discountPct = discount(norm.mrp, unitPrice);
+  const bulkSavings = Math.max(0, ((tiers[0]?.price ?? unitPrice) - unitPrice) * qty);
 
   if (!id) {
     return (
       <div className="min-h-screen" style={{ background: C.cream }}>
-        <div className="mx-auto max-w-7xl px-4 py-10">
-          <div
-            className="rounded-sm border p-6"
-            style={{ background: C.white, borderColor: C.border }}
-          >
-            <p className="font-semibold" style={{ color: C.primary }}>
-              Product ID is missing.
-            </p>
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="rounded-sm border p-6" style={{ background: C.white, borderColor: C.border }}>
+            <p className="font-semibold" style={{ color: C.primary }}>Product ID is missing.</p>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen p-5" style={{ background: C.cream }}>
+        <ErrorState message={error} />
       </div>
     );
   }
@@ -422,12 +325,9 @@ useEffect(() => {
   return (
     <div className="min-h-screen" style={{ color: C.text }}>
       <div className="w-full px-4 py-5 sm:px-6 lg:px-8">
-        <div className="grid items-start gap-6 lg:grid-cols-[600px_1fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="grid gap-3">
-            <div
-              className="relative rounded-sm border"
-              style={{ background: C.white, borderColor: C.border }}
-            >
+            <div className="relative rounded-sm border" style={{ background: C.white, borderColor: C.border }}>
               <div className="absolute right-4 top-4 z-10 flex gap-2">
                 <button
                   type="button"
@@ -451,19 +351,12 @@ useEffect(() => {
                 </button>
               </div>
 
-              <div
-                className="flex h-[500px] items-center justify-center p-4 lg:h-[600px]"
-                style={{ background: C.cream }}
-              >
+              <div className="flex h-[320px] items-center justify-center p-4 lg:h-[460px]" style={{ background: C.cream }}>
                 {selectedMedia?.type === "video" ? (
-                  <video
-                    src={selectedMedia.src}
-                    controls
-                    className="h-full w-full object-contain"
-                  />
+                  <video src={selectedMedia.src} controls className="h-full w-full object-contain" />
                 ) : (
                   <img
-                    src={selectedMedia?.src || "/placeholder.png"}
+                    src={selectedMedia?.src ?? "/placeholder.png"}
                     alt={norm.title}
                     className="h-full w-full object-contain"
                   />
@@ -474,29 +367,16 @@ useEffect(() => {
             <div className="relative">
               <button
                 type="button"
-                onClick={() =>
-                  thumbsRef.current?.scrollBy({
-                    left: -220,
-                    behavior: "smooth",
-                  })
-                }
+                onClick={() => thumbsRef.current?.scrollBy({ left: -220, behavior: "smooth" })}
                 className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-white p-2 shadow-sm"
                 style={{ borderColor: C.border }}
               >
-                <ChevronRight
-                  className="h-4 w-4"
-                  style={{ color: C.primary, transform: "rotate(180deg)" }}
-                />
+                <ChevronRight className="h-4 w-4 rotate-180" style={{ color: C.primary }} />
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  thumbsRef.current?.scrollBy({
-                    left: 220,
-                    behavior: "smooth",
-                  })
-                }
+                onClick={() => thumbsRef.current?.scrollBy({ left: 220, behavior: "smooth" })}
                 className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full border bg-white p-2 shadow-sm"
                 style={{ borderColor: C.border }}
               >
@@ -505,33 +385,36 @@ useEffect(() => {
 
               <div
                 ref={thumbsRef}
-                className="flex gap-3 overflow-x-auto px-10 pb-2 [-ms-overflow-style:auto] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E5E5E5]"
+                className="flex gap-3 overflow-x-auto px-10 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#E5E5E5]"
               >
-                {mediaItems.map((item, index) => {
+                {mediaItems.slice(0, 6).map((item, i) => {
+                  const extra = Math.max(0, mediaItems.length - 6);
+                  const isLast = i === 5 && extra > 0;
                   const active = selectedMedia?.src === item.src;
 
                   return (
                     <button
-                      key={`${item.src}-${index}`}
+                      key={`${item.src}-${i}`}
                       type="button"
                       onClick={() => setSelectedMedia(item)}
                       className="h-20 w-20 shrink-0 overflow-hidden rounded-sm border bg-white p-1"
                       style={{ borderColor: active ? C.primary : C.border }}
                     >
-                      {item.type === "video" ? (
-                        <div
-                          className="flex h-full w-full items-center justify-center text-[10px] font-bold"
-                          style={{ background: C.primary, color: C.white }}
-                        >
-                          VIDEO
-                        </div>
-                      ) : (
-                        <img
-                          src={item.src}
-                          alt=""
-                          className="h-full w-full object-contain"
-                        />
-                      )}
+                      <div className="relative h-full w-full">
+                        {item.type === "image" ? (
+                          <img src={item.src} alt="" className="h-full w-full object-contain" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-[10px] font-bold" style={{ background: C.primary, color: C.white }}>
+                            VIDEO
+                          </div>
+                        )}
+
+                        {isLast && (
+                          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ background: "rgba(11,31,58,0.65)", color: C.white }}>
+                            +{extra}
+                          </div>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -540,10 +423,7 @@ useEffect(() => {
           </div>
 
           <div className="space-y-5">
-            <div
-              className="rounded-sm border p-5"
-              style={{ background: C.white, borderColor: C.border }}
-            >
+            <div className="rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
               {loading ? (
                 <LoadingSkeleton />
               ) : (
@@ -556,21 +436,14 @@ useEffect(() => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Stars rating={norm.avgRating} />
-
-                      <span
-                        className="text-xs font-semibold"
-                        style={{ color: C.muted }}
-                      >
-                        {norm.avgRating.toFixed(1)} ({norm.totalReviews})
+                      <Stars rating={norm.rating} />
+                      <span className="text-xs font-semibold" style={{ color: C.muted }}>
+                        {norm.rating.toFixed(1)} ({norm.reviewCount})
                       </span>
                     </div>
                   </div>
 
-                  <h1
-                    className="mt-3 text-2xl font-bold tracking-tight"
-                    style={{ color: C.text }}
-                  >
+                  <h1 className="mt-3 text-2xl font-bold tracking-tight" style={{ color: C.text }}>
                     {norm.title}
                   </h1>
 
@@ -578,25 +451,16 @@ useEffect(() => {
                     {norm.description}
                   </p>
 
-                  <div
-                    className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs"
-                    style={{ color: C.muted }}
-                  >
+                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
                     <span>
                       Brand: <b style={{ color: C.primary }}>{norm.brand}</b>
                     </span>
-                    <span>SKU: {finalSku}</span>
-                    <span>Category: {norm.category}</span>
-                    <span>Subcategory: {norm.subCategory}</span>
-                    <span>Stock: {finalStock}</span>
-                    {norm.weight > 0 && <span>Weight: {norm.weight} kg</span>}
+                    <span>SKU: {norm.sku}</span>
+                    <span>GTIN: {norm.gtin}</span>
                   </div>
 
                   <div className="mt-5 flex flex-wrap items-end gap-3">
-                    <span
-                      className="text-3xl font-extrabold"
-                      style={{ color: C.primary }}
-                    >
+                    <span className="text-3xl font-extrabold" style={{ color: C.primary }}>
                       {fmt(unitPrice)}
                     </span>
 
@@ -604,38 +468,25 @@ useEffect(() => {
                       / {norm.unit}
                     </span>
 
-                    {finalMrp > 0 && (
-                      <span
-                        className="pb-1 text-sm line-through"
-                        style={{ color: C.dimmed }}
-                      >
-                        {fmt(finalMrp)}
+                    {norm.mrp > 0 && (
+                      <span className="pb-1 text-sm line-through" style={{ color: C.dimmed }}>
+                        {fmt(norm.mrp)}
                       </span>
                     )}
 
-                    {discountPct > 0 && (
-                      <Badge variant="gold">{discountPct}% OFF</Badge>
-                    )}
+                    {discountPct > 0 && <Badge variant="gold">{discountPct}% OFF</Badge>}
                   </div>
 
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>
                     Prices are exclusive of GST
                   </p>
 
-                  <div
-                    className="mt-5 rounded-sm border p-3"
-                    style={{ background: C.cream, borderColor: C.border }}
-                  >
+                  <div className="mt-5 rounded-sm border p-3" style={{ background: C.cream, borderColor: C.border }}>
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4" style={{ color: C.gold }} />
-
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: C.primary }}
-                      >
+                      <span className="text-sm font-semibold" style={{ color: C.primary }}>
                         Bulk Pricing
                       </span>
-
                       <span className="text-xs" style={{ color: C.muted }}>
                         Save more at higher quantities
                       </span>
@@ -648,30 +499,20 @@ useEffect(() => {
                         return (
                           <button
                             key={`${tier.min}-${tier.max}`}
+                            type="button"
                             onClick={() => setQty(tier.min)}
                             className="rounded-sm border px-2 py-2 text-left text-xs"
                             style={{
                               borderColor: active ? C.primary : C.border,
                               background: active ? C.white : "#ffffffcc",
-                              boxShadow: active
-                                ? "0 4px 12px rgba(11,31,58,0.1)"
-                                : "none",
+                              boxShadow: active ? "0 4px 12px rgba(11,31,58,0.1)" : "none",
                             }}
                           >
-                            <p
-                              className="font-semibold"
-                              style={{ color: C.text }}
-                            >
-                              {tier.label ||
-                                (tier.max === Infinity
-                                  ? `${tier.min}+`
-                                  : `${tier.min}–${tier.max}`)}
+                            <p className="font-semibold" style={{ color: C.text }}>
+                              {tier.label || (tier.max === Infinity ? `${tier.min}+` : `${tier.min}–${tier.max}`)}
                             </p>
 
-                            <p
-                              className="mt-1 font-bold"
-                              style={{ color: C.primary }}
-                            >
+                            <p className="mt-1 font-bold" style={{ color: C.primary }}>
                               {fmt(tier.price)}
                             </p>
                           </button>
@@ -680,12 +521,9 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  {norm.colors.length > 0 && (
-                    <div className="mt-5">
-                      <p
-                        className="text-xs font-semibold"
-                        style={{ color: C.muted }}
-                      >
+                  <div className="mt-5 space-y-5">
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: C.muted }}>
                         Color
                       </p>
 
@@ -705,6 +543,7 @@ useEffect(() => {
                           return (
                             <button
                               key={color}
+                              type="button"
                               onClick={() => setSelectedColor(color)}
                               className="relative flex items-center gap-2 rounded-sm border px-3 py-2 text-xs font-semibold"
                               style={{
@@ -712,23 +551,13 @@ useEffect(() => {
                                 background: active ? C.cream : C.white,
                               }}
                             >
-                              <span
-                                className="h-4 w-4 rounded-sm border"
-                                style={{
-                                  background: swatch,
-                                  borderColor: C.border,
-                                }}
-                              />
-
+                              <span className="h-4 w-4 rounded-sm border" style={{ background: swatch, borderColor: C.border }} />
                               {color}
 
                               {active && (
                                 <BadgeCheck
                                   className="absolute -right-1.5 -top-1.5 h-4 w-4"
-                                  style={{
-                                    fill: C.primary,
-                                    color: C.white,
-                                  }}
+                                  style={{ fill: C.primary, color: C.white }}
                                 />
                               )}
                             </button>
@@ -736,15 +565,10 @@ useEffect(() => {
                         })}
                       </div>
                     </div>
-                  )}
 
-                  {norm.sizes.length > 0 && (
-                    <div className="mt-5">
-                      <p
-                        className="text-xs font-semibold"
-                        style={{ color: C.muted }}
-                      >
-                        Variant
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: C.muted }}>
+                        Warranty
                       </p>
 
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -754,6 +578,7 @@ useEffect(() => {
                           return (
                             <button
                               key={size}
+                              type="button"
                               onClick={() => setSelectedSize(size)}
                               className="rounded-sm border px-4 py-2 text-xs font-semibold"
                               style={{
@@ -768,90 +593,67 @@ useEffect(() => {
                         })}
                       </div>
                     </div>
-                  )}
 
-                  <div className="mt-5">
-                    <p
-                      className="text-xs font-semibold"
-                      style={{ color: C.muted }}
-                    >
-                      Quantity ({norm.unit})
-                    </p>
+                    <div>
+                      <p className="text-xs font-semibold" style={{ color: C.muted }}>
+                        Quantity ({norm.unit}s)
+                      </p>
 
-                    <div className="mt-2 flex items-center gap-3">
-                      <div
-                        className="flex overflow-hidden rounded-sm border"
-                        style={{ borderColor: C.border }}
-                      >
-                        <button
-                          className="w-10 py-2"
-                          style={{ background: C.cream }}
-                          onClick={() =>
-                            setQty((value) => Math.max(norm.moq, value - 1))
-                          }
-                        >
-                          <Minus className="mx-auto h-4 w-4" />
-                        </button>
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="flex overflow-hidden rounded-sm border" style={{ borderColor: C.border }}>
+                          <button
+                            type="button"
+                            className="w-10 py-2"
+                            style={{ background: C.cream }}
+                            onClick={() => setQty((q) => Math.max(norm.minQty, q - 1))}
+                          >
+                            <Minus className="mx-auto h-4 w-4" />
+                          </button>
 
-                        <input
-                          value={qty}
-                          onChange={(e) =>
-                            setQty(
-                              Math.max(
-                                norm.moq,
-                                Number(e.target.value) || norm.moq
-                              )
-                            )
-                          }
-                          className="w-16 border-x text-center text-sm font-semibold outline-none"
-                          style={{ borderColor: C.border }}
-                        />
+                          <input
+                            value={qty}
+                            onChange={(e) => setQty(Math.max(norm.minQty, Number(e.target.value) || norm.minQty))}
+                            className="w-16 border-x text-center text-sm font-semibold outline-none"
+                            style={{ borderColor: C.border }}
+                          />
 
-                        <button
-                          className="w-10 py-2"
-                          style={{ background: C.cream }}
-                          onClick={() => setQty((value) => value + 1)}
-                        >
-                          <Plus className="mx-auto h-4 w-4" />
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            className="w-10 py-2"
+                            style={{ background: C.cream }}
+                            onClick={() => setQty((q) => q + 1)}
+                          >
+                            <Plus className="mx-auto h-4 w-4" />
+                          </button>
+                        </div>
 
-                      <div className="text-xs" style={{ color: C.primary }}>
-                        {bulkSavings > 0 ? (
-                          <span>
-                            You save <strong>{fmt(bulkSavings)}</strong>
-                          </span>
-                        ) : (
-                          <span>
-                            MOQ:{" "}
-                            <strong>
-                              {norm.moq} {norm.unit}
-                            </strong>
-                          </span>
-                        )}
+                        <div className="text-xs" style={{ color: C.primary }}>
+                          {bulkSavings > 0 ? (
+                            <span>
+                              You save <strong>{fmt(bulkSavings)}</strong>
+                            </span>
+                          ) : (
+                            <span>
+                              MOQ: <strong>{norm.minQty} units</strong>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-5 space-y-3">
-                    <button
-                      className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white"
-                      style={{ background: C.primary }}
-                    >
-                      <ShoppingCart className="h-5 w-5" />
-                      Add to Cart
-                    </button>
+                    <div className="space-y-3">
+                      <button className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white" style={{ background: C.primary }}>
+                        <ShoppingCart className="h-5 w-5" /> Add to Cart
+                      </button>
 
-                    <button
-                      className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold"
-                      style={{
-                        borderColor: C.primary,
-                        color: C.primary,
-                      }}
-                    >
-                      <FileText className="h-5 w-5" />
-                      Request for Quote (RFQ)
-                    </button>
+                      <button className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold" style={{ borderColor: C.primary, color: C.primary }}>
+                        <FileText className="h-5 w-5" /> Request for Quote (RFQ)
+                      </button>
+
+                      <p className="text-center text-xs" style={{ color: C.muted }}>
+                        Submit RFQ for larger quantities — our team will respond promptly.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -864,163 +666,118 @@ useEffect(() => {
               )}
             </div>
 
-            <div
-              className="rounded-sm border p-4"
-              style={{ background: C.white, borderColor: C.border }}
-            >
-              <p className="text-xs" style={{ color: C.muted }}>
-                Sold & Fulfilled by
-              </p>
+            {!loading && !error && (
+              <div className="rounded-sm border p-4" style={{ background: C.white, borderColor: C.border }}>
+                <p className="text-xs" style={{ color: C.muted }}>
+                  Sold & Fulfilled by
+                </p>
 
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-sm font-bold text-white text-sm"
-                    style={{ background: C.primary }}
-                  >
-                    {initials(supplierName)}
-                  </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-sm text-sm font-bold text-white" style={{ background: C.primary }}>
+                      {initials(norm.supplier?.name ?? norm.brand)}
+                    </div>
 
-                  <div>
-                    <p className="text-sm font-semibold">{supplierName}</p>
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {norm.supplier?.name ?? norm.brand}
+                      </p>
 
-                    <div className="mt-1 flex items-center gap-2">
-                      <Stars rating={supplierRating} size={14} />
-
-                      <span
-                        className="text-xs font-semibold"
-                        style={{ color: C.muted }}
-                      >
-                        {supplierRating.toFixed(1)} ({supplierReviewCount} ratings)
-                      </span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Stars rating={4.6} size={14} />
+                        <span className="text-xs font-semibold" style={{ color: C.muted }}>
+                          4.6 ({Math.max(1, norm.reviewCount)} ratings)
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  <button className="rounded-sm border px-4 py-2 text-xs font-semibold" style={{ borderColor: C.primary, color: C.primary }}>
+                    Contact Supplier
+                  </button>
                 </div>
-
-                <button
-                  className="rounded-sm border px-4 py-2 text-xs font-semibold"
-                  style={{ borderColor: C.primary, color: C.primary }}
-                >
-                  Contact Supplier
-                </button>
               </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <ProductDetailsSection product={product} />
+          <SpecificationsSection specifications={norm.specifications} />
+          <CustomerReviewsSection product={product} reviews={norm.reviews} />
+          <ShippingDeliverySection product={product} />
+
+          <section className="mt-6 rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold">Similar Products</h2>
+
+              <Link href="/" className="text-sm font-semibold" style={{ color: C.primary }}>
+                View All
+              </Link>
             </div>
-          </div>
 
-          <div className="mt-6 w-full space-y-5 lg:col-span-2">
-            <ProductDetailsSection product={p} />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {(similar.length ? similar : Array.from({ length: 4 }, (_, i) => null)).map((item, i) =>
+                item ? (
+                  <article
+                    key={item.id || i}
+                    className="overflow-hidden rounded-sm border"
+                    style={{ background: C.white, borderColor: C.border }}
+                  >
+                    <div className="flex h-48 items-center justify-center p-4" style={{ background: C.cream }}>
+                      <img src={item.img} alt={item.title} className="h-full w-full object-contain" />
+                    </div>
 
-            <SpecificationsSection specifications={norm.specifications} />
+                    <div className="p-4">
+                      <p className="line-clamp-2 text-sm font-bold">{item.title}</p>
 
-            <CustomerReviewsSection reviews={norm.reviews} />
+                      <p className="mt-1 text-xs" style={{ color: C.muted }}>
+                        {item.brand}
+                      </p>
 
-            <ShippingDeliverySection product={p} />
+                      <div className="mt-2 flex items-center gap-2">
+                        <Stars rating={item.rating} size={14} />
 
-            <section
-              className="mt-6 rounded-sm border p-5"
-              style={{ background: C.white, borderColor: C.border }}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Similar Products</h2>
+                        <span className="text-xs" style={{ color: C.muted }}>
+                          {(item.rating || 0).toFixed(1)} ({item.reviewCount})
+                        </span>
+                      </div>
 
-                <Link
-                  href="/"
-                  className="text-sm font-semibold"
-                  style={{ color: C.primary }}
-                >
-                  View All
-                </Link>
-              </div>
+                      <div className="mt-3 flex items-end gap-2">
+                        <span className="text-xl font-extrabold" style={{ color: C.primary }}>
+                          {fmt(item.price)}
+                        </span>
 
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {(similar.length
-                  ? similar
-                  : Array.from({ length: 4 }, (_, i) => null)
-                ).map((item, i) =>
-                  item ? (
-                    <article
-                      key={item.id || i}
-                      className="overflow-hidden rounded-sm border"
-                      style={{ background: C.white, borderColor: C.border }}
-                    >
-                      <div
-                        className="flex h-48 items-center justify-center p-4"
-                        style={{ background: C.cream }}
+                        <span className="text-xs" style={{ color: C.muted }}>
+                          / unit
+                        </span>
+                      </div>
+
+                      {item.off > 0 && <Badge variant="gold">{item.off}% OFF</Badge>}
+
+                      <p className="mt-2 text-xs" style={{ color: C.muted }}>
+                        Min. Order: {item.minQty} units
+                      </p>
+
+                      <Link
+                        href={item.id ? `/product/${item.id}` : "#"}
+                        className="mt-4 block w-full rounded-sm border px-4 py-2 text-center text-sm font-semibold"
+                        style={{ borderColor: C.primary, color: C.primary }}
                       >
-                        <img
-                          src={item.img}
-                          alt={item.title}
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-
-                      <div className="p-4">
-                        <p className="line-clamp-2 text-sm font-bold">
-                          {item.title}
-                        </p>
-
-                        <p className="mt-1 text-xs" style={{ color: C.muted }}>
-                          {item.brand}
-                        </p>
-
-                        <div className="mt-2 flex items-center gap-2">
-                          <Stars rating={item.rating} />
-
-                          <span
-                            className="text-xs"
-                            style={{ color: C.muted }}
-                          >
-                            {(item.rating || 0).toFixed(1)} ({item.reviewCount})
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex items-end gap-2">
-                          <span
-                            className="text-xl font-extrabold"
-                            style={{ color: C.primary }}
-                          >
-                            {fmt(item.price)}
-                          </span>
-
-                          <span className="text-xs" style={{ color: C.muted }}>
-                            / unit
-                          </span>
-                        </div>
-
-                        {item.off > 0 && (
-                          <Badge variant="gold">{item.off}% OFF</Badge>
-                        )}
-
-                        <p className="mt-2 text-xs" style={{ color: C.muted }}>
-                          Min. Order: {item.minQty} units
-                        </p>
-
-                        <Link
-                          href={item.id ? `/product/${item.id}` : "#"}
-                          className="mt-4 block w-full rounded-sm border px-4 py-2 text-center text-sm font-semibold"
-                          style={{
-                            borderColor: C.primary,
-                            color: C.primary,
-                          }}
-                        >
-                          View Product
-                        </Link>
-                      </div>
-                    </article>
-                  ) : (
-                    <div
-                      key={i}
-                      className="h-80 animate-pulse rounded-sm border"
-                      style={{
-                        background: C.cream,
-                        borderColor: C.border,
-                      }}
-                    />
-                  )
-                )}
-              </div>
-            </section>
-          </div>
+                        View Product
+                      </Link>
+                    </div>
+                  </article>
+                ) : (
+                  <div
+                    key={i}
+                    className="h-80 animate-pulse rounded-sm border"
+                    style={{ background: C.cream, borderColor: C.border }}
+                  />
+                )
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </div>
