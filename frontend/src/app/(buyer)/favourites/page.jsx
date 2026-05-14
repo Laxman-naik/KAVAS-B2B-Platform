@@ -24,6 +24,7 @@ const Page = () => {
   const [token, setToken] = React.useState(null);
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
+  const MAX_WISHLIST_ITEMS = 5;
 
   const productMap = useMemo(() => {
     const map = {};
@@ -76,7 +77,7 @@ const Page = () => {
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (mounted && token) {
       dispatch(fetchFavourites());
     }
@@ -333,7 +334,7 @@ const Page = () => {
                                       ₹{row.mrp.toLocaleString()}
                                     </p>
                                   ) : null}
-                                  {row.mrp && row.price && row.mrp > row.price ? (
+                                  {/* {row.mrp && row.price && row.mrp > row.price ? (
                                     <p className="text-xs text-green-700 font-semibold">
                                       (
                                       {Math.round(
@@ -341,7 +342,7 @@ const Page = () => {
                                       )}
                                       % OFF)
                                     </p>
-                                  ) : null}
+                                  ) : null} */}
                                 </div>
                               </td>
                               <td className="px-4 py-4">
@@ -352,14 +353,14 @@ const Page = () => {
                                   {row.stockNote}
                                 </p>
                               </td>
-                              <td className="px-4 py-4">
+                              {/* <td className="px-4 py-4">
                                 <p className="text-xs text-gray-600">
                                   {row.addedOnDate}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {row.addedOnTime}
                                 </p>
-                              </td>
+                              </td> */}
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-2">
                                   <Button
