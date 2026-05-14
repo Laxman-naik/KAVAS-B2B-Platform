@@ -26,7 +26,7 @@ router.post("/register", register);
 router.post("/login", loginLimiter, login);
 router.post("/refresh", refreshTokenHandler);
 router.post("/logout", logout);
-router.get("/me", getMe); 
+router.get("/me", authMiddleware, getMe); 
 
 module.exports = router;
 

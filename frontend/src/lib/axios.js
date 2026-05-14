@@ -112,66 +112,121 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// const refreshAccessToken = async () => {
+//   const role = getRole();
+//   const refreshToken = getRefreshToken();
+
+//   if (!role || !refreshToken) {
+//   console.warn("No active session found");
+//   return null;
+// }
+
+//   const url = refreshRoutes[role];
+
+//   console.log("REFRESH URL:", url);
+
+//   // if (!url) {
+//   //   throw new Error(`No refresh route configured for role: ${role}`);
+//   // }
+
+//   const response = await axios.post(
+//     url,
+//     {
+//       refreshToken,
+//     },
+//     {
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     }
+//   );
+
+//   console.log("REFRESH RESPONSE:", response.data);
+
+//   const newAccessToken = response.data?.accessToken;
+
+// if (!newAccessToken) {
+//   throw new Error("No new access token returned");
+// }
+
+// /* PRINT TOKENS */
+
+// console.log("OLD REFRESH TOKEN:", refreshToken);
+
+// console.log("NEW ACCESS TOKEN:", newAccessToken);
+
+// /* SAVE ACCESS TOKEN */
+
+// setAccessToken(newAccessToken);
+
+// /* VERIFY STORAGE */
+
+// console.log(
+//   "STORED ACCESS TOKEN:",
+//   localStorage.getItem(`${role}_accessToken`)
+// );
+
+// console.log(
+//   "STORED REFRESH TOKEN:",
+//   localStorage.getItem(`${role}_refreshToken`)
+// );
+
+// return newAccessToken;
+// };
 const refreshAccessToken = async () => {
-  const role = getRole();
-  const refreshToken = getRefreshToken();
+  try {
+    const role = getRole();
+    const refreshToken = getRefreshToken();
 
-  if (!role || !refreshToken) {
-  console.warn("No active session found");
-  return null;
-}
+    console.log("==== REFRESH START ====");
+    console.log("ROLE:", role);
+    console.log("REFRESH TOKEN:", refreshToken);
 
-  const url = refreshRoutes[role];
-
-  console.log("REFRESH URL:", url);
-
-  // if (!url) {
-  //   throw new Error(`No refresh route configured for role: ${role}`);
-  // }
-
-  const response = await axios.post(
-    url,
-    {
-      refreshToken,
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
+    if (!role || !refreshToken) {
+      throw new Error("Missing role or refresh token");
     }
-  );
 
-  console.log("REFRESH RESPONSE:", response.data);
+    const url = refreshRoutes[role];
 
-  const newAccessToken = response.data?.accessToken;
+    console.log("REFRESH URL:", url);
 
-if (!newAccessToken) {
-  throw new Error("No new access token returned");
-}
+    const response = await axios.post(
+      url,
+      { refreshToken },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-/* PRINT TOKENS */
+    console.log("REFRESH SUCCESS:", response.data);
 
-console.log("OLD REFRESH TOKEN:", refreshToken);
+    const newAccessToken = response.data?.accessToken;
 
-console.log("NEW ACCESS TOKEN:", newAccessToken);
+    if (!newAccessToken) {
+      throw new Error("No access token returned");
+    }
 
-/* SAVE ACCESS TOKEN */
+    setAccessToken(newAccessToken);
 
-setAccessToken(newAccessToken);
+    return newAccessToken;
 
-/* VERIFY STORAGE */
+  } catch (err) {
+    console.error("==== REFRESH FAILED ====");
 
-console.log(
-  "STORED ACCESS TOKEN:",
-  localStorage.getItem(`${role}_accessToken`)
-);
+    console.error("MESSAGE:", err.message);
 
-console.log(
-  "STORED REFRESH TOKEN:",
-  localStorage.getItem(`${role}_refreshToken`)
-);
+    console.error("STATUS:", err.response?.status);
 
-return newAccessToken;
+    console.error("DATA:", err.response?.data);
+
+    console.error("URL:", err.config?.url);
+
+    console.error("FULL ERROR:", err);
+
+    throw err;
+  }
 };
 
 /* ================= RESPONSE INTERCEPTOR ================= */

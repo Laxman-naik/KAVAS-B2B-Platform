@@ -20,12 +20,13 @@ export const loginUser = async (data) => {
   const res = await authapi.post(
     "/api/auth/login",
     data,
-    {
-      skipAuth: true,
-    }
+    { skipAuth: true }
   );
+
+  const role = res.data?.user?.role;
+
   saveAuthData({
-    role: res.data.role,
+    role,
     accessToken: res.data.accessToken,
     refreshToken: res.data.refreshToken,
   });
