@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -73,6 +72,108 @@ export default function Page() {
   useEffect(() => {
     dispatch(fetchAddresses());
   }, [dispatch]);
+  const [showModal, setShowModal] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    tag: "Home",
+    name: "",
+    phone: "",
+    addressLine: "",
+    isDefault: false,
+    active: true,
+  });
+
+  // ADD THESE FUNCTIONS inside your Page() component
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const openAddModal = () => {
+    setIsEdit(false);
+    setSelectedId(null);
+
+    setFormData({
+      title: "",
+      tag: "Home",
+      name: "",
+      phone: "",
+      addressLine: "",
+      isDefault: false,
+      active: true,
+    });
+
+    setShowModal(true);
+  };
+
+  const openEditModal = (address) => {
+    setIsEdit(true);
+    setSelectedId(address.id);
+
+    setFormData({
+      title: address.title,
+      tag: address.tag,
+      name: address.name,
+      phone: address.phone,
+      addressLine: address.addressLine,
+      isDefault: address.isDefault,
+      active: address.active,
+    });
+
+    setShowModal(true);
+  };
+
+  const handleSaveAddress = () => {
+    if (
+      !formData.title ||
+      !formData.name ||
+      !formData.phone ||
+      !formData.addressLine
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (isEdit) {
+      setLocalAddresses((prev) =>
+        prev.map((item) =>
+          item.id === selectedId
+            ? {
+                ...item,
+                ...formData,
+              }
+            : item,
+        ),
+      );
+    } else {
+      const newAddress = {
+        id: `addr_${Date.now()}`,
+        ...formData,
+      };
+
+      setLocalAddresses((prev) => [...prev, newAddress]);
+    }
+
+    setShowModal(false);
+  };
+
+  const handleDeleteAddress = (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this address?",
+    );
+
+    if (confirmDelete) {
+      setLocalAddresses((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
 
   const handleEditClick = (addr) => {
     setEditId(addr.id);
@@ -149,7 +250,9 @@ export default function Page() {
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">My Addresses</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
+                  My Addresses
+                </h1>
                 <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
                   <Link href="/" className="hover:underline">Home</Link><ChevronRight size={14} />
                   <span className="text-[#0B1F3A]">My Addresses</span>
@@ -167,7 +270,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Total Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.total}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.total}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -179,7 +284,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Default Address</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.defaultCount}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.defaultCount}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -191,7 +298,9 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Active Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.active}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.active}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -203,14 +312,18 @@ export default function Page() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Inactive Addresses</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{stats.inactive}</p>
+                    <p className="text-lg font-bold text-[#0B1F3A]">
+                      {stats.inactive}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             <div>
-              <h2 className="font-semibold text-[#0B1F3A] text-sm mb-3">Saved Addresses</h2>
+              <h2 className="font-semibold text-[#0B1F3A] text-sm mb-3">
+                Saved Addresses
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {normalizedAddresses.map((a) => (
@@ -282,7 +395,8 @@ export default function Page() {
               </div>
 
               <div className="mt-4 text-xs text-gray-500">
-                You can set any address as default from the edit option. Default address will be used for checkout.
+                You can set any address as default from the edit option. Default
+                address will be used for checkout.
               </div>
             </div>
           </div>

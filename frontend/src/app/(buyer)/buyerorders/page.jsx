@@ -46,7 +46,6 @@ const Page = () => {
     .trim()
     .split(/\s+/)
     .filter(Boolean);
-
   const user = {
     firstName: authUser?.firstName || firstName,
     lastName: authUser?.lastName || rest.join(" "),

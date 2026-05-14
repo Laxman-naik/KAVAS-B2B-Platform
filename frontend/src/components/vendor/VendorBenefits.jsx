@@ -30,7 +30,7 @@ const VendorBenefits = () => {
 
   return (
     <section id="benefits" className="bg-[#FFF8EC] py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           <div className="lg:col-span-6">
             <div className="relative overflow-hidden rounded-sm border border-[#E5E5E5] bg-white">

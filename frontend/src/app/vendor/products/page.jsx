@@ -508,7 +508,7 @@ export default function ProductManagementBody() {
             moq: Number(data?.moq || 0),
             stock: Number(data?.stock || 0),
             images: Array.isArray(data?.images)
-              ? data.images.filter((x) => typeof x === "string")
+              ? data.images.filter((x) => typeof x === "string" && x.trim())
               : [],
           };
 

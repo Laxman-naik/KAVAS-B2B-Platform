@@ -69,17 +69,67 @@ export default function PaymentsPayoutsBody() {
         </div>
         <button className="px-4 py-2 text-white rounded-lg cursor-pointer text-sm flex items-center gap-2 hover:opacity-90"
           style={{ backgroundColor: COLORS.gold }}>
-          {/* <DollarSign size={16} /> */}
           Download Statement
         </button>
       </div>
 
-      {/* STATS WITH ICONS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        <StatCard icon={<DollarSign size={16} />} label="Total Earnings" value="₹28.48L" bg="bg-green-500" />
-        <StatCard icon={<Clock size={16} />} label="Pending Payouts" value="₹4.85L" bg="bg-yellow-500" />
-        <StatCard icon={<CheckCircle size={16} />} label="Settled Payouts" value="₹23.63L" bg="bg-blue-500" />
-        <StatCard icon={<Calendar size={16} />} label="This Month" value="₹485K" bg="bg-purple-500" />
+      {/* ✅ NEW WALLET STYLE STATS */}
+      <div className="grid md:grid-cols-3 gap-4 mb-4">
+
+        {/* LEFT BIG CARD */}
+        <div className="bg-[#1E2A38] text-white p-5 rounded-2xl flex flex-col justify-between">
+          <div>
+            <p className="text-xs text-gray-300">AVAILABLE BALANCE</p>
+            <h2 className="text-3xl font-bold mt-2">Rs. 1.2L</h2>
+            <p className="text-xs text-gray-400 mt-1">Next auto-payout in 0 days</p>
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <button className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:scale-105 transition">
+              Withdraw
+            </button>
+            <button className="border border-gray-500 px-4 py-2 rounded-lg text-sm hover:bg-white/10 transition">
+              Schedule
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT CARDS */}
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+
+          <div className="bg-green-100 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="bg-white p-2 rounded-full">₹</div>
+            <div>
+              <p className="text-lg font-semibold text-green-700">Rs. 28.5L</p>
+              <p className="text-xs text-gray-500">Total Earned</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 border rounded-2xl p-4 flex items-center gap-3">
+            <div className="bg-white p-2 rounded-full">⬆</div>
+            <div>
+              <p className="text-lg font-semibold text-gray-700">Rs. 24.5L</p>
+              <p className="text-xs text-gray-500">Total Withdrawn</p>
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="bg-white p-2 rounded-full">⏱</div>
+            <div>
+              <p className="text-lg font-semibold text-yellow-700">Rs. 45.2K</p>
+              <p className="text-xs text-gray-500">Pending Settlement</p>
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center gap-3">
+            <div className="bg-white p-2 rounded-full">📅</div>
+            <div>
+              <p className="text-lg font-semibold text-blue-700">2 May</p>
+              <p className="text-xs text-gray-500">Next Payout</p>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       {/* BANK DETAILS */}
@@ -181,21 +231,6 @@ export default function PaymentsPayoutsBody() {
         </div>
       </div>
 
-    </div>
-  );
-}
-
-/* STAT CARD */
-function StatCard({ icon, label, value, bg }) {
-  return (
-    <div className="bg-white border p-4 rounded-xl flex items-center gap-3 hover:shadow-md hover:-translate-y-1 transition">
-      <div className={`w-9 h-9 flex items-center justify-center rounded-md text-white ${bg}`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-sm font-semibold">{value}</p>
-      </div>
     </div>
   );
 }

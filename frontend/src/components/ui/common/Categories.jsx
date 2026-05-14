@@ -98,7 +98,7 @@ const Categories = () => {
 
   return (
     <section className="bg-white">
-      <div className="max-w-350 mx-auto px-3 sm:px-4 md:px-6 py-8 sm:py-10">
+      <div className="w-full px-3 sm:px-4 md:px-6 py-8 sm:py-10">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
             <span className="h-px w-5 bg-[#D4AF37]/60"></span>
@@ -111,7 +111,7 @@ const Categories = () => {
           </div>
 
           <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
-            Top Categories
+            All Categories
           </div>
 
         </div>
@@ -132,9 +132,9 @@ const Categories = () => {
                 <Link
                   key={cat.name}
                   href={`/products/${slugify(cat.name)}`}
-                  className="group w-[140px] sm:w-[160px] lg:w-[180px] shrink-0 rounded-sm border border-black/10 bg-white shadow-sm hover:shadow-md transition overflow-hidden"
+                  className="group w-35 sm:w-40 lg:w-45 shrink-0 rounded-sm border border-black/10 bg-white shadow-sm hover:shadow-md transition overflow-hidden"
                 >
-                  <div className="aspect-[5/4] bg-[#FFF8EC] overflow-hidden">
+                  <div className="aspect-5/4 bg-[#FFF8EC] overflow-hidden">
                     <img
                       src={cat.image}
                       alt={cat.name}

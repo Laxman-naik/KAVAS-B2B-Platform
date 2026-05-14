@@ -29,7 +29,7 @@ export default function WhyChoose() {
 
   return (
     <section className="bg-white">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="text-center">
           <div className="text-xl font-bold tracking-widest text-[#0B1F3A] uppercase">
             Why Choose Kavas Wholesale Hub?

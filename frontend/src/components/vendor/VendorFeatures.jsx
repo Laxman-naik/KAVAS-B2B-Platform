@@ -58,7 +58,7 @@ const VendorFeatures = () => {
 
   return (
     <section id="features" className="bg-[#FFF8EC] py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1F3A]">
             Everything You Need to Succeed

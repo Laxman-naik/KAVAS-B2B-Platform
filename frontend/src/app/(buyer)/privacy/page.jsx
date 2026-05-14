@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    Shield, Lock, FileText, ChevronRight, Phone, Mail, MapPin, Headset, ShieldCheck, BookOpenText
-} from "lucide-react";
+import { Shield, BadgeCheck, ChevronRight, Phone, Mail, MapPin, Headset, ShieldCheck, BookOpenText } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const sections = [
     {
@@ -97,43 +95,45 @@ const page = () => {
 
     return (
         <div className="bg-[#FFF8EC] min-h-screen">
-            <div className="bg-[#0B1F3A] text-white p-7 ">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div>
-                        <p className="text-xs text-white mb-1">
-                            <Link href="/">
-                                <span className=" text-gray-500 hover:text-[#D4AF37]">Home</span>
-                            </Link>
-                            <span className="mx-1">{">>"}</span>
-                            <span className="text-white font-semibold">Privacy Policy</span>
-                        </p>
-
-                        <h1 className="text-4xl font-bold">
-                            Privacy <span className="text-[#D4AF37]">Policy</span>
-                        </h1>
-
-                        <p className="mt-2 font-medium text-[#D4AF37]">
-                            Your Privacy Matters. We Protect It.
-                        </p>
-
-                        <p className="mt-2 text-gray-500">
-                            This Privacy Policy explains how KAVAS Wholesale Hub collects, uses, and protects your information.
-                        </p>
-
-                        <Badge className="mt-4 bg-[#0B1F3A] text-white border border-white/20 px-4 rounded-2xl flex items-center py-3 gap-2 w-fit">
-                            <ShieldCheck className="text-[#D4AF37]" size={16} />
-                            Last Updated: 01 August 2025
-                        </Badge>
-                    </div>
-
-                    <div className="hidden md:flex gap-4">
-                        <Shield size={80} />
-                        <Lock size={80} />
-                        <FileText size={80} />
+            <div className="bg-[#0B1F3A] overflow-hidden">
+                <div className="w-full px-4 sm:px-6 lg:px-8 ">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <div className="text-white">
+                    
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+                                Privacy{" "}&{" "}
+                                <span className="text-[#D4AF37]">Policy</span>
+                            </h1>
+                            <p className="mt-3 text-sm sm:text-base font-semibold text-[#D4AF37]">
+                                Your Privacy Matters. We Protect It.
+                            </p>
+                            <p className="mt-4 text-sm sm:text-base text-white/75 leading-relaxed max-w-xl">
+                                This Privacy Policy explains how KAVAS Wholesale Hub
+                                collects, uses, and protects your information.
+                            </p>
+                            <div className="mt-5 inline-flex items-center gap-2 rounded-md bg-white/10 border border-white/10 px-4 py-2 text-xs text-white/85 backdrop-blur-sm">
+                                <BadgeCheck className="h-4 w-4 text-[#D4AF37]" />
+                                <span className="font-semibold">Last Updated:</span>
+                                <span>01 August 2025</span>
+                            </div>
+                        </div>
+                        <div className="hidden lg:flex justify-end relative">
+                            <div className="absolute inset-0 flex justify-end items-center">
+                                <div className="w-[320px] h-80 bg-[#D4AF37]/10 rounded-full blur-3xl" />
+                            </div>
+                            <Image
+                                src="/privacypolicies.png"
+                                alt="Privacy Policy"
+                                width={430}
+                                height={360}
+                                priority
+                                className=" relative object-contain -ml-20 drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)] hover:scale-105 transition-transform duration-500 "
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="bg-white mt-3 max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 rounded-sm shadow-lg">
+            <div className="bg-white mt-3 w-full  p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 rounded-sm shadow-lg">
                 <div className="lg:col-span-2">
 
                     {sections.map((sec) => (
@@ -141,17 +141,15 @@ const page = () => {
                             key={sec.id}
                             onMouseEnter={() => setHovered(sec.id)}
                             onMouseLeave={() => setHovered(null)}
-                            className={`py-6 border-b transition-all duration-300 ${
-                                current === sec.id ? "border-[#D4AF37]" : "border-gray-200"
-                            }`}
+                            className={`py-6 border-b transition-all duration-300 ${current === sec.id ? "border-[#D4AF37]" : "border-gray-200"
+                                }`}
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <span
                                     className={`w-9 h-9 flex items-center justify-center rounded-full text-sm font-bold transition-all
-                                        ${
-                                            current === sec.id
-                                                ? "bg-[#D4AF37] text-black"
-                                                : "bg-[#FFF8EC] text-[#D4AF37] border border-gray-200"
+                                        ${current === sec.id
+                                            ? "bg-[#D4AF37] text-black"
+                                            : "bg-[#FFF8EC] text-[#D4AF37] border border-gray-200"
                                         }
                                     `}
                                 >

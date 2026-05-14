@@ -51,7 +51,7 @@ const VendorNavbar = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E5E5E5] bg-[#0B1F3A]">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <Image

@@ -7,8 +7,8 @@ import { FaLinkedin, FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 
 const VendorFooter = () => {
   return (
-    <footer className="border-t border-[#E5E5E5] bg-white">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+    <footer className="border-t border-[#E5E5E5] bg-[#0B1F3A]">
+      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <Image
@@ -29,16 +29,16 @@ const VendorFooter = () => {
           </div>
 
           <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm font-medium text-gray-600">
-            <Link href="/privacy" className="hover:text-[#0B1F3A]">
+            <Link href="/privacy" className="hover:text-white">
               Privacy Policy
             </Link>
-            <Link href="/termsandconditions" className="hover:text-[#0B1F3A]">
+            <Link href="/termsandconditions" className="hover:text-white">
               Terms & Conditions
             </Link>
-            <a href="#" className="hover:text-[#0B1F3A]">
+            <a href="#" className="hover:text-white">
               Seller Policy
             </a>
-            <Link href="/help" className="hover:text-[#0B1F3A]">
+            <Link href="/help" className="hover:text-white">
               Help Center
             </Link>
           </nav>

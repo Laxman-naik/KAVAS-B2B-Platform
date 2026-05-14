@@ -113,7 +113,6 @@ const Page = () => {
                       <div className="h-28 w-28 rounded-full bg-[#0B1F3A] flex items-center justify-center">
                         <User className="text-white" size={44} />
                       </div>
-
                       <div className="absolute bottom-1 right-1 h-10 w-10 rounded-full bg-[#D4AF37] text-[#0B1F3A] flex items-center justify-center border-2 border-white">
                         <CreditCard size={18} />
                       </div>
@@ -127,21 +126,18 @@ const Page = () => {
                         {user.firstName} {user.lastName}
                       </p>
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Mobile Number</p>
                       <p className="font-semibold text-[#0B1F3A]">
                         {user.phone || "-"}
                       </p>
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Email Address</p>
                       <p className="font-semibold text-[#0B1F3A] break-all">
                         {user.email || "-"}
                       </p>
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Member Since</p>
                       <p className="font-semibold text-[#0B1F3A]">
@@ -236,7 +232,6 @@ const Page = () => {
                   <p className="font-semibold text-[#0B1F3A] text-sm">
                     Recent Orders
                   </p>
-
                   <Link
                     href="/buyerorders"
                     className="text-xs text-[#D4AF37] hover:underline"
@@ -244,7 +239,6 @@ const Page = () => {
                     View All Orders →
                   </Link>
                 </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -327,7 +321,6 @@ const Page = () => {
                   <p className="font-semibold text-[#0B1F3A] text-sm">
                     Saved Addresses
                   </p>
-
                   <Link
                     href="/myaddresses"
                     className="text-xs text-[#D4AF37] hover:underline"
@@ -347,12 +340,10 @@ const Page = () => {
                           <div className="h-9 w-9 rounded-sm bg-gray-50 flex items-center justify-center">
                             <MapPin size={18} className="text-gray-700" />
                           </div>
-
                           <div className="min-w-0">
                             <p className="font-semibold text-[#0B1F3A] text-sm">
                               {a?.label || "Address"}
                             </p>
-
                             <p className="text-xs text-gray-500 mt-1 line-clamp-3">
                               {a.address_line1}
                               {a.address_line2 ? `, ${a.address_line2}` : ""}
