@@ -112,6 +112,8 @@ export const fetchVendorProfile = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const res = await getVendorProfileAPI(id);
+      console.log(res);
+      console.log(res.data);
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -462,37 +464,22 @@ const initialState = {
   loading: false,
   error: null,
 
- accessToken:
-  typeof window !== "undefined"
-    ? localStorage.getItem("vendor_accessToken")
-    : null,
+  accessToken:
+    typeof window !== "undefined"
+      ? localStorage.getItem("vendor_accessToken")
+      : null,
 
-refreshToken:
-  typeof window !== "undefined"
-    ? localStorage.getItem("vendor_refreshToken")
-    : null,
+  refreshToken:
+    typeof window !== "undefined"
+      ? localStorage.getItem("vendor_refreshToken")
+      : null,
 
-isAuthenticated:
-  typeof window !== "undefined"
-    ? !!localStorage.getItem("vendor_accessToken")
-    : false,
+  isAuthenticated:
+    typeof window !== "undefined"
+      ? !!localStorage.getItem("vendor_accessToken")
+      : false,
 
-  vendor: {
-    id: null,
-    email: null,
-    phone: null,
-    email_verified: false,
-    phone_verified: false,
-    id_verified: false,
-    signature_verified: false,
-    is_active: false,
-  },
-
-  onboarding: null,
-  business: null,
-  bank: null,
-  store: null,
-  pickup: null,
+  vendor: null,
 
   otp: {
     mobileSent: false,
@@ -516,11 +503,6 @@ const vendorSlice = createSlice({
       state.refreshToken = null;
       state.isAuthenticated = false;
       state.vendor = null;
-      state.onboarding = null;
-      state.business = null;
-      state.bank = null;
-      state.store = null;
-      state.pickup = null;
 
       state.otp = {
         mobileSent: false,
@@ -594,13 +576,7 @@ if (payload.refreshToken) {
   state.accessToken = null;
   state.refreshToken = null;
   state.isAuthenticated = false;
-
   state.vendor = null;
-  state.onboarding = null;
-  state.business = null;
-  state.bank = null;
-  state.store = null;
-  state.pickup = null;
 
   state.otp = {
     mobileSent: false,
@@ -676,21 +652,13 @@ if (payload.refreshToken) {
 
       /* ================= PROFILE ================= */
       .addCase(fetchVendorProfile.fulfilled, (state, action) => {
-        state.vendor = {
-          ...state.vendor,
-          ...action.payload,
-        };
-      })
+  state.vendor = action.payload;
+})
 
       /* ================= SELF PROFILE ================= */
       .addCase(fetchVendorme.fulfilled, (state, action) => {
-        state.vendor = action.payload?.vendor || null;
-        state.onboarding = action.payload?.onboarding || null;
-        state.business = action.payload?.business || null;
-        state.bank = action.payload?.bank || null;
-        state.store = action.payload?.store || null;
-        state.pickup = action.payload?.pickup || null;
-      })
+  state.vendor = action.payload || null;
+})
 
       /* ================= BUSINESS ================= */
       .addCase(fetchBusinessDetails.fulfilled, (state, action) => {

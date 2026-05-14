@@ -4,16 +4,16 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, HelpCircle, Search } from "lucide-react";
 import { vendorNavItems } from "./vendorNavConfig";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutVendor } from "../../store/slices/vendorSlice";
 
 const VendorHeader = () => {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
-
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const vendor = useSelector((state) => state.vendor.vendor);
 
   const pageTitle = useMemo(() => {
     if (!pathname) return "";
@@ -89,7 +89,7 @@ const VendorHeader = () => {
 
               <div className="hidden sm:block leading-tight">
                 <div className="text-sm font-bold text-[#0B1F3A]">
-                  Rahul Sharma
+                  {vendor?.business?.business_name}
                 </div>
                 <div className="text-[11px] text-gray-500">
                   Seller Account
