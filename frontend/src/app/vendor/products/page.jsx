@@ -16,7 +16,7 @@ export default function ProductManagementBody() {
   const [openAdd, setOpenAdd] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 8;
-  const vendorId = useSelector((state) => state.vendor.vendor?.id);
+  const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
   const { vendorProducts, loading } = useSelector((state) => state.products);
   console.log(vendorProducts);
   console.log(vendorId);

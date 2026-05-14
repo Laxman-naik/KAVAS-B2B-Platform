@@ -6,12 +6,7 @@ import { useSelector } from "react-redux";
 
 const DashboardBody = () => {
   const vendor = useSelector((state) => state.vendor.vendor);
-
-  const business = useSelector((state) => state.vendor.business);
-  
   const [ordersFilter, setOrdersFilter] = useState("All");
-
-  
 
   const orders = [
     {
@@ -202,9 +197,7 @@ const DashboardBody = () => {
 
       <div className="rounded-2xl bg-[#0B1F3A] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-         <div className="text-xl sm:text-2xl font-extrabold">
-  Welcome back, {business?.business_name || "Vendor"}
-</div>
+          <div className="text-xl sm:text-2xl font-extrabold">Welcome back, {vendor?.business?.business_name}</div>
           <div className="mt-1 text-sm text-white/75">Here&apos;s what&apos;s happening with your store today.</div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-white/80">
