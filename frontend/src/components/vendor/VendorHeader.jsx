@@ -4,10 +4,13 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, HelpCircle, Search } from "lucide-react";
 import { vendorNavItems } from "./vendorNavConfig";
+import { useDispatch } from "react-redux";
+import { logoutVendor } from "../../store/slices/vendorSlice";
 
 const VendorHeader = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -30,6 +33,16 @@ const VendorHeader = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+ const handleLogout = async () => {
+  try {
+    await dispatch(logoutVendor()).unwrap();
+
+    router.push("/vendor/vendorlogin");
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
 
   return (
     <header className="fixed top-0 right-0 z-30 h-16 w-[calc(100%-16rem)] bg-white border-b border-[#E5E5E5]">
@@ -85,9 +98,8 @@ const VendorHeader = () => {
 
               <ChevronDown
                 size={16}
-                className={`text-gray-500 transition ${
-                  open ? "rotate-180" : ""
-                }`}
+                className={`text-gray-500 transition ${open ? "rotate-180" : ""
+                  }`}
               />
             </div>
 
@@ -127,8 +139,7 @@ const VendorHeader = () => {
 
                   <li
                     onClick={() => {
-                      // logout logic here
-                      console.log("Logout clicked");
+                      handleLogout();
                       setOpen(false);
                     }}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-500"

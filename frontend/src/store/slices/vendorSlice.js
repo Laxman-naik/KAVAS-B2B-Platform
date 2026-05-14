@@ -83,6 +83,28 @@ export const refreshVendorToken = createAsyncThunk(
   }
 );
 
+/* ================= LOGOUT ================= */
+
+export const logoutVendor = createAsyncThunk(
+  "vendor/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      const refreshToken =
+        typeof window !== "undefined"
+          ? localStorage.getItem("vendor_refreshToken")
+          : null;
+
+      const res = await logoutVendorAPI({ refreshToken });
+
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
 /* ================= PROFILE ================= */
 
 export const fetchVendorProfile = createAsyncThunk(
@@ -440,20 +462,20 @@ const initialState = {
   loading: false,
   error: null,
 
-  accessToken:
-    typeof window !== "undefined"
-      ? localStorage.getItem("accessToken")
-      : null,
+ accessToken:
+  typeof window !== "undefined"
+    ? localStorage.getItem("vendor_accessToken")
+    : null,
 
-  refreshToken:
-    typeof window !== "undefined"
-      ? localStorage.getItem("refreshToken")
-      : null,
+refreshToken:
+  typeof window !== "undefined"
+    ? localStorage.getItem("vendor_refreshToken")
+    : null,
 
-  isAuthenticated:
-    typeof window !== "undefined"
-      ? !!localStorage.getItem("accessToken")
-      : false,
+isAuthenticated:
+  typeof window !== "undefined"
+    ? !!localStorage.getItem("vendor_accessToken")
+    : false,
 
   vendor: {
     id: null,
@@ -508,8 +530,9 @@ const vendorSlice = createSlice({
       };
 
       if (typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("vendor_accessToken");
+        localStorage.removeItem("vendor_refreshToken");
+        localStorage.removeItem("role");
       }
     },
   },
@@ -532,14 +555,19 @@ const vendorSlice = createSlice({
         state.refreshToken = payload.refreshToken || null;
 
         if (typeof window !== "undefined") {
-          localStorage.setItem("accessToken", payload.accessToken);
+          localStorage.setItem("role", "vendor");
 
-          if (payload.refreshToken) {
-            localStorage.setItem(
-              "refreshToken",
-              payload.refreshToken
-            );
-          }
+localStorage.setItem(
+  "vendor_accessToken",
+  payload.accessToken
+);
+
+if (payload.refreshToken) {
+  localStorage.setItem(
+    "vendor_refreshToken",
+    payload.refreshToken
+  );
+}
         }
 
         state.vendor = payload.vendor || null;
@@ -560,6 +588,33 @@ const vendorSlice = createSlice({
         }
       })
 
+      /* ================= LOGOUT ================= */
+
+.addCase(logoutVendor.fulfilled, (state) => {
+  state.accessToken = null;
+  state.refreshToken = null;
+  state.isAuthenticated = false;
+
+  state.vendor = null;
+  state.onboarding = null;
+  state.business = null;
+  state.bank = null;
+  state.store = null;
+  state.pickup = null;
+
+  state.otp = {
+    mobileSent: false,
+    emailSent: false,
+    mobileVerified: false,
+    emailVerified: false,
+  };
+
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("vendor_accessToken");
+    localStorage.removeItem("vendor_refreshToken");
+    localStorage.removeItem("role");
+  }
+})
       /* ================= OTP ================= */
 
       .addCase(sendVendorOtp.pending, (state) => {
@@ -720,7 +775,5 @@ const vendorSlice = createSlice({
   },
 });
 
-export const { resetVendorState, logoutLocal } =
-  vendorSlice.actions;
-
+export const { resetVendorState, logoutLocal } = vendorSlice.actions;
 export default vendorSlice.reducer;
