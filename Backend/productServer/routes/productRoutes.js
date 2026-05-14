@@ -19,7 +19,4 @@ router.get("/:id", productController.getSingleProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 
-
-
-
 module.exports = router;
