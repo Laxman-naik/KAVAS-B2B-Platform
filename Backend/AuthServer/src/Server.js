@@ -84,14 +84,6 @@ const passport =
 
 require("dotenv").config();
 
-<<<<<<< HEAD
-const authRoutes = require("./routes/authRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const addressRoutes = require("./routes/addressRoutes");
-const vendorRoutes = require("./routes/vendorRoutes");
-const orderRoutes = require("./routes/orderRoutes")
-const profileRoutes = require("./routes/profileRoutes")
-=======
 const pool =
   require("./config/db");
 
@@ -99,7 +91,6 @@ require("./config/passport");
 
 const authRoutes =
   require("./routes/authRoutes");
->>>>>>> 141a9f0c4a0e0b84487e06cb2bc2f5266fb4315d
 
 const app = express();
 
@@ -154,23 +145,10 @@ app.get("/", (req, res) => {
   );
 });
 
-<<<<<<< HEAD
-app.get("/ping", (req, res) => {
-  res.json({ ok: true });
-});
-
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/address", addressRoutes);
-app.use("/api/vendor", vendorRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/orders", orderRoutes);
-=======
 app.use(
   "/api/auth",
   authRoutes
 );
->>>>>>> 141a9f0c4a0e0b84487e06cb2bc2f5266fb4315d
 
 app.use((req, res) => {
   res.status(404).json({
