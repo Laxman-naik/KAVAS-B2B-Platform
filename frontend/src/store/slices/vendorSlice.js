@@ -17,7 +17,7 @@ import {
   refreshTokenAPI,
   logoutVendorAPI,
   getVendorProfileSelfAPI,
-} from "../../services/vendorServer";
+} from "../../services/vendorService";
 
 /* ================= THUNKS ================= */
 

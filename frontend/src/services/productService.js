@@ -23,7 +23,6 @@ export const getProducts = async () => {
   const res = await productapi.get("/api/products/all", {
     skipAuth: true,
   });
-
   return res.data;
 };
 
@@ -32,63 +31,60 @@ export const getSingleProduct = async (id) => {
   const res = await productapi.get(`/api/products/${id}`, {
     skipAuth: true,
   });
-
   return res.data;
 };
 
 // ================= CREATE PRODUCT =================
 export const createProduct = async (data) => {
   const res = await productapi.post("/api/products", data);
-
   return res.data;
 };
 
 // ================= UPDATE PRODUCT =================
 export const updateProduct = async (id, data) => {
   const res = await productapi.put(`/api/products/${id}`, data);
-
   return res.data;
 };
 
+// ================= GET VENDOR PRODUCTS =================
+export const getVendorProductsAPI = async (vendorId) => {
+  const res = await productapi.get(`/api/products/vendor/${vendorId}`, {
+    skipAuth: true,
+  });
+  return res.data;
+};
+
+// ================= GET PRODUCT REVIEWS =================
+export const getProductReviewsAPI = async (productId) => {
+  const res = await productapi.get(`/api/products/${productId}/reviews`, {
+    skipAuth: true,
+  });
+  return res.data;
+};
+
+// ================= ADD PRODUCT REVIEW =================
+export const addProductReviewAPI = async (productId, data) => {
+  const res = await productapi.post(`/api/products/${productId}/reviews`, data);
+  return res.data;
+};
 // ================= DELETE PRODUCT =================
 export const deleteProduct = async (id) => {
   const res = await productapi.delete(`/api/products/${id}`);
-
   return res.data;
 };
 
 // ================= NEW ARRIVALS =================
 export const getNewArrivalsAPI = async () => {
-  const res = await productapi.get(
-    "/api/products/new-arrivals?limit=25",
-    {
-      skipAuth: true,
-    }
-  );
-
+  const res = await productapi.get("/api/products/new-arrivals", {
+    skipAuth: true,
+  });
   return res.data;
 };
 
 // ================= TRENDING PRODUCTS =================
 export const getTrendingProductsAPI = async () => {
-  const res = await productapi.get(
-    "/api/products/trending?limit=25",
-    {
-      skipAuth: true,
-    }
-  );
-
-  return res.data;
-};
-
-// ================= VENDOR PRODUCTS =================
-export const getVendorProductsAPI = async (vendorId) => {
-  const res = await productapi.get(
-    `/api/products/vendor/${vendorId}`,
-    {
-      skipAuth: true,
-    }
-  );
-
+  const res = await productapi.get("/api/products/trending", {
+    skipAuth: true,
+  });
   return res.data;
 };
