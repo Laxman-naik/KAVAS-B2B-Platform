@@ -264,7 +264,7 @@ export default function ProductView() {
   const tiers = useTiers(product?.pricingTiers, norm.baseUnit, norm.minQty);
   const similar = useSimilar(products, p?._id ?? p?.id);
 
-  const [selectedMedia, setSelectedMedia] = useState(mediaItems[0]);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   const [qty, setQty] = useState(norm.minQty);
   const [selectedSize, setSelectedSize] = useState(norm.sizes[0]);
   const [selectedColor, setSelectedColor] = useState(norm.colors[0]);
