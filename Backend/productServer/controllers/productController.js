@@ -760,7 +760,7 @@ exports.getProductReviews = async (req, res) => {
         r.created_at,
         r.product_id,
         r.user_id,
-        u.name AS user_name,
+        COALESCE(u.name, u.email, 'Anonymous User') AS user_name,
         u.email AS user_email
       FROM reviews r
       LEFT JOIN users u
@@ -782,21 +782,23 @@ exports.getProductReviews = async (req, res) => {
       [id]
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
-      reviews: result.rows,
-      summary: summaryResult.rows[0],
+      reviews: result.rows || [],
+      summary: summaryResult.rows[0] || {
+        avg_rating: 0,
+        total_reviews: 0,
+      },
     });
   } catch (err) {
-    console.error("getProductReviews error:", err);
+    console.error("getProductReviews error:", err.message);
 
     return res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message || "Failed to fetch product reviews",
     });
   }
 };
-
 exports.addProductReview = async (req, res) => {
   try {
     const { id } = req.params;

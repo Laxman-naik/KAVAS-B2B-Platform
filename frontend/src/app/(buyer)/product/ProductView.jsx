@@ -256,8 +256,7 @@ export default function ProductView() {
 
   const dispatch = useDispatch();
   const { product, loading, error, products } = useSelector((s) => s.products);
-  useEffect(() => { if (id) dispatch(fetchSingleProduct(id)); }, [dispatch, id]);
-  const p = product ?? {};
+ const p = useMemo(() => product ?? {}, [product]);
   const norm = useNormalized(p);
 
   const mediaItems = useMemo(() => normalizeMedia(p), [p]);
@@ -277,9 +276,14 @@ export default function ProductView() {
     dispatch(fetchProducts());
   }, [dispatch, id]);
 
-  useEffect(() => {
-    setSelectedMedia(mediaItems[0]);
-  }, [mediaItems]);
+ useEffect(() => {
+  if (!mediaItems.length) return;
+
+  setSelectedMedia((prev) => {
+    if (prev?.src === mediaItems[0]?.src) return prev;
+    return mediaItems[0];
+  });
+}, [mediaItems]);
 
   useEffect(() => {
     setQty((prev) => prev || norm.minQty);

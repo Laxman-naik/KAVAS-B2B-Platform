@@ -82,14 +82,14 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               wholesale prices.
             </p>
 
-           <div className="flex justify-center">
-  <Image
-    src="/Lock3.png"
-    alt="lock"
-    width={320}
-    height={420}
-    priority
-    className="
+            <div className="flex justify-center">
+              <Image
+                src="/Lock3.png"
+                alt="lock"
+                width={320}
+                height={420}
+                priority
+                className="
       h-55
       sm:h-65
       md:h-75
@@ -97,8 +97,8 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
       object-contain
       drop-shadow-[0_15px_35px_rgba(212,175,55,0.18)]
     "
-  />
-</div>
+              />
+            </div>
 
             <div className="">
               <div className="text-sm font-semibold text-[#D4AF37]">Why Login?</div>
@@ -187,7 +187,7 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
                   <input
                     type="checkbox"
                     required
-                    
+
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 accent-[#D4AF37]"
                   />
@@ -219,16 +219,32 @@ const Login = ({ open, setOpen, setMode, initialEmail = "" }) => {
               <div className="flex grow h-px bg-[#E5E5E5]" />
             </div>
 
-           <div className="grid grid-cols-1 gap-3">
-  <button
-  onClick={() => {
-    window.location.href =
-      "http://localhost:5001/api/auth/google";
-  }}
->
-  Continue with Google
-</button>
-</div>
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href =
+                    "http://localhost:5001/api/auth/google";
+                }}
+                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-lg border border-[#E5E5E5] bg-white px-4 py-3 text-sm font-semibold text-[#1A1A1A] shadow-sm transition-all duration-300 hover:border-[#D4AF37] hover:bg-[#FFF8EC] hover:shadow-md active:scale-[0.98]"
+              >
+                <div
+                  className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full "
+                />
+
+                <div className="relative flex items-center justify-center">
+                  <img
+                    src="/googlelogo.png"
+                    alt="Google"
+                    className="h-5 w-5 object-contain"
+                  />
+                </div>
+
+                <span className="relative">
+                  Continue with Google
+                </span>
+              </button>
+            </div>
             <p className="text-sm text-center mt-6 text-gray-600">
               Don’t have an account?{" "}
               <span
