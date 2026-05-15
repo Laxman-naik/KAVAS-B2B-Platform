@@ -18,8 +18,7 @@ export default function ProductManagementBody() {
   const pageSize = 8;
   const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
   const { vendorProducts, loading } = useSelector((state) => state.products);
-  console.log(vendorProducts);
-  console.log(vendorId);
+  // console.log(vendorProducts);
 
   useEffect(() => {
     if (vendorId) {
@@ -47,7 +46,7 @@ export default function ProductManagementBody() {
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(totalFiltered / pageSize));
   }, [totalFiltered]);
-
+ 
   const safePage = Math.min(Math.max(1, page), totalPages);
 
   const pagedFilteredProducts = useMemo(() => {
@@ -279,7 +278,15 @@ export default function ProductManagementBody() {
               className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden shadow-sm hover:shadow-md transition"
             >
               <div className="relative">
-                <img src={product.image} alt="" className="w-full h-44 object-cover bg-gray-100" />
+                <img
+                  src={
+                    product?.images?.find((img) => img.is_primary)?.image_url ||
+                    product?.images?.[0]?.image_url ||
+                    "/placeholder.png"
+                  }
+                  alt={product?.name || "Product"}
+                  className="w-full h-44 object-cover bg-gray-100"
+                />
 
                 {product.discount ? (
                   <span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-extrabold px-3 py-1 rounded-full">
@@ -376,8 +383,8 @@ export default function ProductManagementBody() {
                 type="button"
                 onClick={() => setPage(p)}
                 className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${active
-                    ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                    : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
+                  ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
+                  : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
                   }`}
               >
                 {p}

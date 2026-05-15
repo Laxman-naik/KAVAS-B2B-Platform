@@ -69,14 +69,8 @@ export const loginVendorAPI = async (data) => {
 
 
 export const refreshTokenAPI = async () => {
-  const refreshToken = localStorage.getItem("refreshToken");
-
-  const res = await authapi.post("/api/vendor/refresh", {
-    refreshToken,
-  });
-
-  localStorage.setItem("accessToken", res.data.accessToken);
-
+  const refreshToken = localStorage.getItem("vendor_refreshToken");
+  const res = await axios.post("/api/vendor/refresh", { refreshToken });
   return res.data;
 };
 
