@@ -345,7 +345,7 @@ const handleCheckout = async () => {
               }`}
           > Proceed to Checkout →</button>
 
-          <Link href="/products">
+          <Link href="/allproducts">
             <button className="w-full border py-2.5 rounded-md text-sm mt-3 hover:bg-gray-100">
               Continue Shopping
             </button>
