@@ -149,7 +149,7 @@ const handleCheckout = async () => {
         await dispatch(verifyPayment(response));
 
         alert("Payment successful");
-        router.push("/checkout");
+        router.push("/proceedtocheckout");
       },
     });
 
