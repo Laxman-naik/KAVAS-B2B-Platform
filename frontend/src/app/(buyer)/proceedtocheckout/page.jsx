@@ -1,546 +1,371 @@
 "use client";
 
-import React, { useState } from "react";
-
+import React, { useMemo, useState } from "react";
 import {
-  ChevronDown,
   MapPin,
-  Truck,
+  FileText,
+  Package,
   CreditCard,
   ShieldCheck,
   LockKeyhole,
-  Package,
+  Download,
+  Plus,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-
 const Page = () => {
-  const [selectedShipping, setSelectedShipping] =
-    useState("standard");
+  const [selectedAddress, setSelectedAddress] = useState("office");
+  const [selectedPayment, setSelectedPayment] = useState("net30");
 
-  const [selectedPayment, setSelectedPayment] =
-    useState("net30");
-
-  const [shippingInfo, setShippingInfo] =
-    useState({
-      companyName: "",
-      contactPerson: "",
-      phoneNumber: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "",
-    });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-
-    setShippingInfo((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const shippingMethods = [
+  const products = [
     {
-      id: "standard",
-      title: "Standard Shipping",
-      subtitle: "5–7 Business Days",
-      price: "FREE",
-      amount: 0,
+      id: 1,
+      name: "Premium Coffee Beans",
+      desc: "1kg • Pack of 10",
+      qty: 2,
+      unitPrice: 120,
+      image: "/coffee.png",
     },
-
     {
-      id: "expedited",
-      title: "Expedited Shipping",
-      subtitle: "3–4 Business Days",
-      price: "$24.99",
-      amount: 24.99,
+      id: 2,
+      name: "Ceramic Coffee Mug",
+      desc: "Black • 350ml • Pack of 24",
+      qty: 1,
+      unitPrice: 120,
+      image: "/mug.png",
     },
-
     {
-      id: "express",
-      title: "Express Shipping",
-      subtitle: "1–2 Business Days",
-      price: "$49.99",
-      amount: 49.99,
+      id: 3,
+      name: "Green Tea Leaves",
+      desc: "500g • Pack of 20",
+      qty: 1,
+      unitPrice: 200,
+      image: "/tea.png",
+    },
+  ];
+
+  const addresses = [
+    {
+      id: "office",
+      title: "Office Address",
+      tag: "Default",
+      name: "Kavas Industries Pvt. Ltd.",
+      address:
+        "123 Business Park, Industrial Area, New York, NY 10001, United States",
+      person: "John Doe",
+      phone: "+1 123 456 7890",
+    },
+    {
+      id: "warehouse",
+      title: "Warehouse Address",
+      name: "Kavas Industries Pvt. Ltd.",
+      address:
+        "456 Logistics Hub, Warehouse Zone, New Jersey, NJ 07001, United States",
+      person: "Michael Smith",
+      phone: "+1 987 654 3210",
+    },
+    {
+      id: "home",
+      title: "Home Address",
+      name: "John Doe",
+      address: "789 Residential St, New York, NY 10002, United States",
+      person: "John Doe",
+      phone: "+1 123 456 7890",
     },
   ];
 
   const paymentMethods = [
-    {
-      id: "net30",
-      title: "Net 30",
-      subtitle: "Pay within 30 days",
-    },
-
-    {
-      id: "net60",
-      title: "Net 60",
-      subtitle: "Pay within 60 days",
-    },
-
-    {
-      id: "card",
-      title: "Credit / Debit Card",
-      subtitle: "VISA ● AMEX",
-    },
-
-    {
-      id: "bank",
-      title: "Bank Transfer",
-      subtitle: "Secure bank transfer",
-    },
+    ["net30", "Net 30", "Pay within 30 days"],
+    ["net60", "Net 60", "Pay within 60 days"],
+    ["card", "Credit / Debit Card", "Visa • Mastercard • Amex"],
+    ["bank", "Bank Transfer", "Secure bank transfer"],
   ];
 
-  const orderItems = [
-    {
-      name: "Premium Coffee Beans",
-      meta: "1 kg • Pack of 10",
-      qty: "Qty: 2",
-      price: "$240.00",
-    },
-
-    {
-      name: "Ceramic Coffee Mug",
-      meta: "Black • 350ml • Pack of 24",
-      qty: "Qty: 1",
-      price: "$120.00",
-    },
-  ];
-
-  const subtotal = 360;
-
-  const selectedShippingData =
-    shippingMethods.find(
-      (item) => item.id === selectedShipping
-    );
-
-  const shippingAmount =
-    selectedShippingData?.amount || 0;
-
-  const total = subtotal + shippingAmount;
+  const subtotal = useMemo(
+    () => products.reduce((sum, item) => sum + item.qty * item.unitPrice, 0),
+    []
+  );
 
   return (
-    <div className="min-h-screen bg-white text-[#1A1A1A]">
-      <main className="w-full px-10 py-8">
-        <div className="mb-7 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_720px]">
-          <div>
-            <h2 className="text-4xl font-bold text-[#0B1F3A]">
-              Checkout
-            </h2>
-
-            <p className="mt-2 flex items-center gap-3 text-[#1A1A1A]">
-              Secure checkout for your wholesale order
-
-              <ShieldCheck
-                className="text-[#D4AF37]"
-                size={20}
-              />
-            </p>
-          </div>
-
-         
+    <main className="min-h-screen bg-[#001a35] px-4 py-5 text-[#0b1324] md:px-8">
+      <section className="mb-5 flex flex-col gap-5 text-white lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold md:text-4xl">Checkout</h1>
+          <p className="mt-1 text-sm text-white/75">
+            Review your order and complete your purchase
+          </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 gap-7 xl:grid-cols-[1fr_510px]">
-          <div className="space-y-4">
-            <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex gap-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#D4AF37] text-lg font-bold text-[#0B1F3A]">
-                      1
-                    </span>
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_420px]">
+        <div className="space-y-5">
+          <Card>
+            <SectionTitle
+              icon={MapPin}
+              title="Delivery Address"
+              subtitle="Select a saved delivery location"
+            />
 
+            <div className="mt-5 flex items-center justify-between border-t border-[#d8dee8] pt-4">
+              <h3 className="text-sm font-bold">Saved Addresses</h3>
+              <button className="flex items-center gap-2 rounded-sm border border-[#f3a51c] px-3 py-2 text-sm font-semibold text-[#0b1324]">
+                <Plus size={15} />
+                Add New Address
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {addresses.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedAddress(item.id)}
+                  className={`rounded-sm border p-4 text-left transition ${
+                    selectedAddress === item.id
+                      ? "border-[#f3a51c] bg-[#fff8ea]"
+                      : "border-[#d8dee8] bg-white hover:border-[#f3a51c]"
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    <Radio active={selectedAddress === item.id} />
                     <div>
-                      <h3 className="text-xl font-bold text-[#0B1F3A]">
-                        Shipping Information
-                      </h3>
-
-                      <p className="text-sm text-[#666]">
-                        Where should we deliver your
-                        order?
+                      <h4 className="text-sm font-bold">
+                        {item.title}
+                        {item.tag && (
+                          <span className="ml-2 rounded-sm bg-[#fff2d2] px-2 py-1 text-[11px] text-[#d48800]">
+                            {item.tag}
+                          </span>
+                        )}
+                      </h4>
+                      <p className="mt-2 text-sm">{item.name}</p>
+                      <p className="mt-1 text-sm leading-6 text-[#536072]">
+                        {item.address}
+                      </p>
+                      <p className="mt-2 text-sm">
+                        {item.person} <span className="mx-2 text-[#a5adba]">|</span>
+                        {item.phone}
                       </p>
                     </div>
                   </div>
+                </button>
+              ))}
+            </div>
+          </Card>
 
-                  <MapPin
-                    className="text-[#D4AF37]"
-                    size={34}
-                  />
-                </div>
+          <Card>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <SectionTitle
+                icon={FileText}
+                title="Invoice Preview"
+                subtitle="Review invoice details before payment"
+              />
+              <button className="flex w-fit items-center gap-2 rounded-sm border border-[#d8dee8] px-4 py-2.5 text-sm font-semibold hover:border-[#f3a51c]">
+                <Download size={16} />
+                Download Invoice
+              </button>
+            </div>
 
-                <div className="space-y-3">
-                  <InputField
-                    label="Company Name"
-                    name="companyName"
-                    value={
-                      shippingInfo.companyName
-                    }
-                    onChange={handleInputChange}
-                    placeholder="Enter company name"
-                  />
+            <div className="mt-5 overflow-hidden rounded-sm border border-[#d8dee8]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead className="bg-[#f8fafc] text-left">
+                    <tr>
+                      <th className="px-4 py-3">Item</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3 text-center">Qty</th>
+                      <th className="px-4 py-3 text-right">Unit Price</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                    </tr>
+                  </thead>
 
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <InputField
-                      label="Contact Person"
-                      name="contactPerson"
-                      value={
-                        shippingInfo.contactPerson
-                      }
-                      onChange={handleInputChange}
-                      placeholder="Enter contact person"
-                    />
+                  <tbody>
+                    {products.map((item) => {
+                      const total = item.qty * item.unitPrice;
 
-                    <InputField
-                      label="Phone Number"
-                      name="phoneNumber"
-                      value={
-                        shippingInfo.phoneNumber
-                      }
-                      onChange={handleInputChange}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-
-                  <InputField
-                    label="Address"
-                    name="address"
-                    value={shippingInfo.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter address"
-                  />
-
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <InputField
-                      label="City"
-                      name="city"
-                      value={shippingInfo.city}
-                      onChange={handleInputChange}
-                      placeholder="City"
-                    />
-
-                    <InputField
-                      label="State / Province"
-                      name="state"
-                      value={shippingInfo.state}
-                      onChange={handleInputChange}
-                      placeholder="State"
-                    />
-
-                    <InputField
-                      label="ZIP / Postal Code"
-                      name="zipCode"
-                      value={
-                        shippingInfo.zipCode
-                      }
-                      onChange={handleInputChange}
-                      placeholder="ZIP Code"
-                    />
-                  </div>
-
-                  <InputField
-                    label="Country"
-                    name="country"
-                    value={shippingInfo.country}
-                    onChange={handleInputChange}
-                    placeholder="Country"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex gap-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#D4AF37] text-lg font-bold text-[#0B1F3A]">
-                      2
-                    </span>
-
-                    <div>
-                      <h3 className="text-xl font-bold text-[#0B1F3A]">
-                        Shipping Method
-                      </h3>
-
-                      <p className="text-sm text-[#666]">
-                        Choose your preferred
-                        shipping option
-                      </p>
-                    </div>
-                  </div>
-
-                  <Truck
-                    className="text-[#D4AF37]"
-                    size={34}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                  {shippingMethods.map(
-                    (method) => (
-                      <OptionCard
-                        key={method.id}
-                        active={
-                          selectedShipping ===
-                          method.id
-                        }
-                        title={method.title}
-                        subtitle={
-                          method.subtitle
-                        }
-                        price={method.price}
-                        onClick={() =>
-                          setSelectedShipping(
-                            method.id
-                          )
-                        }
-                      />
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-           
-          </div>
-
-          <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="mb-4 flex items-center gap-3 border-b border-[#E5E5E5] pb-4 text-2xl font-bold text-[#0B1F3A]">
-                <Package
-                  className="text-[#D4AF37]"
-                  size={30}
-                />
-                Order Summary
-              </h3>
-
-              <div className="space-y-4">
-                {orderItems.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex gap-4"
-                  >
-                    <div className="h-[72px] w-[72px] rounded-sm bg-[#FFF8EC]" />
-
-                    <div className="flex-1">
-                      <div className="flex justify-between gap-3">
-                        <h4 className="font-bold text-[#0B1F3A]">
-                          {item.name}
-                        </h4>
-
-                        <p className="font-bold text-[#D4AF37]">
-                          {item.price}
-                        </p>
-                      </div>
-
-                      <p className="text-sm text-[#666]">
-                        {item.meta}
-                      </p>
-
-                      <p className="mt-1 text-sm text-[#666]">
-                        {item.qty}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                      return (
+                        <tr key={item.id} className="border-t border-[#d8dee8]">
+                          <td className="px-4 py-3">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-14 w-16 rounded-sm bg-[#f3f5f8] object-contain"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <h4 className="font-bold">{item.name}</h4>
+                            <p className="mt-1 text-[#536072]">{item.desc}</p>
+                          </td>
+                          <td className="px-4 py-3 text-center">{item.qty}</td>
+                          <td className="px-4 py-3 text-right">
+                            ${item.unitPrice.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold">
+                            ${total.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
-              <div className="mt-6 space-y-3 border-t border-[#E5E5E5] pt-5">
-                <SummaryRow
-                  label="Subtotal"
-                  value={`$${subtotal.toFixed(
-                    2
-                  )}`}
-                />
-
-                <SummaryRow
-                  label="Shipping"
-                  value={
-                    shippingAmount === 0
-                      ? "FREE"
-                      : `$${shippingAmount.toFixed(
-                          2
-                        )}`
-                  }
-                  gold
-                />
-
-                <SummaryRow
-                  label="Tax (0%)"
-                  value="$0.00"
-                />
-              </div>
-
-              <div className="mt-5 flex items-center justify-between border-t border-[#E5E5E5] pt-5">
-                <span className="text-xl font-bold text-[#0B1F3A]">
-                  Total
-                </span>
-
-                <span className="text-3xl font-bold text-[#D4AF37]">
-                  ${total.toFixed(2)}
-                </span>
-              </div>
-
-              <Button className="mt-6 h-14 w-full rounded-sm bg-[#D4AF37] text-lg font-bold text-[#0B1F3A] hover:bg-[#c9a02f]">
-                <LockKeyhole
-                  className="mr-2"
-                  size={20}
-                />
-                Continue to Payment
-              </Button>
-
-              <div className="mt-6 flex justify-center gap-3 text-center">
-                <ShieldCheck
-                  className="text-[#D4AF37]"
-                  size={28}
-                />
-
-                <div>
-                  <h4 className="font-bold text-[#0B1F3A]">
-                    Secure & Encrypted
-                    Checkout
-                  </h4>
-
-                  <p className="text-sm text-[#666]">
-                    Your information is safe with
-                    us
-                  </p>
+              <div className="ml-auto w-full max-w-sm space-y-2 px-5 py-4 text-sm">
+                <SummaryRow label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
+                <SummaryRow label="Shipping" value="FREE" gold />
+                <SummaryRow label="Tax (0%)" value="$0.00" />
+                <div className="flex justify-between border-t border-[#d8dee8] pt-3 text-lg font-bold">
+                  <span>Grand Total</span>
+                  <span className="text-[#d48800]">${subtotal.toFixed(2)}</span>
                 </div>
               </div>
-            </CardContent>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#f3c77b] bg-[#fff8ea] px-4 py-3 text-sm text-[#536072]">
+              <ShieldCheck size={18} className="text-[#d48800]" />
+              This is a proforma invoice. Final invoice will be available after
+              order confirmation.
+            </div>
           </Card>
         </div>
-      </main>
+
+        <aside className="h-fit rounded-sm border border-[#d8dee8] bg-white p-5 shadow-xl xl:sticky xl:top-5">
+          <SectionTitle icon={Package} title="Order Summary" />
+
+          <div className="my-4 h-px bg-[#d8dee8]" />
+
+          <div className="space-y-4">
+            {products.map((item) => {
+              const total = item.qty * item.unitPrice;
+
+              return (
+                <div key={item.id} className="flex gap-3">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-16 w-16 rounded-sm bg-[#f3f5f8] object-contain"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between gap-3">
+                      <h4 className="text-sm font-bold">{item.name}</h4>
+                      <p className="text-sm font-bold text-[#d48800]">
+                        ${total.toFixed(2)}
+                      </p>
+                    </div>
+                    <p className="mt-1 text-xs text-[#536072]">{item.desc}</p>
+                    <p className="mt-1 text-xs">Qty: {item.qty}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="my-4 h-px bg-[#d8dee8]" />
+
+          <div className="space-y-3 text-sm">
+            <SummaryRow label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
+            <SummaryRow label="Shipping" value="FREE" gold />
+            <SummaryRow label="Tax (0%)" value="$0.00" />
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-[#d8dee8] pt-4">
+            <span className="text-lg font-bold">Total</span>
+            <span className="text-3xl font-bold text-[#d48800]">
+              ${subtotal.toFixed(2)}
+            </span>
+          </div>
+
+          <div className="my-5 h-px bg-[#d8dee8]" />
+
+          <SectionTitle
+            icon={CreditCard}
+            title="Payment Method"
+            subtitle="Select preferred payment method"
+          />
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-2">
+            {paymentMethods.map(([id, title, subtitle]) => (
+              <button
+                key={id}
+                onClick={() => setSelectedPayment(id)}
+                className={`rounded-sm border p-3 text-left transition ${
+                  selectedPayment === id
+                    ? "border-[#f3a51c] bg-[#fff8ea]"
+                    : "border-[#d8dee8] bg-white hover:border-[#f3a51c]"
+                }`}
+              >
+                <div className="flex gap-3">
+                  <Radio active={selectedPayment === id} />
+                  <div>
+                    <h4 className="text-sm font-bold">{title}</h4>
+                    <p className="mt-1 text-xs text-[#536072]">{subtitle}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <button className="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-sm bg-[#f3a51c] text-base font-bold text-[#0b1324] transition hover:bg-[#d99513]">
+            <LockKeyhole size={18} />
+            Continue to Payment
+          </button>
+
+          <div className="mt-5 flex justify-center gap-3 text-center">
+            <ShieldCheck size={28} className="text-[#001a35]" />
+            <div>
+              <h4 className="text-sm font-bold">Secure & Encrypted Checkout</h4>
+              <p className="text-xs text-[#536072]">
+                Your information is safe with us
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  );
+};
+
+const Card = ({ children }) => {
+  return (
+    <section className="rounded-sm border border-[#d8dee8] bg-white p-5 shadow-xl">
+      {children}
+    </section>
+  );
+};
+
+const SectionTitle = ({ icon: Icon, title, subtitle }) => {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-[#f3a51c] bg-[#fff8ea]">
+        <Icon size={23} className="text-[#d48800]" />
+      </span>
+
+      <div>
+        <h3 className="text-xl font-bold text-[#0b1324]">{title}</h3>
+        {subtitle && <p className="mt-1 text-sm text-[#536072]">{subtitle}</p>}
+      </div>
     </div>
   );
 };
 
-const InputField = ({
-  label,
-  name,
-  value,
-  onChange,
-  placeholder,
-}) => (
-  <div className="rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] px-4 py-3">
-    <p className="mb-2 text-xs text-[#666]">
-      {label}
-    </p>
-
-    <input
-      type="text"
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full bg-transparent text-[#1A1A1A] outline-none placeholder:text-[#999]"
-    />
-  </div>
-);
-
-const OptionCard = ({
-  active,
-  title,
-  subtitle,
-  price,
-  onClick,
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`flex w-full items-center justify-between rounded-sm border px-4 py-3 text-left transition ${
-      active
-        ? "border-[#D4AF37] bg-[#FFF8EC]"
-        : "border-[#E5E5E5] bg-white hover:border-[#D4AF37]"
-    }`}
-  >
-    <div className="flex gap-3">
-      <span
-        className={`mt-1 h-4 w-4 rounded-full border ${
-          active
-            ? "border-[#D4AF37] bg-[#D4AF37]"
-            : "border-[#999]"
-        }`}
-      />
-
-      <div>
-        <h4 className="font-bold text-[#0B1F3A]">
-          {title}
-        </h4>
-
-        <p className="mt-1 text-sm text-[#666]">
-          {subtitle}
-        </p>
-      </div>
-    </div>
-
-    <p className="font-bold text-[#D4AF37]">
-      {price}
-    </p>
-  </button>
-);
-
-const PaymentCard = ({
-  active,
-  title,
-  subtitle,
-  onClick,
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`w-full rounded-sm border px-4 py-4 text-left transition ${
-      active
-        ? "border-[#D4AF37] bg-[#FFF8EC]"
-        : "border-[#E5E5E5] bg-white hover:border-[#D4AF37]"
-    }`}
-  >
-    <div className="flex gap-3">
-      <span
-        className={`mt-1 h-4 w-4 rounded-full border ${
-          active
-            ? "border-[#D4AF37] bg-[#D4AF37]"
-            : "border-[#999]"
-        }`}
-      />
-
-      <div>
-        <h4 className="font-bold text-[#0B1F3A]">
-          {title}
-        </h4>
-
-        <p className="mt-2 text-sm text-[#666]">
-          {subtitle}
-        </p>
-      </div>
-    </div>
-  </button>
-);
-
-const SummaryRow = ({
-  label,
-  value,
-  gold,
-}) => (
-  <div className="flex justify-between">
-    <span className="text-[#1A1A1A]">
-      {label}
-    </span>
-
+const Radio = ({ active }) => {
+  return (
     <span
-      className={
-        gold
-          ? "font-bold text-[#D4AF37]"
-          : "text-[#1A1A1A]"
-      }
+      className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+        active ? "border-[#f3a51c]" : "border-[#9aa4b2]"
+      }`}
     >
-      {value}
+      {active && <span className="h-2 w-2 rounded-full bg-[#f3a51c]" />}
     </span>
-  </div>
-);
+  );
+};
+
+const SummaryRow = ({ label, value, gold }) => {
+  return (
+    <div className="flex justify-between">
+      <span className="text-[#536072]">{label}</span>
+      <span className={gold ? "font-bold text-[#d48800]" : "text-[#0b1324]"}>
+        {value}
+      </span>
+    </div>
+  );
+};
 
 export default Page;
