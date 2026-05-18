@@ -118,7 +118,7 @@ const Categories = () => {
 
         <div className="mt-4 flex items-center justify-end">
           <Link
-            href="/categories"
+            href="/viewallcategories"
             className="text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37]"
           >
             View All Categories →

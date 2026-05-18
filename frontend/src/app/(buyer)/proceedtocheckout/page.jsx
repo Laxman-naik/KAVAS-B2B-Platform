@@ -142,51 +142,7 @@ const Page = () => {
             </p>
           </div>
 
-          <div className="flex items-start justify-between pt-2">
-            {[
-              "Shipping",
-              "Payment",
-              "Review",
-              "Complete",
-            ].map((step, index) => (
-              <div
-                key={step}
-                className="flex flex-1 items-start"
-              >
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-sm border text-lg font-semibold ${
-                      index === 0
-                        ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F3A]"
-                        : "border-[#CFCFCF] bg-white text-[#1A1A1A]"
-                    }`}
-                  >
-                    {index + 1}
-                  </div>
-
-                  <p
-                    className={`mt-2 text-sm ${
-                      index === 0
-                        ? "font-semibold text-[#D4AF37]"
-                        : "text-[#1A1A1A]"
-                    }`}
-                  >
-                    {step}
-                  </p>
-                </div>
-
-                {index !== 3 && (
-                  <div
-                    className={`mt-4 h-px flex-1 ${
-                      index === 0
-                        ? "bg-[#D4AF37]"
-                        : "bg-[#D9D9D9]"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+         
         </div>
 
         <div className="grid grid-cols-1 gap-7 xl:grid-cols-[1fr_510px]">
@@ -296,8 +252,7 @@ const Page = () => {
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
+            {/* <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
               <CardContent className="p-6">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex gap-4">
@@ -347,60 +302,8 @@ const Page = () => {
                   )}
                 </div>
               </CardContent>
-            </Card>
-
-            <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
-              <CardContent className="p-6">
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex gap-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#D4AF37] text-lg font-bold text-[#0B1F3A]">
-                      3
-                    </span>
-
-                    <div>
-                      <h3 className="text-xl font-bold text-[#0B1F3A]">
-                        Payment Method
-                      </h3>
-
-                      <p className="text-sm text-[#666]">
-                        Select a secure payment
-                        method
-                      </p>
-                    </div>
-                  </div>
-
-                  <CreditCard
-                    className="text-[#D4AF37]"
-                    size={34}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                  {paymentMethods.map(
-                    (method) => (
-                      <PaymentCard
-                        key={method.id}
-                        active={
-                          selectedPayment ===
-                          method.id
-                        }
-                        title={method.title}
-                        subtitle={
-                          method.subtitle
-                        }
-                        onClick={() =>
-                          setSelectedPayment(
-                            method.id
-                          )
-                        }
-                      />
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            </Card> */}
           </div>
-
           <Card className="rounded-sm border-[#E5E5E5] bg-white shadow-sm">
             <CardContent className="p-6">
               <h3 className="mb-4 flex items-center gap-3 border-b border-[#E5E5E5] pb-4 text-2xl font-bold text-[#0B1F3A]">

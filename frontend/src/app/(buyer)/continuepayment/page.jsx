@@ -77,7 +77,7 @@ const Page = () => {
       qty: "Qty: 1",
       price: "$120.00",
     },
-   
+    
   ];
 
   return (

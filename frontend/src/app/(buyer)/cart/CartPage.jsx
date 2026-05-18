@@ -162,11 +162,8 @@ const CartPage = () => {
 // };
 
 const handleCheckout = async() => {
-  router.push("/continuepayment");
+  router.push("/proceedtocheckout");
 }
-
-
-
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
