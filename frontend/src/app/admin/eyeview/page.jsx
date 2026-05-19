@@ -1,6 +1,7 @@
 "use client";
 
-import { X,Package,BarChart3,Eye,Clock,Layers,Star,BadgeInfo,Box,Palette,Ruler,Shirt, Circle,} from "lucide-react";
+import { useState } from "react";
+import { X, Package, BarChart3, Eye, Clock, Layers, Star, BadgeInfo, Box, Palette, Ruler, Shirt, Circle, } from "lucide-react";
 
 const C = {
   primary: "#0B1F3A",
@@ -14,23 +15,20 @@ const C = {
 const Eyeview = ({ product, open, onClose }) => {
   if (!open || !product) return null;
 
-  const image =
-    product.images?.find((img) => img.is_primary)?.image_url ||
-    product.images?.[0]?.image_url ||
-    "/placeholder.png";
+  const image = product.images?.find((img) => img.is_primary)?.image_url || product.images?.[0]?.image_url || "/placeholder.png";
 
   const statusClass =
     product.status === "approved"
       ? "bg-green-100 text-green-700"
       : product.status === "pending"
-      ? "bg-yellow-100 text-yellow-700"
-      : product.status === "rejected"
-      ? "bg-red-100 text-red-700"
-      : "bg-gray-100 text-gray-700";
+        ? "bg-yellow-100 text-yellow-700"
+        : product.status === "rejected"
+          ? "bg-red-100 text-red-700"
+          : "bg-gray-100 text-gray-700";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-      
+
       <div className="relative w-full max-w-4xl max-h-[86vh] overflow-y-auto scrollbar-hide rounded-xl bg-white shadow-xl">
         <button
           onClick={onClose}
@@ -49,12 +47,70 @@ const Eyeview = ({ product, open, onClose }) => {
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
+              {/* Main Image */}
               <img
                 src={image}
                 alt={product.name || "product"}
                 className="w-full h-[330px] object-cover rounded-lg border"
                 style={{ borderColor: C.border }}
               />
+
+              {/* All Images */}
+              {product?.images?.length > 0 && (
+                <div className="mt-4">
+                  <h4
+                    className="text-sm font-bold mb-2"
+                    style={{ color: C.primary }}
+                  >
+                    Product Images
+                  </h4>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {product.images.map((img) => (
+                      <div
+                        key={img.id}
+                        className="border rounded-lg overflow-hidden"
+                        style={{ borderColor: C.border }}
+                      >
+                        <img
+                          src={img.image_url}
+                          alt="product"
+                          className="w-full h-24 object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Videos */}
+              {product?.videos?.length > 0 && (
+                <div className="mt-5">
+                  <h4
+                    className="text-sm font-bold mb-2"
+                    style={{ color: C.primary }}
+                  >
+                    Product Videos
+                  </h4>
+
+                  <div className="space-y-3">
+                    {product.videos.map((video) => (
+                      <video
+                        key={video.id}
+                        controls
+                        className="w-full rounded-lg border"
+                        style={{ borderColor: C.border }}
+                      >
+                        <source
+                          src={video.video_url}
+                          type="video/mp4"
+                        />
+                        Your browser does not support video.
+                      </video>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <h3
@@ -262,9 +318,8 @@ const TopInfo = ({
     </p>
 
     <p
-      className={`text-xl font-bold ${
-        line ? "line-through" : ""
-      }`}
+      className={`text-xl font-bold ${line ? "line-through" : ""
+        }`}
       style={{ color }}
     >
       {value}

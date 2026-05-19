@@ -1,60 +1,57 @@
 "use client";
 
 import { useEffect } from "react";
-
-import { useRouter }
-  from "next/navigation";
-
-import { useDispatch }
-  from "react-redux";
-
 import {
-  loadUserThunk,
-} from "@/store/slices/authSlice";
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
-export default function
-GoogleSuccess() {
+export default function Page() {
 
-  const router =
-    useRouter();
+  const router = useRouter();
 
-  const dispatch =
-    useDispatch();
+  const params =
+    useSearchParams();
 
   useEffect(() => {
 
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
+    const accessToken =
+      params.get("accessToken");
 
-    const token =
-      params.get("token");
+    const refreshToken =
+      params.get("refreshToken");
 
-    if (token) {
+    const role =
+      params.get("role");
+
+    if (
+      accessToken &&
+      refreshToken
+    ) {
 
       localStorage.setItem(
-        "accessToken",
-        token
+        `${role}_accessToken`,
+        accessToken
       );
 
-      dispatch(
-        loadUserThunk()
-      )
-        .unwrap()
-        .then(() => {
-          router.push("/");
-        })
-        .catch(() => {
-          router.push("/login");
-        });
+      localStorage.setItem(
+        `${role}_refreshToken`,
+        refreshToken
+      );
+
+      localStorage.setItem(
+        "role",
+        role
+      );
+
+      router.push("/");
     }
 
-  }, [dispatch, router]);
+  }, [params, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      Logging in...
+    <div>
+      Signing in...
     </div>
   );
 }

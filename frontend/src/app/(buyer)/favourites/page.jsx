@@ -21,7 +21,8 @@ const Page = () => {
   const { items: favouriteIds, loading, error } = useSelector((state) => state.favourites);
   const products = useSelector((state) => state.products.products || []);
   const cartItems = useSelector((state) => state.cart.items || []);
-  const [token, setToken] = React.useState(null);
+  const authUser = useSelector((state) => state.auth.user);
+  const isLoggedIn = !!authUser;
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
   const MAX_WISHLIST_ITEMS = 5;
@@ -44,8 +45,6 @@ const Page = () => {
   //   return favouriteIds.map((id) => productMap[id]).filter(Boolean);
   // }, [favouriteIds, productMap]);
 
-  const authUser = useSelector((state) => state.auth.user);
-
   const fullName = authUser?.full_name || authUser?.fullName || authUser?.name || "";
   const [firstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
   const user = {
@@ -55,36 +54,18 @@ const Page = () => {
   };
 
   useEffect(() => {
-    setMounted(true);
+  setMounted(true);
+
+  if (authUser) {
     dispatch(fetchFavourites());
     dispatch(fetchProducts());
     dispatch(fetchCart());
-  }, [dispatch]);
+  }
+}, [dispatch, authUser]);
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("accessToken");
-    setToken(savedToken);
-
-    const handleStorageChange = () => {
-      const updatedToken = localStorage.getItem("accessToken");
-      setToken(updatedToken);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (mounted && token) {
-      dispatch(fetchFavourites());
-    }
-  }, [mounted, token, dispatch]);
 
   const handleClearAll = () => {
-    if (!token) {
+    if (!isLoggedIn) {
       router.push("/login");
       return;
     }
@@ -97,7 +78,7 @@ const Page = () => {
   };
 
   const handleRemove = (productId) => {
-    if (!token) {
+    if (!isLoggedIn) {
       router.push("/login");
       return;
     }
@@ -105,7 +86,7 @@ const Page = () => {
   };
 
   const handleAddToCart = async (productId) => {
-    if (!token) {
+    if (!isLoggedIn) {
       router.push("/login");
       return;
     }
@@ -206,7 +187,7 @@ const Page = () => {
 
   if (!mounted) return null;
 
-  if (!token) {
+  if (!isLoggedIn) {
     return (
       <div className="bg-[#0B1F3A] min-h-screen">
         <div className="mx-auto bg-white border rounded-sm border-white/10">

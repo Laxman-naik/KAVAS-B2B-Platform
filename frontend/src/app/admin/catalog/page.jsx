@@ -11,18 +11,11 @@ const ITEMS_PER_PAGE = 10;
 
 export default function ProductCatalog() {
   const dispatch = useDispatch();
-
-  const { products = [], loading } = useSelector(
-    (state) => state.products
-  );
-
+  const { products = [], loading } = useSelector((state) => state.products);
   const [catalogProducts, setCatalogProducts] = useState([]);
-
   const [currentPage, setCurrentPage] = useState(1);
-
   const [openView, setOpenView] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
   const [openEdit, setOpenEdit] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
 
@@ -107,7 +100,6 @@ export default function ProductCatalog() {
                 "Sales",
                 "Views",
                 "Rating",
-                "Status",
                 "Action",
               ].map((h) => (
                 <th
@@ -182,7 +174,7 @@ export default function ProductCatalog() {
                   {p.avg_rating}
                 </td>
 
-                <td className="p-3">
+                {/* <td className="p-3">
                   <span
                     className={`rounded px-2 py-1 text-xs ${
                       p.status === "approved"
@@ -203,7 +195,7 @@ export default function ProductCatalog() {
                         {p.rejection_reason}
                       </p>
                     )}
-                </td>
+                </td> */}
 
                 <td className="p-3">
                   <div className="flex items-center gap-3">
@@ -217,7 +209,7 @@ export default function ProductCatalog() {
                       <Eye size={18} />
                     </button>
 
-                    <button
+                    {/* <button
                       className="text-yellow-400 hover:text-yellow-300"
                       title="Update Status"
                       onClick={() =>
@@ -225,7 +217,7 @@ export default function ProductCatalog() {
                       }
                     >
                       <Edit size={18} />
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
