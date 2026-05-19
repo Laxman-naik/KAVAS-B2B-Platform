@@ -8,6 +8,75 @@ import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
 
 const otpStore = new Map();
 
+// export const sendOtp = async (req, res) => {
+//   try {
+//     const { email, phone } = req.body;
+
+//     if (!email && !phone) {
+//       return res.status(400).json({ message: "Email or phone required" });
+//     }
+
+//     const expires = Date.now() + 5 * 60 * 1000;
+
+//     // ================= PHONE OTP =================
+//     if (phone) {
+//       const phoneOtp = Math.floor(100000 + Math.random() * 900000);
+//       const key = `phone:${phone}`;
+
+//       otpStore.set(key, {
+//         otp: phoneOtp,
+//         expires,
+//         verified: false,
+//       });
+
+//       await axios.post(
+//         "https://www.fast2sms.com/dev/bulkV2",
+//         {
+//           route: "q",
+//           message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
+//           language: "english",
+//           numbers: phone,
+//         },
+//         {
+//           headers: {
+//             authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+//           },
+//         }
+//       );
+
+//       console.log("PHONE OTP SENT:", key, phoneOtp);
+//     }
+
+//     // ================= EMAIL OTP =================
+//     if (email) {
+//       const emailOtp = Math.floor(100000 + Math.random() * 900000);
+//       const key = `email:${email}`;
+
+//       otpStore.set(key, {
+//         otp: emailOtp,
+//         expires,
+//         verified: false,
+//       });
+
+//       try {
+//   const info = await sendEmailOtp(email, emailOtp);
+//   console.log("EMAIL SENT:", info.messageId);
+//   emailSent = true;
+// } catch (err) {
+//   console.error("EMAIL FAILED FULL:", err);
+//   emailSent = false;
+// }
+
+//       console.log("EMAIL OTP SENT:", key, emailOtp);
+//     }
+
+//     return res.json({ message: "OTP sent successfully" });
+
+//   } catch (err) {
+//     console.error("SEND OTP ERROR:", err);
+//     return res.status(500).json({ message: err });
+//   }
+// };
 export const sendOtp = async (req, res) => {
   try {
     const { email, phone } = req.body;
@@ -17,6 +86,9 @@ export const sendOtp = async (req, res) => {
     }
 
     const expires = Date.now() + 5 * 60 * 1000;
+
+    let emailSent = false;
+    let phoneSent = false;
 
     // ================= PHONE OTP =================
     if (phone) {
@@ -29,22 +101,28 @@ export const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      await axios.post(
-        "https://www.fast2sms.com/dev/bulkV2",
-        {
-          route: "q",
-          message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
-          language: "english",
-          numbers: phone,
-        },
-        {
-          headers: {
-            authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+      try {
+        await axios.post(
+          "https://www.fast2sms.com/dev/bulkV2",
+          {
+            route: "q",
+            message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
+            language: "english",
+            numbers: phone,
           },
-        }
-      );
+          {
+            headers: {
+              authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
+            },
+          }
+        );
 
-      console.log("PHONE OTP SENT:", key, phoneOtp);
+        phoneSent = true;
+      } catch (smsErr) {
+        console.error("SMS FAILED FULL:", smsErr);
+      }
+
+      console.log("PHONE OTP GENERATED:", key, phoneOtp);
     }
 
     // ================= EMAIL OTP =================
@@ -58,16 +136,29 @@ export const sendOtp = async (req, res) => {
         verified: false,
       });
 
-      await sendEmailOtp(email, emailOtp);
+      try {
+        const info = await sendEmailOtp(email, emailOtp);
+        console.log("EMAIL SENT:", info.messageId);
+        emailSent = true;
+      } catch (err) {
+        console.error("EMAIL FAILED FULL:", err);
+      }
 
-      console.log("EMAIL OTP SENT:", key, emailOtp);
+      console.log("EMAIL OTP GENERATED:", key, emailOtp);
     }
 
-    return res.json({ message: "OTP sent successfully" });
+    return res.status(200).json({
+      message: "OTP process completed",
+      emailSent,
+      phoneSent,
+    });
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      message: err.message || "Internal server error",
+    });
   }
 };
 
@@ -291,7 +382,7 @@ export const loginVendor = async (req, res) => {
         onboarding_id: vendor.onboarding_id,
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "60m" }
     );
 
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
@@ -323,6 +414,7 @@ export const loginVendor = async (req, res) => {
       next_action,
       onboarding_step,
       status: vendor.status,
+      role:"vendoe",
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,
@@ -345,28 +437,55 @@ export const refreshAccessToken = async (req, res) => {
       return res.status(401).json({ message: "No refresh token" });
     }
 
-    // 1. verify token
+    // 1. verify JWT refresh token
     const decoded = verifyRefreshToken(refreshToken);
 
-    // 2. check DB session
+    if (!decoded?.vendor_id) {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // 2. check session in DB (STRICT validation)
     const session = await db.query(
-      `SELECT * FROM vendor_sessions 
-       WHERE refresh_token = $1 AND expires_at > NOW()`,
-      [refreshToken]
+      `SELECT * FROM sessions 
+       WHERE refresh_token = $1 
+         AND user_id = $2 
+         AND expires_at > NOW()
+         AND is_revoked = false`,
+      [refreshToken, decoded.vendor_id]
     );
 
     if (!session.rows.length) {
       return res.status(401).json({ message: "Invalid session" });
     }
 
-    // 3. issue new access token
+    const currentSession = session.rows[0];
+
+    // 3. generate new access token
     const accessToken = generateAccessToken({
       vendor_id: decoded.vendor_id,
     });
 
-    return res.json({ accessToken });
+    // 4. OPTIONAL BUT IMPORTANT → rotate refresh token (security upgrade)
+    const newRefreshToken = generateRefreshToken({
+      vendor_id: decoded.vendor_id,
+    });
+
+    // 5. update session (rotation + tracking)
+    await db.query(
+      `UPDATE sessions
+       SET refresh_token = $1,
+           last_used_at = NOW()
+       WHERE id = $2`,
+      [newRefreshToken, currentSession.id]
+    );
+
+    return res.json({
+      accessToken,
+      refreshToken: newRefreshToken, // send updated token
+    });
 
   } catch (err) {
+    console.error("Refresh error:", err);
     return res.status(401).json({ message: "Refresh failed" });
   }
 };
@@ -436,14 +555,106 @@ export const logoutVendor = async (req, res) => {
 };
 
 export const getVendorProfile = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const result = await db.query(
-    `SELECT email_verified, phone_verified FROM vendorprofile WHERE id = $1`,
-    [id]
-  );
+    // ================= VENDOR =================
+    const vendorResult = await db.query(
+      `
+      SELECT *
+      FROM vendorprofile
+      WHERE id = $1
+      `,
+      [id]
+    );
 
-  res.json(result.rows[0]);
+    if (vendorResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Vendor not found",
+      });
+    }
+
+    const vendor = vendorResult.rows[0];
+
+    // ================= ONBOARDING =================
+    const onboardingResult = await db.query(
+      `
+      SELECT *
+      FROM vendor_onboarding
+      WHERE vendor_id = $1
+      `,
+      [id]
+    );
+
+    const onboarding = onboardingResult.rows[0] || null;
+
+    let business = null;
+    let bank = null;
+    let store = null;
+
+    // ================= RELATED TABLES =================
+    if (onboarding?.id) {
+      // BUSINESS
+      const businessResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_business_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      business = businessResult.rows[0] || null;
+
+      // BANK
+      const bankResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_bank_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      bank = bankResult.rows[0] || null;
+
+      // STORE
+      const storeResult = await db.query(
+        `
+        SELECT *
+        FROM vendor_store_details
+        WHERE onboarding_id = $1
+        `,
+        [onboarding.id]
+      );
+
+      store = storeResult.rows[0] || null;
+    }
+
+    // ================= MERGED RESPONSE =================
+    const mergedVendor = {
+      ...vendor,
+
+      onboarding,
+
+      business,
+
+      bank,
+
+      store,
+    };
+
+    return res.json({
+      vendor: mergedVendor,
+    });
+
+  } catch (err) {
+    console.error("GET VENDOR PROFILE ERROR:", err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
 };
 
 export const upsertBusinessDetails = async (req, res) => {

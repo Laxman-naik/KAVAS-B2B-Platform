@@ -17,16 +17,25 @@ export default function NewArrivals() {
   }, [dispatch]);
 
   const liked = useMemo(() => {
-    const items = Array.isArray(favouriteItems) ? favouriteItems : [];
-    return items
-      .map((item) => item?._id ?? item?.id ?? item?.productId)
+    return (Array.isArray(favouriteItems)
+      ? favouriteItems
+      : []
+    )
+      .map((item) =>
+        String(
+          item?._id ??
+          item?.id ??
+          item?.productId ??
+          item
+        )
+      )
       .filter(Boolean);
   }, [favouriteItems]);
 
   const onToggleFavourite = (product) => {
     const productId = product?._id ?? product?.id ?? product?.productId;
     if (!productId) return;
-    if (liked.includes(productId)) {
+    if (liked.includes(String(productId))) {
       dispatch(removeFromFavourites(productId));
     } else {
       dispatch(addToFavourites(productId));
@@ -82,8 +91,8 @@ export default function NewArrivals() {
                   );
                 }
 
-                const productId = item?._id ?? item?.id ?? item?.productId;
-                const isLiked = productId ? liked.includes(productId) : false;
+                const productId = String(item?._id ?? item?.id ?? item?.productId);
+                const isLiked = liked.includes(productId);
                 const imageUrl =
                   item?.image_url || item?.imageUrl || "/placeholder.png";
                 const title = item?.name || "Product";
@@ -99,12 +108,15 @@ export default function NewArrivals() {
                         type="button"
                         onClick={() => onToggleFavourite(item)}
                         className={`absolute right-3 top-3 z-10 h-9 w-9 rounded-full border flex items-center justify-center bg-white/90 backdrop-blur shadow-sm transition ${isLiked
-                            ? "border-[#D4AF37] text-[#D4AF37]"
-                            : "border-[#E5E5E5] text-[#0B1F3A] hover:border-[#D4AF37]"
+                          ? "border-[#D4AF37] text-[#D4AF37]"
+                          : "border-[#E5E5E5] text-[#0B1F3A] hover:border-[#D4AF37]"
                           }`}
                       >
                         <Heart
-                          className={`h-4 w-4 ${isLiked ? "fill-[#D4AF37]" : ""}`}
+                          className={`h-4 w-4 ${isLiked
+                              ? "text-red-500 fill-red-500"
+                              : "text-[#0B1F3A]"
+                            }`}
                         />
                       </button>
 
@@ -130,8 +142,8 @@ export default function NewArrivals() {
                             <Star
                               key={i}
                               className={`h-3.5 w-3.5 ${filled
-                                  ? "text-[#D4AF37] fill-[#D4AF37]"
-                                  : "text-gray-300"
+                                ? "text-[#D4AF37] fill-[#D4AF37]"
+                                : "text-gray-300"
                                 }`}
                             />
                           );

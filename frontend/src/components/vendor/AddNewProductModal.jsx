@@ -1,26 +1,15 @@
-
-
-
 "use client";
- 
-import React, { useMemo, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings } from "lucide-react";
- 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
- 
-/* ─────────────────────────────────────────────
-   Tiny shared field components
-───────────────────────────────────────────── */
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import { useDispatch, useSelector } from "react-redux";
+import { getMainCategoriesThunk, getSubcategoriesByParentThunk, clearSubcategories, } from "@/store/slices/categorySlice";
+
 const Field = ({ label, required, children, className = "" }) => (
   <div className={`space-y-1.5 ${className}`}>
     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
@@ -29,12 +18,9 @@ const Field = ({ label, required, children, className = "" }) => (
     {children}
   </div>
 );
- 
-const inputCls =
-  "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 
+const inputCls = "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 const VARIANT_TYPES = ["Color", "Size", "Unit", "Custom"];
-
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Standard", "Premium"];
 const UNIT_OPTIONS = ["pcs", "kg", "litre", "meter", "box", "set"];
 const COLOR_OPTIONS = [
@@ -59,10 +45,10 @@ const toggleCsvValue = (csv, value) => {
   return Array.from(set).join(", ");
 };
 
-/* ─────────────────────────────────────────────
-   Main Modal
-───────────────────────────────────────────── */
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
+  const dispatch = useDispatch();
+  const { mainCategories, subcategories, loading, } = useSelector((state) => state.category);
+
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [form, setForm] = useState({
@@ -91,7 +77,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     supplierEmail: "", supplierPhone: "", supplierAddress: "",
     website: "", certification: "", businessLicenseNo: "", additionalDocuments: [],
   });
- 
+
   const update = (key) => (value) => setForm(s => ({ ...s, [key]: value }));
   const updateRow = (key, id, patch) => setForm(s => ({ ...s, [key]: (s[key] || []).map(r => r.id === id ? { ...r, ...patch } : r) }));
   const addRow = (key, emptyRow) => setForm(s => {
@@ -114,15 +100,15 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     setVideoUrl("");
   };
 
-  const removeVideo = (idx) =>
-    setForm((s) => ({ ...s, videos: (s.videos || []).filter((_, i) => i !== idx) }));
-
+  const removeVideo = (idx) => setForm((s) => ({ ...s, videos: (s.videos || []).filter((_, i) => i !== idx) }));
   const canSubmit = useMemo(() => !!(form.name.trim() && form.sku.trim() && form.category.trim() && form.description.trim() && form.price.trim() && form.moq.trim() && form.stock.trim()), [form]);
-
   const close = () => typeof onClose === "function" && onClose();
 
-  const categoriesLevel1 = ["Tools & Equipment","Industrial Hardware","Electrical","Raw Materials","Chemicals"];
-  const categoriesLevel2 = ["Cleaning Equipment","Pressure Washers","Bearings","Fasteners","Pipes & Fittings"];
+  // const categoriesLevel1 = ["Tools & Equipment","Industrial Hardware","Electrical","Raw Materials","Chemicals"];
+  // const categoriesLevel2 = ["Cleaning Equipment","Pressure Washers","Bearings","Fasteners","Pipes & Fittings"];
+  useEffect(() => {
+    dispatch(getMainCategoriesThunk());
+  }, [dispatch]);
 
   const summary = useMemo(() => {
     const variantsCount = Array.isArray(form.variants) ? form.variants.filter(v => String(v?.value || "").trim()).length : 0;
@@ -203,12 +189,12 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <Input className={inputCls} value={form.brand} onChange={(e) => update("brand")(e.target.value)} placeholder="Enter brand name" />
                         </Field>
                         <Field label="Category" required>
-                          <Select value={form.category} onValueChange={update("category")}>
+                          <Select value={form.category} onValueChange={(value) => { update("category")(value); update("subCategory")(""); dispatch(getSubcategoriesByParentThunk(value)); }}>
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {categoriesLevel1.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              {mainCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}> {cat.name} </SelectItem>))}
                             </SelectContent>
                           </Select>
                         </Field>
@@ -221,7 +207,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                               <SelectValue placeholder="Select sub category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {categoriesLevel2.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              {subcategories.length > 0 ? (subcategories.map((sub) => (<SelectItem key={sub.id} value={sub.id}> {sub.name}</SelectItem>))) : (<div className="px-3 py-2 text-sm text-gray-500">No subcategories found </div>)}
                             </SelectContent>
                           </Select>
                         </Field>
@@ -723,5 +709,5 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     </>
   );
 }
- 
+
 export default AddNewProductModal;

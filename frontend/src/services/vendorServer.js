@@ -9,20 +9,49 @@ export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", 
 
 export const loginVendorAPI = async (data) => {
   try {
-    const res = await authapi.post("/api/vendor/login", data, {
-      skipAuth: true,
-      withCredentials: true, 
-    });
+    const res = await authapi.post(
+      "/api/vendor/login",
+      data,
+      {
+        skipAuth: true,
+        withCredentials: true,
+      }
+    );
 
     const response = res.data;
 
-    if (typeof window !== "undefined" && response?.accessToken) {
-      localStorage.setItem("accessToken", response.accessToken);
-      localStorage.setItem("next_action", response.next_action || "dashboard");
-      localStorage.setItem("onboarding_step", response.onboarding_step || 1);
+    if (
+      typeof window !== "undefined" &&
+      response?.accessToken
+    ) {
+      // ✅ USE ROLE-BASED STORAGE
+      localStorage.setItem("role", "vendor");
+
+      localStorage.setItem(
+        "vendor_accessToken",
+        response.accessToken
+      );
+
+      if (response.refreshToken) {
+        localStorage.setItem(
+          "vendor_refreshToken",
+          response.refreshToken
+        );
+      }
+
+      localStorage.setItem(
+        "next_action",
+        response.next_action || "dashboard"
+      );
+
+      localStorage.setItem(
+        "onboarding_step",
+        response.onboarding_step || 1
+      );
     }
 
     return response;
+
   } catch (err) {
     const errorData = err.response?.data;
 
@@ -40,14 +69,8 @@ export const loginVendorAPI = async (data) => {
 
 
 export const refreshTokenAPI = async () => {
-  const refreshToken = localStorage.getItem("refreshToken");
-
-  const res = await authapi.post("/api/vendor/refresh", {
-    refreshToken,
-  });
-
-  localStorage.setItem("accessToken", res.data.accessToken);
-
+  const refreshToken = localStorage.getItem("vendor_refreshToken");
+  const res = await axios.post("/api/vendor/refresh", { refreshToken });
   return res.data;
 };
 
@@ -71,8 +94,4 @@ export const getOnboardingStateAPI = () => authapi.get("/api/vendor/state");
 
 export const updateOnboardingStepAPI = (step) => authapi.patch("/api/vendor/step", { step });
 
-export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-    },
-  });
+export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me",);

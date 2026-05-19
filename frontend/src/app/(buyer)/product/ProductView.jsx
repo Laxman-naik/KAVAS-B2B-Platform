@@ -253,10 +253,7 @@ export default function ProductView() {
   const id = paramId ?? paramIdLower;
   const dispatch = useDispatch();
   const { product, loading, error, products } = useSelector((s) => s.products);
-  console.log("PRODUCT FROM BACKEND:", product);
-
   useEffect(() => { if (id) dispatch(fetchSingleProduct(id)); }, [dispatch, id]);
-
   const p = product ?? {};
   const norm = useNormalized(p);
   const mediaItems = useMemo(() => normalizeMedia(p), [product]);
