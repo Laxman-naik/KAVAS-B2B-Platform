@@ -334,24 +334,62 @@ const getOrCreateCart = async (userId) => {
 };
 
 /* ================= GET CART ITEMS ================= */
+// const getCartItems = async (cartId) => {
+//   const result = await pool.query(
+//     `SELECT
+//       ci.id,
+//       ci.cart_id,
+//       ci.product_id,
+//       ci.variant_id,
+//       ci.quantity,
+//       ci.moq,
+//       ci.image_url,
+//       ci.price,
+//       ci.mrp,
+//       ci.product_name AS name,
+//       ci.unit,
+//       ci.added_at
+//      FROM cart_items ci
+//      WHERE ci.cart_id=$1
+//      ORDER BY ci.added_at DESC`,
+//     [cartId]
+//   );
+
+//   return result.rows;
+// };
 const getCartItems = async (cartId) => {
   const result = await pool.query(
-    `SELECT
+    `
+    SELECT
       ci.id,
       ci.cart_id,
+
       ci.product_id,
       ci.variant_id,
+
+      ci.organization_id,
+      ci.organization_name,
+      ci.business_type,
+
       ci.quantity,
       ci.moq,
+
       ci.image_url,
+
       ci.price,
       ci.mrp,
+
       ci.product_name AS name,
       ci.unit,
+
       ci.added_at
-     FROM cart_items ci
-     WHERE ci.cart_id=$1
-     ORDER BY ci.added_at DESC`,
+
+    FROM cart_items ci
+
+    WHERE ci.cart_id = $1
+
+    ORDER BY ci.added_at DESC
+    `,
     [cartId]
   );
 
