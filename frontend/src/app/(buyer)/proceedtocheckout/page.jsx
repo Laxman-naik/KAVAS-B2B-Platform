@@ -4,62 +4,47 @@ import React, { useEffect, useMemo, useState } from "react";
 import { MapPin, FileText, Package, CreditCard, ShieldCheck, LockKeyhole, Download, Plus, } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAddresses } from "@/store/slices/addressSlice";
+import { fetchCart } from "@/store/slices/cartSlice";
 
 const Page = () => {
   const [selectedPayment, setSelectedPayment] = useState("net30");
   const dispatch = useDispatch();
   const { addresses, loading } = useSelector((state) => state.address);
-  const defaultAddress = useMemo(() => addresses.find((a) => a.is_default),[addresses]);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const { items: cartItems = [], loading: cartLoading, } = useSelector((state) => state.cart);
+  const defaultAddress = useMemo(() => addresses.find((a) => a.is_default), [addresses]);
+  console.log(cartItems)
 
   useEffect(() => {
     dispatch(fetchAddresses());
+    dispatch(fetchCart());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (defaultAddress) {
-      setSelectedAddress(defaultAddress.id);
-    }
-  }, [defaultAddress]);
+  const products = useMemo(() => {
+    return cartItems.map((item) => ({
+      id: item.id,
 
-  const products = [
-    {
-      id: 1,
-      name: "Premium Coffee Beans",
-      desc: "1kg • Pack of 10",
-      qty: 2,
-      unitPrice: 120,
-      image: "/coffee.png",
-    },
-    {
-      id: 2,
-      name: "Ceramic Coffee Mug",
-      desc: "Black • 350ml • Pack of 24",
-      qty: 1,
-      unitPrice: 120,
-      image: "/mug.png",
-    },
-    {
-      id: 3,
-      name: "Green Tea Leaves",
-      desc: "500g • Pack of 20",
-      qty: 1,
-      unitPrice: 200,
-      image: "/tea.png",
-    },
-  ];
+      name: item.name,
 
-  // const addresses = [
-  //   {
-  //     id: "office",
-  //     title: "Office Address",
-  //     tag: "Default",
-  //     name: "Kavas Industries Pvt. Ltd.",
-  //     address: "123 Business Park, Industrial Area, New York, NY 10001, United States",
-  //     person: "John Doe",
-  //     phone: "+1 123 456 7890",
-  //   },
-  // ];
+      desc: [
+        item.unit ? `Unit: ${item.unit}` : null,
+        item.moq ? `MOQ: ${item.moq}` : null,
+      ]
+        .filter(Boolean)
+        .join(" • "),
+
+      qty: Number(item.quantity),
+
+      unitPrice: Number(item.price || 0),
+
+      mrp: Number(item.mrp || 0),
+
+      image: item.image_url || "/placeholder.png",
+
+      productId: item.product_id,
+      variantId: item.variant_id,
+      organizationId: item.organization_id,
+    }));
+  }, [cartItems]);
 
   const paymentMethods = [
     ["net30", "Net 30", "Pay within 30 days"],
@@ -68,10 +53,12 @@ const Page = () => {
     ["bank", "Bank Transfer", "Secure bank transfer"],
   ];
 
-  const subtotal = useMemo(
-    () => products.reduce((sum, item) => sum + item.qty * item.unitPrice, 0),
-    []
-  );
+  const subtotal = useMemo(() => {
+    return products.reduce(
+      (sum, item) => sum + item.qty * item.unitPrice,
+      0
+    );
+  }, [products]);
 
   return (
     <main className="min-h-screen bg-[#001a35] px-4 py-5 text-[#0b1324] md:px-8">

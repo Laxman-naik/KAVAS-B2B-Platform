@@ -13,7 +13,7 @@ const CartPage = () => {
   const dispatch = useDispatch();
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
-  console.log("CART ITEMS:", cartItems);
+  // console.log("CART ITEMS:", cartItems);
   const router = useRouter();
 
   /* ---------------- FETCH CART ---------------- */
@@ -247,9 +247,9 @@ const handleCheckout = async() => {
 
                           <button
                             onClick={() => handleDecrease(item)}
-                            disabled={(item.quantity || moq) <= moq || loading}
+                            disabled={(item.quantity || moq) <= moq || updating}
                             className={`px-2.5 py-1 bg-gray-100 ${
-                              (item.quantity || moq) <= moq || loading
+                              (item.quantity || moq) <= moq || updating
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-200"
                             }`}
