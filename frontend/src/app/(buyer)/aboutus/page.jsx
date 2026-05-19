@@ -114,23 +114,19 @@ const AboutUsPage = () => {
               KAVS was founded to simplify wholesale sourcing with reliable
               products, smooth delivery, and customer-focused service.
             </p>
-
             <p className="mt-3 text-sm leading-7 text-[#1A1A1A]/75">
               Today, businesses trust us for dependable partnerships and
               high-quality wholesale solutions.
             </p>
-
             <div className="mt-5">
               <p className="font-serif text-2xl italic text-[#0B1F3A]">
                 KAVS Team
               </p>
-
               <p className="mt-1 text-xs font-semibold tracking-wide text-[#D4AF37]">
                 KAVS WHOLESALE
               </p>
             </div>
           </div>
-
           <div className="rounded-sm border border-[#E5E5E5] bg-[#FFFFFF] p-5 shadow-sm">
             {[
               { icon: BadgeCheck, title: "Quality Assurance" },
@@ -139,7 +135,6 @@ const AboutUsPage = () => {
               { icon: HeartHandshake, title: "Customer First" },
             ].map((item) => {
               const Icon = item.icon;
-
               return (
                 <div
                   key={item.title}
@@ -158,7 +153,6 @@ const AboutUsPage = () => {
           </div>
         </div>
       </section>
-
       <section className="w-full bg-[#FFF8EC] py-10">
         <div className="px-5 lg:px-12">
           <div className="mb-8 flex items-center justify-center gap-4">
@@ -213,7 +207,6 @@ const AboutUsPage = () => {
           </div>
         </div>
       </section>
-
       <section className="w-full bg-[#0B1F3A] py-8 text-[#FFFFFF]">
         <div className="grid grid-cols-1 gap-6 px-5 lg:grid-cols-[1fr_2fr] lg:px-12">
           <div>
