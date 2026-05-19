@@ -35,10 +35,12 @@ export const getSingleProduct = async (id) => {
 };
 
 // ================= CREATE PRODUCT =================
-export const createProduct = async (data) => {
-  const res = await productapi.post("/api/products", data);
-  return res.data;
-};
+// export const createProduct = async (data) => {
+//   const res = await productapi.post("/api/products", data);
+//   return res.data;
+// };
+
+
 
 // ================= UPDATE PRODUCT =================
 export const updateProduct = async (id, data) => {
@@ -72,19 +74,30 @@ export const deleteProduct = async (id) => {
   const res = await productapi.delete(`/api/products/${id}`);
   return res.data;
 };
-
-// ================= NEW ARRIVALS =================
+// ================= GET NEW ARRIVALS =================
 export const getNewArrivalsAPI = async () => {
-  const res = await productapi.get("/api/products/new-arrivals", {
+  const res = await productapi.get("/api/products/new-arrivals?days=365", {
     skipAuth: true,
   });
   return res.data;
 };
 
-// ================= TRENDING PRODUCTS =================
+// ================= GET TRENDING PRODUCTS =================
 export const getTrendingProductsAPI = async () => {
   const res = await productapi.get("/api/products/trending", {
     skipAuth: true,
   });
   return res.data;
 };
+export const createProduct = async (data) => {
+  const res = await productapi.post("/api/products", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return res.data;
+};
+
+
+// export const getVendorProductsAPI = (vendorId) => productapi.get(`/api/products/vendor/${vendorId}`, {skipAuth: true,});

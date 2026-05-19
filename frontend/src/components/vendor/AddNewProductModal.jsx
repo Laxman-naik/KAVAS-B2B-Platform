@@ -1,16 +1,37 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Upload,
+  X,
+  Check,
+  Package,
+  Image,
+  Layers,
+  Archive,
+  Tag,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import { getMainCategoriesThunk, getSubcategoriesByParentThunk, clearSubcategories, } from "@/store/slices/categorySlice";
+import {
+  getMainCategoriesThunk,
+  getSubcategoriesByParentThunk,
+  clearSubcategories,
+} from "@/store/slices/categorySlice";
 import { addProduct } from "@/store/slices/productSlice";
-
 
 const Field = ({ label, required, children, className = "" }) => (
   <div className={`space-y-1.5 ${className}`}>
@@ -22,7 +43,8 @@ const Field = ({ label, required, children, className = "" }) => (
   </div>
 );
 
-const inputCls = "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
+const inputCls =
+  "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 const VARIANT_TYPES = ["Color", "Size", "Unit", "Custom"];
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Standard", "Premium"];
 const UNIT_OPTIONS = ["pcs", "kg", "litre", "meter", "box", "set"];
@@ -50,7 +72,9 @@ const toggleCsvValue = (csv, value) => {
 
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   const dispatch = useDispatch();
-  const { mainCategories, subcategories, loading, } = useSelector((state) => state.category);
+  const { mainCategories, subcategories, loading } = useSelector(
+    (state) => state.category,
+  );
 
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -137,13 +161,22 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     additionalDocuments: [],
   });
 
-  const update = (key) => (value) => setForm(s => ({ ...s, [key]: value }));
-  const updateRow = (key, id, patch) => setForm(s => ({ ...s, [key]: (s[key] || []).map(r => r.id === id ? { ...r, ...patch } : r) }));
-  const addRow = (key, emptyRow) => setForm(s => {
-    const nextId = Math.max(0, ...(s[key] || []).map(x => x.id)) + 1;
-    return { ...s, [key]: [...(s[key] || []), { ...emptyRow, id: nextId }] };
-  });
-  const removeRow = (key, id) => setForm(s => ({ ...s, [key]: (s[key] || []).filter(r => r.id !== id) }));
+  const update = (key) => (value) => setForm((s) => ({ ...s, [key]: value }));
+  const updateRow = (key, id, patch) =>
+    setForm((s) => ({
+      ...s,
+      [key]: (s[key] || []).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+  const addRow = (key, emptyRow) =>
+    setForm((s) => {
+      const nextId = Math.max(0, ...(s[key] || []).map((x) => x.id)) + 1;
+      return { ...s, [key]: [...(s[key] || []), { ...emptyRow, id: nextId }] };
+    });
+  const removeRow = (key, id) =>
+    setForm((s) => ({
+      ...s,
+      [key]: (s[key] || []).filter((r) => r.id !== id),
+    }));
 
   const addImageUrl = () => {
     const url = String(imageUrl || "").trim();
@@ -159,8 +192,24 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     setVideoUrl("");
   };
 
-  const removeVideo = (idx) => setForm((s) => ({ ...s, videos: (s.videos || []).filter((_, i) => i !== idx) }));
-  const canSubmit = useMemo(() => !!(form.name.trim() && form.sku.trim() && form.category.trim() && form.description.trim() && form.price.trim() && form.moq.trim() && form.stock.trim()), [form]);
+  const removeVideo = (idx) =>
+    setForm((s) => ({
+      ...s,
+      videos: (s.videos || []).filter((_, i) => i !== idx),
+    }));
+  const canSubmit = useMemo(
+    () =>
+      !!(
+        form.name.trim() &&
+        form.sku.trim() &&
+        form.category.trim() &&
+        form.description.trim() &&
+        form.price.trim() &&
+        form.moq.trim() &&
+        form.stock.trim()
+      ),
+    [form],
+  );
   const close = () => typeof onClose === "function" && onClose();
 
   // const categoriesLevel1 = ["Tools & Equipment","Industrial Hardware","Electrical","Raw Materials","Chemicals"];
@@ -188,65 +237,91 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
   if (!open) return null;
   const handlePublishProduct = async () => {
-  if (!canSubmit) return;
+    if (!canSubmit) return;
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  // ================= BASIC FIELDS =================
-  formData.append("name", form.name);
-  formData.append("sku", form.sku);
-  formData.append("category", form.category);
-  formData.append("subCategory", form.subCategory);
-  formData.append("brand", form.brand);
-  formData.append("price", Number(form.price));
-  formData.append("mrp", Number(form.mrp || 0));
-  formData.append("moq", Number(form.moq));
-  formData.append("stock", Number(form.stock));
-  formData.append("description", form.description);
-  formData.append("unit", form.unit || "");
+    // ================= ORGANIZATION ID FIX =================
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // ================= JSON FIELDS =================
-  formData.append(
-    "specifications",
-    JSON.stringify(form.specifications.filter(s => s.name && s.value))
-  );
+    const organizationId =
+      localStorage.getItem("organizationId") ||
+      localStorage.getItem("organization_id") ||
+      user.organization_id ||
+      user.organizationId ||
+      user.organization?.id ||
+      user.vendor?.organization_id ||
+      user.vendor?.organizationId ||
+      "42519fc0-c043-4f67-92e9-7f7b3c60472a";
 
-  formData.append(
-    "variants",
-    JSON.stringify(form.variants.filter(v => v.variantName && v.value))
-  );
-
-  formData.append(
-    "bulkPricing",
-    JSON.stringify(form.bulkPricing.filter(b => b.minQty && b.pricePerUnit))
-  );
-
-  // ================= IMAGES =================
-  form.images.forEach((url) => {
-    formData.append("images", url);
-  });
-
-  // ================= VIDEOS =================
-  form.videos.forEach((url) => {
-    formData.append("videos", url);
-  });
-
-  try {
-    const resultAction = await dispatch(addProduct(formData));
-
-    if (addProduct.fulfilled.match(resultAction)) {
-      console.log("✅ Product Created");
-
-      onSubmit?.(resultAction.payload);
-      close();
-    } else {
-      console.error("❌ Failed:", resultAction.payload);
-      alert(JSON.stringify(resultAction.payload, null, 2));
+    if (!organizationId) {
+      alert("Organization ID not found. Please login again as vendor.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-  }
-};
+
+    formData.append("organizationId", organizationId);
+
+    // ================= BASIC FIELDS =================
+    formData.append("name", form.name);
+    formData.append("sku", form.sku);
+    formData.append("category", form.category);
+    formData.append("subCategory", form.subCategory);
+    formData.append("brand", form.brand);
+    formData.append("price", Number(form.price));
+    formData.append("mrp", Number(form.mrp || 0));
+    formData.append("moq", Number(form.moq));
+    formData.append("stock", Number(form.stock));
+    formData.append("description", form.description);
+    formData.append("unit", form.unit || "");
+
+    // ================= JSON FIELDS =================
+    formData.append(
+      "specifications",
+      JSON.stringify(form.specifications.filter((s) => s.name && s.value)),
+    );
+
+    formData.append(
+      "variants",
+      JSON.stringify(form.variants.filter((v) => v.variantName && v.value)),
+    );
+
+    formData.append(
+      "bulkPricing",
+      JSON.stringify(
+        form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit),
+      ),
+    );
+
+    // ================= IMAGES =================
+    formData.append("images", JSON.stringify(form.images || []));
+
+    // ================= VIDEOS =================
+    formData.append("videos", JSON.stringify(form.videos || []));
+
+    try {
+      const resultAction = await dispatch(addProduct(formData));
+
+      if (addProduct.fulfilled.match(resultAction)) {
+        console.log("✅ Product Created", resultAction.payload);
+
+        alert("Product created successfully!");
+
+        onSubmit?.(resultAction.payload);
+        close();
+      } else {
+        console.error("❌ Failed Full Action:", resultAction);
+
+        alert(
+          resultAction.payload?.message ||
+            resultAction.error?.message ||
+            "Product creation failed",
+        );
+      }
+    } catch (err) {
+      console.error("❌ Product create error:", err);
+      alert("Something went wrong while creating product");
+    }
+  };
 
   return (
     <>
@@ -338,12 +413,24 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           />
                         </Field>
                         <Field label="Category" required>
-                          <Select value={form.category} onValueChange={(value) => { update("category")(value); update("subCategory")(""); dispatch(getSubcategoriesByParentThunk(value)); }}>
+                          <Select
+                            value={form.category}
+                            onValueChange={(value) => {
+                              update("category")(value);
+                              update("subCategory")("");
+                              dispatch(getSubcategoriesByParentThunk(value));
+                            }}
+                          >
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {mainCategories.map((cat) => (<SelectItem key={cat.id} value={String(cat.id)}> {cat.name} </SelectItem>))}
+                              {mainCategories.map((cat) => (
+                                <SelectItem key={cat.id} value={String(cat.id)}>
+                                  {" "}
+                                  {cat.name}{" "}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </Field>
@@ -353,13 +440,26 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         <Field label="Sub Category" required>
                           <Select
                             value={form.subCategory}
-                            onValueChange={update("subCategory")("")}
+                            onValueChange={(value) =>
+                              update("subCategory")(value)
+                            }
                           >
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select sub category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {subcategories.length > 0 ? (subcategories.map((sub) => (<SelectItem key={sub.id} value={sub.id}> {sub.name}</SelectItem>))) : (<div className="px-3 py-2 text-sm text-gray-500">No subcategories found </div>)}
+                              {subcategories.length > 0 ? (
+                                subcategories.map((sub) => (
+                                  <SelectItem key={sub.id} value={sub.id}>
+                                    {" "}
+                                    {sub.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="px-3 py-2 text-sm text-gray-500">
+                                  No subcategories found{" "}
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                         </Field>
@@ -1152,6 +1252,6 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
       </div>
     </>
   );
-}
+};
 
 export default AddNewProductModal;

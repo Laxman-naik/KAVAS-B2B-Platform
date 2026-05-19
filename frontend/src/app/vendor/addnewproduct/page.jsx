@@ -12,8 +12,11 @@ export default function AddNewProductPage() {
   const dispatch = useDispatch();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const handleSubmit = async (form) => {
 =======
+=======
+>>>>>>> dac18934cdbe69d4c72c9f352c7fbf90d206ba93
 
   const handleSubmit = async (data) => {
     const payload = {
@@ -33,7 +36,10 @@ export default function AddNewProductPage() {
 
     await createProductAPI(payload);
     router.push("/vendor/products");
+<<<<<<< HEAD
 >>>>>>> 112b3e52fd0da3aa73869420330e18ac5c86b7ac
+=======
+>>>>>>> dac18934cdbe69d4c72c9f352c7fbf90d206ba93
     try {
       const payload = {
         name: form.name?.trim(),
