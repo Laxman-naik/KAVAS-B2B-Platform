@@ -11,7 +11,29 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
+<<<<<<< HEAD
   const handleSubmit = async (form) => {
+=======
+
+  const handleSubmit = async (data) => {
+    const payload = {
+      name: data?.name,
+      sku: data?.sku,
+      category: data?.category,
+      unit: data?.unit,
+      status: data?.status,
+      description: data?.description,
+      price: Number(data?.price || 0),
+      mrp: Number(data?.mrp || 0),
+      gst: data?.gst,
+      moq: Number(data?.moq || 0),
+      stock: Number(data?.stock || 0),
+      images: Array.isArray(data?.images) ? data.images.filter((x) => typeof x === "string" && x.trim()) : [],
+    };
+
+    await createProductAPI(payload);
+    router.push("/vendor/products");
+>>>>>>> 112b3e52fd0da3aa73869420330e18ac5c86b7ac
     try {
       const payload = {
         name: form.name?.trim(),
