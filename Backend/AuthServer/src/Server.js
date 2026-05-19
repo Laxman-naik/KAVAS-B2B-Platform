@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
+const profileRoutes = require("./routes/profileRoutes")
 
 const app = express();
 
@@ -39,14 +40,13 @@ app.get("/", (req, res) => {
   res.status(200).send("Server is running 🚀");
 });
 
-app.get("/ping", (req, res) => {
-  res.json({ ok: true });
-});
+app.get("/ping", (req, res) => {res.json({ ok: true });});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/vendor", vendorRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
@@ -61,9 +61,7 @@ pool.connect()
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log("Server running on", PORT);
-});
+app.listen(PORT, () => {console.log("Server running on", PORT);});
 
 
 // const express = require("express");

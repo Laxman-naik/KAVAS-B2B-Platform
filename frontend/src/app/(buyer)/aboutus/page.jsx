@@ -1,73 +1,311 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { ShieldCheck, Truck, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Users,
+  Package,
+  Award,
+  Headphones,
+  BadgeCheck,
+  ShieldCheck,
+  Box,
+  HeartHandshake,
+  Target,
+  Eye,
+  Handshake,
+} from "lucide-react";
 
 const AboutUsPage = () => {
   return (
-    <div className="min-h-[70vh] bg-[#FFF8EC]">
-      <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-10 py-10">
-        <div className="rounded-2xl bg-[#0B1F3A] px-6 py-8 sm:px-10 sm:py-10 text-[#FFF8EC] shadow-sm">
-          <div className="text-sm text-white/80">KAVAS Wholesale Hub</div>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">
-            About Us
-          </h1>
-          <p className="mt-3 max-w-3xl text-white/85 leading-relaxed">
-            We help businesses source quality products at competitive wholesale
-            prices with a smooth ordering experience, reliable fulfilment, and
-            responsive support.
-          </p>
+    <main className="w-full overflow-hidden bg-[#f8f5ef] text-[#071831]">
+      {/* HERO */}
+      <section className="w-full bg-[#f6f1e8] py-8">
+        <div className="grid w-full grid-cols-1 items-center gap-6 px-5 lg:grid-cols-2 lg:px-12">
+          {/* LEFT */}
+          <div>
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.25em] text-[#c79b2c]">
+              About Us
+            </p>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-lg bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#caa734]"
-            >
-              Continue Shopping
-            </Link>
-            <Link
-              href="/help"
-              className="inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              Help & Support
-            </Link>
+            <h1 className="max-w-xl font-serif text-3xl font-bold leading-tight md:text-5xl">
+              Built to Empower Your Business
+            </h1>
+
+            <div className="my-4 h-[2px] w-12 bg-[#c79b2c]" />
+
+            <p className="max-w-xl text-sm leading-7 text-[#5d6675]">
+              At KAVS, we provide trusted wholesale solutions with premium
+              quality products, competitive pricing, and reliable service for
+              growing businesses.
+            </p>
+
+            <button className="mt-5 flex items-center gap-2 rounded-sm bg-[#071831] px-5 py-2.5 text-sm font-medium text-white">
+              Our Story
+              <ArrowRight size={16} className="text-[#c79b2c]" />
+            </button>
+          </div>
+
+          {/* RIGHT */}
+          <div className="flex justify-center">
+            <img
+              src="/aboutimage.png"
+              alt="About"
+              className="max-h-[320px] w-full max-w-xl object-contain"
+            />
           </div>
         </div>
+      </section>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-2xl bg-white border border-black/5 p-6 shadow-sm">
-            <div className="h-11 w-11 rounded-xl bg-[#ECFFF6] flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-green-700" />
-            </div>
-            <div className="mt-4 font-extrabold text-[#0B1F3A]">Trusted Platform</div>
-            <div className="mt-2 text-sm text-[#0B1F3A]/70">
-              Built for B2B buyers with verified suppliers and dependable service.
+      {/* STATS */}
+      <section className="w-full  py-6 text-white">
+        <div className="grid grid-cols-2 gap-4 px-5 md:grid-cols-4 lg:px-12">
+          {[
+            {
+              icon: Users,
+              value: "10K+",
+              title: "Partners",
+            },
+            {
+              icon: Package,
+              value: "5K+",
+              title: "Products",
+            },
+            {
+              icon: Award,
+              value: "98%",
+              title: "Delivery",
+            },
+            {
+              icon: Headphones,
+              value: "24/7",
+              title: "Support",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.title}
+                className="rounded-sm border border-white/10 bg-[#0a2342] p-4 text-center"
+              >
+                <Icon
+                  size={26}
+                  className="mx-auto mb-2 text-[#c79b2c]"
+                />
+
+                <h2 className="font-serif text-2xl font-bold">
+                  {item.value}
+                </h2>
+
+                <p className="mt-1 text-xs text-white/80">
+                  {item.title}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* STORY */}
+      <section className="w-full px-5 py-10 lg:px-12">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr_0.7fr]">
+          {/* IMAGE */}
+          <div>
+            <img
+              src="/ourstoryimage.png"
+              alt="Story"
+              className="h-[280px] w-full rounded-sm object-cover"
+            />
+          </div>
+
+          {/* CONTENT */}
+          <div className="flex flex-col justify-center">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.25em] text-[#c79b2c]">
+              Our Story
+            </p>
+
+            <h2 className="font-serif text-3xl font-bold leading-snug">
+              From Vision to Trusted Wholesale Partner
+            </h2>
+
+            <p className="mt-4 text-sm leading-7 text-[#5d6675]">
+              KAVS was founded to simplify wholesale sourcing with reliable
+              products, smooth delivery, and customer-focused service.
+            </p>
+
+            <p className="mt-3 text-sm leading-7 text-[#5d6675]">
+              Today, businesses trust us for dependable partnerships and
+              high-quality wholesale solutions.
+            </p>
+
+            <div className="mt-5">
+              <p className="font-serif text-2xl italic">
+                KAVS Team
+              </p>
+
+              <p className="mt-1 text-xs font-semibold tracking-wide">
+                KAVS WHOLESALE
+              </p>
             </div>
           </div>
 
-          <div className="rounded-2xl bg-white border border-black/5 p-6 shadow-sm">
-            <div className="h-11 w-11 rounded-xl bg-[#EAF3FF] flex items-center justify-center">
-              <Truck className="h-5 w-5 text-blue-700" />
-            </div>
-            <div className="mt-4 font-extrabold text-[#0B1F3A]">Reliable Fulfilment</div>
-            <div className="mt-2 text-sm text-[#0B1F3A]/70">
-              Track orders easily and get updates from dispatch to delivery.
-            </div>
-          </div>
+          {/* FEATURES */}
+          <div className="rounded-sm border border-[#e5d8bf] bg-white p-5">
+            {[
+              {
+                icon: BadgeCheck,
+                title: "Quality Assurance",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Competitive Pricing",
+              },
+              {
+                icon: Box,
+                title: "Reliable Supply",
+              },
+              {
+                icon: HeartHandshake,
+                title: "Customer First",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
 
-          <div className="rounded-2xl bg-white border border-black/5 p-6 shadow-sm">
-            <div className="h-11 w-11 rounded-xl bg-[#F3EEFF] flex items-center justify-center">
-              <Users className="h-5 w-5 text-purple-700" />
-            </div>
-            <div className="mt-4 font-extrabold text-[#0B1F3A]">Business First</div>
-            <div className="mt-2 text-sm text-[#0B1F3A]/70">
-              MOQ-friendly catalog and pricing designed for repeat procurement.
-            </div>
+              return (
+                <div
+                  key={item.title}
+                  className="mb-5 flex items-center gap-3 last:mb-0"
+                >
+                  <Icon
+                    size={22}
+                    className="text-[#c79b2c]"
+                  />
+
+                  <h3 className="text-sm font-medium text-[#071831]">
+                    {item.title}
+                  </h3>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* MISSION */}
+      <section className="w-full bg-[#f2ece1] py-10">
+        <div className="px-5 lg:px-12">
+          <div className="mb-8 flex items-center justify-center gap-4">
+            <div className="h-px w-16 bg-[#d7c7a8]" />
+
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#c79b2c]">
+              Mission • Vision • Values
+            </p>
+
+            <div className="h-px w-16 bg-[#d7c7a8]" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {[
+              {
+                icon: Target,
+                title: "Mission",
+                text: "Empowering businesses with quality wholesale solutions.",
+              },
+              {
+                icon: Eye,
+                title: "Vision",
+                text: "To become the most trusted wholesale platform worldwide.",
+              },
+              {
+                icon: Handshake,
+                title: "Values",
+                text: "Integrity, reliability, and customer satisfaction.",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-sm border border-[#e4d7be] bg-white p-5"
+                >
+                  <Icon
+                    size={30}
+                    className="text-[#c79b2c]"
+                  />
+
+                  <h3 className="mt-3 font-serif text-2xl font-bold">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-7 text-[#5d6675]">
+                    {item.text}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="w-full bg-[#041a34] py-8 text-white">
+        <div className="grid grid-cols-1 gap-6 px-5 lg:grid-cols-[1fr_2fr] lg:px-12">
+          {/* LEFT */}
+          <div>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.25em] text-[#c79b2c]">
+              Let’s Grow Together
+            </p>
+
+            <h2 className="font-serif text-3xl font-bold leading-snug">
+              Partner with KAVS and Grow Your Business
+            </h2>
+
+            <button className="mt-5 flex items-center gap-2 rounded-sm bg-[#c79b2c] px-5 py-2.5 text-sm font-semibold text-[#071831]">
+              Explore Products
+              <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* RIGHT */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: Box,
+                title: "Wide Product Range",
+              },
+              {
+                icon: BadgeCheck,
+                title: "Trusted by Businesses",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Secure & Reliable",
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="rounded-sm border border-white/10 bg-[#0a2342] p-4"
+                >
+                  <Icon
+                    size={24}
+                    className="text-[#c79b2c]"
+                  />
+
+                  <h4 className="mt-3 text-sm font-medium">
+                    {item.title}
+                  </h4>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </main>
   );
 };
 

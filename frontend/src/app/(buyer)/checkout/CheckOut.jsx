@@ -1,178 +1,495 @@
 "use client";
-import React, { useState } from "react";
-import { CreditCard, Banknote, Smartphone, ShoppingCart, } from "lucide-react";
-import Link from "next/link";
+
+import React, { useMemo, useState } from "react";
+import {
+  MapPin,
+  FileText,
+  Package,
+  CreditCard,
+  ShieldCheck,
+  LockKeyhole,
+  Download,
+  Plus,
+  Banknote,
+  Smartphone,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { createCheckout, verifyPayment } from "../../../store/slices/paymentSlice";
 import { loadRazorpay } from "@/lib/razorpay";
 
 const CheckOut = () => {
-  const [paymentMethod, setPaymentMethod] = useState("bank");
   const dispatch = useDispatch();
   const { cart } = useSelector((state) => state.cart);
-  const handlePlaceOrder = async () => {
-  const res = await fetch("/api/orders/create", {
-    method: "POST",
-    credentials: "include",
-  });
 
-  const data = await res.json();
+  const [selectedAddress, setSelectedAddress] = useState("office");
+  const [paymentMethod, setPaymentMethod] = useState("net30");
 
-  if (data.success) {
-    console.log("Order created", data.order);
-    // NEXT: trigger payment
-  }
-};
+  const cartItems = cart?.items || [];
+
+  const fallbackProducts = [
+    {
+      id: 1,
+      name: "Premium Coffee Beans",
+      desc: "1kg • Pack of 10",
+      qty: 2,
+      unitPrice: 120,
+      image: "/coffee.png",
+    },
+    {
+      id: 2,
+      name: "Ceramic Coffee Mug",
+      desc: "Black • 350ml • Pack of 24",
+      qty: 1,
+      unitPrice: 120,
+      image: "/mug.png",
+    },
+    {
+      id: 3,
+      name: "Green Tea Leaves",
+      desc: "500g • Pack of 20",
+      qty: 1,
+      unitPrice: 200,
+      image: "/tea.png",
+    },
+  ];
+
+  const products = cartItems.length
+    ? cartItems.map((item, index) => ({
+        id: item.id || index,
+        name: item.name || item.product_name || "Product",
+        desc: item.description || item.variant || "Wholesale Item",
+        qty: Number(item.quantity || item.qty || 1),
+        unitPrice: Number(item.price || item.unit_price || 0),
+        image: item.image || item.product_image || "/placeholder.png",
+      }))
+    : fallbackProducts;
+
+  const subtotal = useMemo(
+    () => products.reduce((sum, item) => sum + item.qty * item.unitPrice, 0),
+    [products]
+  );
+
+  const total = cart?.summary?.total || subtotal;
+
+  const addresses = [
+    {
+      id: "office",
+      title: "Office Address",
+      tag: "Default",
+      name: "Kavas Industries Pvt. Ltd.",
+      address:
+        "123 Business Park, Industrial Area, New York, NY 10001, United States",
+      person: "John Doe",
+      phone: "+1 123 456 7890",
+    },
+    {
+      id: "warehouse",
+      title: "Warehouse Address",
+      name: "Kavas Industries Pvt. Ltd.",
+      address:
+        "456 Logistics Hub, Warehouse Zone, New Jersey, NJ 07001, United States",
+      person: "Michael Smith",
+      phone: "+1 987 654 3210",
+    },
+    {
+      id: "home",
+      title: "Home Address",
+      name: "John Doe",
+      address: "789 Residential St, New York, NY 10002, United States",
+      person: "John Doe",
+      phone: "+1 123 456 7890",
+    },
+  ];
+
   const paymentMethods = [
-    { id: "bank", name: "Bank Transfer", icon: <Banknote size={16} /> },
-    { id: "card", name: "Card", icon: <CreditCard size={16} /> },
-    { id: "upi", name: "UPI", icon: <Smartphone size={16} /> },
+    {
+      id: "net30",
+      title: "Net 30",
+      subtitle: "Pay within 30 days",
+      icon: <Banknote size={16} />,
+    },
+    {
+      id: "net60",
+      title: "Net 60",
+      subtitle: "Pay within 60 days",
+      icon: <Banknote size={16} />,
+    },
+    {
+      id: "card",
+      title: "Credit / Debit Card",
+      subtitle: "Visa • Mastercard • Amex",
+      icon: <CreditCard size={16} />,
+    },
+    {
+      id: "upi",
+      title: "UPI / Razorpay",
+      subtitle: "Pay securely online",
+      icon: <Smartphone size={16} />,
+    },
   ];
 
   const handlePayment = async () => {
-  const isLoaded = await loadRazorpay();
+    const isLoaded = await loadRazorpay();
 
-  if (!isLoaded) {
-    alert("Razorpay SDK failed to load");
-    return;
-  }
+    if (!isLoaded) {
+      alert("Razorpay SDK failed to load");
+      return;
+    }
 
-  try {
-    const data = await dispatch(createCheckout()).unwrap();
+    try {
+      const data = await dispatch(createCheckout()).unwrap();
 
-    const options = {
-      key: data.key,
-      amount: data.amount,
-      currency: "INR",
-      name: "Your Store",
-      description: "Order Payment",
-      order_id: data.orderId,
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency || "INR",
+        name: "KAVAS Wholesale Hub",
+        description: "Order Payment",
+        order_id: data.orderId,
+        theme: {
+          color: "#D4AF37",
+        },
+        handler: async (response) => {
+          try {
+            await dispatch(
+              verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              })
+            ).unwrap();
 
-      handler: async function (response) {
-        try {
-          await dispatch(
-            verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            })
-          ).unwrap();
+            alert("Payment Successful");
+          } catch {
+            alert("Payment verification failed");
+          }
+        },
+      };
 
-          alert("Payment Successful");
-        } catch (err) {
-          alert("Payment verification failed");
-        }
-      },
-
-      theme: {
-        color: "#f97316",
-      },
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-  } catch (err) {
-    alert(err.message || "Checkout failed");
-  }
-};
-
-  const inputClass ="w-full px-3 py-2 text-sm border-2 border-gray-300 rounded-md focus:ring-1 focus:ring-orange-400 focus:border-orange-400 outline-none";
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      alert(err?.message || "Checkout failed");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 max-w-7xl mx-auto">Checkout</h1>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4 pb-2 border-b">
-              <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">1</div>
-              <h3 className="text-base sm:text-lg font-semibold">Shipping / Business Address</h3>
+    <main className="min-h-screen bg-white px-4 py-6 text-[#1A1A1A] md:px-8">
+      <section className="mb-6">
+        <h1 className="text-4xl font-bold text-[#0B1F3A]">Checkout</h1>
+        <p className="mt-2 text-sm text-[#666666]">
+          Review your order and complete your purchase
+        </p>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_500px]">
+        <div className="space-y-5">
+          <Card>
+            <SectionTitle
+              icon={MapPin}
+              title="Delivery Address"
+              subtitle="Select a delivery address"
+            />
+
+            <div className="my-4 h-px bg-[#E5E5E5]" />
+
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-bold text-[#1A1A1A]">Saved Addresses</h3>
+
+              <button className="flex items-center gap-2 rounded-sm border border-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]">
+                <Plus size={16} />
+                Add New Address
+              </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-              <input className={inputClass} placeholder="First Name" />
-              <input className={inputClass} placeholder="Last Name" />
-            </div>
-            <input className={`${inputClass} mb-3`} placeholder="Company name" />
-            <input className={`${inputClass} mb-4`} placeholder="Address" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input className={inputClass} placeholder="City" />
-              <input className={inputClass} placeholder="Pin Code" />
-              <input className={inputClass} placeholder="Phone" />
-              <input className={inputClass} placeholder="GST (optional)" />
-            </div>
-          </div>
-          <div className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4 pb-2 border-b">
-              <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm">2</div>
-              <h3 className="text-base sm:text-lg font-semibold">Payment Method</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-              {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  onClick={() => setPaymentMethod(method.id)}
-                  className={`flex items-center justify-center gap-1 px-2 py-2 border-2 rounded-md cursor-pointer text-xs sm:text-sm ${
-                    paymentMethod === method.id? "border-orange-500 bg-orange-50" : "border-gray-300"
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {addresses.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setSelectedAddress(item.id)}
+                  className={`rounded-sm border p-4 text-left transition ${
+                    selectedAddress === item.id
+                      ? "border-[#D4AF37] bg-[#FFF8EC]"
+                      : "border-[#E5E5E5] bg-[#FFFFFF] hover:border-[#D4AF37]"
                   }`}
-                >{method.icon} {method.name}</div>
+                >
+                  <div className="flex items-start gap-3">
+                    <Radio active={selectedAddress === item.id} />
+
+                    <div>
+                      <h4 className="font-bold text-[#1A1A1A]">
+                        {item.title}
+                        {item.tag && (
+                          <span className="ml-2 rounded-sm bg-[#FFF8EC] px-2 py-1 text-xs text-[#D4AF37]">
+                            {item.tag}
+                          </span>
+                        )}
+                      </h4>
+
+                      <p className="mt-2 text-sm text-[#1A1A1A]">{item.name}</p>
+
+                      <p className="mt-1 text-sm leading-6 text-[#666666]">
+                        {item.address}
+                      </p>
+
+                      <p className="mt-2 text-sm text-[#1A1A1A]">
+                        {item.person}
+                        <span className="mx-2 text-[#999999]">|</span>
+                        {item.phone}
+                      </p>
+                    </div>
+                  </div>
+                </button>
               ))}
             </div>
-            <div className="bg-gray-50 p-3 rounded-md border">
-              {paymentMethod === "bank" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <input className={inputClass} placeholder="Account Holder" />
-                  <input className={inputClass} placeholder="Account Number" />
-                  <input className={inputClass} placeholder="IFSC" />
-                  <input className={inputClass} placeholder="Bank Name" />
-                </div>
-              )}
-              {paymentMethod === "card" && (
-                <div className="space-y-2">
-                  <input className={inputClass} placeholder="Card Number" />
-                  <div className="grid grid-cols-2 gap-2">
-                    <input className={inputClass} placeholder="MM/YY" />
-                    <input className={inputClass} placeholder="CVV" />
-                  </div>
-                  <input className={inputClass} placeholder="Cardholder Name" />
-                </div>
-              )}
-              {paymentMethod === "upi" && (
-                <input className={inputClass} placeholder="example@upi" />
-              )}
+          </Card>
+
+          <Card>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <SectionTitle
+                icon={FileText}
+                title="Invoice Preview"
+                subtitle="Review your invoice details before payment"
+              />
+
+              <button className="flex w-fit items-center gap-2 rounded-sm border border-[#E5E5E5] px-5 py-2.5 text-sm font-semibold text-[#1A1A1A] hover:border-[#D4AF37]">
+                <Download size={16} />
+                Download Proforma Invoice
+              </button>
             </div>
+
+            <div className="mt-4 overflow-hidden rounded-sm border border-[#E5E5E5]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead className="bg-[#FFF8EC] text-left text-[#1A1A1A]">
+                    <tr>
+                      <th className="px-4 py-3">Item</th>
+                      <th className="px-4 py-3">Descriptions</th>
+                      <th className="px-4 py-3 text-center">Quantity</th>
+                      <th className="px-4 py-3 text-right">Unit Price</th>
+                      <th className="px-4 py-3 text-right">Total</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {products.map((item) => {
+                      const itemTotal = item.qty * item.unitPrice;
+
+                      return (
+                        <tr key={item.id} className="border-t border-[#E5E5E5]">
+                          <td className="px-4 py-3">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-14 w-16 rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] object-contain"
+                            />
+                          </td>
+
+                          <td className="px-4 py-3">
+                            <h4 className="font-bold text-[#1A1A1A]">
+                              {item.name}
+                            </h4>
+                            <p className="mt-1 text-[#666666]">{item.desc}</p>
+                          </td>
+
+                          <td className="px-4 py-3 text-center">{item.qty}</td>
+
+                          <td className="px-4 py-3 text-right">
+                            ₹{item.unitPrice.toFixed(2)}
+                          </td>
+
+                          <td className="px-4 py-3 text-right font-semibold">
+                            ₹{itemTotal.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ml-auto w-full max-w-md space-y-2 px-8 py-4 text-sm">
+                <SummaryRow label="Subtotal" value={`₹${subtotal.toFixed(2)}`} />
+                <SummaryRow label="Shipping" value="FREE" gold />
+                <SummaryRow label="Tax (0%)" value="₹0.00" />
+
+                <div className="flex justify-between border-t border-[#E5E5E5] pt-3 text-xl font-bold">
+                  <span className="text-[#1A1A1A]">Grand Total</span>
+                  <span className="text-[#D4AF37]">₹{total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 rounded-sm border border-[#D4AF37] bg-[#FFF8EC] px-4 py-3 text-sm text-[#666666]">
+              <ShieldCheck size={18} className="text-[#D4AF37]" />
+              This is a proforma invoice. You will be able to download the final
+              invoice after order confirmation.
+            </div>
+          </Card>
+        </div>
+
+        <aside className="h-fit rounded-sm border border-[#E5E5E5] bg-[#FFFFFF] p-5 shadow-sm xl:sticky xl:top-5">
+          <SectionTitle icon={Package} title="Order Summary" />
+
+          <div className="my-4 h-px bg-[#E5E5E5]" />
+
+          <div className="space-y-4">
+            {products.map((item) => {
+              const itemTotal = item.qty * item.unitPrice;
+
+              return (
+                <div key={item.id} className="flex gap-4">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-16 w-16 rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] object-contain"
+                  />
+
+                  <div className="flex-1">
+                    <div className="flex justify-between gap-3">
+                      <h4 className="text-sm font-bold text-[#1A1A1A]">
+                        {item.name}
+                      </h4>
+
+                      <p className="text-sm font-bold text-[#D4AF37]">
+                        ₹{itemTotal.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <p className="mt-1 text-xs text-[#666666]">{item.desc}</p>
+                    <p className="mt-1 text-xs text-[#1A1A1A]">
+                      Qty: {item.qty}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="bg-white border rounded-xl p-4 sm:p-6 shadow-sm">
-            <h3 className="text-base sm:text-lg font-semibold mb-4">Review & Place Order</h3>
-            <button onClick={handlePayment} className="w-full bg-orange-500 text-white py-2.5 rounded-md text-sm flex items-center justify-center gap-2 hover:bg-orange-600">
-              <ShoppingCart size={16} /> Place Order — Pay ₹{cart?.summary?.total || 0}
-            </button>
+          <div className="my-4 h-px bg-[#E5E5E5]" />
+
+          <div className="space-y-3 text-sm">
+            <SummaryRow label="Subtotal" value={`₹${subtotal.toFixed(2)}`} />
+            <SummaryRow label="Shipping" value="FREE" gold />
+            <SummaryRow label="Tax (0%)" value="₹0.00" />
           </div>
-        </div>
-        <div>
-          <div className="bg-white border rounded-xl p-4 shadow-sm lg:sticky lg:top-20">
-            <h3 className="text-base font-semibold mb-2">Order Summary</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>₹{cart?.summary?.subtotal || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST</span>
-                <span>₹{cart?.summary?.gst || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span className="text-green-600">FREE</span>
-              </div>
-            </div>
-            <div className="border-t mt-4 pt-3 flex justify-between font-semibold">
-              <span>Total</span>
-              <span>₹{cart?.summary?.total || 0}</span>
+
+          <div className="mt-4 flex items-center justify-between border-t border-[#E5E5E5] pt-4">
+            <span className="text-lg font-bold text-[#1A1A1A]">Total</span>
+            <span className="text-3xl font-bold text-[#D4AF37]">
+              ₹{total.toFixed(2)}
+            </span>
+          </div>
+
+          <div className="my-5 h-px bg-[#E5E5E5]" />
+
+          <SectionTitle
+            icon={CreditCard}
+            title="Payment Method"
+            subtitle="Select your preferred payment method"
+          />
+
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {paymentMethods.map((method) => (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => setPaymentMethod(method.id)}
+                className={`rounded-sm border p-3 text-left transition ${
+                  paymentMethod === method.id
+                    ? "border-[#D4AF37] bg-[#FFF8EC]"
+                    : "border-[#E5E5E5] bg-[#FFFFFF] hover:border-[#D4AF37]"
+                }`}
+              >
+                <div className="flex gap-3">
+                  <Radio active={paymentMethod === method.id} />
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#D4AF37]">{method.icon}</span>
+                      <h4 className="text-sm font-bold text-[#1A1A1A]">
+                        {method.title}
+                      </h4>
+                    </div>
+
+                    <p className="mt-1 text-xs text-[#666666]">
+                      {method.subtitle}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handlePayment}
+            className="mt-5 flex h-14 w-full items-center justify-center gap-3 rounded-sm bg-[#D4AF37] text-lg font-bold text-[#0B1F3A] transition hover:bg-[#c89f28]"
+          >
+            <LockKeyhole size={18} />
+            Continue to Payment
+          </button>
+
+          <div className="mt-6 flex justify-center gap-3 text-center">
+            <ShieldCheck size={30} className="text-[#0B1F3A]" />
+
+            <div>
+              <h4 className="font-bold text-[#1A1A1A]">
+                Secure & Encrypted Checkout
+              </h4>
+              <p className="text-sm text-[#666666]">
+                Your information is safe with us
+              </p>
             </div>
           </div>
-        </div>
+        </aside>
+      </section>
+    </main>
+  );
+};
+
+const Card = ({ children }) => {
+  return (
+    <section className="rounded-sm border border-[#E5E5E5] bg-[#FFFFFF] p-5 shadow-sm">
+      {children}
+    </section>
+  );
+};
+
+const SectionTitle = ({ icon: Icon, title, subtitle }) => {
+  return (
+    <div className="flex items-center gap-4">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border border-[#D4AF37] bg-[#FFF8EC]">
+        <Icon size={24} className="text-[#D4AF37]" />
+      </span>
+
+      <div>
+        <h3 className="text-2xl font-bold text-[#1A1A1A]">{title}</h3>
+        {subtitle && <p className="mt-1 text-sm text-[#666666]">{subtitle}</p>}
       </div>
+    </div>
+  );
+};
+
+const Radio = ({ active }) => {
+  return (
+    <span
+      className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+        active ? "border-[#D4AF37]" : "border-[#999999]"
+      }`}
+    >
+      {active && <span className="h-2 w-2 rounded-full bg-[#D4AF37]" />}
+    </span>
+  );
+};
+
+const SummaryRow = ({ label, value, gold }) => {
+  return (
+    <div className="flex justify-between">
+      <span className="text-[#666666]">{label}</span>
+      <span className={gold ? "font-bold text-[#D4AF37]" : "text-[#1A1A1A]"}>
+        {value}
+      </span>
     </div>
   );
 };
