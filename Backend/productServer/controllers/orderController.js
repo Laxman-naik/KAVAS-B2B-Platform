@@ -9,7 +9,7 @@ exports.createOrderFromCart = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const { idempotency_key } = req.body;
+    const { idempotency_key, payment_method } = req.body;
 
     if (!idempotency_key) {
       return res.status(400).json({ message: "Idempotency key required" });
@@ -101,6 +101,10 @@ exports.createOrderFromCart = async (req, res) => {
 
     const grouped = {};
 
+    const status = payment_method === "cod" ? "cod" : "pending";
+
+    const deliveryStatus = payment_method === "cod" ? "confirmed" : "pending";
+
     for (const item of items) {
       const orgId = item.organization_id;
 
@@ -117,25 +121,23 @@ exports.createOrderFromCart = async (req, res) => {
     for (const supplierOrgId of Object.keys(grouped)) {
       const supplierItems = grouped[supplierOrgId];
 
-      const totalAmount = supplierItems.reduce(
-        (sum, item) => sum + Number(item.price) * Number(item.quantity),
-        0
-      );
+      const totalAmount = supplierItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
 
       grandTotal += totalAmount;
 
       const orderRes = await client.query(
         `INSERT INTO orders 
-        (user_id, supplier_org_id, total_amount, status, idempotency_key, shipping_address_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        (user_id, supplier_org_id, total_amount, status, delivery_status, idempotency_key, shipping_address_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *`,
         [
-          userId,
-          supplierOrgId,
-          totalAmount,
-          "pending",
-          idempotency_key,
-          shippingAddressId,
+         userId,
+         supplierOrgId,
+         totalAmount,
+         status,
+         deliveryStatus,
+         idempotency_key,
+         shippingAddressId,
         ]
       );
 
@@ -159,8 +161,8 @@ exports.createOrderFromCart = async (req, res) => {
 
       await client.query(
         `INSERT INTO order_status_history (order_id, status)
-         VALUES ($1, $2)`,
-        [order.id, "pending"]
+        VALUES ($1, $2)`,
+        [order.id, status]
       );
 
       createdOrders.push(order);
