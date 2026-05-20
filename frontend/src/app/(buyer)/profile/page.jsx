@@ -3,40 +3,25 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  ChevronRight,
-  ClipboardList,
-  CreditCard,
-  IndianRupee,
-  MapPin,
-  Package,
-  Pencil,
-  User,
-} from "lucide-react";
-
+import {CheckCircle2,ChevronRight,ClipboardList,CreditCard,IndianRupee,MapPin,Package,Pencil,User,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAddresses } from "../../../store/slices/addressSlice";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
 import { fetchProfile } from "../../../store/slices/profileSlice";
-import {
-  fetchOrderStats,
-  fetchRecentOrders,
-} from "../../../store/slices/orderSlice";
-
+import { fetchOrderStats,fetchRecentOrders,} from "../../../store/slices/orderSlice";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 
 const Page = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-
   const { profile } = useSelector((state) => state.profile);
   const { addresses } = useSelector((state) => state.address);
   const { stats, recentOrders } = useSelector((state) => state.order);
+
+  console.log(profile)
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -45,13 +30,8 @@ const Page = () => {
     dispatch(fetchRecentOrders());
   }, [dispatch]);
 
-  const fullName =
-    profile?.full_name || profile?.fullName || profile?.name || "";
-
-  const [parsedFirstName = "", ...rest] = String(fullName)
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const fullName = profile?.full_name || profile?.fullName || profile?.name || "";
+  const [parsedFirstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
 
   const user = {
     firstName: profile?.firstName || parsedFirstName || "",

@@ -18,12 +18,14 @@ exports.createCheckout = async (req, res) => {
 
     //  2. Fetch order (WITH ownership check)
     const orderRes = await pool.query(
-      `SELECT o.* 
-       FROM orders o
-       JOIN addresses a ON o.shipping_address_id = a.id
-       WHERE o.id = $1 AND a.user_id = $2`,
-      [orderId, userId]
-    );
+  `SELECT o.*
+   FROM orders o
+   JOIN addresses a
+     ON o.shipping_address_id = a.id
+   WHERE o.id = $1
+     AND a.user_id = $2`,
+  [orderId, userId]
+);
 
     if (!orderRes.rows.length) {
       return res.status(404).json({ message: "Order not found" });
@@ -48,7 +50,7 @@ exports.createCheckout = async (req, res) => {
     }
 
     //  4. Convert safely to paise
-    const amount = Math.round(Number(order.total_amount) * 100);
+    const amount = Math.round(Number(order.total_amount)*100);
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Invalid order amount" });
@@ -72,10 +74,15 @@ exports.createCheckout = async (req, res) => {
       dbOrderId: order.id,
     });
 
-  } catch (err) {
-    console.error("createCheckout error:", err);
-    res.status(500).json({ message: err.message });
-  }
+  }catch (err) {
+  return res.status(500).json({
+    success: false,
+    message: err?.message || null,
+    statusCode: err?.statusCode || null,
+    error: err?.error || null,
+    raw: err,
+  });
+}
 };
 
 exports.verifyPayment = async (req, res) => {
@@ -89,7 +96,7 @@ exports.verifyPayment = async (req, res) => {
     } = req.body;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RZP_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
@@ -125,12 +132,13 @@ exports.verifyPayment = async (req, res) => {
     );
 
     await client.query(
-      `UPDATE orders
-       SET status = 'confirmed',
-           payment_status = 'paid'
-       WHERE id = $1`,
-      [tx.order_id]
-    );
+  `UPDATE orders
+   SET status = 'paid',
+       delivery_status = 'confirmed',
+       paid_at = NOW()
+   WHERE id = $1`,
+  [tx.order_id]
+);
 
     // fetch items
     const itemsRes = await client.query(
@@ -246,12 +254,13 @@ exports.handleWebhook = async (req, res) => {
       );
 
       await client.query(
-        `UPDATE orders
-         SET status = 'confirmed',
-             payment_status = 'paid'
-         WHERE id = $1`,
-        [tx.order_id]
-      );
+  `UPDATE orders
+   SET status = 'paid',
+       delivery_status = 'confirmed',
+       paid_at = NOW()
+   WHERE id = $1`,
+  [tx.order_id]
+);
 
       // SAME sales logic
       const itemsRes = await client.query(

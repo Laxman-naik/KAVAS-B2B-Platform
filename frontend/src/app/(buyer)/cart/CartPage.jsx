@@ -13,7 +13,7 @@ const CartPage = () => {
   const dispatch = useDispatch();
   const { items: cartItems, loading, error, } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
-  console.log("CART ITEMS:", cartItems);
+  // console.log("CART ITEMS:", cartItems);
   const router = useRouter();
 
   /* ---------------- FETCH CART ---------------- */
@@ -96,71 +96,74 @@ const CartPage = () => {
   // const isAnyLoading = loading?.fetch || loading?.update || loading?.remove || loading?.clear;
 
 
-const handleCheckout = async () => {
-  if (!isAuthenticated) {
-    alert("Login required");
-    return;
-  }
+// const handleCheckout = async () => {
+//   if (!isAuthenticated) {
+//     alert("Login required");
+//     return;
+//   }
 
-  if (cartItems.length === 0) {
-    alert("Cart is empty");
-    return;
-  }
+//   if (cartItems.length === 0) {
+//     alert("Cart is empty");
+//     return;
+//   }
 
-  if (hasInvalidMoq) {
-    alert("Fix MOQ first");
-    return;
-  }
+//   if (hasInvalidMoq) {
+//     alert("Fix MOQ first");
+//     return;
+//   }
 
-  try {
-    const isLoaded = await loadRazorpay();
-    if (!isLoaded) {
-      alert("Razorpay failed to load");
-      return;
-    }
+//   try {
+//     const isLoaded = await loadRazorpay();
+//     if (!isLoaded) {
+//       alert("Razorpay failed to load");
+//       return;
+//     }
 
-    const idempotencyKey = crypto.randomUUID();
+//     const idempotencyKey = crypto.randomUUID();
 
-    // 1. Create order
-    const res = await dispatch(
-      createOrderFromCart({ idempotency_key: idempotencyKey })
-    ).unwrap();
+//     // 1. Create order
+//     const res = await dispatch(
+//       createOrderFromCart({ idempotency_key: idempotencyKey })
+//     ).unwrap();
 
-    const orderId = res?.orders?.[0]?.id;
+//     const orderId = res?.orders?.[0]?.id;
 
-    if (!orderId) {
-      alert("Order ID missing");
-      return;
-    }
+//     if (!orderId) {
+//       alert("Order ID missing");
+//       return;
+//     }
 
-    // 2. Create payment using orderId (NOT amount)
-    const paymentRes = await dispatch(
-      createCheckout({ orderId })
-    ).unwrap();
+//     // 2. Create payment using orderId (NOT amount)
+//     const paymentRes = await dispatch(
+//       createCheckout({ orderId })
+//     ).unwrap();
 
-    //  3. Open Razorpay
-    const rzp = new window.Razorpay({
-      key: paymentRes.key,
-      amount: paymentRes.amount,
-      currency: "INR",
-      order_id: paymentRes.orderId,
+//     //  3. Open Razorpay
+//     const rzp = new window.Razorpay({
+//       key: paymentRes.key,
+//       amount: paymentRes.amount,
+//       currency: "INR",
+//       order_id: paymentRes.orderId,
 
-      handler: async function (response) {
-        await dispatch(verifyPayment(response));
+//       handler: async function (response) {
+//         await dispatch(verifyPayment(response));
 
-        alert("Payment successful");
-        router.push("/proceedtocheckout");
-      },
-    });
+//         alert("Payment successful");
+//         router.push("/checkout");
+//       },
+//     });
 
-    rzp.open();
+//     rzp.open();
 
-  } catch (err) {
-    console.error("Checkout error:", err);
-    alert(err?.message || "Checkout failed");
-  }
-};
+//   } catch (err) {
+//     console.error("Checkout error:", err);
+//     alert(err?.message || "Checkout failed");
+//   }
+// };
 
+const handleCheckout = async() => {
+  router.push("/proceedtocheckout");
+}
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-16 xl:px-24 py-8 sm:py-10 dark:bg-gray-900">
@@ -244,9 +247,9 @@ const handleCheckout = async () => {
 
                           <button
                             onClick={() => handleDecrease(item)}
-                            disabled={(item.quantity || moq) <= moq || loading}
+                            disabled={(item.quantity || moq) <= moq || updating}
                             className={`px-2.5 py-1 bg-gray-100 ${
-                              (item.quantity || moq) <= moq || loading
+                              (item.quantity || moq) <= moq || updating
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-200"
                             }`}

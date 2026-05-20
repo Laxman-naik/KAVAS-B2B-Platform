@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { createOrderFromCart, getUserOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, } = require("../controllers/orderController");
+const { createOrderFromCart, getUserOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, getOrderById } = require("../controllers/orderController");
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
 
@@ -13,5 +13,6 @@ router.get("/", getUserOrders);
 router.get("/:id", getOrderDetails);
 router.put("/:id/status", updateOrderStatus);
 router.delete("/clear", clearCartAfterOrder )
+router.get("/by-id/:orderId", getOrderById);
 
 module.exports = router;

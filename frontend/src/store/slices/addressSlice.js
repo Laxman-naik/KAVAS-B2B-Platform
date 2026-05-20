@@ -1,11 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  getAddresses,
-  createAddress,
-  updateAddress,
-  deleteAddress,
-  setDefaultAddress,
-} from "@/services/addressService";
+import { getAddresses, createAddress, updateAddress, deleteAddress, setDefaultAddress,} from "@/services/addressService";
 
 /* ---------------- NORMALIZER ---------------- */
 const normalize = (a) => ({

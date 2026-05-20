@@ -10,13 +10,20 @@ const razorpay = new Razorpay({
 });
 
 const createOrder = async (amount) => {
-  return await razorpay.orders.create({
-    amount,
-    currency: "INR",
-    receipt: `rcpt_${Date.now()}`,
-  });
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Invalid Razorpay amount");
+  }
+  try {
+    return await razorpay.orders.create({
+      amount,
+      currency: "INR",
+      receipt: `rcpt_${Date.now()}`,
+    });
+  } catch (err) {
+    console.error("RAZORPAY CREATE ORDER ERROR:", err);
+
+    throw err;
+  }
 };
 
-module.exports = {
-  createOrder,
-};
+module.exports = {createOrder,};
