@@ -76,21 +76,33 @@ exports.createCheckout = async (req, res) => {
       dbOrderId: order.id,
     });
 
-  }  catch (err) {
+  }catch (err) {
 
   console.error("========= CHECKOUT ERROR =========");
 
-  console.error("MESSAGE:", err.message);
+  console.error("FULL ERROR OBJECT:");
+  console.dir(err, { depth: null });
 
-  console.error("STACK:", err.stack);
+  console.error("MESSAGE:", err?.message);
 
-  console.error("FULL:", err);
+  console.error("STACK:", err?.stack);
+
+  console.error("STATUS CODE:", err?.statusCode);
+
+  console.error("ERROR DESCRIPTION:", err?.error);
+
+  console.error("RAW JSON:", JSON.stringify(err, null, 2));
 
   return res.status(500).json({
     success: false,
-    message: err.message,
-    stack: err.stack,
-    raw: String(err),
+
+    message: err?.message || null,
+
+    statusCode: err?.statusCode || null,
+
+    error: err?.error || null,
+
+    raw: err,
   });
 }
 };
