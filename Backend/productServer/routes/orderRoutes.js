@@ -13,6 +13,6 @@ router.get("/", getUserOrders);
 router.get("/:id", getOrderDetails);
 router.put("/:id/status", updateOrderStatus);
 router.delete("/clear", clearCartAfterOrder )
-router.get("/:orderId", authMiddleware, getOrderById);
+router.get("/by-id/:orderId", getOrderById);
 
 module.exports = router;

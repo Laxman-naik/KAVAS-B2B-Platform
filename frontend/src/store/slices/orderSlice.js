@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI,} from "@/services/orderService";
+import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById,} from "@/services/orderService";
 
 const normalizeError = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
@@ -141,6 +141,7 @@ const initialState = {
     totalSpent: 0,
   },
   currentOrder: null,
+  currentOrderbyid: null,
   loading: false,
   error: null,
   success: false,
@@ -202,7 +203,7 @@ const orderSlice = createSlice({
       })
 
       .addCase(fetchOrderById.fulfilled, (state, action) => {
-        state.currentOrder = action.payload;
+        state.currentOrderbyid = action.payload;
       })
 
       .addCase(updateOrderStatus.fulfilled, (state, action) => {

@@ -15,7 +15,8 @@ const Page = () => {
   const router = useRouter();
   const orderId = searchParams.get("orderId");
   const dispatch = useDispatch();
-  const { currentOrder } = useSelector((state) => state.order);
+  const { currentOrderbyid } = useSelector((state) => state.order);
+  console.log(currentOrderbyid)
 
   useEffect(() => {
     if (orderId) {
@@ -23,7 +24,7 @@ const Page = () => {
     }
   }, [dispatch, orderId]);
 
-  const orderItems = currentOrder?.items || [];
+  const orderItems = currentOrderbyid?.items || [];
 
   const steps = [
     {
@@ -77,7 +78,7 @@ const Page = () => {
               <div className="text-left">
                 <p className="text-sm text-[#666]">Order Number</p>
                 <p className="text-xl font-bold text-[#D4AF37]">
-                  #{currentOrder?.order?.id}
+                  #{currentOrderbyid?.order?.id}
                 </p>
               </div>
             </div>
@@ -88,7 +89,7 @@ const Page = () => {
               <div className="text-left">
                 <p className="text-sm text-[#666]">Order Date</p>
                 <p className="font-semibold text-[#1A1A1A]">
-                  {new Date(currentOrder?.order?.created_at).toLocaleString()}
+                  {new Date(currentOrderbyid?.order?.created_at).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -194,7 +195,7 @@ const Page = () => {
               <div className="mt-4 flex items-center justify-between border-t border-[#E5E5E5] pt-4">
                 <span className="text-lg font-bold text-[#0B1F3A]">Total</span>
                 <span className="text-2xl font-bold text-[#D4AF37]">
-                  ₹{Number(currentOrder?.order?.total_amount ).toFixed(2)}
+                  ₹{Number(currentOrderbyid?.order?.total_amount || 0).toFixed(2)}
                 </span>
               </div>
             </CardContent>

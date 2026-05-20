@@ -366,7 +366,17 @@ exports.getOrderById = async (req, res) => {
 
     const orderRes = await pool.query(
       `
-      SELECT *
+      SELECT 
+        id,
+        user_id,
+        supplier_org_id,
+        total_amount,
+        status,
+        delivery_status,
+        shipping_address_id,
+        idempotency_key,
+        paid_at,
+        created_at
       FROM orders
       WHERE id = $1
       `,
@@ -379,23 +389,8 @@ exports.getOrderById = async (req, res) => {
       });
     }
 
-    const itemsRes = await pool.query(
-      `
-      SELECT 
-        oi.*,
-        p.name,
-        p.image_url
-      FROM order_items oi
-      JOIN products p
-        ON p.id = oi.product_id
-      WHERE oi.order_id = $1
-      `,
-      [orderId]
-    );
-
     return res.json({
       order: orderRes.rows[0],
-      items: itemsRes.rows,
     });
   } catch (err) {
     console.error(err);

@@ -69,24 +69,26 @@ const Page = () => {
 
   const handlePayment = async () => {
     try {
-      // COD FLOW
       if (paymentMethod === "cod") {
-        await dispatch(
+        const orderRes = await dispatch(
           createOrderFromCart({
             payment_method: "cod",
             idempotency_key: crypto.randomUUID(),
           })
         ).unwrap();
-        
+
         const orderId = orderRes?.orders?.[0]?.id;
 
         if (!orderId) {
           alert("Order ID missing");
           return;
         }
+
         await dispatch(clearCart()).unwrap();
         await dispatch(fetchCart());
+
         router.push(`/thankyoupage?orderId=${orderId}`);
+
         return;
       }
 
