@@ -359,3 +359,49 @@ exports.clearCartAfterOrder = async (userId, client) => {
 
   await client.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cartId]);
 };
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const orderRes = await pool.query(
+      `
+      SELECT *
+      FROM orders
+      WHERE id = $1
+      `,
+      [orderId]
+    );
+
+    if (!orderRes.rows.length) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    const itemsRes = await pool.query(
+      `
+      SELECT 
+        oi.*,
+        p.name,
+        p.image_url
+      FROM order_items oi
+      JOIN products p
+        ON p.id = oi.product_id
+      WHERE oi.order_id = $1
+      `,
+      [orderId]
+    );
+
+    return res.json({
+      order: orderRes.rows[0],
+      items: itemsRes.rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};

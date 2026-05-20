@@ -1,19 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  MapPin,
-  FileText,
-  Package,
-  CreditCard,
-  ShieldCheck,
-  LockKeyhole,
-  Landmark,
-  Banknote,
-} from "lucide-react";
-
+import { MapPin, FileText, Package, CreditCard, ShieldCheck, LockKeyhole, Landmark, Banknote, } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { fetchAddresses } from "@/store/slices/addressSlice";
 import { fetchCart, clearCart, } from "@/store/slices/cartSlice";
 import { createOrderFromCart } from "@/store/slices/orderSlice";
@@ -27,7 +16,6 @@ const Page = () => {
   const router = useRouter();
   const { addresses } = useSelector((state) => state.address);
   const { items: cartItems = [] } = useSelector((state) => state.cart);
-
   const defaultAddress = useMemo(() => addresses.find((a) => a.is_default), [addresses]);
 
   useEffect(() => {
@@ -89,9 +77,16 @@ const Page = () => {
             idempotency_key: crypto.randomUUID(),
           })
         ).unwrap();
+        
+        const orderId = orderRes?.orders?.[0]?.id;
+
+        if (!orderId) {
+          alert("Order ID missing");
+          return;
+        }
         await dispatch(clearCart()).unwrap();
         await dispatch(fetchCart());
-        router.push("/thankyoupage");
+        router.push(`/thankyoupage?orderId=${orderId}`);
         return;
       }
 
@@ -140,57 +135,57 @@ const Page = () => {
         },
 
         prefill: {
-  method:
-    paymentMethod === "upi"
-      ? "upi"
-      : paymentMethod === "card"
-      ? "card"
-      : "netbanking",
-},
+          method:
+            paymentMethod === "upi"
+              ? "upi"
+              : paymentMethod === "card"
+                ? "card"
+                : "netbanking",
+        },
 
         config: {
-  display: {
-    blocks: {
-      upi: {
-        name: "Pay using UPI",
-        instruments: [
-          {
-            method: "upi",
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay using UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                  },
+                ],
+              },
+
+              cards: {
+                name: "Pay using Cards",
+                instruments: [
+                  {
+                    method: "card",
+                  },
+                ],
+              },
+
+              netbanking: {
+                name: "Pay using Net Banking",
+                instruments: [
+                  {
+                    method: "netbanking",
+                  },
+                ],
+              },
+            },
+
+            sequence:
+              paymentMethod === "upi"
+                ? ["upi"]
+                : paymentMethod === "card"
+                  ? ["cards"]
+                  : ["netbanking"],
+
+            preferences: {
+              show_default_blocks: false,
+            },
           },
-        ],
-      },
-
-      cards: {
-        name: "Pay using Cards",
-        instruments: [
-          {
-            method: "card",
-          },
-        ],
-      },
-
-      netbanking: {
-        name: "Pay using Net Banking",
-        instruments: [
-          {
-            method: "netbanking",
-          },
-        ],
-      },
-    },
-
-    sequence:
-      paymentMethod === "upi"
-        ? ["upi"]
-        : paymentMethod === "card"
-        ? ["cards"]
-        : ["netbanking"],
-
-    preferences: {
-      show_default_blocks: false,
-    },
-  },
-},
+        },
 
         handler: async (response) => {
           try {
@@ -207,7 +202,7 @@ const Page = () => {
               })
             ).unwrap();
 
-            router.push("/thankyoupage");
+            router.push(`/thankyoupage?orderId=${orderId}`);
           } catch (err) {
             console.error(err);
 

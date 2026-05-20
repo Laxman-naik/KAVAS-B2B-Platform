@@ -24,3 +24,8 @@ export const updateOrderStatusAPI = async (orderId, status) => {
 
   return res.data;
 };
+
+export const getOrderById = async (orderId) => {
+  const res = await productapi.get(`/orders/${orderId}`);
+  return res.data;
+};
