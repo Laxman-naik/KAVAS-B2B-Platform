@@ -16,7 +16,7 @@ const Page = () => {
   const orderId = searchParams.get("orderId");
   const dispatch = useDispatch();
   const { currentOrderbyid } = useSelector((state) => state.order);
-  console.log(currentOrderbyid)
+  // console.log(currentOrderbyid)
 
   useEffect(() => {
     if (orderId) {
@@ -157,7 +157,7 @@ const Page = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
+          {/* <Card className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
             <CardContent className="p-6">
               <h3 className="mb-5 text-xl font-bold text-[#0B1F3A]">
                 Order Summary
@@ -199,7 +199,7 @@ const Page = () => {
                 </span>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </section>
 
         <Card className="mt-5 rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
