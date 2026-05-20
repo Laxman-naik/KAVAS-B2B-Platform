@@ -50,7 +50,7 @@ exports.createCheckout = async (req, res) => {
     }
 
     //  4. Convert safely to paise
-    const amount = Math.round(Number(order.total_amount) * 100);
+    const amount = Math.round(Number(order.total_amount));
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Invalid order amount" });
