@@ -53,7 +53,6 @@ export default function VendorStoreDetailsPage() {
 
     return [
       { label: "Mobile Verification", done: v?.phone_verified === true },
-      { label: "Email Verification", done: v?.email_verified === true },
     ];
   }, [vendor]);
 

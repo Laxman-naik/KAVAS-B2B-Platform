@@ -28,9 +28,14 @@ export const sendVendorOtp = createAsyncThunk(
       const res = await sendVendorOtpAPI(data);
       return res.data;
     } catch (err) {
-      console.log(err)
-      return rejectWithValue(err.response?.data || err.message);
-    }
+  console.log("SEND OTP THUNK ERROR:", err);
+  console.log("ERROR RESPONSE:", err.response);
+  console.log("ERROR DATA:", err.response?.data);
+
+  return rejectWithValue(
+    err.response?.data || err.message
+  );
+}
   }
 );
 

@@ -82,21 +82,21 @@ export default function VendorRegisterPage() {
     }
   };
 
-  const onOtpChange = (index) => (e) => {
+  const onOtpChange = (channel, index) => (e) => {
     const val = e.target.value.replace(/\D/g, "").slice(-1);
 
     setOtpDigits((prev) => {
-      const next = [...prev.mobile];
+      const next = [...prev[channel]];
       next[index] = val;
 
       return {
         ...prev,
-        mobile: next,
+        [channel]: next,
       };
     });
 
     if (val && index < 5) {
-      otpRefs.current.mobile[index + 1]?.focus?.();
+      otpRefs.current[channel][index + 1]?.focus?.();
     }
   };
 
