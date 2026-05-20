@@ -132,12 +132,13 @@ exports.verifyPayment = async (req, res) => {
     );
 
     await client.query(
-      `UPDATE orders
-       SET status = 'confirmed',
-            status = 'paid'
-       WHERE id = $1`,
-      [tx.order_id]
-    );
+  `UPDATE orders
+   SET status = 'confirmed',
+       delivery_status = 'confirmed',
+       paid_at = NOW()
+   WHERE id = $1`,
+  [tx.order_id]
+);
 
     // fetch items
     const itemsRes = await client.query(
