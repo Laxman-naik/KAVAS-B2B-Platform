@@ -4,8 +4,6 @@ const crypto = require("crypto");
 
 exports.createCheckout = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("USER:", req.user);
     const { id: userId } = req.user;
     const { orderId } = req.body;
 
@@ -77,31 +75,11 @@ exports.createCheckout = async (req, res) => {
     });
 
   }catch (err) {
-
-  console.error("========= CHECKOUT ERROR =========");
-
-  console.error("FULL ERROR OBJECT:");
-  console.dir(err, { depth: null });
-
-  console.error("MESSAGE:", err?.message);
-
-  console.error("STACK:", err?.stack);
-
-  console.error("STATUS CODE:", err?.statusCode);
-
-  console.error("ERROR DESCRIPTION:", err?.error);
-
-  console.error("RAW JSON:", JSON.stringify(err, null, 2));
-
   return res.status(500).json({
     success: false,
-
     message: err?.message || null,
-
     statusCode: err?.statusCode || null,
-
     error: err?.error || null,
-
     raw: err,
   });
 }
@@ -118,7 +96,7 @@ exports.verifyPayment = async (req, res) => {
     } = req.body;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RZP_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 

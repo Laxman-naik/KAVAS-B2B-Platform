@@ -18,9 +18,13 @@ exports.createOrderFromCart = async (req, res) => {
     await client.query("BEGIN");
 
     const addressRes = await client.query(
-      `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
-      [userId]
-    );
+  `SELECT id
+   FROM addresses
+   WHERE user_id = $1
+     AND is_default = true
+   LIMIT 1`,
+  [userId]
+);
 
     if (!addressRes.rows.length) {
       await client.query("ROLLBACK");
@@ -56,16 +60,20 @@ exports.createOrderFromCart = async (req, res) => {
     const cartId = cartRes.rows[0].id;
 
     const itemsRes = await client.query(
-      `SELECT 
-         ci.*, 
-         p.stock,
-         p.organization_id
-       FROM cart_items ci
-       JOIN products p ON p.id = ci.product_id
-       WHERE ci.cart_id = $1
-       FOR UPDATE`,
-      [cartId]
-    );
+  `SELECT 
+     ci.*, 
+     p.stock,
+     p.organization_id,
+     o.name AS organization_name
+   FROM cart_items ci
+   JOIN products p 
+     ON p.id = ci.product_id
+   JOIN organizations o
+     ON p.organization_id = o.id
+   WHERE ci.cart_id = $1
+   FOR UPDATE`,
+  [cartId]
+);
 
     if (!itemsRes.rows.length) {
       throw new Error("Cart is empty");
@@ -136,9 +144,9 @@ exports.createOrderFromCart = async (req, res) => {
       for (const item of supplierItems) {
         await client.query(
           `INSERT INTO order_items 
-           (order_id, product_id, quantity, price)
-           VALUES ($1, $2, $3, $4)`,
-          [order.id, item.product_id, item.quantity, item.price]
+           (order_id, product_id, quantity, price, organization_name)
+            VALUES ($1, $2, $3, $4, $5)`,
+          [order.id, item.product_id, item.quantity, item.price,item.organization_name,]
         );
 
         await client.query(
