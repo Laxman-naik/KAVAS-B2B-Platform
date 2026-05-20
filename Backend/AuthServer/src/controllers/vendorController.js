@@ -79,142 +79,136 @@ const otpStore = new Map();
 // };
 export const sendOtp = async (req, res) => {
   try {
-    const { email, phone } = req.body;
+    const { phone } = req.body;
 
-    if (!email && !phone) {
-      return res.status(400).json({ message: "Email or phone required" });
+    if (!phone) {
+      return res.status(400).json({
+        message: "Phone number required",
+      });
     }
+
+    // mobile validation
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
     const expires = Date.now() + 5 * 60 * 1000;
 
-    let emailSent = false;
-    let phoneSent = false;
+    const key = `phone:${phone}`;
 
-    // ================= PHONE OTP =================
-    if (phone) {
-      const phoneOtp = Math.floor(100000 + Math.random() * 900000);
-      const key = `phone:${phone}`;
-
-      otpStore.set(key, {
-        otp: phoneOtp,
-        expires,
-        verified: false,
-      });
-
-      try {
-        await axios.post(
-          "https://www.fast2sms.com/dev/bulkV2",
-          {
-            route: "q",
-            message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
-            language: "english",
-            numbers: phone,
-          },
-          {
-            headers: {
-              authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
-            },
-          }
-        );
-
-        phoneSent = true;
-      } catch (smsErr) {
-        console.error("SMS FAILED FULL:", smsErr);
-      }
-
-      console.log("PHONE OTP GENERATED:", key, phoneOtp);
-    }
-
-    // ================= EMAIL OTP =================
-    if (email) {
-      const emailOtp = Math.floor(100000 + Math.random() * 900000);
-      const key = `email:${email}`;
-
-      otpStore.set(key, {
-        otp: emailOtp,
-        expires,
-        verified: false,
-      });
-
-      try {
-        const info = await sendEmailOtp(email, emailOtp);
-        console.log("EMAIL SENT:", info.messageId);
-        emailSent = true;
-      } catch (err) {
-        console.error("EMAIL FAILED FULL:", err);
-      }
-
-      console.log("EMAIL OTP GENERATED:", key, emailOtp);
-    }
-
-    return res.status(200).json({
-      message: "OTP process completed",
-      emailSent,
-      phoneSent,
+    otpStore.set(key, {
+      otp,
+      expires,
+      verified: false,
     });
+
+    try {
+      await axios.post(
+        "https://www.fast2sms.com/dev/bulkV2",
+        {
+          route: "q",
+          message: `Your Kavas OTP is ${otp}. Valid for 5 minutes.`,
+          language: "english",
+          numbers: phone,
+        },
+        {
+          headers: {
+            authorization:
+              process.env.FAST2SMS_API_KEY,
+          },
+        }
+      );
+
+      console.log("PHONE OTP GENERATED:", key, otp);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully",
+      });
+
+    } catch (smsErr) {
+      console.error("SMS FAILED:", smsErr?.response?.data || smsErr.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send OTP",
+      });
+    }
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
 
     return res.status(500).json({
-      message: err.message || "Internal server error",
+      success: false,
+      message: "Internal server error",
     });
   }
 };
 
 export const verifyOtp = async (req, res) => {
   try {
-    let { email, phone, otp } = req.body;
+    let { phone, otp } = req.body;
 
-    otp = otp ? String(otp).trim() : null;
+    otp = otp ? String(otp).trim() : "";
 
-    // ================= EMAIL VERIFY =================
-    if (email) {
-      const key = `email:${email}`;
-      const emailData = otpStore.get(key);
-
-      if (!emailData) {
-        return res.status(400).json({ message: "Email OTP not found" });
-      }
-
-      if (Date.now() > emailData.expires) {
-        return res.status(400).json({ message: "Email OTP expired" });
-      }
-
-      if (String(emailData.otp) !== String(otp)) {
-        return res.status(400).json({ message: "Invalid email OTP" });
-      }
-
-      emailData.verified = true;
-      otpStore.set(key, emailData);
+    if (!phone || !otp) {
+      return res.status(400).json({
+        message: "Phone and OTP are required",
+      });
     }
 
-    // ================= PHONE VERIFY =================
-    if (phone) {
-      const key = `phone:${phone}`;
-      const phoneData = otpStore.get(key);
-
-      if (!phoneData) {
-        return res.status(400).json({ message: "Phone OTP not found" });
-      }
-
-      if (Date.now() > phoneData.expires) {
-        return res.status(400).json({ message: "Phone OTP expired" });
-      }
-
-      if (String(phoneData.otp) !== String(otp)) {
-        return res.status(400).json({ message: "Invalid phone OTP" });
-      }
-
-      phoneData.verified = true;
-      otpStore.set(key, phoneData);
+    // validate phone
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number",
+      });
     }
 
-    return res.json({ message: "OTP verified successfully" });
+    const key = `phone:${phone}`;
+
+    const phoneData = otpStore.get(key);
+
+    if (!phoneData) {
+      return res.status(400).json({
+        message: "OTP not found",
+      });
+    }
+
+    if (Date.now() > phoneData.expires) {
+      otpStore.delete(key);
+
+      return res.status(400).json({
+        message: "OTP expired",
+      });
+    }
+
+    if (String(phoneData.otp) !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    // mark verified
+    phoneData.verified = true;
+
+    otpStore.set(key, phoneData);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
 
   } catch (err) {
     console.error("VERIFY OTP ERROR:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -224,67 +218,111 @@ export const registerVendor = async (req, res) => {
   try {
     const { email, phone, password, confirmPassword } = req.body;
 
-    if (!password || password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
+    // ================= VALIDATIONS =================
+
+    if (!phone) {
+      return res.status(400).json({
+        message: "Phone number is required",
+      });
     }
 
-    // ================= EMAIL OTP CHECK =================
-    if (email) {
-      const emailKey = `email:${email}`;
-      const emailData = otpStore.get(emailKey);
-
-      if (!emailData?.verified) {
-        return res.status(400).json({ message: "Email OTP not verified" });
-      }
+    if (!password || password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
     }
 
     // ================= PHONE OTP CHECK =================
-    if (phone) {
-      const phoneKey = `phone:${phone}`;
-      const phoneData = otpStore.get(phoneKey);
 
-      if (!phoneData?.verified) {
-        return res.status(400).json({ message: "Phone OTP not verified" });
-      }
+    const phoneKey = `phone:${phone}`;
+
+    const phoneData = otpStore.get(phoneKey);
+
+    if (!phoneData?.verified) {
+      return res.status(400).json({
+        message: "Phone OTP not verified",
+      });
+    }
+
+    // ================= CHECK EXISTING VENDOR =================
+
+    const existingVendor = await client.query(
+      `
+        SELECT id
+        FROM vendorprofile
+        WHERE phone = $1
+           OR email = $2
+        LIMIT 1
+      `,
+      [phone, email || null]
+    );
+
+    if (existingVendor.rows.length > 0) {
+      return res.status(400).json({
+        message: "Vendor already exists",
+      });
     }
 
     await client.query("BEGIN");
 
+    // ================= HASH PASSWORD =================
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ================= CREATE VENDOR =================
+
     const vendorResult = await client.query(
-      `INSERT INTO vendorprofile (
-        email, phone, password_hash, email_verified, phone_verified
-      )
-      VALUES ($1, $2, $3, true, true)
-      RETURNING id`,
-      [email, phone, hashedPassword]
+      `
+        INSERT INTO vendorprofile (
+          email,
+          phone,
+          password_hash,
+          email_verified,
+          phone_verified
+        )
+        VALUES ($1, $2, $3, false, true)
+        RETURNING id
+      `,
+      [email || null, phone, hashedPassword]
     );
 
     const vendorId = vendorResult.rows[0].id;
 
+    // ================= CREATE ONBOARDING =================
+
     const onboarding = await client.query(
-      `INSERT INTO vendor_onboarding (vendor_id, status)
-       VALUES ($1, 'draft')
-       RETURNING id`,
+      `
+        INSERT INTO vendor_onboarding (
+          vendor_id,
+          status
+        )
+        VALUES ($1, 'draft')
+        RETURNING id
+      `,
       [vendorId]
     );
 
     await client.query("COMMIT");
 
-    // cleanup OTPs
-    otpStore.delete(`email:${email}`);
+    // ================= CLEANUP OTP =================
+
     otpStore.delete(`phone:${phone}`);
 
-    return res.json({
+    return res.status(201).json({
       message: "Registered successfully",
       onboarding_id: onboarding.rows[0].id,
+      vendor_id: vendorId,
     });
 
   } catch (err) {
     await client.query("ROLLBACK");
+
     console.error("REGISTER ERROR:", err);
-    return res.status(500).json({ message: "Registration failed" });
+
+    return res.status(500).json({
+      message: "Registration failed",
+    });
+
   } finally {
     client.release();
   }

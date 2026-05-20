@@ -13,8 +13,8 @@ export default function VendorRegisterPage() {
   const step = 1;
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [otpDigits, setOtpDigits] = useState({ mobile: Array(6).fill(""), email: Array(6).fill("") });
-  const otpRefs = useRef({ mobile: [], email: [] });
+  const [otpDigits, setOtpDigits] = useState({ mobile: Array(6).fill(""), });
+  const otpRefs = useRef({ mobile: [] });
   const dispatch = useDispatch();
 
   const { loading, otp, error } = useSelector((state) => state.vendor);
@@ -57,48 +57,46 @@ export default function VendorRegisterPage() {
   );
 
   const setValue = (key) => (e) => {
-    const value = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm((s) => ({ ...s, [key]: value }));
+    const value =
+      e?.target?.type === "checkbox"
+        ? e.target.checked
+        : e.target.value;
+
+    setForm((s) => ({
+      ...s,
+      [key]: value,
+    }));
   };
 
-const sendOtp = async (channel) => {
-  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(form.mobile)) return;
-  if (channel === "email" && !/^\S+@\S+\.\S+$/.test(form.email)) return;
+  const sendOtp = async () => {
+    if (!/^[6-9]\d{9}$/.test(form.mobile)) return;
 
-  const payload =
-    channel === "mobile"
-      ? { phone: form.mobile }
-      : { email: form.email };
+    const res = await dispatch(
+      sendVendorOtp({ phone: form.mobile })
+    );
 
-  const res = await dispatch(sendVendorOtp(payload));
+    if (res.meta.requestStatus === "fulfilled") {
+      setOtpDigits({
+        mobile: Array(6).fill("")
+      });
+    }
+  };
 
-  console.log("🔥 FULL DISPATCH RESULT:", res);
-
-  if (res.meta.requestStatus === "fulfilled") {
-    console.log("✅ OTP API SUCCESS:", res.payload);
-
-    console.log("📩 EMAIL USED:", form.email);
-  } else {
-    console.log("❌ OTP FAILED:", res.payload);
-  }
-
-  setOtpDigits((s) => ({
-    ...s,
-    [channel]: Array(6).fill("")
-  }));
-};
-
-  const onOtpChange = (channel, index) => (e) => {
+  const onOtpChange = (index) => (e) => {
     const val = e.target.value.replace(/\D/g, "").slice(-1);
 
     setOtpDigits((prev) => {
-      const next = [...prev[channel]];
+      const next = [...prev.mobile];
       next[index] = val;
-      return { ...prev, [channel]: next };
+
+      return {
+        ...prev,
+        mobile: next,
+      };
     });
 
     if (val && index < 5) {
-      otpRefs.current?.[channel]?.[index + 1]?.focus?.();
+      otpRefs.current.mobile[index + 1]?.focus?.();
     }
   };
 
@@ -109,25 +107,22 @@ const sendOtp = async (channel) => {
     otpRefs.current?.[channel]?.[index - 1]?.focus?.();
   };
 
-  const verifyOtp = async (channel) => {
-    const code = otpDigits[channel].join("");
+  const verifyOtp = async () => {
+    const code = otpDigits.mobile.join("");
+
     if (code.length !== 6) return;
 
-    const payload =
-      channel === "mobile"
-        ? { phone: form.mobile, otp: code }
-        : { email: form.email, otp: code };
-
-    const res = await dispatch(verifyVendorOtp(payload));
-
-    if (res.meta.requestStatus !== "fulfilled") {
-      return;
-    }
+    const res = await dispatch(
+      verifyVendorOtp({
+        phone: form.mobile,
+        otp: code,
+      })
+    );
   };
 
   const canContinue =
     otp.mobileVerified &&
-    otp.emailVerified &&
+    /^\S+@\S+\.\S+$/.test(form.email) &&
     form.password &&
     form.confirmPassword &&
     form.password === form.confirmPassword &&
@@ -272,7 +267,7 @@ const sendOtp = async (channel) => {
                       <button
                         type="button"
                         onClick={() => sendOtp("mobile")}
-                        disabled={loading.sendOtp || otp.mobileVerified || !form.mobile}
+                        disabled={loading.sendOtp || otp.mobileVerified || !/^[6-9]\d{9}$/.test(form.mobile)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
                         {otp.mobileVerified ? "Verified" : otp?.mobileSent ? "Resend OTP" : "Send OTP"}
@@ -313,7 +308,7 @@ const sendOtp = async (channel) => {
                       </div>
                     )}
 
-                    <div className="relative">
+                    {/* <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                         <Mail size={16} />
                       </span>
@@ -331,9 +326,22 @@ const sendOtp = async (channel) => {
                       >
                         {otp.emailVerified ? "Verified" : otp.emailSent ? "Resend OTP" : "Send OTP"}
                       </button>
+                    </div> */}
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <Mail size={16} />
+                      </span>
+
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={setValue("email")}
+                        placeholder="Email ID"
+                        className="w-full h-11 rounded-md border border-[#E5E5E5] bg-white pl-10 pr-3 text-sm text-[#1A1A1A] outline-none focus:border-[#0B1F3A]"
+                      />
                     </div>
 
-                    {otp.emailSent && !otp.emailVerified && (
+                    {/* {otp.emailSent && !otp.emailVerified && (
                       <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
@@ -365,7 +373,7 @@ const sendOtp = async (channel) => {
                           ))}
                         </div>
                       </div>
-                    )}
+                    )} */}
 
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -536,13 +544,6 @@ const sendOtp = async (channel) => {
                       </div>
                     </div>
                   </div>
-
-                  {/* <button
-                    type="button"
-                    className="mt-6 inline-flex items-center justify-center rounded-full bg-[#D4AF37] px-6 py-2 text-xs font-extrabold text-[#0B1F3A] hover:opacity-95"
-                  >
-                    Start Selling Now
-                  </button> */}
 
                   <div className="pointer-events-none absolute -right-6 -bottom-10 opacity-20">
                     <Image src="/lotussymbol.png" alt="" width={240} height={240} className="h-auto w-60" />
