@@ -55,141 +55,20 @@ if (RAZORPAY_KEY_ID && RAZORPAY_SECRET) {
 ====================================================== */
 
 const createOrder = async (amount) => {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Invalid Razorpay amount");
+  }
   try {
-    if (!razorpay) {
-      throw new Error("Razorpay is not configured");
-    }
-
-    if (!amount || amount <= 0) {
-      throw new Error("Invalid payment amount");
-    }
-
-    const options = {
-      amount: Math.round(amount), // amount in paise
+    return await razorpay.orders.create({
+      amount,
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
-    };
+    });
+  } catch (err) {
+    console.error("RAZORPAY CREATE ORDER ERROR:", err);
 
-    const order = await razorpay.orders.create(options);
-
-    return order;
-  } catch (error) {
-    console.error("❌ Razorpay Create Order Error:", error.message);
-
-    throw error;
+    throw err;
   }
 };
 
-/* ======================================================
-   Verify Razorpay Signature
-====================================================== */
-
-const crypto = require("crypto");
-
-const verifyPaymentSignature = ({
-  razorpay_order_id,
-  razorpay_payment_id,
-  razorpay_signature,
-}) => {
-  try {
-    if (!RAZORPAY_SECRET) {
-      throw new Error("Razorpay secret missing");
-    }
-
-    const body =
-      razorpay_order_id + "|" + razorpay_payment_id;
-
-    const expectedSignature = crypto
-      .createHmac("sha256", RAZORPAY_SECRET)
-      .update(body.toString())
-      .digest("hex");
-
-    return expectedSignature === razorpay_signature;
-  } catch (error) {
-    console.error(
-      "❌ Razorpay Signature Verification Error:",
-      error.message
-    );
-
-    return false;
-  }
-};
-
-/* ======================================================
-   Refund Payment
-====================================================== */
-
-const createRefund = async (paymentId, amount) => {
-  try {
-    if (!razorpay) {
-      throw new Error("Razorpay is not configured");
-    }
-
-    const refund = await razorpay.payments.refund(
-      paymentId,
-      {
-        amount: amount || undefined,
-      }
-    );
-
-    return refund;
-  } catch (error) {
-    console.error("❌ Refund Error:", error.message);
-
-    throw error;
-  }
-};
-
-/* ======================================================
-   Fetch Payment Details
-====================================================== */
-
-const fetchPayment = async (paymentId) => {
-  try {
-    if (!razorpay) {
-      throw new Error("Razorpay is not configured");
-    }
-
-    return await razorpay.payments.fetch(paymentId);
-  } catch (error) {
-    console.error(
-      "❌ Fetch Payment Error:",
-      error.message
-    );
-
-    throw error;
-  }
-};
-
-/* ======================================================
-   Fetch Order Details
-====================================================== */
-
-const fetchOrder = async (orderId) => {
-  try {
-    if (!razorpay) {
-      throw new Error("Razorpay is not configured");
-    }
-
-    return await razorpay.orders.fetch(orderId);
-  } catch (error) {
-    console.error(
-      "❌ Fetch Order Error:",
-      error.message
-    );
-
-    throw error;
-  }
-};
-
-/* ======================================================
-   Export
-====================================================== */
-
-module.exports = {
-  createOrder,
-  verifyPaymentSignature,
-  createRefund,
-  fetchPayment,
-  fetchOrder,
-};
+module.exports = {createOrder,};
