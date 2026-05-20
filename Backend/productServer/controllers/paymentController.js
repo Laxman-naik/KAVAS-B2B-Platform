@@ -77,18 +77,20 @@ exports.createCheckout = async (req, res) => {
     });
 
   }  catch (err) {
+
   console.error("========= CHECKOUT ERROR =========");
 
   console.error("MESSAGE:", err.message);
 
   console.error("STACK:", err.stack);
 
-  console.error("FULL ERROR:", err);
+  console.error("FULL:", err);
 
-  res.status(500).json({
+  return res.status(500).json({
     success: false,
     message: err.message,
     stack: err.stack,
+    raw: String(err),
   });
 }
 };
