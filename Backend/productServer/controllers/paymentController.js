@@ -134,7 +134,7 @@ exports.verifyPayment = async (req, res) => {
     await client.query(
       `UPDATE orders
        SET status = 'confirmed',
-           payment_status = 'paid'
+            status = 'paid'
        WHERE id = $1`,
       [tx.order_id]
     );
