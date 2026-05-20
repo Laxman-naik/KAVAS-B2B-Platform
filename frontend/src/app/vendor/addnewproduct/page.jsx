@@ -12,36 +12,14 @@ export default function AddNewProductPage() {
   const dispatch = useDispatch();
 
 
-  const handleSubmit = async (data) => {
-    const payload = {
-      name: data?.name,
-      sku: data?.sku,
-      category: data?.category,
-      unit: data?.unit,
-      status: data?.status,
-      description: data?.description,
-      price: Number(data?.price || 0),
-      mrp: Number(data?.mrp || 0),
-      gst: data?.gst,
-      moq: Number(data?.moq || 0),
-      stock: Number(data?.stock || 0),
-      images: Array.isArray(data?.images) ? data.images.filter((x) => typeof x === "string" && x.trim()) : [],
-    };
-
-    await createProductAPI(payload);
-    router.push("/vendor/products");
+  const handleSubmit = async (form) => {
     try {
       const payload = {
         name: form.name?.trim(),
         sku: form.sku?.trim(),
 
-        categories: form.subCategoryId
-          ? [Number(form.subCategoryId)]
-          : form.categoryId
-          ? [Number(form.categoryId)]
-          : [],
-
-        category: form.subCategory || form.category,
+        category: form.category || null,
+        subCategory: form.subCategory || null,
 
         unit: form.unit || "pcs",
         status: "active",
@@ -49,7 +27,7 @@ export default function AddNewProductPage() {
 
         price: Number(form.price || 0),
         mrp: Number(form.mrp || 0),
-        moq: Number(form.moq || 0),
+        moq: Number(form.moq || 1),
         stock: Number(form.stock || 0),
 
         gst: form.taxClass || "",
@@ -60,37 +38,58 @@ export default function AddNewProductPage() {
         dispatchTimeDays: Number(form.expectedDispatchTime || 0),
 
         images: Array.isArray(form.images)
-          ? form.images.filter(
-              (url) => typeof url === "string" && url.trim()
-            )
+          ? form.images.filter((url) => typeof url === "string" && url.trim())
+          : [],
+
+        videos: Array.isArray(form.videos)
+          ? form.videos.filter((url) => typeof url === "string" && url.trim())
           : [],
 
         specifications: Array.isArray(form.specifications)
           ? form.specifications
-              .filter((s) => s.name?.trim() && s.value?.trim())
-              .map((s) => ({
-                key: s.name.trim(),
-                value: s.value.trim(),
-              }))
+            .filter((s) => s.name?.trim() && s.value?.trim())
+            .map((s) => ({
+              name: s.name.trim(),
+              value: s.value.trim(),
+            }))
           : [],
 
-        pricingTiers: Array.isArray(form.bulkPricing)
+        bulkPricing: Array.isArray(form.bulkPricing)
           ? form.bulkPricing
-              .filter((p) => p.minQty && p.pricePerUnit)
-              .map((p) => ({
-                min_quantity: Number(p.minQty),
-                price: Number(p.pricePerUnit),
-                label: p.maxQty ? `${p.minQty}-${p.maxQty}` : `${p.minQty}+`,
-              }))
+            .filter((p) => p.minQty && p.pricePerUnit)
+            .map((p) => ({
+              minQty: Number(p.minQty),
+              maxQty: p.maxQty ? Number(p.maxQty) : null,
+              pricePerUnit: Number(p.pricePerUnit),
+            }))
+          : [],
+
+        variants: Array.isArray(form.variants)
+          ? form.variants
+            .filter((v) => v.value?.trim())
+            .map((v) => ({
+              variant_type: v.variantName,
+              variant_value: v.value,
+              sku: v.sku || null,
+              price: Number(v.price || form.price || 0),
+              mrp: Number(v.mrp || form.mrp || 0),
+              stock: Number(v.stock || 0),
+              unit: form.unit || "pcs",
+            }))
           : [],
       };
 
       await dispatch(addProduct(payload)).unwrap();
-
       router.push("/vendor/products");
     } catch (error) {
       console.error("Product create failed:", error);
-      alert(error?.message || "Failed to create product");
+
+      alert(
+        error?.response?.data?.message ||
+        error?.data?.message ||
+        error?.message ||
+        "Failed to create product"
+      );
     }
   };
 
