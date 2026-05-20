@@ -266,8 +266,8 @@ export default function VendorRegisterPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => sendOtp("mobile")}
-                        disabled={loading.sendOtp || otp.mobileVerified || !/^[6-9]\d{9}$/.test(form.mobile)}
+                        onClick={sendOtp}
+                        disabled={loading || otp.mobileVerified || !/^[6-9]\d{9}$/.test(form.mobile)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
                       >
                         {otp.mobileVerified ? "Verified" : otp?.mobileSent ? "Resend OTP" : "Send OTP"}
@@ -281,7 +281,7 @@ export default function VendorRegisterPage() {
                           <button
                             type="button"
                             onClick={() => verifyOtp("mobile")}
-                            disabled={loading.verifyOtp || otpDigits.mobile.join("").length !== 6}
+                            disabled={loading || otpDigits.mobile.join("").length !== 6}
                             className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${otpDigits.mobile.join("").length === 6
                               ? "bg-[#0B1F3A] hover:opacity-95"
                               : "bg-[#0B1F3A]/40 cursor-not-allowed"

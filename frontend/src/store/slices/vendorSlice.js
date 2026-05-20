@@ -28,6 +28,7 @@ export const sendVendorOtp = createAsyncThunk(
       const res = await sendVendorOtpAPI(data);
       return res.data;
     } catch (err) {
+      console.log(err)
       return rejectWithValue(err.response?.data || err.message);
     }
   }
@@ -716,5 +717,5 @@ const vendorSlice = createSlice({
   },
 });
 
-export const { resetVendorState, logoutLocal } = vendorSlice.actions;
+export const { resetVendorState, resetMobileVerification, logoutLocal,} = vendorSlice.actions;
 export default vendorSlice.reducer;

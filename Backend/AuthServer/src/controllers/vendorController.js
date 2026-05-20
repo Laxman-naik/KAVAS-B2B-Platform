@@ -130,14 +130,19 @@ export const sendOtp = async (req, res) => {
         message: "OTP sent successfully",
       });
 
-    } catch (smsErr) {
-      console.error("SMS FAILED:", smsErr?.response?.data || smsErr.message);
+    } catch (error) {
+  console.error("SEND OTP ERROR RESPONSE:", error.response?.data);
+  console.error("SEND OTP ERROR STATUS:", error.response?.status);
+  console.error("SEND OTP ERROR MESSAGE:", error.message);
 
-      return res.status(500).json({
-        success: false,
-        message: "Failed to send OTP",
-      });
-    }
+  return res.status(500).json({
+    success: false,
+    message: error.message,
+    error: process.env.NODE_ENV === "development"
+      ? error.stack
+      : undefined,
+  });
+}
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
