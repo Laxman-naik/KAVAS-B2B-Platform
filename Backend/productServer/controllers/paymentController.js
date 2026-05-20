@@ -50,7 +50,7 @@ exports.createCheckout = async (req, res) => {
     }
 
     //  4. Convert safely to paise
-    const amount = Math.round(Number(order.total_amount));
+    const amount = Math.round(Number(order.total_amount)*100);
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Invalid order amount" });
@@ -133,7 +133,7 @@ exports.verifyPayment = async (req, res) => {
 
     await client.query(
   `UPDATE orders
-   SET status = 'confirmed',
+   SET status = 'paid',
        delivery_status = 'confirmed',
        paid_at = NOW()
    WHERE id = $1`,
@@ -254,12 +254,13 @@ exports.handleWebhook = async (req, res) => {
       );
 
       await client.query(
-        `UPDATE orders
-         SET status = 'confirmed',
-             payment_status = 'paid'
-         WHERE id = $1`,
-        [tx.order_id]
-      );
+  `UPDATE orders
+   SET status = 'paid',
+       delivery_status = 'confirmed',
+       paid_at = NOW()
+   WHERE id = $1`,
+  [tx.order_id]
+);
 
       // SAME sales logic
       const itemsRes = await client.query(
