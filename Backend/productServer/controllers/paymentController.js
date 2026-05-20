@@ -4,6 +4,8 @@ const crypto = require("crypto");
 
 exports.createCheckout = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+    console.log("USER:", req.user);
     const { id: userId } = req.user;
     const { orderId } = req.body;
 
@@ -18,12 +20,14 @@ exports.createCheckout = async (req, res) => {
 
     //  2. Fetch order (WITH ownership check)
     const orderRes = await pool.query(
-      `SELECT o.* 
-       FROM orders o
-       JOIN addresses a ON o.shipping_address_id = a.id
-       WHERE o.id = $1 AND a.user_id = $2`,
-      [orderId, userId]
-    );
+  `SELECT o.*
+   FROM orders o
+   JOIN addresses a
+     ON o.shipping_address_id = a.id
+   WHERE o.id = $1
+     AND a.user_id = $2`,
+  [orderId, userId]
+);
 
     if (!orderRes.rows.length) {
       return res.status(404).json({ message: "Order not found" });
@@ -72,10 +76,21 @@ exports.createCheckout = async (req, res) => {
       dbOrderId: order.id,
     });
 
-  } catch (err) {
-    console.error("createCheckout error:", err);
-    res.status(500).json({ message: err.message });
-  }
+  }  catch (err) {
+  console.error("========= CHECKOUT ERROR =========");
+
+  console.error("MESSAGE:", err.message);
+
+  console.error("STACK:", err.stack);
+
+  console.error("FULL ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    message: err.message,
+    stack: err.stack,
+  });
+}
 };
 
 exports.verifyPayment = async (req, res) => {
