@@ -298,7 +298,7 @@ const Navbar = () => {
                           if (debouncedQuery) setShowSearchDropdown(true);
                         }}
                         placeholder="Search products, categories, brands..."
-                        className=" flex-1  h-full bg-white  px-3 text-sm text-white placeholder:text-gray-400 outline-none"
+                        className=" flex-1  h-full bg-white  px-3 text-sm text-black placeholder:text-gray-400 outline-none"
                       />
 
                       {/* Search Button */}

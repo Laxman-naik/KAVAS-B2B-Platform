@@ -1,17 +1,29 @@
 import { productapi } from "../lib/axios";
 
-export const getProducts = () => productapi.get("/api/products/all", { skipAuth: true });
+export const getProducts = () =>
+  productapi.get("/api/products/all", { skipAuth: true });
 
-export const getSingleProduct = (id) => productapi.get(`/api/products/${id}`, { skipAuth: true });
+export const getSingleProduct = (id) =>
+  productapi.get(`/api/products/${id}`, { skipAuth: true });
 
-export const createProduct = (data) => productapi.post("/api/products", data);
+export const createProduct = (data) =>
+  productapi.post("/api/products", data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-export const updateProduct = (id, data) => productapi.put(`/api/products/${id}`, data);
+export const updateProduct = (id, data) =>
+  productapi.put(`/api/products/${id}`, data);
 
-export const deleteProduct = (id) => productapi.delete(`/api/products/${id}`);
+export const deleteProduct = (id) =>
+  productapi.delete(`/api/products/${id}`);
 
-export const getNewArrivalsAPI = () =>  productapi.get("/api/products/new-arrivals?limit=25");
+export const getNewArrivalsAPI = () =>
+  productapi.get("/api/products/new-arrivals?limit=25", { skipAuth: true });
 
-export const getTrendingProductsAPI = () => productapi.get("/api/products/trending?limit=25")
+export const getTrendingProductsAPI = () =>
+  productapi.get("/api/products/trending?limit=25", { skipAuth: true });
 
-export const getVendorProductsAPI = (vendorId) => productapi.get(`/api/products/vendor/${vendorId}`, {skipAuth: true,});
+export const getVendorProductsAPI = (vendorId) =>
+  productapi.get(`/api/products/vendor/${vendorId}`);

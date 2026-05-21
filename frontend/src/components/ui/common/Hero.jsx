@@ -69,7 +69,7 @@ const Hero = () => {
 
   return (
     <div className="overflow-x-hidden bg-white">
-    <div className="mx-auto max-w-350 mt-3 ">
+    <div className="w-full px-4 sm:px-6 lg:px-8 mt-3 ">
         <div className="relative rounded-sm overflow-hidden bg-[#0B1F3A]">
 
           <div
