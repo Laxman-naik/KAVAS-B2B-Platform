@@ -293,10 +293,14 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     );
 
     // ================= IMAGES =================
-    formData.append("images", JSON.stringify(form.images || []));
+    form.images.forEach((image) => {
+      formData.append("images", image);
+    });
 
     // ================= VIDEOS =================
-    formData.append("videos", JSON.stringify(form.videos || []));
+   form.videos.forEach((video) => {
+  formData.append("videos", video);
+});
 
     try {
       const resultAction = await dispatch(addProduct(formData));
@@ -322,7 +326,27 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
       alert("Something went wrong while creating product");
     }
   };
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
 
+    if (!files.length) return;
+
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...files].slice(0, 10),
+    }));
+  };
+
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (!files.length) return;
+
+    setForm((prev) => ({
+      ...prev,
+      videos: [...prev.videos, ...files].slice(0, 5),
+    }));
+  };
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -761,9 +785,9 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         <div className="flex h-44 items-center justify-center p-3">
                           {(form.images || []).length ? (
                             <img
-                              src={
-                                (form.images || [])[form.mainImageIndex || 0]
-                              }
+                              src={URL.createObjectURL(
+                                (form.images || [])[form.mainImageIndex || 0],
+                              )}
                               alt="Main"
                               className="h-full w-full object-contain"
                             />
@@ -781,26 +805,28 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         </div>
                       </div>
 
-                      {/* Image URL input */}
-                      <div className="mt-3 flex gap-2">
-                        <Input
-                          className={inputCls + " flex-1"}
-                          placeholder="Paste image URL"
-                          value={imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && addImageUrl()}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-9 rounded-sm px-4 text-xs font-semibold"
-                          onClick={addImageUrl}
-                        >
-                          <Plus className="mr-1 h-4 w-4" />
-                          Add
-                        </Button>
-                      </div>
+                      {/* Upload Images */}
+                      <div className="mt-3">
+                        <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
+                          <Upload className="h-6 w-6 text-slate-500" />
 
+                          <span className="mt-2 text-sm font-medium text-slate-700">
+                            Click to Upload Images
+                          </span>
+
+                          <span className="text-xs text-slate-500">
+                            PNG, JPG, JPEG (Max 10)
+                          </span>
+
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                          />
+                        </label>
+                      </div>
                       {/* Sub images */}
                       <div className="mt-4">
                         <div className="flex items-center justify-between">
@@ -831,7 +857,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                                 }}
                               >
                                 <img
-                                  src={url}
+                                  src={URL.createObjectURL(url)}
                                   alt=""
                                   className="h-full w-full object-cover"
                                 />
@@ -870,53 +896,53 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           })}
                         </div>
                       </div>
+                      {/* Upload Videos */}
+<div className="mt-3">
+  <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
+    <Upload className="h-6 w-6 text-slate-500" />
 
-                      {/* Videos */}
-                      <div className="mt-5">
-                        <p className="text-xs font-semibold text-slate-700">
-                          Product Videos
-                        </p>
-                        <div className="mt-2 flex gap-2">
-                          <Input
-                            className={inputCls + " flex-1"}
-                            placeholder="Paste video URL"
-                            value={videoUrl}
-                            onChange={(e) => setVideoUrl(e.target.value)}
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && addVideoUrl()
-                            }
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-9 rounded-sm px-4 text-xs font-semibold"
-                            onClick={addVideoUrl}
-                          >
-                            Add
-                          </Button>
-                        </div>
+    <span className="mt-2 text-sm font-medium text-slate-700">
+      Click to Upload Videos
+    </span>
 
-                        {(form.videos || []).length ? (
-                          <div className="mt-3 space-y-2">
-                            {(form.videos || []).map((u, idx) => (
-                              <div
-                                key={`${u}-${idx}`}
-                                className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 bg-white px-3 py-2"
-                              >
-                                <span className="truncate text-xs text-slate-600">
-                                  {u}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => removeVideo(idx)}
-                                  className="text-xs font-semibold text-red-500 hover:text-red-700"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
+    <span className="text-xs text-slate-500">
+      MP4, MOV, WEBM (Max 5)
+    </span>
+
+    <input
+      type="file"
+      multiple
+      accept="video/*"
+      className="hidden"
+      onChange={handleVideoUpload}
+    />
+  </label>
+</div>
+
+                      {(form.videos || []).length ? (
+  <div className="mt-4 grid grid-cols-2 gap-3">
+    {(form.videos || []).map((video, idx) => (
+      <div
+        key={idx}
+        className="relative overflow-hidden rounded-md border border-slate-200 bg-black"
+      >
+        <video
+          src={URL.createObjectURL(video)}
+          controls
+          className="h-40 w-full object-cover"
+        />
+
+        <button
+          type="button"
+          onClick={() => removeVideo(idx)}
+          className="absolute right-2 top-2 rounded-full bg-white p-1 shadow"
+        >
+          <X className="h-4 w-4 text-red-500" />
+        </button>
+      </div>
+    ))}
+  </div>
+) : null}
                       </div>
                     </div>
                   </div>
@@ -1249,7 +1275,6 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
             </Button>
           </div>
         </div>
-      </div>
     </>
   );
 };
