@@ -11,84 +11,32 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-
-  const handleSubmit = async (form) => {
+  const handleSubmit = async (data) => {
     try {
       const payload = {
-        name: form.name?.trim(),
-        sku: form.sku?.trim(),
-
-        category: form.category || null,
-        subCategory: form.subCategory || null,
-
-        unit: form.unit || "pcs",
-        status: "active",
-        description: form.description,
-
-        price: Number(form.price || 0),
-        mrp: Number(form.mrp || 0),
-        moq: Number(form.moq || 1),
-        stock: Number(form.stock || 0),
-
-        gst: form.taxClass || "",
-        brand: form.brand || "",
-        barcode: form.barcode || "",
-
-        weight: form.productWeight || null,
-        dispatchTimeDays: Number(form.expectedDispatchTime || 0),
-
-        images: Array.isArray(form.images)
-          ? form.images.filter((url) => typeof url === "string" && url.trim())
-          : [],
-
-        videos: Array.isArray(form.videos)
-          ? form.videos.filter((url) => typeof url === "string" && url.trim())
-          : [],
-
-        specifications: Array.isArray(form.specifications)
-          ? form.specifications
-            .filter((s) => s.name?.trim() && s.value?.trim())
-            .map((s) => ({
-              name: s.name.trim(),
-              value: s.value.trim(),
-            }))
-          : [],
-
-        bulkPricing: Array.isArray(form.bulkPricing)
-          ? form.bulkPricing
-            .filter((p) => p.minQty && p.pricePerUnit)
-            .map((p) => ({
-              minQty: Number(p.minQty),
-              maxQty: p.maxQty ? Number(p.maxQty) : null,
-              pricePerUnit: Number(p.pricePerUnit),
-            }))
-          : [],
-
-        variants: Array.isArray(form.variants)
-          ? form.variants
-            .filter((v) => v.value?.trim())
-            .map((v) => ({
-              variant_type: v.variantName,
-              variant_value: v.value,
-              sku: v.sku || null,
-              price: Number(v.price || form.price || 0),
-              mrp: Number(v.mrp || form.mrp || 0),
-              stock: Number(v.stock || 0),
-              unit: form.unit || "pcs",
-            }))
+        name: data.name?.trim(),
+        description: data.description?.trim(),
+        price: Number(data.price || 0),
+        mrp: Number(data.mrp || 0),
+        moq: Number(data.moq || 1),
+        stock: Number(data.stock || 0),
+        sku: data.sku?.trim(),
+        unit: data.unit || "pcs",
+        images: Array.isArray(data.images)
+          ? data.images.filter((url) => typeof url === "string" && url.trim())
           : [],
       };
+
+      console.log("FINAL PRODUCT PAYLOAD:", payload);
 
       await dispatch(addProduct(payload)).unwrap();
       router.push("/vendor/products");
     } catch (error) {
-      console.error("Product create failed:", error);
-
+      console.log("PAGE CREATE ERROR:", error);
       alert(
-        error?.response?.data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        "Failed to create product"
+        typeof error === "string"
+          ? error
+          : error?.message || "Failed to create product"
       );
     }
   };

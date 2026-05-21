@@ -1,14 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import {
-  DollarSign,
-  Clock,
-  CheckCircle,
-  Calendar,
-  Edit,
-  Save
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Edit, Save } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchBankDetails, saveBankDetails, } from "@/store/slices/vendorSlice";
+
 
 const COLORS = {
   primary: "#0B1F3A",
@@ -20,31 +16,49 @@ const COLORS = {
 };
 
 export default function PaymentsPayoutsBody() {
+  const dispatch = useDispatch();
+  const { bank, loading } = useSelector((state) => state.vendor);
   const [isEditing, setIsEditing] = useState(false);
+  const [bankDetails, setBankDetails] = useState({ account_holder_name: "", account_number: "", ifsc_code: "", bank_name: "", branch_name: "", account_type: "", });
 
-  const [bankDetails, setBankDetails] = useState({
-    name: "Sharma Industries Pvt Ltd",
-    account: "****9012",
-    IFSC: "SBIN0001234",
-    bank: "State Bank of India",
-    branch: "Mumbai Main Branch",
-    type: "Current Account",
-  });
+  useEffect(() => {
+    dispatch(fetchBankDetails());
+  }, [dispatch]);
+
+  useEffect(() => { if (bank) { setBankDetails({ account_holder_name: bank.account_holder_name || "", account_number: bank.account_number || "", ifsc_code: bank.ifsc_code || "", bank_name: bank.bank_name || "", branch_name: bank.branch_name || "", account_type: bank.account_type || "", }); } }, [bank]);
+
+  const handleChange = (key, value) => {
+    setBankDetails((prev) => (
+      { ...prev, [key]: value, }
+    ));
+  };
+
+  const handleSave = async () => {
+    try {
+      const resultAction = await dispatch(saveBankDetails(bankDetails));
+      if (saveBankDetails.fulfilled.match(resultAction)) { setIsEditing(false); }
+      console.log("BANK DETAILS PAYLOAD:", bankDetails)
+
+    }
+    catch (err) {
+      console.log(err);
+    }
+  };
 
   const transactions = [
     { id: "TXN-2024-4521", order: "ORD-2024-8819", date: "2026-04-19", amount: 210000, commission: 6300, net: 203700, status: "Settled" },
-    { id: "TXN-2024-4520", order: "ORD-2024-8817", date: "2026-04-17", amount: 345200, commission: 10356, net: 334844, status: "Settled" },
-    { id: "TXN-2024-4519", order: "ORD-2024-8814", date: "2026-04-14", amount: 105000, commission: 3150, net: 101850, status: "Settled" },
-    { id: "TXN-2024-4518", order: "ORD-2024-8815", date: "2026-04-15", amount: 141250, commission: 4237, net: 137013, status: "Pending" },
-    { id: "TXN-2024-4517", order: "ORD-2024-8820", date: "2026-04-20", amount: 56500, commission: 1695, net: 54805, status: "Pending" },
-    { id: "TXN-2024-4514", order: "ORD-2024-8818", date: "2026-04-18", amount: -88750, commission: 0, net: -88750, status: "Refunded" },
+    // { id: "TXN-2024-4520", order: "ORD-2024-8817", date: "2026-04-17", amount: 345200, commission: 10356, net: 334844, status: "Settled" },
+    // { id: "TXN-2024-4519", order: "ORD-2024-8814", date: "2026-04-14", amount: 105000, commission: 3150, net: 101850, status: "Settled" },
+    // { id: "TXN-2024-4518", order: "ORD-2024-8815", date: "2026-04-15", amount: 141250, commission: 4237, net: 137013, status: "Pending" },
+    // { id: "TXN-2024-4517", order: "ORD-2024-8820", date: "2026-04-20", amount: 56500, commission: 1695, net: 54805, status: "Pending" },
+    // { id: "TXN-2024-4514", order: "ORD-2024-8818", date: "2026-04-18", amount: -88750, commission: 0, net: -88750, status: "Refunded" },
   ];
 
   const payouts = [
     { id: "PAY-2024-089", date: "2026-04-15", amount: 485000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123456", status: "Processing" },
-    { id: "PAY-2024-088", date: "2026-04-08", amount: 520000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123455", status: "Completed" },
-    { id: "PAY-2024-087", date: "2026-04-01", amount: 485000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123454", status: "Completed" },
-    { id: "PAY-2024-086", date: "2026-03-25", amount: 510000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123453", status: "Completed" },
+    // { id: "PAY-2024-088", date: "2026-04-08", amount: 520000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123455", status: "Completed" },
+    // { id: "PAY-2024-087", date: "2026-04-01", amount: 485000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123454", status: "Completed" },
+    // { id: "PAY-2024-086", date: "2026-03-25", amount: 510000, method: "Bank Transfer", ref: "NEFT/SBIN0001234/123453", status: "Completed" },
   ];
 
   const statusStyle = (s) => {
@@ -52,10 +66,6 @@ export default function PaymentsPayoutsBody() {
     if (s === "Pending" || s === "Processing") return "bg-yellow-100 text-yellow-600";
     if (s === "Refunded") return "bg-red-100 text-red-600";
     return "bg-gray-100";
-  };
-
-  const handleChange = (key, value) => {
-    setBankDetails(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -67,10 +77,10 @@ export default function PaymentsPayoutsBody() {
           <h1 className="text-xl font-semibold">Payments & Payouts</h1>
           <p className="text-sm text-gray-500">Track your earnings and manage payouts</p>
         </div>
-        <button className="px-4 py-2 text-white rounded-lg cursor-pointer text-sm flex items-center gap-2 hover:opacity-90"
+        {/* <button className="px-4 py-2 text-white rounded-lg cursor-pointer text-sm flex items-center gap-2 hover:opacity-90"
           style={{ backgroundColor: COLORS.gold }}>
           Download Statement
-        </button>
+        </button> */}
       </div>
 
       {/* ✅ NEW WALLET STYLE STATS */}
@@ -137,13 +147,16 @@ export default function PaymentsPayoutsBody() {
         <div className="flex justify-between mb-2">
           <h2 className="font-semibold">Bank Account Details</h2>
 
-          <button
+          {/* <butt
             onClick={() => setIsEditing(!isEditing)}
             className="text-sm flex items-center gap-1 bg-amber-300 cursor-pointer px-3 border rounded-2xl text-orange-500"
-          >
-            {isEditing ? <Save size={14} /> : <Edit size={14} />}
-            {isEditing ? "Save" : "Edit"}
-          </button>
+          > */}
+          {/* {isEditing ? <Save size={14} /> : <Edit size={14} />} */}
+          {isEditing ? (<button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-green-50 border-green-200 text-green-700" > <Save size={15} />
+            {loading ? "Saving..." : "Save"} </button>) :
+            (<button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-amber-50 border-amber-300 text-amber-700" >
+              <Edit size={15} /> Edit </button>)}
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -171,27 +184,21 @@ export default function PaymentsPayoutsBody() {
           <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["Txn ID","Order ID","Date","Amount","Commission","Net Amount","Status"].map(h => (
+                {["Txn ID", "Order ID", "Date", "Amount", "Commission", "Net Amount", "Status"].map(h => (
                   <th key={h} className="p-3 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t,i)=>(
+              {transactions.map((t, i) => (
                 <tr key={i} className="border-t hover:bg-gray-50 transition">
                   <td className="p-3">{t.id}</td>
                   <td className="p-3 text-blue-500">{t.order}</td>
-                  <td className="p-3">{new Date(t.date).toLocaleDateString()}</td>
-                  <td className={`p-3 ${t.amount<0?"text-red-500":"text-green-600"}`}>
-                    ₹{t.amount.toLocaleString()}
-                  </td>
-                  <td className="p-3">₹{t.commission.toLocaleString()}</td>
-                  <td className="p-3 font-medium">₹{t.net.toLocaleString()}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${statusStyle(t.status)}`}>
-                      {t.status}
-                    </span>
-                  </td>
+                  <td className="p-3"> {new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", }).format(new Date(t.date))}</td>
+                  <td className={`p-3 ${t.amount < 0 ? "text-red-500" : "text-green-600"}`}>₹{t.amount.toLocaleString("en-IN")} </td>
+                  <td className="p-3">₹{t.commission.toLocaleString("en-IN")}</td>
+                  <td className="p-3 font-medium">₹{t.net.toLocaleString("en-IN")}</td>
+                  <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs ${statusStyle(t.status)}`}> {t.status} </span> </td>
                 </tr>
               ))}
             </tbody>
@@ -206,24 +213,20 @@ export default function PaymentsPayoutsBody() {
           <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {["Payout ID","Date","Amount","Method","Reference","Status"].map(h => (
+                {["Payout ID", "Date", "Amount", "Method", "Reference", "Status"].map(h => (
                   <th key={h} className="p-3 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {payouts.map((p,i)=>(
+              {payouts.map((p, i) => (
                 <tr key={i} className="border-t hover:bg-gray-50 transition">
                   <td className="p-3">{p.id}</td>
-                  <td className="p-3">{new Date(p.date).toLocaleDateString()}</td>
-                  <td className="p-3">₹{p.amount.toLocaleString()}</td>
+                  <td className="p-3"> {new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", }).format(new Date(p.date))}</td>
+                  <td className="p-3">₹{p.amount.toLocaleString("en-IN")}</td>
                   <td className="p-3">{p.method}</td>
                   <td className="p-3 text-xs text-gray-500">{p.ref}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs ${statusStyle(p.status)}`}>
-                      {p.status}
-                    </span>
-                  </td>
+                  <td className="p-3"><span className={`px-2 py-1 rounded-full text-xs ${statusStyle(p.status)}`}> {p.status} </span> </td>
                 </tr>
               ))}
             </tbody>

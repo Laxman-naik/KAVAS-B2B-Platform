@@ -2,6 +2,7 @@ import { Roboto, Inter } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/store/provider";
 import AuthLoader from "@/components/AuthLoader";
+import Chatbot from "@/components/Chatbot";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,14 +23,18 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={` ${roboto.variable} ${inter.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${roboto.variable} ${inter.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-white text-black dark:bg-gray-900 dark:text-white transition-colors duration-300">
         <ReduxProvider>
           <AuthLoader>
-          <main className="flex-1">{children}</main>
+            <main className="flex-1">{children}</main>
+            <Chatbot />
           </AuthLoader>
         </ReduxProvider>
-        </body>
+      </body>
     </html>
   );
 }

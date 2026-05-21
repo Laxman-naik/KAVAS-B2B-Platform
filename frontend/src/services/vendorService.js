@@ -1,11 +1,38 @@
 import { authapi } from "../lib/axios";
 
 
-export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
+export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data);
 
-export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
+export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data);
 
-export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data, { skipAuth: true });
+// export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data);
+export const registerVendorAPI = async (data) => {
+  const res = await authapi.post(
+    "/api/vendor/register",
+    data
+  );
+
+  const response = res.data;
+
+  if (
+    typeof window !== "undefined" &&
+    response?.accessToken
+  ) {
+    localStorage.setItem("role", "vendor");
+
+    localStorage.setItem(
+      "vendor_accessToken",
+      response.accessToken
+    );
+
+    localStorage.setItem(
+      "vendor_refreshToken",
+      response.refreshToken
+    );
+  }
+
+  return res;
+};
 
 export const loginVendorAPI = async (data) => {
   try {
@@ -26,29 +53,22 @@ export const loginVendorAPI = async (data) => {
     ) {
       // ✅ USE ROLE-BASED STORAGE
       localStorage.setItem("role", "vendor");
-
-      localStorage.setItem(
-        "vendor_accessToken",
-        response.accessToken
-      );
+      localStorage.setItem("vendor_accessToken", response.accessToken);
 
       if (response.refreshToken) {
-        localStorage.setItem(
-          "vendor_refreshToken",
-          response.refreshToken
-        );
+        localStorage.setItem("vendor_refreshToken", response.refreshToken );
       }
 
-      localStorage.setItem(
-        "next_action",
-        response.next_action || "dashboard"
-      );
-
-      localStorage.setItem(
-        "onboarding_step",
-        response.onboarding_step || 1
-      );
+      localStorage.setItem("next_action", response.next_action || "dashboard");
+      localStorage.setItem( "onboarding_step", response.onboarding_step || 1 );
     }
+
+      console.log("LOGIN RESPONSE:", res.data);
+      const role = localStorage.getItem("role");
+  console.log("LOCAL ROLE:", localStorage.getItem("role"));
+  console.log("ACCESS TOKEN:",localStorage.getItem(`${role}_accessToken`));
+  console.log("REFRESH TOKEN:", localStorage.getItem(`${role}_refreshToken`));
+
 
     return response;
 
@@ -70,7 +90,7 @@ export const loginVendorAPI = async (data) => {
 
 export const refreshTokenAPI = async () => {
   const refreshToken = localStorage.getItem("vendor_refreshToken");
-  const res = await axios.post("/api/vendor/refresh", { refreshToken });
+  const res = await authapi.post("/api/vendor/refresh", { refreshToken });
   return res.data;
 };
 

@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const uploadToCloudinary = require("../services/uploadToCloudinary");
 
 const slugify = (value) => {
   return String(value || "")
@@ -8,36 +9,381 @@ const slugify = (value) => {
     .replace(/(^-|-$)+/g, "");
 };
 
+// exports.createProduct = async (req, res) => {
+//   const client = await pool.connect();
+
+//   try {
+//     // =====================================================
+//     // HELPERS
+//     // =====================================================
+
+//     const safeParse = (value, fallback = []) => {
+//   if (!value) return fallback;
+
+//   if (Array.isArray(value)) return value;
+
+//   try {
+//     return JSON.parse(value);
+//   } catch {
+//     return fallback;
+//   }
+// };
+
+//     const slugifyText = (text) =>
+//       String(text || "")
+//         .trim()
+//         .toLowerCase()
+//         .replace(/[^a-z0-9]+/g, "-")
+//         .replace(/^-|-$/g, "");
+
+//     // =====================================================
+//     // BODY
+//     // =====================================================
+
+//     const {
+//       name,
+//       sku,
+//       description,
+//       category,
+//       subCategory,
+//       price,
+//       mrp,
+//       stock,
+//       moq,
+//       unit,
+//       organizationId,
+//       specifications,
+//       bulkPricing,
+//       variants,
+//       images,
+//       videos,
+//     } = req.body || {};
+
+//     if (!String(name || "").trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Product name required",
+//       });
+//     }
+
+//     const resolvedOrganizationId =
+//       organizationId || req.user?.organization_id;
+
+//     if (!resolvedOrganizationId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "organizationId required",
+//       });
+//     }
+
+//     // =====================================================
+//     // TRANSACTION START
+//     // =====================================================
+
+//     await client.query("BEGIN");
+
+//     // =====================================================
+//     // CATEGORY LOGIC
+//     // =====================================================
+
+//     let parentCategoryId = null;
+//     let subCategoryId = null;
+
+//     const uuidRegex =/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+//     if (category?.trim()) {
+//       if (uuidRegex.test(category)) {
+//         parentCategoryId = category;
+//       } else {
+//         const existing = await client.query(
+//           `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+//           [category]
+//         );
+
+//         if (existing.rows.length) {
+//           parentCategoryId = existing.rows[0].id;
+//         } else {
+//           const created = await client.query(
+//             `INSERT INTO categories (name,slug,parent_id)
+//              VALUES ($1,$2,NULL) RETURNING id`,
+//             [category, slugifyText(category)]
+//           );
+
+//           parentCategoryId = created.rows[0].id;
+//         }
+//       }
+//     }
+
+//     if (subCategory?.trim()) {
+//       const existingSub = await client.query(
+//         `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+//         [subCategory]
+//       );
+
+//       if (existingSub.rows.length) {
+//         subCategoryId = existingSub.rows[0].id;
+//       } else {
+//         const createdSub = await client.query(
+//           `INSERT INTO categories (name,slug,parent_id)
+//            VALUES ($1,$2,$3) RETURNING id`,
+//           [subCategory, slugifyText(subCategory), parentCategoryId]
+//         );
+
+//         subCategoryId = createdSub.rows[0].id;
+//       }
+//     }
+
+//     // =====================================================
+//     // PRODUCT INSERT
+//     // =====================================================
+
+//     const productResult = await client.query(
+//       `INSERT INTO products (
+//         organization_id,
+//         name,
+//         description,
+//         price,
+//         mrp,
+//         moq,
+//         stock,
+//         is_active,
+//         slug,
+//         sku,
+//         unit
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
+//       RETURNING *`,
+//       [
+//         resolvedOrganizationId,
+//         name,
+//         description || null,
+//         price || 0,
+//         mrp || 0,
+//         moq || 1,
+//         stock || 0,
+//         slugifyText(name),
+//         sku || null,
+//         unit || null,
+//       ]
+//     );
+
+//     const product = productResult.rows[0];
+
+//     // =====================================================
+//     // PRODUCT CATEGORY MAP
+//     // =====================================================
+
+//     const categories = [];
+
+//     if (parentCategoryId) {
+//       await client.query(
+//         `INSERT INTO product_categories (product_id,category_id)
+//          VALUES ($1,$2)`,
+//         [product.id, parentCategoryId]
+//       );
+
+//       categories.push(parentCategoryId);
+//     }
+
+//     if (subCategoryId) {
+//       await client.query(
+//         `INSERT INTO product_categories (product_id,category_id)
+//          VALUES ($1,$2)`,
+//         [product.id, subCategoryId]
+//       );
+
+//       categories.push(subCategoryId);
+//     }
+
+//     // =====================================================
+//     // IMAGES
+//     // =====================================================
+
+//     const parsedImages = safeParse(images);
+//     const imageList = [];
+
+//     for (let i = 0; i < (parsedImages || []).length; i++) {
+//       await client.query(
+//         `INSERT INTO product_images
+//         (product_id,image_url,media_type,sort_order,is_primary)
+//         VALUES ($1,$2,'image',$3,$4)`,
+//         [product.id, parsedImages[i], i, i === 0]
+//       );
+
+//       imageList.push({
+//         image_url: parsedImages[i],
+//         sort_order: i,
+//         is_primary: i === 0,
+//       });
+//     }
+
+//     // =====================================================
+//     // VIDEOS
+//     // =====================================================
+
+//     const parsedVideos = safeParse(videos);
+//     const videoList = [];
+
+//     for (let i = 0; i < (parsedVideos || []).length; i++) {
+//       await client.query(
+//         `INSERT INTO product_images
+//         (product_id,image_url,media_type,sort_order,is_primary)
+//         VALUES ($1,$2,'video',$3,false)`,
+//         [product.id, parsedVideos[i], i]
+//       );
+
+//       videoList.push({
+//         video_url: parsedVideos[i],
+//         sort_order: i,
+//       });
+//     }
+
+//     // =====================================================
+//     // SPECIFICATIONS
+//     // =====================================================
+
+//     const parsedSpecs = safeParse(specifications);
+//     const specsList = [];
+
+//     for (const spec of (parsedSpecs || [])) {
+//       if (!spec?.name || !spec?.value) continue;
+
+//       await client.query(
+//         `INSERT INTO product_specifications
+//         (product_id,key,value)
+//         VALUES ($1,$2,$3)`,
+//         [product.id, spec.name, spec.value]
+//       );
+
+//       specsList.push(spec);
+//     }
+
+//     // =====================================================
+//     // BULK PRICING
+//     // =====================================================
+
+//     const parsedPricing = safeParse(bulkPricing);
+//     const pricingList = [];
+
+//     for (const tier of (parsedPricing || [])){
+//       await client.query(
+//         `INSERT INTO product_pricing_tiers
+//         (product_id,min_quantity,max_quantity,price)
+//         VALUES ($1,$2,$3,$4)`,
+//         [
+//           product.id,
+//           tier.minQty || 1,
+//           tier.maxQty || null,
+//           tier.pricePerUnit || 0,
+//         ]
+//       );
+
+//       pricingList.push(tier);
+//     }
+
+//     // =====================================================
+//     // VARIANTS
+//     // =====================================================
+
+//     const parsedVariants = safeParse(variants);
+//     const variantList = [];
+
+//     for (const v of (parsedVariants || [])) {
+//       await client.query(
+//         `INSERT INTO product_variants (
+//           product_id,
+//           variant_type,
+//           variant_value,
+//           variant_name,
+//           sku,
+//           price,
+//           mrp,
+//           stock,
+//           unit,
+//           image_url,
+//           is_active
+//         )
+//         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+//         [
+//           product.id,
+//           v.variant_type || v.variantName || null,
+//           v.variant_value || v.value || null,
+//           `${v.variant_type || v.variantName || ""} - ${v.variant_value || v.value || ""}`,
+//           v.sku || null,
+//           v.price || 0,
+//           v.mrp || 0,
+//           v.stock || 0,
+//           v.unit || null,
+//           v.image_url || null,
+//         ]
+//       );
+
+//       variantList.push(v);
+//     }
+
+//     // =====================================================
+//     // COMMIT
+//     // =====================================================
+
+//     await client.query("COMMIT");
+
+//     // =====================================================
+//     // FINAL RESPONSE (FIXED)
+//     // =====================================================
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Product created successfully",
+
+//       product: {
+//         ...product,
+
+//         categories,
+//         images: imageList,
+//         videos: videoList,
+//         specifications: specsList,
+//         bulkPricing: pricingList,
+//         variants: variantList,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("❌ CREATE PRODUCT ERROR STACK:");
+//     console.error(err); // IMPORTANT (not just err.message)
+//     await client.query("ROLLBACK");
+
+//     console.error("createProduct error:", err);
+
+//     if (err.code === "23505") {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Duplicate SKU found",
+//       });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//       stack: err.stack,
+//     });
+//   } finally {
+//     client.release();
+//   }
+// };
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    // =====================================================
-    // HELPERS
-    // =====================================================
+    const safeParseArray = (value) => {
+      if (!value) return [];
+      if (Array.isArray(value)) return value;
 
-    const safeParse = (value, fallback = []) => {
       try {
-        if (Array.isArray(value)) return value;
-
-        return JSON.parse(
-          value || JSON.stringify(fallback)
-        );
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
-        return fallback;
+        return [];
       }
     };
-
-    const slugifyText = (text) =>
-      String(text || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-
-    // =====================================================
-    // BODY
-    // =====================================================
 
     const {
       name,
@@ -54,114 +400,37 @@ exports.createProduct = async (req, res) => {
       specifications,
       bulkPricing,
       variants,
-      images,
-      videos,
-    } = req.body || {};
+    } = req.body;
 
-    if (!String(name || "").trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Product name required",
-      });
+    if (!name?.trim()) {
+      return res.status(400).json({ message: "Product name required" });
     }
 
     const resolvedOrganizationId =
       organizationId || req.user?.organization_id;
 
     if (!resolvedOrganizationId) {
-      return res.status(400).json({
-        success: false,
-        message: "organizationId required",
-      });
+      return res.status(400).json({ message: "organizationId required" });
     }
-
-    // =====================================================
-    // TRANSACTION START
-    // =====================================================
 
     await client.query("BEGIN");
 
-    // =====================================================
-    // CATEGORY LOGIC
-    // =====================================================
-
-    let parentCategoryId = null;
-    let subCategoryId = null;
-
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    if (category?.trim()) {
-      if (uuidRegex.test(category)) {
-        parentCategoryId = category;
-      } else {
-        const existing = await client.query(
-          `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
-          [category]
-        );
-
-        if (existing.rows.length) {
-          parentCategoryId = existing.rows[0].id;
-        } else {
-          const created = await client.query(
-            `INSERT INTO categories (name,slug,parent_id)
-             VALUES ($1,$2,NULL) RETURNING id`,
-            [category, slugifyText(category)]
-          );
-
-          parentCategoryId = created.rows[0].id;
-        }
-      }
-    }
-
-    if (subCategory?.trim()) {
-      const existingSub = await client.query(
-        `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
-        [subCategory]
-      );
-
-      if (existingSub.rows.length) {
-        subCategoryId = existingSub.rows[0].id;
-      } else {
-        const createdSub = await client.query(
-          `INSERT INTO categories (name,slug,parent_id)
-           VALUES ($1,$2,$3) RETURNING id`,
-          [subCategory, slugifyText(subCategory), parentCategoryId]
-        );
-
-        subCategoryId = createdSub.rows[0].id;
-      }
-    }
-
-    // =====================================================
-    // PRODUCT INSERT
-    // =====================================================
-
+    // ================= PRODUCT =================
     const productResult = await client.query(
       `INSERT INTO products (
-        organization_id,
-        name,
-        description,
-        price,
-        mrp,
-        moq,
-        stock,
-        is_active,
-        slug,
-        sku,
-        unit
+        organization_id, name, description, price, mrp, moq, stock,
+        is_active, sku, unit
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9)
       RETURNING *`,
       [
         resolvedOrganizationId,
         name,
         description || null,
-        price || 0,
-        mrp || 0,
-        moq || 1,
-        stock || 0,
-        slugifyText(name),
+        Number(price) || 0,
+        Number(mrp) || 0,
+        Number(moq) || 1,
+        Number(stock) || 0,
         sku || null,
         unit || null,
       ]
@@ -169,194 +438,121 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // =====================================================
-    // PRODUCT CATEGORY MAP
-    // =====================================================
+    // ================= FILES =================
+    const images = req.files?.images || [];
+    const videos = req.files?.videos || [];
 
-    const categories = [];
+    // ================= IMAGES (CLOUDINARY) =================
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      if (!file?.path) continue;
 
-    if (parentCategoryId) {
-      await client.query(
-        `INSERT INTO product_categories (product_id,category_id)
-         VALUES ($1,$2)`,
-        [product.id, parentCategoryId]
+      const uploaded = await uploadToCloudinary(
+        file.path,
+        "products/images"
       );
 
-      categories.push(parentCategoryId);
-    }
-
-    if (subCategoryId) {
-      await client.query(
-        `INSERT INTO product_categories (product_id,category_id)
-         VALUES ($1,$2)`,
-        [product.id, subCategoryId]
-      );
-
-      categories.push(subCategoryId);
-    }
-
-    // =====================================================
-    // IMAGES
-    // =====================================================
-
-    const parsedImages = safeParse(images);
-    const imageList = [];
-
-    for (let i = 0; i < parsedImages.length; i++) {
       await client.query(
         `INSERT INTO product_images
-        (product_id,image_url,media_type,sort_order,is_primary)
-        VALUES ($1,$2,'image',$3,$4)`,
-        [product.id, parsedImages[i], i, i === 0]
-      );
-
-      imageList.push({
-        image_url: parsedImages[i],
-        sort_order: i,
-        is_primary: i === 0,
-      });
-    }
-
-    // =====================================================
-    // VIDEOS
-    // =====================================================
-
-    const parsedVideos = safeParse(videos);
-    const videoList = [];
-
-    for (let i = 0; i < parsedVideos.length; i++) {
-      await client.query(
-        `INSERT INTO product_images
-        (product_id,image_url,media_type,sort_order,is_primary)
-        VALUES ($1,$2,'video',$3,false)`,
-        [product.id, parsedVideos[i], i]
-      );
-
-      videoList.push({
-        video_url: parsedVideos[i],
-        sort_order: i,
-      });
-    }
-
-    // =====================================================
-    // SPECIFICATIONS
-    // =====================================================
-
-    const parsedSpecs = safeParse(specifications);
-    const specsList = [];
-
-    for (const spec of parsedSpecs) {
-      if (!spec?.name || !spec?.value) continue;
-
-      await client.query(
-        `INSERT INTO product_specifications
-        (product_id,key,value)
-        VALUES ($1,$2,$3)`,
-        [product.id, spec.name, spec.value]
-      );
-
-      specsList.push(spec);
-    }
-
-    // =====================================================
-    // BULK PRICING
-    // =====================================================
-
-    const parsedPricing = safeParse(bulkPricing);
-    const pricingList = [];
-
-    for (const tier of parsedPricing) {
-      await client.query(
-        `INSERT INTO product_pricing_tiers
-        (product_id,min_quantity,max_quantity,price)
-        VALUES ($1,$2,$3,$4)`,
+         (product_id, image_url, media_type, public_id, sort_order, is_primary)
+         VALUES ($1,$2,'image',$3,$4,$5)`,
         [
           product.id,
-          tier.minQty || 1,
-          tier.maxQty || null,
-          tier.pricePerUnit || 0,
+          uploaded.url,
+          uploaded.public_id,
+          i,
+          i === 0,
         ]
       );
-
-      pricingList.push(tier);
     }
 
-    // =====================================================
-    // VARIANTS
-    // =====================================================
+    // ================= VIDEOS (CLOUDINARY) =================
+    for (let i = 0; i < videos.length; i++) {
+      const file = videos[i];
+      if (!file?.path) continue;
 
-    const parsedVariants = safeParse(variants);
-    const variantList = [];
+      const uploaded = await uploadToCloudinary(
+        file.path,
+        "products/videos"
+      );
 
-    for (const v of parsedVariants) {
       await client.query(
-        `INSERT INTO product_variants (
-          product_id,
-          variant_type,
-          variant_value,
-          variant_name,
-          sku,
-          price,
-          mrp,
-          stock,
-          unit,
-          image_url,
-          is_active
-        )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+        `INSERT INTO product_images
+         (product_id, image_url, media_type, public_id, sort_order, is_primary)
+         VALUES ($1,$2,'video',$3,$4,false)`,
         [
           product.id,
-          v.variant_type || null,
-          v.variant_value || null,
-          `${v.variant_type || ""} - ${v.variant_value || ""}`,
+          uploaded.url,
+          uploaded.public_id,
+          i,
+        ]
+      );
+    }
+
+    // ================= SPECIFICATIONS =================
+    const specs = safeParseArray(specifications);
+
+    for (const s of specs) {
+      if (!s?.name || !s?.value) continue;
+
+      await client.query(
+        `INSERT INTO product_specifications (product_id, key, value)
+         VALUES ($1,$2,$3)`,
+        [product.id, s.name, s.value]
+      );
+    }
+
+    // ================= VARIANTS =================
+    const parsedVariants = safeParseArray(variants);
+
+    for (const v of parsedVariants) {
+      if (!v?.variant_type || !v?.variant_value) continue;
+
+      await client.query(
+        `INSERT INTO product_variants (
+          product_id, variant_type, variant_value,
+          sku, price, mrp, stock, is_active
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
+        [
+          product.id,
+          v.variant_type,
+          v.variant_value,
           v.sku || null,
           v.price || 0,
           v.mrp || 0,
           v.stock || 0,
-          v.unit || null,
-          v.image_url || null,
         ]
       );
-
-      variantList.push(v);
     }
 
-    // =====================================================
-    // COMMIT
-    // =====================================================
+    // ================= BULK PRICING =================
+    const pricing = safeParseArray(bulkPricing);
+
+    for (const b of pricing) {
+      await client.query(
+        `INSERT INTO product_pricing_tiers
+         (product_id, min_quantity, max_quantity, price)
+         VALUES ($1,$2,$3,$4)`,
+        [
+          product.id,
+          Number(b.minQty || 0),
+          Number(b.maxQty || 0),
+          Number(b.pricePerUnit || 0),
+        ]
+      );
+    }
 
     await client.query("COMMIT");
-
-    // =====================================================
-    // FINAL RESPONSE (FIXED)
-    // =====================================================
 
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
-
-      product: {
-        ...product,
-
-        categories,
-        images: imageList,
-        videos: videoList,
-        specifications: specsList,
-        bulkPricing: pricingList,
-        variants: variantList,
-      },
+      product,
     });
   } catch (err) {
     await client.query("ROLLBACK");
-
-    console.error("createProduct error:", err);
-
-    if (err.code === "23505") {
-      return res.status(400).json({
-        success: false,
-        message: "Duplicate SKU found",
-      });
-    }
+    console.error("CREATE PRODUCT ERROR:", err);
 
     return res.status(500).json({
       success: false,
@@ -617,8 +813,16 @@ exports.getSingleProduct = async (req, res) => {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `SELECT * FROM products 
-       WHERE id = $1 AND is_active = true`,
+      `
+    SELECT
+    p.*,
+    o.name AS organization_name
+    FROM products p
+    LEFT JOIN organizations o
+    ON p.organization_id = o.id
+    WHERE p.id = $1
+    AND p.is_active = true
+  `,
       [id]
     );
 
@@ -863,158 +1067,227 @@ exports.getNewArrivals = async (req, res) => {
 
 exports.getVendorProducts = async (req, res) => {
   try {
-    const { vendorId } = req.params;
+    const { organizationId } = req.params;
 
-    if (!vendorId) {
-      return res.status(400).json({
-        success: false,
-        message: "vendorId is required",
-      });
-    }
-
-    // STEP 1: GET organization_id FROM vendor onboarding
-    const vendorResult = await pool.query(
-      `
-      SELECT 
-        vp.id AS vendor_id,
-        vo.organization_id
-      FROM vendorprofile vp
-      LEFT JOIN vendor_onboarding vo 
-        ON vo.vendor_id = vp.id
-      WHERE vp.id = $1
-      `,
-      [vendorId]
-    );
-
-    if (!vendorResult.rows.length) {
-      return res.status(404).json({
-        success: false,
-        message: "Vendor not found",
-      });
-    }
-
-    const organizationId = vendorResult.rows[0].organization_id;
-
+    // ==========================================
+    // VALIDATION
+    // ==========================================
     if (!organizationId) {
       return res.status(400).json({
         success: false,
-        message: "Organization not assigned yet",
+        message: "organizationId is required",
       });
     }
 
-    // STEP 2: GET ALL PRODUCTS (NO STATUS FILTER)
+    // ==========================================
+    // QUERY (FIXED USING LATERAL SUBQUERIES)
+    // ==========================================
     const result = await pool.query(
       `
       SELECT 
-        p.*,
+        p.id,
+        p.organization_id,
+        p.name,
+        p.description,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.stock,
+        p.slug,
+        p.sku,
+        p.unit,
+        p.is_active,
+        p.is_featured,
+        p.is_top_product,
+        p.avg_rating,
+        p.total_reviews,
+        p.views_count,
+        p.sales_count,
+        p.created_at,
+        p.updated_at,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', c.id,
-              'name', c.name,
-              'slug', c.slug
-            )
-          ) FILTER (WHERE c.id IS NOT NULL),
-          '[]'
-        ) AS categories,
+        -- =========================
+        -- STATUS
+        -- =========================
+        CASE
+          WHEN p.stock <= 0 THEN 'Out of Stock'
+          WHEN p.stock <= 10 THEN 'Low Stock'
+          WHEN p.is_active = false THEN 'Inactive'
+          ELSE 'Active'
+        END AS status,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', pi.id,
-              'image_url', pi.image_url,
-              'sort_order', pi.sort_order,
-              'is_primary', pi.is_primary
-            )
-          ) FILTER (WHERE pi.media_type = 'image'),
-          '[]'
-        ) AS images,
+        -- =========================
+        -- CATEGORIES (SAFE)
+        -- =========================
+        COALESCE(cat.categories, '[]') AS categories,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', pi.id,
-              'video_url', pi.image_url,
-              'sort_order', pi.sort_order
-            )
-          ) FILTER (WHERE pi.media_type = 'video'),
-          '[]'
-        ) AS videos,
+        -- =========================
+        -- IMAGES (SAFE)
+        -- =========================
+        COALESCE(img.images, '[]') AS images,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'key', ps.key,
-              'value', ps.value
-            )
-          ) FILTER (WHERE ps.id IS NOT NULL),
-          '[]'
-        ) AS specifications,
+        -- =========================
+        -- VIDEOS (SAFE)
+        -- =========================
+        COALESCE(vid.videos, '[]') AS videos,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'minQty', ppt.min_quantity,
-              'maxQty', ppt.max_quantity,
-              'price', ppt.price
-            )
-          ) FILTER (WHERE ppt.id IS NOT NULL),
-          '[]'
-        ) AS bulkPricing,
+        -- =========================
+        -- SPECIFICATIONS
+        -- =========================
+        COALESCE(spec.specifications, '[]') AS specifications,
 
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', pv.id,
-              'type', pv.variant_type,
-              'value', pv.variant_value,
-              'price', pv.price,
-              'mrp', pv.mrp,
-              'stock', pv.stock,
-              'image_url', pv.image_url
-            )
-          ) FILTER (WHERE pv.id IS NOT NULL),
-          '[]'
-        ) AS variants
+        -- =========================
+        -- BULK PRICING
+        -- =========================
+        COALESCE(price.bulkPricing, '[]') AS bulkPricing,
+
+        -- =========================
+        -- VARIANTS
+        -- =========================
+        COALESCE(variant.variants, '[]') AS variants
 
       FROM products p
 
-      LEFT JOIN product_categories pc 
-        ON pc.product_id = p.id
+      -- =========================
+      -- CATEGORY
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', c.id,
+            'name', c.name,
+            'slug', c.slug
+          )
+        ) AS categories
+        FROM product_categories pc
+        JOIN categories c ON c.id = pc.category_id
+        WHERE pc.product_id = p.id
+      ) cat ON true
 
-      LEFT JOIN categories c 
-        ON c.id = pc.category_id
+      -- =========================
+      -- IMAGES
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', pi.id,
+            'image_url', pi.image_url,
+            'public_id', pi.public_id,
+            'media_type', pi.media_type,
+            'sort_order', pi.sort_order,
+            'is_primary', pi.is_primary
+          )
+          ORDER BY pi.sort_order
+        ) AS images
+        FROM product_images pi
+        WHERE pi.product_id = p.id
+          AND pi.media_type = 'image'
+      ) img ON true
 
-      LEFT JOIN product_images pi 
-        ON pi.product_id = p.id
+      -- =========================
+      -- VIDEOS
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', pi.id,
+            'video_url', pi.image_url,
+            'public_id', pi.public_id,
+            'sort_order', pi.sort_order
+          )
+          ORDER BY pi.sort_order
+        ) AS videos
+        FROM product_images pi
+        WHERE pi.product_id = p.id
+          AND pi.media_type = 'video'
+      ) vid ON true
 
-      LEFT JOIN product_specifications ps 
-        ON ps.product_id = p.id
+      -- =========================
+      -- SPECIFICATIONS
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', ps.id,
+            'key', ps.key,
+            'value', ps.value
+          )
+        ) AS specifications
+        FROM product_specifications ps
+        WHERE ps.product_id = p.id
+      ) spec ON true
 
-      LEFT JOIN product_pricing_tiers ppt 
-        ON ppt.product_id = p.id
+      -- =========================
+      -- BULK PRICING
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', ppt.id,
+            'minQty', ppt.min_quantity,
+            'maxQty', ppt.max_quantity,
+            'price', ppt.price
+          )
+        ) AS bulkPricing
+        FROM product_pricing_tiers ppt
+        WHERE ppt.product_id = p.id
+      ) price ON true
 
-      LEFT JOIN product_variants pv 
-        ON pv.product_id = p.id
+      -- =========================
+      -- VARIANTS
+      -- =========================
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', pv.id,
+            'type', pv.variant_type,
+            'value', pv.variant_value,
+            'variant_name', pv.variant_name,
+            'sku', pv.sku,
+            'price', pv.price,
+            'mrp', pv.mrp,
+            'stock', pv.stock,
+            'unit', pv.unit,
+            'image_url', pv.image_url,
+            'is_active', pv.is_active
+          )
+        ) AS variants
+        FROM product_variants pv
+        WHERE pv.product_id = p.id
+      ) variant ON true
 
       WHERE p.organization_id = $1
-
-      GROUP BY p.id
       ORDER BY p.created_at DESC
       `,
       [organizationId]
     );
 
-    return res.json({
-      success: true,
-      vendorId,
-      organizationId,
-      products: result.rows,
-    });
+    // ==========================================
+    // NORMALIZE RESPONSE
+    // ==========================================
+    const products = result.rows.map((product) => ({
+      ...product,
 
+      category:
+        product.categories?.[0]?.name || "Uncategorized",
+
+      image:
+        product.images?.find((img) => img.is_primary)?.image_url ||
+        product.images?.[0]?.image_url ||
+        null,
+    }));
+
+    // ==========================================
+    // RESPONSE
+    // ==========================================
+    return res.status(200).json({
+      success: true,
+      count: products.length,
+      organizationId,
+      products,
+    });
   } catch (err) {
-    console.error("getVendorProducts error:", err);
+    console.error("❌ getVendorProducts error:", err);
 
     return res.status(500).json({
       success: false,

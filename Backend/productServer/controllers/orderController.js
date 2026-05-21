@@ -9,7 +9,7 @@ exports.createOrderFromCart = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const { idempotency_key } = req.body;
+    const { idempotency_key, payment_method } = req.body;
 
     if (!idempotency_key) {
       return res.status(400).json({ message: "Idempotency key required" });
@@ -18,7 +18,11 @@ exports.createOrderFromCart = async (req, res) => {
     await client.query("BEGIN");
 
     const addressRes = await client.query(
-      `SELECT id FROM addresses WHERE user_id = $1 LIMIT 1`,
+      `SELECT id
+   FROM addresses
+   WHERE user_id = $1
+     AND is_default = true
+   LIMIT 1`,
       [userId]
     );
 
@@ -57,13 +61,17 @@ exports.createOrderFromCart = async (req, res) => {
 
     const itemsRes = await client.query(
       `SELECT 
-         ci.*, 
-         p.stock,
-         p.organization_id
-       FROM cart_items ci
-       JOIN products p ON p.id = ci.product_id
-       WHERE ci.cart_id = $1
-       FOR UPDATE`,
+     ci.*, 
+     p.stock,
+     p.organization_id,
+     o.name AS organization_name
+   FROM cart_items ci
+   JOIN products p 
+     ON p.id = ci.product_id
+   JOIN organizations o
+     ON p.organization_id = o.id
+   WHERE ci.cart_id = $1
+   FOR UPDATE`,
       [cartId]
     );
 
@@ -93,6 +101,10 @@ exports.createOrderFromCart = async (req, res) => {
 
     const grouped = {};
 
+    const status = payment_method === "cod" ? "cod" : "pending";
+
+    const deliveryStatus = payment_method === "cod" ? "confirmed" : "pending";
+
     for (const item of items) {
       const orgId = item.organization_id;
 
@@ -109,23 +121,21 @@ exports.createOrderFromCart = async (req, res) => {
     for (const supplierOrgId of Object.keys(grouped)) {
       const supplierItems = grouped[supplierOrgId];
 
-      const totalAmount = supplierItems.reduce(
-        (sum, item) => sum + Number(item.price) * Number(item.quantity),
-        0
-      );
+      const totalAmount = supplierItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
 
       grandTotal += totalAmount;
 
       const orderRes = await client.query(
         `INSERT INTO orders 
-        (user_id, supplier_org_id, total_amount, status, idempotency_key, shipping_address_id)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        (user_id, supplier_org_id, total_amount, status, delivery_status, idempotency_key, shipping_address_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *`,
         [
           userId,
           supplierOrgId,
           totalAmount,
-          "pending",
+          status,
+          deliveryStatus,
           idempotency_key,
           shippingAddressId,
         ]
@@ -136,9 +146,9 @@ exports.createOrderFromCart = async (req, res) => {
       for (const item of supplierItems) {
         await client.query(
           `INSERT INTO order_items 
-           (order_id, product_id, quantity, price)
-           VALUES ($1, $2, $3, $4)`,
-          [order.id, item.product_id, item.quantity, item.price]
+           (order_id, product_id, quantity, price, organization_name)
+            VALUES ($1, $2, $3, $4, $5)`,
+          [order.id, item.product_id, item.quantity, item.price, item.organization_name,]
         );
 
         await client.query(
@@ -151,8 +161,8 @@ exports.createOrderFromCart = async (req, res) => {
 
       await client.query(
         `INSERT INTO order_status_history (order_id, status)
-         VALUES ($1, $2)`,
-        [order.id, "pending"]
+        VALUES ($1, $2)`,
+        [order.id, status]
       );
 
       createdOrders.push(order);
@@ -180,21 +190,33 @@ exports.createOrderFromCart = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const result = await pool.query(`
+    console.log("REQ USER:", req.user);
+
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized user" });
+    }
+
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      `
       SELECT 
         o.*,
         u.full_name AS buyer_name
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.user_id = $1
       ORDER BY o.created_at DESC
-    `);
+      `,
+      [userId]
+    );
 
-    res.json({
+    return res.json({
       orders: result.rows,
     });
   } catch (err) {
-    console.error("GET ORDERS ERROR:", err);
-    res.status(500).json({ message: err.message });
+    console.error("GET USER ORDERS ERROR:", err);
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -348,4 +370,45 @@ exports.clearCartAfterOrder = async (userId, client) => {
   const cartId = cartRes.rows[0].id;
 
   await client.query(`DELETE FROM cart_items WHERE cart_id = $1`, [cartId]);
+};
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const orderRes = await pool.query(
+      `
+      SELECT 
+        id,
+        user_id,
+        supplier_org_id,
+        total_amount,
+        status,
+        delivery_status,
+        shipping_address_id,
+        idempotency_key,
+        paid_at,
+        created_at
+      FROM orders
+      WHERE id = $1
+      `,
+      [orderId]
+    );
+
+    if (!orderRes.rows.length) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    return res.json({
+      order: orderRes.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
 };

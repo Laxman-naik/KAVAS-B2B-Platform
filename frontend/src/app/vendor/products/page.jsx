@@ -1,19 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  Search,
-  Plus,
-  MoreVertical,
-  Download,
-  LayoutGrid,
-  List,
-  Pencil,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight, } from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
-import { createProduct as createProductAPI } from "../../../services/productService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "../../../store/slices/productSlice";
 
@@ -28,49 +17,34 @@ export default function ProductManagementBody() {
   const [page, setPage] = useState(1);
 
   const pageSize = 8;
-
-  const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
-  const organizationId = useSelector(
-    (state) =>
-      state.vendor.vendor?.vendor?.organization_id ||
-      state.vendor.vendor?.vendor?.organizationId ||
-      state.vendor.vendor?.organization_id ||
-      state.vendor.vendor?.organizationId
-  );
-
-  const { vendorProducts = [], loading } = useSelector((state) => state.products);
+  const { vendorProducts, loading } = useSelector((state) => state.products);
+  const vendorData = useSelector((state) => state.vendor?.vendor);
+  const vendorId = vendorData?.id;
+  const organizationId = vendorData?.organization_id;
+  console.log(vendorProducts)
 
   useEffect(() => {
-    if (vendorId) {
-      dispatch(fetchVendorProducts(vendorId));
+    if (organizationId) {
+      dispatch(fetchVendorProducts(organizationId));
     }
-  }, [vendorId, dispatch]);
+  }, [dispatch, organizationId]);
 
-  const products = Array.isArray(vendorProducts) ? vendorProducts : [];
+  const products = useMemo(() => {
+    return Array.isArray(vendorProducts) ? vendorProducts : [];
+  }, [vendorProducts]);
 
   const filteredProducts = useMemo(() => {
-    const q = String(search || "").trim().toLowerCase();
+    const q = String(search || "")
+      .trim()
+      .toLowerCase();
 
     return products.filter((p) => {
-      const productName = String(p?.name || "").toLowerCase();
-      const productSku = String(p?.sku || "").toLowerCase();
-
-      const productCategory =
-        p?.category ||
-        p?.categories?.[0]?.name ||
-        "";
-
-      const productStatus = p?.status || "";
-
       const matchSearch =
-        !q || productName.includes(q) || productSku.includes(q);
-
-      const matchCategory =
-        category === "All" || productCategory === category;
-
-      const matchStatus =
-        status === "All Status" || productStatus === status;
-
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        String(p.sku).toLowerCase().includes(q);
+      const matchCategory = category === "All" || p.category === category;
+      const matchStatus = status === "All Status" || p.status === status;
       return matchSearch && matchCategory && matchStatus;
     });
   }, [products, search, category, status]);
@@ -96,49 +70,47 @@ export default function ProductManagementBody() {
   }, [safePage, totalFiltered]);
 
   const categories = useMemo(() => {
-    const list = products
-      .map((p) => p?.category || p?.categories?.[0]?.name)
-      .filter(Boolean);
+    const uniqueCategories = [
+      ...new Set(
+        products
+          .map((p) => p.category)
+          .filter((cat) => typeof cat === "string" && cat.trim())
+      ),
+    ];
 
-    return ["All", ...new Set(list)];
+    return ["All", ...uniqueCategories];
   }, [products]);
 
   const statuses = useMemo(
-    () => ["All Status", "active", "pending", "rejected", "inactive"],
-    []
+    () => [
+      "All Status",
+      "Active",
+      "Pending Review",
+      "Low Stock",
+      "Out of Stock",
+    ],
+    [],
   );
 
   const enrichedProducts = useMemo(() => {
     return pagedFilteredProducts.map((p, index) => {
-      const numericId = index + 1;
-      const discount = numericId % 2 === 0 ? 25 : numericId % 3 === 0 ? 17 : 0;
-      const price = Number(p?.price || 0);
-      const oldPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
-
-      return {
-        ...p,
-        discount,
-        oldPrice,
-        sold: Number(p?.sales_count || 0),
-        rating: Number(p?.avg_rating || 0),
-        reviews: Number(p?.total_reviews || 0),
-      };
+      const discount = index % 2 === 0 ? 25 : index % 3 === 0 ? 17 : 0;
+      const oldPrice = discount ? Math.round(p.price / (1 - discount / 100)) : null;
+      const sold = 120 + index * 35;
+      const rating = 4.2 + (index % 3) * 0.2;
+      const reviews = 120 + index * 17;
+      return { ...p, discount, oldPrice, sold, rating, reviews };
     });
   }, [pagedFilteredProducts]);
 
   const summary = useMemo(() => {
-    const active = products.filter((p) => p.status === "active").length;
-    const pending = products.filter((p) => p.status === "pending").length;
-    const rejected = products.filter((p) => p.status === "rejected").length;
-    const inactive = products.filter((p) => p.status === "inactive").length;
-
-    return {
-      active,
-      pending,
-      rejected,
-      inactive,
-      total: products.length,
-    };
+    const active = products.filter((p) => p.status === "Active").length;
+    const pending = products.filter(
+      (p) => p.status === "Pending Review",
+    ).length;
+    const low = products.filter((p) => p.status === "Low Stock").length;
+    const out = products.filter((p) => p.status === "Out of Stock").length;
+    return { active, pending, low, out, total: products.length };
   }, [products]);
 
   const statusPill = (s) => {
@@ -149,115 +121,12 @@ export default function ProductManagementBody() {
     return "bg-gray-100 text-gray-700";
   };
 
-  const handleCreateProduct = async (data) => {
-    try {
-      let localVendor = {};
+  const getImageUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
 
-      try {
-        localVendor = JSON.parse(localStorage.getItem("vendor") || "{}");
-      } catch {
-        localVendor = {};
-      }
-
-      const finalOrganizationId =
-        organizationId ||
-        localVendor?.organization_id ||
-        localVendor?.organizationId ||
-        localVendor?.vendor?.organization_id ||
-        localVendor?.vendor?.organizationId;
-
-      const payload = {
-        organizationId: finalOrganizationId,
-
-        name: data?.name?.trim(),
-        sku: data?.sku?.trim(),
-
-        category: data?.category || null,
-        subCategory: data?.subCategory || null,
-
-        unit: data?.unit || "pcs",
-        status: "active",
-        description: data?.description || "",
-
-        price: Number(data?.price || 0),
-        mrp: Number(data?.mrp || 0),
-        moq: Number(data?.moq || 1),
-        stock: Number(data?.stock || 0),
-
-        gst: data?.gst || "",
-        brand: data?.brand || "",
-        barcode: data?.barcode || "",
-
-        weight: data?.productWeight || null,
-        dispatchTimeDays: Number(data?.expectedDispatchTime || 0),
-
-        images: Array.isArray(data?.images)
-          ? data.images.filter((x) => typeof x === "string" && x.trim())
-          : [],
-
-        videos: Array.isArray(data?.videos)
-          ? data.videos.filter((x) => typeof x === "string" && x.trim())
-          : [],
-
-        specifications: Array.isArray(data?.specifications)
-          ? data.specifications
-              .filter((s) => s?.name?.trim() && s?.value?.trim())
-              .map((s) => ({
-                name: s.name.trim(),
-                value: s.value.trim(),
-              }))
-          : [],
-
-        bulkPricing: Array.isArray(data?.bulkPricing)
-          ? data.bulkPricing
-              .filter((p) => p?.minQty && p?.pricePerUnit)
-              .map((p) => ({
-                minQty: Number(p.minQty),
-                maxQty: p.maxQty ? Number(p.maxQty) : null,
-                pricePerUnit: Number(p.pricePerUnit),
-              }))
-          : [],
-
-        variants: Array.isArray(data?.variants)
-          ? data.variants
-              .filter((v) => v?.value?.trim())
-              .map((v) => ({
-                variant_type: v.variantName,
-                variant_value: v.value,
-                sku: v.sku || null,
-                price: Number(v.price || data.price || 0),
-                mrp: Number(v.mrp || data.mrp || 0),
-                stock: Number(v.stock || 0),
-                unit: data.unit || "pcs",
-              }))
-          : [],
-      };
-
-      if (!payload.organizationId) {
-        alert("organizationId missing. Please check vendor login data.");
-        return;
-      }
-
-      const res = await createProductAPI(payload);
-
-      console.log("Product created:", res.data);
-
-      if (vendorId) {
-        dispatch(fetchVendorProducts(vendorId));
-      }
-
-      setPage(1);
-      setOpenAdd(false);
-    } catch (err) {
-      console.error("Create product API error:", err.response?.data || err);
-
-      alert(
-        err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Product create failed"
-      );
-    }
-  };
+  return `https://kavas-b2b-platform-4.onrender.com${path}`;
+};
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
@@ -280,43 +149,58 @@ export default function ProductManagementBody() {
               <Download size={16} />
               Export
             </button>
-
-            <button
-              type="button"
-              onClick={() => setOpenAdd(true)}
+            <button type="button" onClick={() => setOpenAdd(true)}
               className="h-10 rounded-lg bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95 inline-flex items-center gap-2"
-            >
-              <Plus size={16} />
-              Add Product
+            ><Plus size={16} />Add Product
             </button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#EFFFF6] p-4">
-            <div className="text-sm font-extrabold text-green-700">
-              {summary.active}
+            <div className="flex items-start justify-between">
+              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+                <span className="h-3 w-3 rounded-full bg-green-500" />
+              </div>
+              <div className="text-sm font-extrabold text-green-700">
+                {summary.active}
+              </div>
             </div>
             <div className="mt-3 text-xs text-gray-600">Active Products</div>
           </div>
 
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-4">
-            <div className="text-sm font-extrabold text-yellow-700">
-              {summary.pending}
+            <div className="flex items-start justify-between">
+              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+                <span className="h-3 w-3 rounded-full bg-yellow-500" />
+              </div>
+              <div className="text-sm font-extrabold text-yellow-700">
+                {summary.pending}
+              </div>
             </div>
             <div className="mt-3 text-xs text-gray-600">Pending Review</div>
           </div>
 
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFECEC] p-4">
-            <div className="text-sm font-extrabold text-red-700">
-              {summary.rejected}
+          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF3E6] p-4">
+            <div className="flex items-start justify-between">
+              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+                <span className="h-3 w-3 rounded-full bg-orange-500" />
+              </div>
+              <div className="text-sm font-extrabold text-orange-700">
+                {summary.low}
+              </div>
             </div>
             <div className="mt-3 text-xs text-gray-600">Rejected</div>
           </div>
 
-          <div className="rounded-2xl border border-[#E5E5E5] bg-white p-4">
-            <div className="text-sm font-extrabold text-gray-700">
-              {summary.inactive}
+          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFECEC] p-4">
+            <div className="flex items-start justify-between">
+              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
+                <span className="h-3 w-3 rounded-full bg-red-500" />
+              </div>
+              <div className="text-sm font-extrabold text-red-700">
+                {summary.out}
+              </div>
             </div>
             <div className="mt-3 text-xs text-gray-600">Inactive</div>
           </div>
@@ -324,7 +208,7 @@ export default function ProductManagementBody() {
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full sm:w-[340px]">
+            <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full sm:w-85">
               <Search size={16} className="text-gray-400" />
               <input
                 placeholder="Search products, SKU..."
@@ -346,7 +230,7 @@ export default function ProductManagementBody() {
               className="h-11 border border-[#E5E5E5] rounded-xl px-3 bg-white text-sm"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
+                <option key={`category-${cat}`} value={cat}>
                   {cat === "All" ? "All Categories" : cat}
                 </option>
               ))}
@@ -368,30 +252,31 @@ export default function ProductManagementBody() {
             </select>
           </div>
 
-          <div className="flex items-center rounded-xl border border-[#E5E5E5] bg-white p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                viewMode === "grid"
+          <div className="flex items-center justify-between lg:justify-end gap-3">
+            <div className="flex items-center rounded-xl border border-[#E5E5E5] bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "grid"
                   ? "bg-[#0B1F3A] text-white"
                   : "text-gray-600 hover:bg-[#FFF8EC]"
-              }`}
-            >
-              <LayoutGrid size={16} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                viewMode === "list"
+                  }`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "list"
                   ? "bg-[#0B1F3A] text-white"
                   : "text-gray-600 hover:bg-[#FFF8EC]"
-              }`}
-            >
-              <List size={16} />
-            </button>
+                  }`}
+                aria-label="List view"
+              >
+                <List size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -401,10 +286,7 @@ export default function ProductManagementBody() {
       ) : viewMode === "list" ? (
         <div className="mt-6 rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
           {enrichedProducts.map((p) => (
-            <div
-              key={p.id}
-              className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0"
-            >
+            <div key={p.id || p.sku} className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0">
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
                   src={
@@ -412,8 +294,8 @@ export default function ProductManagementBody() {
                     p?.images?.[0]?.image_url ||
                     "/placeholder.png"
                   }
-                  alt=""
-                  className="h-12 w-12 rounded-xl object-cover bg-gray-100"
+                  alt={p?.name || "Product"}
+                  className="h-12 w-12 rounded-xl object-cover bg-gray-100" 
                 />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
@@ -422,9 +304,18 @@ export default function ProductManagementBody() {
                   <div className="mt-1 text-xs text-gray-500">{p.sku}</div>
                 </div>
               </div>
-
               <div className="col-span-2 text-sm font-extrabold text-[#0B1F3A]">
-                ₹{Number(p.price || 0).toLocaleString("en-IN")}
+                ₹{Number(p.price).toLocaleString("en-IN")}
+              </div>
+              <div className="col-span-2 text-sm text-gray-600">
+                {Number(p.stock).toLocaleString("en-IN")}
+              </div>
+              <div className="col-span-2">
+                <span
+                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusPill(p.status)}`}
+                >
+                  {p.status}
+                </span>
               </div>
 
               <div className="col-span-2 text-sm text-gray-600">
@@ -456,24 +347,26 @@ export default function ProductManagementBody() {
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {enrichedProducts.map((product) => (
             <div
-              key={product.id}
+              key={product.id || product.sku}
               className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden shadow-sm hover:shadow-md transition"
             >
               <div className="relative">
                 <img
-                  src={
-                    product?.images?.find((img) => img.is_primary)?.image_url ||
-                    product?.images?.[0]?.image_url ||
-                    "/placeholder.png"
-                  }
-                  alt={product?.name || "Product"}
-                  className="w-full h-44 object-cover bg-gray-100"
-                />
+                  src={product?.images?.find((img) => img.is_primary)?.image_url ||
+                    product?.images?.[0]?.image_url || "/placeholder.png"} alt={product?.name || "Product"} className="w-full h-44 object-cover bg-gray-100" />
+
+                {product.discount ? (<span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-extrabold px-3 py-1 rounded-full"> -{product.discount}%  </span>) : null}
+
+                {product.status === "Out of Stock" ? (
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <span className="rounded-full bg-red-500 text-white text-xs font-extrabold px-4 py-2">
+                      Out of Stock
+                    </span>
+                  </div>
+                ) : null}
 
                 <span
-                  className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(
-                    product.status
-                  )}`}
+                  className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(product.status)}`}
                 >
                   {product.status}
                 </span>
@@ -481,19 +374,22 @@ export default function ProductManagementBody() {
 
               <div className="p-4">
                 <div className="text-[11px] text-gray-400">{product.sku}</div>
-
                 <div className="mt-1 text-sm font-extrabold text-[#0B1F3A] line-clamp-2">
                   {product.name}
                 </div>
-
                 <span className="inline-flex mt-2 text-[11px] bg-[#FFF8EC] text-gray-700 px-3 py-1 rounded-full border border-[#E5E5E5]">
                   {product?.categories?.[0]?.name || product.category || "No Category"}
                 </span>
 
                 <div className="mt-3 flex items-end gap-2">
                   <div className="text-lg font-extrabold text-[#0B1F3A]">
-                    ₹{Number(product.price || 0).toLocaleString("en-IN")}
+                    ₹{Number(product.price).toLocaleString("en-IN")}
                   </div>
+                  {product.oldPrice ? (
+                    <div className="text-sm text-gray-400 line-through">
+                      ₹{Number(product.oldPrice).toLocaleString("en-IN")}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
@@ -506,17 +402,35 @@ export default function ProductManagementBody() {
 
                   <div>
                     <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {Number(product.stock || 0).toLocaleString("en-IN")}
+                      {Number(product.stock).toLocaleString("en-IN")}
                     </div>
                     <div className="text-[11px] text-gray-500">Stock</div>
                   </div>
 
                   <div>
                     <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {Number(product.sold || 0).toLocaleString("en-IN")}
+                      {Number(product.sold).toLocaleString("en-IN")}
                     </div>
                     <div className="text-[11px] text-gray-500">Sold</div>
                   </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${product.status === "Active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${product.status === "Active" ? "bg-green-600" : "bg-gray-500"}`}
+                    />
+                    {product.status === "Active" ? "Active" : "Inactive"}
+                  </span>
+
+                  <button
+                    type="button"
+                    className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
+                  >
+                    <MoreVertical size={16} className="text-gray-600" />
+                  </button>
                 </div>
 
                 <button
@@ -541,7 +455,11 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center"
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage <= 1
+              ? "opacity-40 cursor-not-allowed"
+              : "hover:bg-[#FFF8EC]"
+              }`}
+            aria-label="Previous page"
           >
             <ChevronLeft size={16} />
           </button>
@@ -572,7 +490,11 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center"
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage >= totalPages
+              ? "opacity-40 cursor-not-allowed"
+              : "hover:bg-[#FFF8EC]"
+              }`}
+            aria-label="Next page"
           >
             <ChevronRight size={16} />
           </button>
@@ -582,7 +504,14 @@ export default function ProductManagementBody() {
       <AddNewProductModal
         open={openAdd}
         onClose={() => setOpenAdd(false)}
-        onSubmit={handleCreateProduct}
+        onSubmit={async () => {
+          if (vendorId) {
+            await dispatch(fetchVendorProducts(vendorId));
+          }
+
+          setPage(1);
+          setOpenAdd(false);
+        }}
       />
     </div>
   );

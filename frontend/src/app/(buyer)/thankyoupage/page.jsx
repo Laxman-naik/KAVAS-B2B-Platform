@@ -1,44 +1,30 @@
 "use client";
 
 import React from "react";
-import {
-  Check,
-  ClipboardList,
-  CalendarDays,
-  Package,
-  Clock3,
-  Truck,
-  Box,
-  Phone,
-  Mail,
-  MessageCircle,
-  ShoppingBag,
-} from "lucide-react";
-
+import { Check, ClipboardList, CalendarDays, Package, Clock3, Truck, Box, Phone, Mail, MessageCircle, ShoppingBag, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { fetchOrderById } from "@/store/slices/orderSlice";
 
 const Page = () => {
-  const orderItems = [
-    {
-      name: "Premium Coffee Beans",
-      meta: "1 kg • Pack of 10",
-      qty: "Qty: 2",
-      price: "$240.00",
-    },
-    {
-      name: "Ceramic Coffee Mug",
-      meta: "Black • 350ml • Pack of 24",
-      qty: "Qty: 1",
-      price: "$120.00",
-    },
-    {
-      name: "Green Tea Leaves",
-      meta: "500g • Pack of 20",
-      qty: "Qty: 1",
-      price: "$200.00",
-    },
-  ];
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const orderId = searchParams.get("orderId");
+  const dispatch = useDispatch();
+  const { currentOrderbyid } = useSelector((state) => state.order);
+  // console.log(currentOrderbyid)
+
+  useEffect(() => {
+    if (orderId) {
+      dispatch(fetchOrderById(orderId));
+    }
+  }, [dispatch, orderId]);
+
+  const orderItems = currentOrderbyid?.items || [];
 
   const steps = [
     {
@@ -92,7 +78,7 @@ const Page = () => {
               <div className="text-left">
                 <p className="text-sm text-[#666]">Order Number</p>
                 <p className="text-xl font-bold text-[#D4AF37]">
-                  #KWH123456789
+                  #{currentOrderbyid?.order?.id}
                 </p>
               </div>
             </div>
@@ -103,7 +89,7 @@ const Page = () => {
               <div className="text-left">
                 <p className="text-sm text-[#666]">Order Date</p>
                 <p className="font-semibold text-[#1A1A1A]">
-                  May 24, 2024 • 10:45 AM
+                  {new Date(currentOrderbyid?.order?.created_at).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -134,11 +120,10 @@ const Page = () => {
                         )}
 
                         <div
-                          className={`z-10 flex h-9 w-9 items-center justify-center rounded-sm border ${
-                            step.active
-                              ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F3A]"
-                              : "border-[#D4AF37] bg-white text-[#D4AF37]"
-                          }`}
+                          className={`z-10 flex h-9 w-9 items-center justify-center rounded-sm border ${step.active
+                            ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F3A]"
+                            : "border-[#D4AF37] bg-white text-[#D4AF37]"
+                            }`}
                         >
                           <Icon size={19} />
                         </div>
@@ -172,7 +157,7 @@ const Page = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
+          {/* <Card className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
             <CardContent className="p-6">
               <h3 className="mb-5 text-xl font-bold text-[#0B1F3A]">
                 Order Summary
@@ -190,12 +175,12 @@ const Page = () => {
                         </h4>
 
                         <p className="text-sm font-bold text-[#D4AF37]">
-                          {item.price}
+                          ₹{Number(item.price).toFixed(2)}
                         </p>
                       </div>
 
                       <p className="mt-1 text-xs text-[#666]">{item.meta}</p>
-                      <p className="mt-1 text-xs text-[#666]">{item.qty}</p>
+                      <p className="mt-1 text-xs text-[#666]">Qty: {item.quantity}</p>
                     </div>
                   </div>
                 ))}
@@ -210,11 +195,11 @@ const Page = () => {
               <div className="mt-4 flex items-center justify-between border-t border-[#E5E5E5] pt-4">
                 <span className="text-lg font-bold text-[#0B1F3A]">Total</span>
                 <span className="text-2xl font-bold text-[#D4AF37]">
-                  $560.00
+                  ₹{Number(currentOrderbyid?.order?.total_amount || 0).toFixed(2)}
                 </span>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </section>
 
         <Card className="mt-5 rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
@@ -245,14 +230,12 @@ const Page = () => {
             </div>
 
             <div className="flex gap-4">
-              <Button className="h-11 rounded-sm border border-[#D4AF37] bg-white px-8 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]">
-                <ClipboardList className="mr-2" size={16} />
-                View Orders
+              <Button onClick={() => router.push("/buyerorders")} className="h-11 rounded-sm border border-[#D4AF37] bg-white px-8 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]">
+                <ClipboardList className="mr-2" size={16} /> View Orders
               </Button>
 
-              <Button className="h-11 rounded-sm bg-[#D4AF37] px-8 text-sm font-bold text-[#0B1F3A] hover:bg-[#c7a22f]">
-                <ShoppingBag className="mr-2" size={16} />
-                Continue Shopping
+              <Button onClick={() => router.push("/")} className="h-11 rounded-sm bg-[#D4AF37] px-8 text-sm font-bold text-[#0B1F3A] hover:bg-[#c7a22f]">
+                <ShoppingBag className="mr-2" size={16} /> Continue Shopping
               </Button>
             </div>
           </CardContent>
@@ -267,9 +250,8 @@ const SummaryRow = ({ label, value, gold }) => (
     <span className="text-sm text-[#1A1A1A]">{label}</span>
 
     <span
-      className={`text-sm ${
-        gold ? "font-bold text-[#D4AF37]" : "text-[#1A1A1A]"
-      }`}
+      className={`text-sm ${gold ? "font-bold text-[#D4AF37]" : "text-[#1A1A1A]"
+        }`}
     >
       {value}
     </span>

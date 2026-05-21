@@ -1,19 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings } from "lucide-react";
+import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import { getMainCategoriesThunk, getSubcategoriesByParentThunk, clearSubcategories, } from "@/store/slices/categorySlice";
+import { getMainCategoriesThunk, getSubcategoriesByParentThunk } from "@/store/slices/categorySlice";
+import { addProduct } from "@/store/slices/productSlice";
 
 const Field = ({ label, required, children, className = "" }) => (
   <div className={`space-y-1.5 ${className}`}>
     <Label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-      {label}{required && <span className="ml-0.5 text-blue-500">*</span>}
+      {label}
+      {required && <span className="ml-0.5 text-blue-500">*</span>}
     </Label>
     {children}
   </div>
@@ -32,11 +34,7 @@ const COLOR_OPTIONS = [
   { label: "Yellow", value: "Yellow", swatch: "#eab308" },
 ];
 
-const parseCsv = (value) =>
-  String(value || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+const parseCsv = (value) => String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 const toggleCsvValue = (csv, value) => {
   const set = new Set(parseCsv(csv));
@@ -47,44 +45,106 @@ const toggleCsvValue = (csv, value) => {
 
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   const dispatch = useDispatch();
-  const { mainCategories, subcategories, loading, } = useSelector((state) => state.category);
-
+  const vendor = useSelector((state) => state.vendor?.vendor);
+  const { mainCategories, subcategories, loading } = useSelector((state) => state.category,);
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [form, setForm] = useState({
-    name: "", sku: "", category: "", subCategory: "", brand: "", modelSku: "",
-    hsnCode: "", countryOfOrigin: "", unit: "", status: "Active", description: "",
-    price: "", mrp: "", costPrice: "", compareAtPrice: "", taxClass: "GST 18%",
-    taxIncluded: false, currency: "USD ($)", moq: "", stock: "", lowStockAlert: "",
-    barcode: "", manageStock: true, images: [], mainImageIndex: 0, videos: [],
+    name: "",
+    sku: "",
+    category: "",
+    subCategory: "",
+    modelSku: "",
+    hsnCode: "",
+    countryOfOrigin: "",
+    unit: "",
+    status: "Active",
+    description: "",
+    price: "",
+    mrp: "",
+    costPrice: "",
+    compareAtPrice: "",
+    taxClass: "GST 18%",
+    taxIncluded: false,
+    currency: "USD ($)",
+    moq: "",
+    stock: "",
+    lowStockAlert: "",
+    barcode: "",
+    manageStock: true,
+    images: [],
+    mainImageIndex: 0,
+    videos: [],
     variants: [
       { id: 1, variantName: "Color", value: "", sku: "", price: "", stock: "" },
-      { id: 2, variantName: "Plug Type", value: "", sku: "", price: "", stock: "" },
+      {
+        id: 2,
+        variantName: "Plug Type",
+        value: "",
+        sku: "",
+        price: "",
+        stock: "",
+      },
     ],
-    bulkPricing: [{ id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" }],
+    bulkPricing: [{ id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },],
     specifications: [{ id: 1, name: "", value: "" }],
     shippingMethods: [
-      { id: 1, method: "Standard Shipping", eta: "7-10 Business Days", cost: "" },
+      {
+        id: 1,
+        method: "Standard Shipping",
+        eta: "7-10 Business Days",
+        cost: "",
+      },
       { id: 2, method: "Express Shipping", eta: "3-5 Business Days", cost: "" },
-      { id: 3, method: "Freight (Bulk Orders)", eta: "10-15 Business Days", cost: "" },
+      {
+        id: 3,
+        method: "Freight (Bulk Orders)",
+        eta: "10-15 Business Days",
+        cost: "",
+      },
     ],
-    productWeight: "", packageLength: "", packageWidth: "", packageHeight: "",
-    shipsFrom: "", expectedDispatchTime: "", shippingClass: "Standard",
-    returnPolicy: "30 Days Return", returnShipping: "Buyer Pays",
-    warrantyPeriod: "12 Months", warrantyType: "Manufacturer Warranty",
-    supportEmail: "", supportPhone: "", additionalNotes: "",
-    supplierName: "", manufacturerName: "", supplierType: "Manufacturer",
-    supplierEmail: "", supplierPhone: "", supplierAddress: "",
-    website: "", certification: "", businessLicenseNo: "", additionalDocuments: [],
+    productWeight: "",
+    packageLength: "",
+    packageWidth: "",
+    packageHeight: "",
+    shipsFrom: "",
+    expectedDispatchTime: "",
+    shippingClass: "Standard",
+    returnPolicy: "",
+    returnShipping: "Buyer Pays",
+    warrantyPeriod: "",
+    warrantyType: "Manufacturer Warranty",
+    supportEmail: "",
+    supportPhone: "",
+    additionalNotes: "",
+    supplierName: "",
+    manufacturerName: "",
+    supplierType: "Manufacturer",
+    supplierEmail: "",
+    supplierPhone: "",
+    supplierAddress: "",
+    website: "",
+    certification: "",
+    businessLicenseNo: "",
+    additionalDocuments: [],
   });
 
-  const update = (key) => (value) => setForm(s => ({ ...s, [key]: value }));
-  const updateRow = (key, id, patch) => setForm(s => ({ ...s, [key]: (s[key] || []).map(r => r.id === id ? { ...r, ...patch } : r) }));
-  const addRow = (key, emptyRow) => setForm(s => {
-    const nextId = Math.max(0, ...(s[key] || []).map(x => x.id)) + 1;
-    return { ...s, [key]: [...(s[key] || []), { ...emptyRow, id: nextId }] };
-  });
-  const removeRow = (key, id) => setForm(s => ({ ...s, [key]: (s[key] || []).filter(r => r.id !== id) }));
+  const update = (key) => (value) => setForm((s) => ({ ...s, [key]: value }));
+  const updateRow = (key, id, patch) =>
+    setForm((s) => ({
+      ...s,
+      [key]: (s[key] || []).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+  const addRow = (key, emptyRow) =>
+    setForm((s) => {
+      const nextId = Math.max(0, ...(s[key] || []).map((x) => x.id)) + 1;
+      return { ...s, [key]: [...(s[key] || []), { ...emptyRow, id: nextId }] };
+    });
+  const removeRow = (key, id) =>
+    setForm((s) => ({
+      ...s,
+      [key]: (s[key] || []).filter((r) => r.id !== id),
+    }));
 
   const addImageUrl = () => {
     const url = String(imageUrl || "").trim();
@@ -100,19 +160,37 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     setVideoUrl("");
   };
 
-  const removeVideo = (idx) => setForm((s) => ({ ...s, videos: (s.videos || []).filter((_, i) => i !== idx) }));
-  const canSubmit = useMemo(() => !!(form.name.trim() && form.sku.trim() && form.category.trim() && form.description.trim() && form.price.trim() && form.moq.trim() && form.stock.trim()), [form]);
+  const removeVideo = (idx) =>
+    setForm((s) => ({
+      ...s,
+      videos: (s.videos || []).filter((_, i) => i !== idx),
+    }));
+  const canSubmit = useMemo(
+    () =>
+      !!(
+        form.name.trim() &&
+        form.sku.trim() &&
+        form.category.trim() &&
+        form.description.trim() &&
+        form.price.trim() &&
+        form.moq.trim() &&
+        form.stock.trim()
+      ),
+    [form],
+  );
   const close = () => typeof onClose === "function" && onClose();
 
-  // const categoriesLevel1 = ["Tools & Equipment","Industrial Hardware","Electrical","Raw Materials","Chemicals"];
-  // const categoriesLevel2 = ["Cleaning Equipment","Pressure Washers","Bearings","Fasteners","Pipes & Fittings"];
   useEffect(() => {
     dispatch(getMainCategoriesThunk());
   }, [dispatch]);
 
   const summary = useMemo(() => {
-    const variantsCount = Array.isArray(form.variants) ? form.variants.filter(v => String(v?.value || "").trim()).length : 0;
-    const tiersCount = Array.isArray(form.bulkPricing) ? form.bulkPricing.length : 0;
+    const variantsCount = Array.isArray(form.variants)
+      ? form.variants.filter((v) => String(v?.value || "").trim()).length
+      : 0;
+    const tiersCount = Array.isArray(form.bulkPricing)
+      ? form.bulkPricing.length
+      : 0;
     return {
       title: form.name || "—",
       category: form.category || "—",
@@ -124,34 +202,203 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   }, [form]);
 
   if (!open) return null;
+  // const handlePublishProduct = async () => {
+  //   if (!canSubmit) return;
 
+  //   const formData = new FormData();
+
+  //   // ================= ORGANIZATION ID FIX =================
+  //   const organizationId = vendor?.organization_id
+  //   console.log(organizationId) 
+
+  //   if (!organizationId) {
+  //     alert("Organization ID not found. Please login again as vendor.");
+  //     return;
+  //   }
+
+  //   formData.append("organizationId", organizationId);
+
+  //   // ================= BASIC FIELDS =================
+  //   formData.append("name", form.name);
+  //   formData.append("sku", form.sku);
+  //   formData.append("category", form.category);
+  //   formData.append("subCategory", form.subCategory);
+  //   // formData.append("brand", form.brand);
+  //   formData.append("price", Number(form.price));
+  //   formData.append("mrp", Number(form.mrp || 0));
+  //   formData.append("moq", Number(form.moq));
+  //   formData.append("stock", Number(form.stock));
+  //   formData.append("description", form.description);
+  //   formData.append("unit", form.unit || "");
+  //   formData.append("specifications", JSON.stringify(form.specifications.filter((s) => s.name && s.value)),);
+  //   formData.append("variants",JSON.stringify(form.variants.filter((v) => v.variantName && v.value)),);
+  //   formData.append("bulkPricing", JSON.stringify(form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit),),);
+  //   form.images.forEach((image) => {formData.append("images", image);});
+  //   // form.videos.forEach((video) => {formData.append("videos", video);});
+  //   try {
+  //     const resultAction = await dispatch(addProduct(formData));
+
+  //     if (addProduct.fulfilled.match(resultAction)) {
+  //       console.log("✅ Product Created", resultAction.payload);
+
+  //       alert("Product created successfully!");
+
+  //       onSubmit?.(resultAction.payload);
+  //       close();
+  //     } else {
+  //       console.error("❌ Failed Full Action:", resultAction);
+
+  //       alert(
+  //         resultAction.payload?.message ||
+  //         resultAction.error?.message ||
+  //         "Product creation failed",
+  //       );
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Product create error:", err);
+  //     alert("Something went wrong while creating product");
+  //   }
+  // };
+  const handlePublishProduct = async () => {
+    if (!canSubmit) return;
+
+    const formData = new FormData();
+
+    const organizationId = vendor?.organization_id;
+    if (!organizationId) {
+      alert("Organization ID missing");
+      return;
+    }
+
+    // ================= BASIC =================
+    formData.append("organizationId", organizationId);
+    formData.append("name", form.name);
+    formData.append("sku", form.sku);
+    formData.append("description", form.description);
+    formData.append("category", form.category);
+    formData.append("subCategory", form.subCategory || "");
+    formData.append("price", Number(form.price));
+    formData.append("mrp", Number(form.mrp || 0));
+    formData.append("moq", Number(form.moq));
+    formData.append("stock", Number(form.stock));
+    formData.append("unit", form.unit || "");
+
+    // ================= SPECIFICATIONS =================
+    formData.append(
+      "specifications",
+      JSON.stringify(
+        form.specifications.filter(s => s.name && s.value)
+      )
+    );
+
+    // ================= VARIANTS (MATCH BACKEND) =================
+    formData.append(
+      "variants",
+      JSON.stringify(
+        form.variants
+          .filter(v => v.value)
+          .map(v => ({
+            variant_type: v.variantName,
+            variant_value: v.value,
+            sku: v.sku || null,
+            price: Number(v.price || 0),
+            mrp: Number(v.mrp || 0),
+            stock: Number(v.stock || 0),
+          }))
+      )
+    );
+
+    // ================= BULK PRICING =================
+    formData.append(
+      "bulkPricing",
+      JSON.stringify(
+        form.bulkPricing
+          .filter(b => b.minQty && b.pricePerUnit)
+          .map(b => ({
+            minQty: Number(b.minQty),
+            maxQty: Number(b.maxQty || 0),
+            pricePerUnit: Number(b.pricePerUnit),
+          }))
+      )
+    );
+
+    // ================= FILES =================
+    form.images.forEach(file => {
+      formData.append("images", file);
+    });
+
+    form.videos.forEach(file => {
+      formData.append("videos", file);
+    });
+
+    try {
+      const result = await dispatch(addProduct(formData));
+
+      if (addProduct.fulfilled.match(result)) {
+        alert("Product created successfully");
+        close();
+      } else {
+        console.error(result);
+        alert(result.payload?.message || "Failed to create product");
+      }
+    } catch (err) {
+      console.error("CREATE PRODUCT ERROR:", err);
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (!files.length) return;
+
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...files].slice(0, 10),
+    }));
+  };
+
+  const handleVideoUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (!files.length) return;
+
+    setForm((prev) => ({
+      ...prev,
+      videos: [...prev.videos, ...files].slice(0, 5),
+    }));
+  };
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-        <button className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={close} aria-label="Close" />
+        <button
+          className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+          onClick={close}
+          aria-label="Close"
+        />
 
-        <div className="relative z-10 flex w-full max-w-6xl flex-col overflow-hidden rounded-sm bg-white shadow-2xl" style={{ maxHeight: "92vh" }}>
+        <div
+          className="relative z-10 flex w-full max-w-6xl flex-col overflow-hidden rounded-sm bg-white shadow-2xl"
+          style={{ maxHeight: "92vh" }}
+        >
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5 shrink-0">
             <div className="min-w-0">
-              <h2 className="text-xl font-extrabold text-slate-900">Add New Product</h2>
-              <p className="mt-1 text-xs text-slate-500">Fill in the information below to add a new product to your catalog.</p>
+              <h2 className="text-xl font-extrabold text-slate-900">
+                Add New Product
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Fill in the information below to add a new product to your
+                catalog.
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" className="h-9 rounded-sm text-xs font-semibold">
-                Save as Draft
-              </Button>
               <Button
                 type="button"
                 className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
-                disabled={!canSubmit}
-                onClick={() => {
-                  if (!canSubmit) return;
-                  typeof onSubmit === "function" && onSubmit(form);
-                  close();
-                }}
+                disabled={!canSubmit || loading}
+                onClick={handlePublishProduct}
               >
-                Publish Product
+                {loading ? "Saving..." : "Save Product"}
               </Button>
               <button
                 onClick={close}
@@ -174,81 +421,169 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <Package className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">Product Information</p>
-                          <p className="text-xs text-slate-500">Enter the basic information about your product.</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            Product Information
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Enter the basic information about your product.
+                          </p>
                         </div>
                       </div>
                     </div>
 
                     <div className="px-5 py-5">
                       <div className="grid gap-4 lg:grid-cols-3">
-                        <Field label="Product Title" required>
-                          <Input className={inputCls} value={form.name} onChange={(e) => update("name")(e.target.value)} placeholder="Enter product title" />
+                        <Field label="Product Name" required>
+                          <Input
+                            className={inputCls}
+                            value={form.name}
+                            onChange={(e) => update("name")(e.target.value)}
+                            placeholder="Enter product title"
+                          />
                         </Field>
-                        <Field label="Brand" required>
-                          <Input className={inputCls} value={form.brand} onChange={(e) => update("brand")(e.target.value)} placeholder="Enter brand name" />
-                        </Field>
+                        {/* <Field label="Brand" required>
+                          <Input
+                            className={inputCls}
+                            value={form.brand}
+                            onChange={(e) => update("brand")(e.target.value)}
+                            placeholder="Enter brand name"
+                          />
+                        </Field> */}
                         <Field label="Category" required>
-                          <Select value={form.category} onValueChange={(value) => { update("category")(value); update("subCategory")(""); dispatch(getSubcategoriesByParentThunk(value)); }}>
+                          <Select
+                            value={form.category}
+                            onValueChange={(value) => {
+                              update("category")(value);
+                              update("subCategory")("");
+                              dispatch(getSubcategoriesByParentThunk(value));
+                            }}
+                          >
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {mainCategories.map((cat) => (<SelectItem key={cat.id} value={cat.id}> {cat.name} </SelectItem>))}
+                              {mainCategories.map((cat) => (
+                                <SelectItem key={cat.id} value={String(cat.id)}>
+                                  {" "}
+                                  {cat.name}{" "}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </Field>
-                      </div>
-
-                      <div className="mt-4 grid gap-4 lg:grid-cols-3">
                         <Field label="Sub Category" required>
-                          <Select value={form.subCategory} onValueChange={update("subCategory")}>
+                          <Select
+                            value={form.subCategory}
+                            onValueChange={(value) =>
+                              update("subCategory")(value)
+                            }
+                          >
                             <SelectTrigger className={inputCls + " w-full"}>
                               <SelectValue placeholder="Select sub category" />
                             </SelectTrigger>
                             <SelectContent position="popper" align="start">
-                              {subcategories.length > 0 ? (subcategories.map((sub) => (<SelectItem key={sub.id} value={sub.id}> {sub.name}</SelectItem>))) : (<div className="px-3 py-2 text-sm text-gray-500">No subcategories found </div>)}
+                              {subcategories.length > 0 ? (
+                                subcategories.map((sub) => (
+                                  <SelectItem key={sub.id} value={sub.id}>
+                                    {" "}
+                                    {sub.name}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="px-3 py-2 text-sm text-gray-500">
+                                  No subcategories found{" "}
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
-                        </Field>
-                        <Field label="SKU" required>
-                          <Input className={inputCls} value={form.sku} onChange={(e) => update("sku")(e.target.value)} placeholder="Enter SKU" />
-                        </Field>
-                        <Field label="GTIN / Barcode">
-                          <Input className={inputCls} value={form.barcode} onChange={(e) => update("barcode")(e.target.value)} placeholder="Enter GTIN or barcode" />
                         </Field>
                       </div>
 
                       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                        <Field label="Selling Price (Per Unit)" required>
-                          <Input className={inputCls} value={form.price} onChange={(e) => update("price")(e.target.value)} placeholder="0.00" />
+                        <Field label="SKU" required>
+                          <Input
+                            className={inputCls}
+                            value={form.sku}
+                            onChange={(e) => update("sku")(e.target.value)}
+                            placeholder="Enter SKU"
+                          />
+                        </Field>
+                        <Field label="GTIN / Barcode">
+                          <Input
+                            className={inputCls}
+                            value={form.barcode}
+                            onChange={(e) => update("barcode")(e.target.value)}
+                            placeholder="Enter GTIN or barcode"
+                          />
+                        </Field>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                        <Field label="Price (Per Unit)" required>
+                          <Input
+                            className={inputCls}
+                            value={form.price}
+                            onChange={(e) => update("price")(e.target.value)}
+                            placeholder="0.00"
+                          />
                         </Field>
                         <Field label="MRP (Per Unit)">
-                          <Input className={inputCls} value={form.mrp} onChange={(e) => update("mrp")(e.target.value)} placeholder="0.00" />
+                          <Input
+                            className={inputCls}
+                            value={form.mrp}
+                            onChange={(e) => update("mrp")(e.target.value)}
+                            placeholder="0.00"
+                          />
                         </Field>
                         <Field label="Minimum Order Quantity" required>
-                          <Input className={inputCls} value={form.moq} onChange={(e) => update("moq")(e.target.value)} placeholder="Enter minimum quantity" />
+                          <Input
+                            className={inputCls}
+                            value={form.moq}
+                            onChange={(e) => update("moq")(e.target.value)}
+                            placeholder="Enter minimum quantity"
+                          />
                         </Field>
                       </div>
 
                       <div className="mt-4 grid gap-4 lg:grid-cols-3">
                         <Field label="Stock Availability" required>
-                          <Input className={inputCls} value={form.stock} onChange={(e) => update("stock")(e.target.value)} placeholder="Enter stock quantity" />
+                          <Input
+                            className={inputCls}
+                            value={form.stock}
+                            onChange={(e) => update("stock")(e.target.value)}
+                            placeholder="Enter stock quantity"
+                          />
                         </Field>
                         <Field label="Warranty">
-                          <Input className={inputCls} value={form.warrantyPeriod} onChange={(e) => update("warrantyPeriod")(e.target.value)} placeholder="e.g. 1 Year Manufacturer" />
+                          <Input
+                            className={inputCls}
+                            value={form.warrantyPeriod}
+                            onChange={(e) =>
+                              update("warrantyPeriod")(e.target.value)
+                            }
+                            placeholder="e.g. 1 Year Manufacturer"
+                          />
                         </Field>
                         <Field label="Return Policy">
-                          <Input className={inputCls} value={form.returnPolicy} onChange={(e) => update("returnPolicy")(e.target.value)} placeholder="e.g. 7 Days Replacement" />
+                          <Input
+                            className={inputCls}
+                            value={form.returnPolicy}
+                            onChange={(e) =>
+                              update("returnPolicy")(e.target.value)
+                            }
+                            placeholder="e.g. 7 Days Replacement"
+                          />
                         </Field>
                       </div>
 
                       <div className="mt-4">
                         <Field label="Product Description" required>
                           <Textarea
-                            className="min-h-[110px] rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
+                            className="min-h-27.5 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all"
                             value={form.description}
-                            onChange={(e) => update("description")(e.target.value)}
+                            onChange={(e) =>
+                              update("description")(e.target.value)
+                            }
                             placeholder="Write detailed product description, features, and benefits..."
                           />
                         </Field>
@@ -263,16 +598,23 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <Settings className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">Specifications</p>
-                          <p className="text-xs text-slate-500">Add technical specifications for your product.</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            Specifications
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Add technical specifications for your product.
+                          </p>
                         </div>
                       </div>
                       <Button
                         type="button"
                         className="h-8 rounded-sm bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800"
-                        onClick={() => addRow("specifications", { name: "", value: "" })}
+                        onClick={() =>
+                          addRow("specifications", { name: "", value: "" })
+                        }
                       >
-                        <Plus className="mr-1 h-3.5 w-3.5" />Add Specification
+                        <Plus className="mr-1 h-3.5 w-3.5" />
+                        Add Specification
                       </Button>
                     </div>
 
@@ -284,20 +626,36 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                       </div>
                       <div className="mt-3 space-y-3">
                         {(form.specifications || []).map((row) => (
-                          <div key={row.id} className="grid grid-cols-[1fr_1fr_40px] items-center gap-3">
+                          <div
+                            key={row.id}
+                            className="grid grid-cols-[1fr_1fr_40px] items-center gap-3"
+                          >
                             <Input
                               className={inputCls}
                               value={row.name}
-                              onChange={(e) => updateRow("specifications", row.id, { name: e.target.value })}
+                              onChange={(e) =>
+                                updateRow("specifications", row.id, {
+                                  name: e.target.value,
+                                })
+                              }
                               placeholder="e.g. Bluetooth Version"
                             />
                             <Input
                               className={inputCls}
                               value={row.value}
-                              onChange={(e) => updateRow("specifications", row.id, { value: e.target.value })}
+                              onChange={(e) =>
+                                updateRow("specifications", row.id, {
+                                  value: e.target.value,
+                                })
+                              }
                               placeholder="e.g. 5.3"
                             />
-                            <button onClick={() => removeRow("specifications", row.id)} className="text-red-400 hover:text-red-600">
+                            <button
+                              onClick={() =>
+                                removeRow("specifications", row.id)
+                              }
+                              className="text-red-400 hover:text-red-600"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -313,16 +671,28 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <Tag className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">Bulk Pricing</p>
-                          <p className="text-xs text-slate-500">Set different prices for different quantity ranges.</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            Bulk Pricing
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Set different prices for different quantity ranges.
+                          </p>
                         </div>
                       </div>
                       <Button
                         type="button"
                         className="h-8 rounded-sm bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800"
-                        onClick={() => addRow("bulkPricing", { minQty: "", maxQty: "", pricePerUnit: "", discount: "" })}
+                        onClick={() =>
+                          addRow("bulkPricing", {
+                            minQty: "",
+                            maxQty: "",
+                            pricePerUnit: "",
+                            discount: "",
+                          })
+                        }
                       >
-                        <Plus className="mr-1 h-3.5 w-3.5" />Add Pricing Tier
+                        <Plus className="mr-1 h-3.5 w-3.5" />
+                        Add Pricing Tier
                       </Button>
                     </div>
 
@@ -331,8 +701,16 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         <table className="w-full text-sm">
                           <thead className="bg-slate-50">
                             <tr>
-                              {["Min Quantity", "Max Quantity", "Price (Per Unit)", "Action"].map((h) => (
-                                <th key={h} className="border-b border-slate-200 px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                              {[
+                                "Min Quantity",
+                                "Max Quantity",
+                                "Price (Per Unit)",
+                                "Action",
+                              ].map((h) => (
+                                <th
+                                  key={h}
+                                  className="border-b border-slate-200 px-4 py-2.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                                >
                                   {h}
                                 </th>
                               ))}
@@ -341,11 +719,46 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <tbody>
                             {(form.bulkPricing || []).map((row) => (
                               <tr key={row.id} className="hover:bg-slate-50/50">
-                                <td className="border-b border-slate-100 px-4 py-2"><Input className={inputCls} value={row.minQty} onChange={(e) => updateRow("bulkPricing", row.id, { minQty: e.target.value })} /></td>
-                                <td className="border-b border-slate-100 px-4 py-2"><Input className={inputCls} value={row.maxQty} onChange={(e) => updateRow("bulkPricing", row.id, { maxQty: e.target.value })} /></td>
-                                <td className="border-b border-slate-100 px-4 py-2"><Input className={inputCls} value={row.pricePerUnit} onChange={(e) => updateRow("bulkPricing", row.id, { pricePerUnit: e.target.value })} /></td>
                                 <td className="border-b border-slate-100 px-4 py-2">
-                                  <button onClick={() => removeRow("bulkPricing", row.id)} className="text-red-400 hover:text-red-600">
+                                  <Input
+                                    className={inputCls}
+                                    value={row.minQty}
+                                    onChange={(e) =>
+                                      updateRow("bulkPricing", row.id, {
+                                        minQty: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </td>
+                                <td className="border-b border-slate-100 px-4 py-2">
+                                  <Input
+                                    className={inputCls}
+                                    value={row.maxQty}
+                                    onChange={(e) =>
+                                      updateRow("bulkPricing", row.id, {
+                                        maxQty: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </td>
+                                <td className="border-b border-slate-100 px-4 py-2">
+                                  <Input
+                                    className={inputCls}
+                                    value={row.pricePerUnit}
+                                    onChange={(e) =>
+                                      updateRow("bulkPricing", row.id, {
+                                        pricePerUnit: e.target.value,
+                                      })
+                                    }
+                                  />
+                                </td>
+                                <td className="border-b border-slate-100 px-4 py-2">
+                                  <button
+                                    onClick={() =>
+                                      removeRow("bulkPricing", row.id)
+                                    }
+                                    className="text-red-400 hover:text-red-600"
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </button>
                                 </td>
@@ -366,8 +779,12 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           <Image className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900">Product Media</p>
-                          <p className="text-xs text-slate-500">Upload high quality images of your product.</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            Product Media
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Upload high quality images of your product.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -381,44 +798,57 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         <div className="flex h-44 items-center justify-center p-3">
                           {(form.images || []).length ? (
                             <img
-                              src={(form.images || [])[form.mainImageIndex || 0]}
+                              src={URL.createObjectURL(
+                                (form.images || [])[form.mainImageIndex || 0],
+                              )}
                               alt="Main"
                               className="h-full w-full object-contain"
                             />
                           ) : (
                             <div className="flex flex-col items-center justify-center text-center">
                               <Upload className="h-6 w-6 text-slate-500" />
-                              <p className="mt-2 text-xs font-semibold text-slate-800">Add image URLs below</p>
-                              <p className="mt-1 text-[11px] text-slate-500">You can add up to 10 images</p>
+                              <p className="mt-2 text-xs font-semibold text-slate-800">
+                                Add image URLs below
+                              </p>
+                              <p className="mt-1 text-[11px] text-slate-500">
+                                You can add up to 10 images
+                              </p>
                             </div>
                           )}
                         </div>
                       </div>
 
-                      {/* Image URL input */}
-                      <div className="mt-3 flex gap-2">
-                        <Input
-                          className={inputCls + " flex-1"}
-                          placeholder="Paste image URL"
-                          value={imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && addImageUrl()}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-9 rounded-sm px-4 text-xs font-semibold"
-                          onClick={addImageUrl}
-                        >
-                          <Plus className="mr-1 h-4 w-4" />Add
-                        </Button>
-                      </div>
+                      {/* Upload Images */}
+                      <div className="mt-3">
+                        <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
+                          <Upload className="h-6 w-6 text-slate-500" />
 
+                          <span className="mt-2 text-sm font-medium text-slate-700">
+                            Click to Upload Images
+                          </span>
+
+                          <span className="text-xs text-slate-500">
+                            PNG, JPG, JPEG (Max 10)
+                          </span>
+
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                          />
+                        </label>
+                      </div>
                       {/* Sub images */}
                       <div className="mt-4">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-slate-700">Sub Images</p>
-                          <p className="text-[11px] text-slate-500">Click an image to set it as main</p>
+                          <p className="text-xs font-semibold text-slate-700">
+                            Sub Images
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            Click an image to set it as main
+                          </p>
                         </div>
 
                         <div className="mt-2 grid grid-cols-5 gap-3">
@@ -428,11 +858,22 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                               <button
                                 key={`${url}-${idx}`}
                                 type="button"
-                                onClick={() => setForm((s) => ({ ...s, mainImageIndex: idx }))}
+                                onClick={() =>
+                                  setForm((s) => ({
+                                    ...s,
+                                    mainImageIndex: idx,
+                                  }))
+                                }
                                 className="relative h-16 overflow-hidden rounded-sm border bg-white"
-                                style={{ borderColor: active ? "#2563eb" : "#e2e8f0" }}
+                                style={{
+                                  borderColor: active ? "#2563eb" : "#e2e8f0",
+                                }}
                               >
-                                <img src={url} alt="" className="h-full w-full object-cover" />
+                                <img
+                                  src={URL.createObjectURL(url)}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
                                 {active ? (
                                   <span className="absolute bottom-1 left-1 rounded-sm bg-blue-600 px-1.5 py-0.5 text-[9px] font-semibold text-white">
                                     Main
@@ -444,9 +885,18 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     setForm((s) => {
-                                      const next = (s.images || []).filter((_, i) => i !== idx);
-                                      const nextMain = Math.min(s.mainImageIndex || 0, Math.max(0, next.length - 1));
-                                      return { ...s, images: next, mainImageIndex: nextMain };
+                                      const next = (s.images || []).filter(
+                                        (_, i) => i !== idx,
+                                      );
+                                      const nextMain = Math.min(
+                                        s.mainImageIndex || 0,
+                                        Math.max(0, next.length - 1),
+                                      );
+                                      return {
+                                        ...s,
+                                        images: next,
+                                        mainImageIndex: nextMain,
+                                      };
                                     });
                                   }}
                                   role="button"
@@ -459,255 +909,387 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                           })}
                         </div>
                       </div>
+                      {/* Upload Videos */}
+                      <div className="mt-3">
+                        <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
+                          <Upload className="h-6 w-6 text-slate-500" />
 
-                      {/* Videos */}
-                      <div className="mt-5">
-                        <p className="text-xs font-semibold text-slate-700">Product Videos</p>
-                        <div className="mt-2 flex gap-2">
-                          <Input
-                            className={inputCls + " flex-1"}
-                            placeholder="Paste video URL"
-                            value={videoUrl}
-                            onChange={(e) => setVideoUrl(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && addVideoUrl()}
+                          <span className="mt-2 text-sm font-medium text-slate-700">
+                            Click to Upload Videos
+                          </span>
+
+                          <span className="text-xs text-slate-500">
+                            MP4, MOV, WEBM (Max 5)
+                          </span>
+
+                          <input
+                            type="file"
+                            multiple
+                            accept="video/*"
+                            className="hidden"
+                            onChange={handleVideoUpload}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="h-9 rounded-sm px-4 text-xs font-semibold"
-                            onClick={addVideoUrl}
-                          >
-                            Add
-                          </Button>
-                        </div>
-
-                        {(form.videos || []).length ? (
-                          <div className="mt-3 space-y-2">
-                            {(form.videos || []).map((u, idx) => (
-                              <div key={`${u}-${idx}`} className="flex items-center justify-between gap-3 rounded-sm border border-slate-200 bg-white px-3 py-2">
-                                <span className="truncate text-xs text-slate-600">{u}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => removeVideo(idx)}
-                                  className="text-xs font-semibold text-red-500 hover:text-red-700"
-                                >
-                                  Remove
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
+                        </label>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="rounded-sm border border-slate-200 bg-white">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
-                          <Layers className="h-4.5 w-4.5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">Product Variants</p>
-                          <p className="text-xs text-slate-500">Add available sizes / variants for this product.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="px-5 py-5">
-                      <div className="space-y-3">
-                        {(form.variants || []).map((row) => (
-                          <div key={row.id} className="rounded-sm border border-slate-200 bg-white p-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Variant Type</p>
-                                <Select
-                                  value={row.variantName || "Custom"}
-                                  onValueChange={(v) => updateRow("variants", row.id, { variantName: v, value: "" })}
-                                >
-                                  <SelectTrigger className={inputCls + " w-full"}>
-                                    <SelectValue placeholder="Select variant" />
-                                  </SelectTrigger>
-                                  <SelectContent position="popper" align="start">
-                                    {VARIANT_TYPES.map((t) => (
-                                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                      {(form.videos || []).length ? (
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          {(form.videos || []).map((video, idx) => (
+                            <div
+                              key={idx}
+                              className="relative overflow-hidden rounded-md border border-slate-200 bg-black"
+                            >
+                              <video
+                                src={URL.createObjectURL(video)}
+                                controls
+                                className="h-40 w-full object-cover"
+                              />
 
                               <button
                                 type="button"
-                                onClick={() => removeRow("variants", row.id)}
-                                className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-500 hover:bg-slate-50"
-                                aria-label="Remove variant"
+                                onClick={() => removeVideo(idx)}
+                                className="absolute right-2 top-2 rounded-full bg-white p-1 shadow"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <X className="h-4 w-4 text-red-500" />
                               </button>
                             </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
 
-                            <div className="mt-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Values</p>
-                              <div className="mt-2">
-                                {row.variantName === "Color" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {COLOR_OPTIONS.map((c) => {
-                                      const selected = parseCsv(row.value);
-                                      const active = selected.includes(c.value);
-                                      return (
-                                        <button
-                                          key={c.value}
-                                          type="button"
-                                          onClick={() => updateRow("variants", row.id, { value: toggleCsvValue(row.value, c.value) })}
-                                          className="flex w-full items-center justify-start gap-2 rounded-sm border px-2 py-2 text-xs font-semibold"
-                                          style={{
-                                            borderColor: active ? "#0B1F3A" : "#e2e8f0",
-                                            background: active ? "#FFF8EC" : "#ffffff",
-                                            color: "#1A1A1A",
-                                          }}
-                                        >
-                                          <span className="relative h-4 w-4 rounded-sm border" style={{ background: c.swatch, borderColor: "#e2e8f0" }}>
-                                            {active ? (
-                                              <span className="absolute inset-0 grid place-items-center">
-                                                <Check className="h-3 w-3" style={{ color: c.value === "White" ? "#0f172a" : "#ffffff" }} />
-                                              </span>
-                                            ) : null}
-                                          </span>
-                                          {c.label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                ) : row.variantName === "Size" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {SIZE_OPTIONS.map((s) => {
-                                      const selected = parseCsv(row.value);
-                                      const checked = selected.includes(s);
-                                      return (
-                                        <label
-                                          key={s}
-                                          className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="h-4 w-4 accent-slate-900"
-                                            checked={checked}
-                                            onChange={() => updateRow("variants", row.id, { value: toggleCsvValue(row.value, s) })}
-                                          />
-                                          {s}
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                ) : row.variantName === "Unit" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {UNIT_OPTIONS.map((u) => {
-                                      const selected = parseCsv(row.value);
-                                      const checked = selected.includes(u);
-                                      return (
-                                        <label
-                                          key={u}
-                                          className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="h-4 w-4 accent-slate-900"
-                                            checked={checked}
-                                            onChange={() => updateRow("variants", row.id, { value: toggleCsvValue(row.value, u) })}
-                                          />
-                                          {u}
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <Input
-                                    className={inputCls + " w-full"}
-                                    value={row.value}
-                                    onChange={(e) => updateRow("variants", row.id, { value: e.target.value })}
-                                    placeholder="Enter value"
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-                              <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
-                                {row.variantName || "Custom"}
-                              </span>
-                              {parseCsv(row.value).map((v) => (
-                                <span key={v} className="rounded-sm border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700">
-                                  {v}
-                                </span>
-                              ))}
-                              {!parseCsv(row.value).length ? (
-                                <span className="text-slate-500">No values selected</span>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))}
-                        <Button type="button" variant="outline" className="h-9 w-full rounded-sm text-xs font-semibold" onClick={() => addRow("variants", { variantName: "", value: "", sku: "", price: "", stock: "" })}>
-                          <Plus className="mr-1 h-4 w-4" />Add Variant
-                        </Button>
+                <div className="rounded-sm border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
+                        <Layers className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          Product Variants
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Add available sizes / variants for this product.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-sm border border-slate-200 bg-white">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
-                          <Archive className="h-4.5 w-4.5" />
+                  <div className="px-5 py-5">
+                    <div className="space-y-3">
+                      {(form.variants || []).map((row) => (
+                        <div
+                          key={row.id}
+                          className="rounded-sm border border-slate-200 bg-white p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                Variant Type
+                              </p>
+                              <Select
+                                value={row.variantName || "Custom"}
+                                onValueChange={(v) =>
+                                  updateRow("variants", row.id, {
+                                    variantName: v,
+                                    value: "",
+                                  })
+                                }
+                              >
+                                <SelectTrigger
+                                  className={inputCls + " w-full"}
+                                >
+                                  <SelectValue placeholder="Select variant" />
+                                </SelectTrigger>
+                                <SelectContent
+                                  position="popper"
+                                  align="start"
+                                >
+                                  {VARIANT_TYPES.map((t) => (
+                                    <SelectItem key={t} value={t}>
+                                      {t}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeRow("variants", row.id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-500 hover:bg-slate-50"
+                              aria-label="Remove variant"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="mt-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                              Values
+                            </p>
+                            <div className="mt-2">
+                              {row.variantName === "Color" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {COLOR_OPTIONS.map((c) => {
+                                    const selected = parseCsv(row.value);
+                                    const active = selected.includes(c.value);
+                                    return (
+                                      <button
+                                        key={c.value}
+                                        type="button"
+                                        onClick={() =>
+                                          updateRow("variants", row.id, {
+                                            value: toggleCsvValue(
+                                              row.value,
+                                              c.value,
+                                            ),
+                                          })
+                                        }
+                                        className="flex w-full items-center justify-start gap-2 rounded-sm border px-2 py-2 text-xs font-semibold"
+                                        style={{
+                                          borderColor: active
+                                            ? "#0B1F3A"
+                                            : "#e2e8f0",
+                                          background: active
+                                            ? "#FFF8EC"
+                                            : "#ffffff",
+                                          color: "#1A1A1A",
+                                        }}
+                                      >
+                                        <span
+                                          className="relative h-4 w-4 rounded-sm border"
+                                          style={{
+                                            background: c.swatch,
+                                            borderColor: "#e2e8f0",
+                                          }}
+                                        >
+                                          {active ? (
+                                            <span className="absolute inset-0 grid place-items-center">
+                                              <Check
+                                                className="h-3 w-3"
+                                                style={{
+                                                  color:
+                                                    c.value === "White"
+                                                      ? "#0f172a"
+                                                      : "#ffffff",
+                                                }}
+                                              />
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                        {c.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : row.variantName === "Size" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {SIZE_OPTIONS.map((s) => {
+                                    const selected = parseCsv(row.value);
+                                    const checked = selected.includes(s);
+                                    return (
+                                      <label
+                                        key={s}
+                                        className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-4 w-4 accent-slate-900"
+                                          checked={checked}
+                                          onChange={() =>
+                                            updateRow("variants", row.id, {
+                                              value: toggleCsvValue(
+                                                row.value,
+                                                s,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {s}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : row.variantName === "Unit" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {UNIT_OPTIONS.map((u) => {
+                                    const selected = parseCsv(row.value);
+                                    const checked = selected.includes(u);
+                                    return (
+                                      <label
+                                        key={u}
+                                        className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-4 w-4 accent-slate-900"
+                                          checked={checked}
+                                          onChange={() =>
+                                            updateRow("variants", row.id, {
+                                              value: toggleCsvValue(
+                                                row.value,
+                                                u,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {u}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <Input
+                                  className={inputCls + " w-full"}
+                                  value={row.value}
+                                  onChange={(e) =>
+                                    updateRow("variants", row.id, {
+                                      value: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Enter value"
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                            <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
+                              {row.variantName || "Custom"}
+                            </span>
+                            {parseCsv(row.value).map((v) => (
+                              <span
+                                key={v}
+                                className="rounded-sm border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700"
+                              >
+                                {v}
+                              </span>
+                            ))}
+                            {!parseCsv(row.value).length ? (
+                              <span className="text-slate-500">
+                                No values selected
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">Product Summary</p>
-                          <p className="text-xs text-slate-500">Review your product information before publishing.</p>
-                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 w-full rounded-sm text-xs font-semibold"
+                        onClick={() =>
+                          addRow("variants", {
+                            variantName: "",
+                            value: "",
+                            sku: "",
+                            price: "",
+                            stock: "",
+                          })
+                        }
+                      >
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add Variant
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-sm border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
+                        <Archive className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          Product Summary
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Review your product information before publishing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-5 py-5">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Product Title</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Category</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Selling Price</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.sellingPrice}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Stock</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.stock}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Variants</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.variants}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Bulk Tiers</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.bulkTiers}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="px-5 py-5">
-                      <div className="space-y-3 text-sm">
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Product Title</span><span className="font-semibold text-slate-900">{summary.title}</span></div>
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Category</span><span className="font-semibold text-slate-900">{summary.category}</span></div>
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Selling Price</span><span className="font-semibold text-slate-900">{summary.sellingPrice}</span></div>
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Stock</span><span className="font-semibold text-slate-900">{summary.stock}</span></div>
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Variants</span><span className="font-semibold text-slate-900">{summary.variants}</span></div>
-                        <div className="flex items-center justify-between gap-3"><span className="text-slate-500">Bulk Tiers</span><span className="font-semibold text-slate-900">{summary.bulkTiers}</span></div>
-                      </div>
-
-                      <div className="mt-5 rounded-sm border border-amber-200 bg-amber-50 p-4">
-                        <p className="text-xs font-semibold text-amber-900">Please review all information before publishing.</p>
-                        <p className="mt-1 text-[11px] text-amber-900/70">Your product will be visible to buyers after approval.</p>
-                      </div>
+                    <div className="mt-5 rounded-sm border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-xs font-semibold text-amber-900">
+                        Please review all information before publishing.
+                      </p>
+                      <p className="mt-1 text-[11px] text-amber-900/70">
+                        Your product will be visible to buyers after approval.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 shrink-0">
-            <Button type="button" variant="outline" className="h-9 rounded-sm text-xs font-semibold" onClick={close}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
-              disabled={!canSubmit}
-              onClick={() => {
-                if (!canSubmit) return;
-                typeof onSubmit === "function" && onSubmit(form);
-                close();
-              }}
-            >
-              Publish Product
-            </Button>
-          </div>
         </div>
+
+        {/* <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-sm text-xs font-semibold"
+            onClick={close}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
+            disabled={!canSubmit || loading}
+            onClick={handlePublishProduct}
+          >
+            {loading ? "Publishing..." : "Publish Product"}
+          </Button>
+        </div> */}
       </div>
     </>
   );
-}
+};
 
 export default AddNewProductModal;

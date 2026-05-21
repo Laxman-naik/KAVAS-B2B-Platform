@@ -237,7 +237,7 @@ const Navbar = () => {
               <div className="flex items-center gap-4 text-white/85">
                 <span className="inline-flex items-center gap-2">
                   <Phone className="h-4 w-4 text-[#D4AF37]" />
-                  +91 0000000000
+                  +91 6302259849
                 </span>
                 <span className="text-white/35">|</span>
                 <Link
@@ -298,14 +298,14 @@ const Navbar = () => {
                           if (debouncedQuery) setShowSearchDropdown(true);
                         }}
                         placeholder="Search products, categories, brands..."
-                        className=" flex-1  h-full bg-white  px-3 text-sm text-white placeholder:text-gray-400 outline-none"
+                        className=" flex-1  h-full bg-white  px-3 text-sm text-black placeholder:text-gray-400 outline-none"
                       />
 
                       {/* Search Button */}
                       <button
                         onClick={handleSearchSubmit}
                         aria-label="Search"
-                        className=" h-8 w-8 mr-2 rounded-full flex items-center justify-center bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#e0bb45] transition-all duration-300 "
+                        className=" h-9 w-9 mr-2 rounded-full flex items-center justify-center bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#e0bb45] transition-all duration-300 "
                       >
                         <Search size={14} />
                       </button>
@@ -313,7 +313,7 @@ const Navbar = () => {
                   </div>
 
                   {showSearchDropdown && (
-                    <div className="absolute left-2 right-2 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto">
+                    <div className="absolute left-2 right-2 top-full mt-2 bg-white border border-[#E5E5E5] rounded-sm shadow-2xl z-50 p-4 max-h-96 overflow-y-auto text-[#0B1F3A]">
                       {searchLoading ? (
                         <p className="text-sm text-gray-500">Searching...</p>
                       ) : searchResults.products.length === 0 &&
@@ -553,7 +553,7 @@ const Navbar = () => {
                                 <span>Payment Methods</span>
                               </button>
 
-                              <button
+                              {/* <button
                                 onClick={() => {
                                   router.push("/help");
                                   setDropdown(false);
@@ -562,7 +562,7 @@ const Navbar = () => {
                               >
                                 <ClipboardList className="h-5 w-5" />
                                 <span>Bulk Enquiry</span>
-                              </button>
+                              </button> */}
 
                               <button
                                 onClick={() => {

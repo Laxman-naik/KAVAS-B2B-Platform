@@ -334,24 +334,62 @@ const getOrCreateCart = async (userId) => {
 };
 
 /* ================= GET CART ITEMS ================= */
+// const getCartItems = async (cartId) => {
+//   const result = await pool.query(
+//     `SELECT
+//       ci.id,
+//       ci.cart_id,
+//       ci.product_id,
+//       ci.variant_id,
+//       ci.quantity,
+//       ci.moq,
+//       ci.image_url,
+//       ci.price,
+//       ci.mrp,
+//       ci.product_name AS name,
+//       ci.unit,
+//       ci.added_at
+//      FROM cart_items ci
+//      WHERE ci.cart_id=$1
+//      ORDER BY ci.added_at DESC`,
+//     [cartId]
+//   );
+
+//   return result.rows;
+// };
 const getCartItems = async (cartId) => {
   const result = await pool.query(
-    `SELECT
+    `
+    SELECT
       ci.id,
       ci.cart_id,
+
       ci.product_id,
       ci.variant_id,
+
+      ci.organization_id,
+      ci.organization_name,
+      ci.business_type,
+
       ci.quantity,
       ci.moq,
+
       ci.image_url,
+
       ci.price,
       ci.mrp,
+
       ci.product_name AS name,
       ci.unit,
+
       ci.added_at
-     FROM cart_items ci
-     WHERE ci.cart_id=$1
-     ORDER BY ci.added_at DESC`,
+
+    FROM cart_items ci
+
+    WHERE ci.cart_id = $1
+
+    ORDER BY ci.added_at DESC
+    `,
     [cartId]
   );
 
@@ -390,12 +428,393 @@ exports.getCart = async (req, res) => {
 };
 
 /* ================= ADD TO CART ================= */
+// exports.addToCart = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     const {
+//       productId,
+//       variantId = null,
+//       quantity = 1,
+//       image_url = null,
+//     } = req.body;
+
+//     if (!productId) {
+//       return res.status(400).json({
+//         message: "productId required",
+//       });
+//     }
+
+//     /* ================= FETCH PRODUCT ================= */
+//     const productRes = await pool.query(
+//       `SELECT 
+//           p.id,
+//           p.name,
+//           p.price,
+//           p.mrp,
+//           p.moq,
+//           p.organization_id,
+//           p.unit,
+//           pi.image_url
+//        FROM products p
+//        LEFT JOIN LATERAL (
+//           SELECT image_url
+//           FROM product_images
+//           WHERE product_id = p.id
+//           ORDER BY is_primary DESC, sort_order ASC
+//           LIMIT 1
+//        ) pi ON true
+//        WHERE p.id = $1
+//          AND p.is_active = true`,
+//       [productId]
+//     );
+
+//     if (!productRes.rows.length) {
+//       return res.status(404).json({
+//         message: "Product not found",
+//       });
+//     }
+
+//     const product = productRes.rows[0];
+
+//     /* ================= VALIDATIONS ================= */
+//     if (!product.price || Number(product.price) <= 0) {
+//       return res.status(400).json({
+//         message: "Invalid product price",
+//       });
+//     }
+
+//     // if (!product.organization_id) {
+//     //   return res.status(400).json({
+//     //     message: "Product missing organization_id",
+//     //   });
+//     // }
+
+//     const price = Number(product.price);
+//     const moq = Number(product.moq) || 1;
+//     const normalizedQty = Math.max(Number(quantity), moq);
+
+//     /* ================= GET CART ================= */
+//     const cart = await getOrCreateCart(userId);
+
+//     /* ================= CHECK EXISTING ITEM ================= */
+//     const existing = await pool.query(
+//       `SELECT * 
+//        FROM cart_items
+//        WHERE cart_id=$1 
+//          AND product_id=$2
+//          AND (
+//            variant_id = $3
+//            OR (variant_id IS NULL AND $3 IS NULL)
+//          )`,
+//       [cart.id, productId, variantId]
+//     );
+
+//     if (existing.rows.length) {
+//       /* ================= UPDATE EXISTING ================= */
+//       await pool.query(
+//         `UPDATE cart_items
+//          SET quantity = quantity + $1
+//          WHERE id=$2`,
+//         [normalizedQty, existing.rows[0].id]
+//       );
+//     } else {
+//       /* ================= INSERT NEW ITEM ================= */
+//       await pool.query(
+//         `INSERT INTO cart_items
+//         (
+//           cart_id,
+//           product_id,
+//           variant_id,
+//           quantity,
+//           price,
+//           mrp,
+//           moq,
+//           image_url,
+//           organization_id,
+//           product_name,
+//           unit,
+//           added_at
+//         )
+//         VALUES
+//         (
+//           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CURRENT_TIMESTAMP
+//         )`,
+//         [
+//           cart.id,
+//           productId,
+//           variantId,
+//           normalizedQty,
+//           price,
+//           product.mrp,
+//           moq,
+//           image_url || product.image_url || null,
+//           product.organization_id,
+//           product.name,
+//           product.unit,
+//         ]
+//       );
+//     }
+
+//     /* ================= RETURN UPDATED CART ================= */
+//     const items = await getCartItems(cart.id);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Added to cart",
+//       cart: {
+//         ...cart,
+//         items,
+//         summary: calculateSummary(items),
+//       },
+//     });
+//   } catch (err) {
+//     console.error("ADD TO CART ERROR:", err);
+
+//     return res.status(500).json({
+//       message: err.message,
+//     });
+//   }
+// };
+// exports.addToCart = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     const {
+//       productId,
+//       variantId = null,
+//       quantity = 1,
+//       image_url = null,
+//     } = req.body;
+
+//     if (!productId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "productId required",
+//       });
+//     }
+
+//     /* ================= FETCH PRODUCT + ORGANIZATION ================= */
+//     const productRes = await pool.query(
+//       `
+//       SELECT 
+//           p.id,
+//           p.name,
+//           p.price,
+//           p.mrp,
+//           p.moq,
+//           p.organization_id,
+//           p.unit,
+
+//           o.name AS organization_name,
+//           o.business_type,
+
+//           pi.image_url
+
+//       FROM products p
+
+//       LEFT JOIN organizations o
+//       ON o.id = p.organization_id
+
+//       LEFT JOIN LATERAL (
+//           SELECT image_url
+//           FROM product_images
+//           WHERE product_id = p.id
+//           ORDER BY is_primary DESC, sort_order ASC
+//           LIMIT 1
+//       ) pi ON true
+
+//       WHERE p.id = $1
+//       AND p.is_active = true
+//       `,
+//       [productId]
+//     );
+
+//     if (!productRes.rows.length) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     const product = productRes.rows[0];
+
+//     /* ================= VALIDATIONS ================= */
+
+//     if (!product.price || Number(product.price) <= 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid product price",
+//       });
+//     }
+
+//     if (!product.organization_id) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Product organization missing",
+//       });
+//     }
+
+//     if (!product.organization_name) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Organization not found",
+//       });
+//     }
+
+//     const price = Number(product.price);
+//     const moq = Number(product.moq) || 1;
+
+//     /* ================= MOQ VALIDATION ================= */
+//     const normalizedQty = Math.max(Number(quantity), moq);
+
+//     /* ================= GET OR CREATE CART ================= */
+//     const cart = await getOrCreateCart(userId);
+
+//     /* ================= SINGLE ORGANIZATION VALIDATION ================= */
+//     const existingOrg = await pool.query(
+//       `
+//       SELECT DISTINCT organization_id
+//       FROM cart_items
+//       WHERE cart_id = $1
+//       LIMIT 1
+//       `,
+//       [cart.id]
+//     );
+
+//     if (
+//       existingOrg.rows.length > 0 &&
+//       existingOrg.rows[0].organization_id !== product.organization_id
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "You can only add products from one organization at a time",
+//       });
+//     }
+
+//     /* ================= CHECK EXISTING ITEM ================= */
+//     const existing = await pool.query(
+//       `
+//       SELECT *
+//       FROM cart_items
+//       WHERE cart_id = $1
+//       AND product_id = $2
+//       AND (
+//         variant_id = $3
+//         OR (variant_id IS NULL AND $3 IS NULL)
+//       )
+//       `,
+//       [cart.id, productId, variantId]
+//     );
+
+//     if (existing.rows.length) {
+//       /* ================= UPDATE EXISTING ITEM ================= */
+//       await pool.query(
+//         `
+//         UPDATE cart_items
+//         SET quantity = quantity + $1
+//         WHERE id = $2
+//         `,
+//         [normalizedQty, existing.rows[0].id]
+//       );
+//     } else {
+//       /* ================= INSERT NEW ITEM ================= */
+//       await pool.query(
+//         `
+//         INSERT INTO cart_items
+//         (
+//           cart_id,
+//           product_id,
+//           variant_id,
+//           quantity,
+//           price,
+//           mrp,
+//           moq,
+//           image_url,
+
+//           organization_id,
+//           organization_name,
+
+//           product_name,
+//           unit,
+//           added_at
+//         )
+//         VALUES
+//         (
+//           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,CURRENT_TIMESTAMP
+//         )
+//         `,
+//         [
+//           cart.id,
+//           productId,
+//           variantId,
+//           normalizedQty,
+//           price,
+//           product.mrp,
+//           moq,
+//           image_url || product.image_url || null,
+
+//           product.organization_id,
+//           product.organization_name,
+
+//           product.name,
+//           product.unit,
+//         ]
+//       );
+//     }
+
+//     /* ================= GET UPDATED CART ITEMS ================= */
+//     const items = await getCartItems(cart.id);
+
+//     /* ================= RETURN RESPONSE ================= */
+//     return res.status(200).json({
+//       success: true,
+//       message: "Added to cart",
+
+//       cart: {
+//         ...cart,
+
+//         organization_id:
+//           items.length > 0 ? items[0].organization_id : null,
+
+//         organization_name:
+//           items.length > 0 ? items[0].organization_name : null,
+
+//         items,
+
+//         summary: calculateSummary(items),
+//       },
+//     });
+//   } catch (err) {
+//     console.error("ADD TO CART ERROR:", err);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({
+        success: false,
         message: "Unauthorized",
       });
     }
@@ -409,36 +828,51 @@ exports.addToCart = async (req, res) => {
 
     if (!productId) {
       return res.status(400).json({
+        success: false,
         message: "productId required",
       });
     }
 
     /* ================= FETCH PRODUCT ================= */
+
     const productRes = await pool.query(
-      `SELECT 
-          p.id,
-          p.name,
-          p.price,
-          p.mrp,
-          p.moq,
-          p.organization_id,
-          p.unit,
-          pi.image_url
-       FROM products p
-       LEFT JOIN LATERAL (
-          SELECT image_url
-          FROM product_images
-          WHERE product_id = p.id
-          ORDER BY is_primary DESC, sort_order ASC
-          LIMIT 1
-       ) pi ON true
-       WHERE p.id = $1
-         AND p.is_active = true`,
+      `
+      SELECT 
+        p.id,
+        p.name,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.organization_id,
+        p.unit,
+
+        o.name AS organization_name,
+        o.business_type,
+
+        pi.image_url
+
+      FROM products p
+
+      LEFT JOIN organizations o
+      ON o.id = p.organization_id
+
+      LEFT JOIN LATERAL (
+        SELECT image_url
+        FROM product_images
+        WHERE product_id = p.id
+        ORDER BY is_primary DESC, sort_order ASC
+        LIMIT 1
+      ) pi ON true
+
+      WHERE p.id = $1
+      AND p.is_active = true
+      `,
       [productId]
     );
 
     if (!productRes.rows.length) {
       return res.status(404).json({
+        success: false,
         message: "Product not found",
       });
     }
@@ -446,50 +880,65 @@ exports.addToCart = async (req, res) => {
     const product = productRes.rows[0];
 
     /* ================= VALIDATIONS ================= */
+
     if (!product.price || Number(product.price) <= 0) {
       return res.status(400).json({
+        success: false,
         message: "Invalid product price",
       });
     }
 
-    // if (!product.organization_id) {
-    //   return res.status(400).json({
-    //     message: "Product missing organization_id",
-    //   });
-    // }
+    if (!product.organization_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Product organization missing",
+      });
+    }
 
     const price = Number(product.price);
     const moq = Number(product.moq) || 1;
+
+    /* ================= MOQ VALIDATION ================= */
+
     const normalizedQty = Math.max(Number(quantity), moq);
 
-    /* ================= GET CART ================= */
+    /* ================= GET OR CREATE CART ================= */
+
     const cart = await getOrCreateCart(userId);
 
     /* ================= CHECK EXISTING ITEM ================= */
+
     const existing = await pool.query(
-      `SELECT * 
-       FROM cart_items
-       WHERE cart_id=$1 
-         AND product_id=$2
-         AND (
-           variant_id = $3
-           OR (variant_id IS NULL AND $3 IS NULL)
-         )`,
+      `
+      SELECT *
+      FROM cart_items
+      WHERE cart_id = $1
+      AND product_id = $2
+      AND (
+        variant_id = $3
+        OR (variant_id IS NULL AND $3 IS NULL)
+      )
+      `,
       [cart.id, productId, variantId]
     );
 
     if (existing.rows.length) {
-      /* ================= UPDATE EXISTING ================= */
+      /* ================= UPDATE EXISTING ITEM ================= */
+
       await pool.query(
-        `UPDATE cart_items
-         SET quantity = quantity + $1
-         WHERE id=$2`,
+        `
+        UPDATE cart_items
+        SET quantity = quantity + $1
+        WHERE id = $2
+        `,
         [normalizedQty, existing.rows[0].id]
       );
     } else {
       /* ================= INSERT NEW ITEM ================= */
+
       await pool.query(
-        `INSERT INTO cart_items
+        `
+        INSERT INTO cart_items
         (
           cart_id,
           product_id,
@@ -499,15 +948,19 @@ exports.addToCart = async (req, res) => {
           mrp,
           moq,
           image_url,
+
           organization_id,
+          organization_name,
+
           product_name,
           unit,
           added_at
         )
         VALUES
         (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CURRENT_TIMESTAMP
-        )`,
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,CURRENT_TIMESTAMP
+        )
+        `,
         [
           cart.id,
           productId,
@@ -517,22 +970,51 @@ exports.addToCart = async (req, res) => {
           product.mrp,
           moq,
           image_url || product.image_url || null,
+
           product.organization_id,
+          product.organization_name,
+
           product.name,
           product.unit,
         ]
       );
     }
 
-    /* ================= RETURN UPDATED CART ================= */
+    /* ================= GET UPDATED CART ITEMS ================= */
+
     const items = await getCartItems(cart.id);
+
+    /* ================= GROUP ITEMS BY ORGANIZATION ================= */
+
+    const groupedOrganizations = {};
+
+    items.forEach((item) => {
+      const orgId = item.organization_id;
+
+      if (!groupedOrganizations[orgId]) {
+        groupedOrganizations[orgId] = {
+          organization_id: orgId,
+          organization_name: item.organization_name,
+          items: [],
+        };
+      }
+
+      groupedOrganizations[orgId].items.push(item);
+    });
+
+    /* ================= RESPONSE ================= */
 
     return res.status(200).json({
       success: true,
       message: "Added to cart",
+
       cart: {
         ...cart,
+
+        organizations: Object.values(groupedOrganizations),
+
         items,
+
         summary: calculateSummary(items),
       },
     });
@@ -540,6 +1022,7 @@ exports.addToCart = async (req, res) => {
     console.error("ADD TO CART ERROR:", err);
 
     return res.status(500).json({
+      success: false,
       message: err.message,
     });
   }

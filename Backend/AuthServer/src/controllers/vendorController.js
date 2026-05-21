@@ -3,8 +3,8 @@ import { randomBytes } from "crypto";
 import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import axios from "axios";
-import { sendEmailOtp } from "../utils/emailService.js";
 import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 const otpStore = new Map();
 
@@ -79,142 +79,141 @@ const otpStore = new Map();
 // };
 export const sendOtp = async (req, res) => {
   try {
-    const { email, phone } = req.body;
+    const { phone } = req.body;
 
-    if (!email && !phone) {
-      return res.status(400).json({ message: "Email or phone required" });
+    if (!phone) {
+      return res.status(400).json({
+        message: "Phone number required",
+      });
     }
+
+    // mobile validation
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
     const expires = Date.now() + 5 * 60 * 1000;
 
-    let emailSent = false;
-    let phoneSent = false;
+    const key = `phone:${phone}`;
 
-    // ================= PHONE OTP =================
-    if (phone) {
-      const phoneOtp = Math.floor(100000 + Math.random() * 900000);
-      const key = `phone:${phone}`;
-
-      otpStore.set(key, {
-        otp: phoneOtp,
-        expires,
-        verified: false,
-      });
-
-      try {
-        await axios.post(
-          "https://www.fast2sms.com/dev/bulkV2",
-          {
-            route: "q",
-            message: `Your Kavas OTP is ${phoneOtp}. Valid for 5 minutes.`,
-            language: "english",
-            numbers: phone,
-          },
-          {
-            headers: {
-              authorization: "qaiITA74c3pkzY1HPJmNWtRMGxoDjefdwulE2QsKXUhCbB9yrS4zEjMDpnmBy92iVqd5uCK83JNakgts",
-            },
-          }
-        );
-
-        phoneSent = true;
-      } catch (smsErr) {
-        console.error("SMS FAILED FULL:", smsErr);
-      }
-
-      console.log("PHONE OTP GENERATED:", key, phoneOtp);
-    }
-
-    // ================= EMAIL OTP =================
-    if (email) {
-      const emailOtp = Math.floor(100000 + Math.random() * 900000);
-      const key = `email:${email}`;
-
-      otpStore.set(key, {
-        otp: emailOtp,
-        expires,
-        verified: false,
-      });
-
-      try {
-        const info = await sendEmailOtp(email, emailOtp);
-        console.log("EMAIL SENT:", info.messageId);
-        emailSent = true;
-      } catch (err) {
-        console.error("EMAIL FAILED FULL:", err);
-      }
-
-      console.log("EMAIL OTP GENERATED:", key, emailOtp);
-    }
-
-    return res.status(200).json({
-      message: "OTP process completed",
-      emailSent,
-      phoneSent,
+    otpStore.set(key, {
+      otp,
+      expires,
+      verified: false,
     });
+
+    try {
+      await axios.post(
+        "https://www.fast2sms.com/dev/bulkV2",
+        {
+          route: "q",
+          message: `Your Kavas OTP is ${otp}. Valid for 5 minutes.`,
+          language: "english",
+          numbers: phone,
+        },
+        {
+          headers: {
+            authorization:
+              process.env.FAST2SMS_API_KEY,
+          },
+        }
+      );
+
+      console.log("PHONE OTP GENERATED:", key, otp);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP sent successfully",
+      });
+
+    } catch (error) {
+  console.error("SEND OTP ERROR RESPONSE:", error.response?.data);
+  console.error("SEND OTP ERROR STATUS:", error.response?.status);
+  console.error("SEND OTP ERROR MESSAGE:", error.message);
+
+  return res.status(500).json({
+    success: false,
+    message: error.message,
+    error: process.env.NODE_ENV === "development"
+      ? error.stack
+      : undefined,
+  });
+}
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
 
     return res.status(500).json({
-      message: err.message || "Internal server error",
+      success: false,
+      message: "Internal server error",
     });
   }
 };
 
 export const verifyOtp = async (req, res) => {
   try {
-    let { email, phone, otp } = req.body;
+    let { phone, otp } = req.body;
 
-    otp = otp ? String(otp).trim() : null;
+    otp = otp ? String(otp).trim() : "";
 
-    // ================= EMAIL VERIFY =================
-    if (email) {
-      const key = `email:${email}`;
-      const emailData = otpStore.get(key);
-
-      if (!emailData) {
-        return res.status(400).json({ message: "Email OTP not found" });
-      }
-
-      if (Date.now() > emailData.expires) {
-        return res.status(400).json({ message: "Email OTP expired" });
-      }
-
-      if (String(emailData.otp) !== String(otp)) {
-        return res.status(400).json({ message: "Invalid email OTP" });
-      }
-
-      emailData.verified = true;
-      otpStore.set(key, emailData);
+    if (!phone || !otp) {
+      return res.status(400).json({
+        message: "Phone and OTP are required",
+      });
     }
 
-    // ================= PHONE VERIFY =================
-    if (phone) {
-      const key = `phone:${phone}`;
-      const phoneData = otpStore.get(key);
-
-      if (!phoneData) {
-        return res.status(400).json({ message: "Phone OTP not found" });
-      }
-
-      if (Date.now() > phoneData.expires) {
-        return res.status(400).json({ message: "Phone OTP expired" });
-      }
-
-      if (String(phoneData.otp) !== String(otp)) {
-        return res.status(400).json({ message: "Invalid phone OTP" });
-      }
-
-      phoneData.verified = true;
-      otpStore.set(key, phoneData);
+    // validate phone
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        message: "Invalid phone number",
+      });
     }
 
-    return res.json({ message: "OTP verified successfully" });
+    const key = `phone:${phone}`;
+
+    const phoneData = otpStore.get(key);
+
+    if (!phoneData) {
+      return res.status(400).json({
+        message: "OTP not found",
+      });
+    }
+
+    if (Date.now() > phoneData.expires) {
+      otpStore.delete(key);
+
+      return res.status(400).json({
+        message: "OTP expired",
+      });
+    }
+
+    if (String(phoneData.otp) !== otp) {
+      return res.status(400).json({
+        message: "Invalid OTP",
+      });
+    }
+
+    // mark verified
+    phoneData.verified = true;
+
+    otpStore.set(key, phoneData);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully",
+    });
 
   } catch (err) {
     console.error("VERIFY OTP ERROR:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -224,67 +223,167 @@ export const registerVendor = async (req, res) => {
   try {
     const { email, phone, password, confirmPassword } = req.body;
 
-    if (!password || password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
+    // ================= VALIDATIONS =================
+
+    if (!phone) {
+      return res.status(400).json({
+        message: "Phone number is required",
+      });
     }
 
-    // ================= EMAIL OTP CHECK =================
-    if (email) {
-      const emailKey = `email:${email}`;
-      const emailData = otpStore.get(emailKey);
-
-      if (!emailData?.verified) {
-        return res.status(400).json({ message: "Email OTP not verified" });
-      }
+    if (!password || password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
     }
 
     // ================= PHONE OTP CHECK =================
-    if (phone) {
-      const phoneKey = `phone:${phone}`;
-      const phoneData = otpStore.get(phoneKey);
 
-      if (!phoneData?.verified) {
-        return res.status(400).json({ message: "Phone OTP not verified" });
-      }
+    const phoneKey = `phone:${phone}`;
+
+    const phoneData = otpStore.get(phoneKey);
+
+    if (!phoneData?.verified) {
+      return res.status(400).json({
+        message: "Phone OTP not verified",
+      });
+    }
+
+    // ================= CHECK EXISTING VENDOR =================
+
+    const existingVendor = await client.query(
+      `
+        SELECT id
+        FROM vendorprofile
+        WHERE phone = $1
+           OR email = $2
+        LIMIT 1
+      `,
+      [phone, email || null]
+    );
+
+    if (existingVendor.rows.length > 0) {
+      return res.status(400).json({
+        message: "Vendor already exists",
+      });
     }
 
     await client.query("BEGIN");
 
+    // ================= HASH PASSWORD =================
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ================= CREATE VENDOR =================
+
     const vendorResult = await client.query(
-      `INSERT INTO vendorprofile (
-        email, phone, password_hash, email_verified, phone_verified
-      )
-      VALUES ($1, $2, $3, true, true)
-      RETURNING id`,
-      [email, phone, hashedPassword]
+      `
+        INSERT INTO vendorprofile (
+          email,
+          phone,
+          password_hash,
+          email_verified,
+          phone_verified
+        )
+        VALUES ($1, $2, $3, false, true)
+        RETURNING id
+      `,
+      [email || null, phone, hashedPassword]
     );
 
     const vendorId = vendorResult.rows[0].id;
 
+    // ================= CREATE ONBOARDING =================
+
     const onboarding = await client.query(
-      `INSERT INTO vendor_onboarding (vendor_id, status)
-       VALUES ($1, 'draft')
-       RETURNING id`,
+      `
+        INSERT INTO vendor_onboarding (
+          vendor_id,
+          status
+        )
+        VALUES ($1, 'draft')
+        RETURNING id
+      `,
       [vendorId]
     );
 
     await client.query("COMMIT");
 
-    // cleanup OTPs
-    otpStore.delete(`email:${email}`);
+    /* ================= TOKENS ================= */
+
+const accessToken = jwt.sign(
+  {
+    vendor_id: vendorId,
+    onboarding_id: onboarding.rows[0].id,
+  },
+  process.env.ACCESS_SECRET,
+  { expiresIn: "60m" }
+);
+
+const refreshToken = jwt.sign(
+  {
+    vendor_id: vendorId,
+  },
+  process.env.REFRESH_SECRET,
+  { expiresIn: "7d" }
+);
+
+/* ================= SESSION ================= */
+
+await db.query(
+  `
+    INSERT INTO vendor_sessions
+    (
+      vendor_id,
+      refresh_token,
+      user_agent,
+      ip_address,
+      expires_at
+    )
+    VALUES ($1,$2,$3,$4,NOW() + INTERVAL '7 days')
+  `,
+  [
+    vendorId,
+    refreshToken,
+    req.headers["user-agent"] || null,
+    req.ip || null,
+  ]
+);
+
+    // ================= CLEANUP OTP =================
+
     otpStore.delete(`phone:${phone}`);
 
-    return res.json({
-      message: "Registered successfully",
-      onboarding_id: onboarding.rows[0].id,
-    });
+    return res.status(201).json({
+  message: "Registered successfully",
+
+  role: "vendor",
+
+  accessToken,
+  refreshToken,
+
+  onboarding_id: onboarding.rows[0].id,
+
+  onboarding_step: 1,
+
+  next_action: "business",
+
+  vendor: {
+    id: vendorId,
+    email,
+    phone,
+  },
+});
 
   } catch (err) {
     await client.query("ROLLBACK");
+
     console.error("REGISTER ERROR:", err);
-    return res.status(500).json({ message: "Registration failed" });
+
+    return res.status(500).json({
+      message: "Registration failed",
+    });
+
   } finally {
     client.release();
   }
@@ -304,7 +403,7 @@ export const loginVendor = async (req, res) => {
 
     if (email) {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE LOWER(vp.email) = LOWER($1)
@@ -312,7 +411,7 @@ export const loginVendor = async (req, res) => {
       values = [email];
     } else {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE vp.phone = $1
@@ -341,11 +440,11 @@ export const loginVendor = async (req, res) => {
     }
 
     // optional: verify email/phone
-    if (!vendor.email_verified || !vendor.phone_verified) {
-      return res.status(403).json({
-        message: "Verify email & phone first",
-      });
-    }
+    if (!vendor.phone_verified) {
+  return res.status(403).json({
+    message: "Phone verification required",
+  });
+}
 
     // ✅ update last login
     await db.query(
@@ -382,7 +481,7 @@ export const loginVendor = async (req, res) => {
         onboarding_id: vendor.onboarding_id,
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: "60m" }
+      { expiresIn: "1d" }
     );
 
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
@@ -414,18 +513,20 @@ export const loginVendor = async (req, res) => {
       next_action,
       onboarding_step,
       status: vendor.status,
-      role:"vendoe",
+      role:"vendor",
+      organization_id: vendor.organization_id,
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,
         email: vendor.email,
         phone: vendor.phone,
+        organization_id: vendor.organization_id,
       },
     });
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    return res.status(500).json({ message: "Login failed" });
+    return res.status(500).json({ message: err });
   }
 };
 
@@ -496,7 +597,7 @@ export const getMe = async (req, res) => {
 
     const result = await db.query(
       `SELECT vp.id, vp.email, vp.phone, vp.email_verified, vp.phone_verified, vp.is_active,
-              vo.id as onboarding_id, vo.status, vo.current_step
+              vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step
        FROM vendorprofile vp
        LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
        WHERE vp.id = $1`,
@@ -774,19 +875,56 @@ export const getBusinessDetails = async (req, res) => {
 export const upsertBankDetails = async (req, res) => {
   try {
     const onboarding_id = req.user?.onboarding_id;
-    const {
+
+    let {
       account_holder_name,
       account_number,
       ifsc_code,
+      bank_name,
+      branch_name,
+      account_type,
     } = req.body;
 
+    account_holder_name = account_holder_name?.trim();
+    account_number = account_number?.trim();
+    ifsc_code = ifsc_code?.trim().toUpperCase();
+    bank_name = bank_name?.trim();
+    branch_name = branch_name?.trim();
+    account_type = account_type?.trim().toLowerCase();
+
+
     if (!onboarding_id) {
-      return res.status(400).json({ message: "Onboarding ID missing" });
+      return res.status(400).json({
+        message: "Onboarding ID missing",
+      });
     }
 
-    if (!account_holder_name || !account_number || !ifsc_code) {
+    if (
+      !account_holder_name ||
+      !account_number ||
+      !ifsc_code ||
+      !bank_name ||
+      !branch_name ||
+      !account_type
+    ) {
       return res.status(400).json({
         message: "Required bank details missing",
+      });
+    }
+
+    const validAccountTypes = ["savings", "current"];
+
+    if (!validAccountTypes.includes(account_type)) {
+      return res.status(400).json({
+        message: "Invalid account type",
+      });
+    }
+
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+
+    if (!ifscRegex.test(ifsc_code)) {
+      return res.status(400).json({
+        message: "Invalid IFSC code",
       });
     }
 
@@ -795,14 +933,23 @@ export const upsertBankDetails = async (req, res) => {
         onboarding_id,
         account_holder_name,
         account_number,
-        ifsc_code
+        ifsc_code,
+        bank_name,
+        branch_name,
+        account_type
       )
-      VALUES ($1,$2,$3,$4)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
+
       ON CONFLICT (onboarding_id)
+
       DO UPDATE SET
         account_holder_name = EXCLUDED.account_holder_name,
         account_number = EXCLUDED.account_number,
-        ifsc_code = EXCLUDED.ifsc_code
+        ifsc_code = EXCLUDED.ifsc_code,
+        bank_name = EXCLUDED.bank_name,
+        branch_name = EXCLUDED.branch_name,
+        account_type = EXCLUDED.account_type
+
       RETURNING *;
     `;
 
@@ -811,17 +958,24 @@ export const upsertBankDetails = async (req, res) => {
       account_holder_name,
       account_number,
       ifsc_code,
+      bank_name,
+      branch_name,
+      account_type,
     ];
 
     const result = await db.query(query, values);
 
     return res.status(200).json({
-      message: "Bank details saved",
+      message: "Bank details saved successfully",
       data: result.rows[0],
     });
+
   } catch (err) {
     console.error("Bank Details Error:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      message: err.message || "Internal server error",
+    });
   }
 };
 
@@ -840,6 +994,107 @@ export const getBankDetails = async (req, res) => {
   }
 };
 
+// export const upsertStoreAndPickup = async (req, res) => {
+//   const client = await db.connect();
+
+//   try {
+//     await client.query("BEGIN");
+
+//     const onboarding_id = req.user?.onboarding_id;
+
+//     if (!onboarding_id) {
+//       return res.status(400).json({
+//         message: "Onboarding ID missing",
+//       });
+//     }
+
+//     const {
+//       store_image,
+//       store_logo,
+//       tagline,
+//       description,
+//       address,
+//       pincode,
+//       city,
+//       state,
+//       is_store_address = true,
+//     } = req.body;
+
+//     if (!address || !pincode || !city || !state) {
+//       return res.status(400).json({
+//         message: "Pickup address fields are required",
+//       });
+//     }
+
+//     // STORE
+//     const storeResult = await client.query(
+//       `INSERT INTO vendor_store_details (
+//         onboarding_id, store_image, store_logo, tagline, description
+//       )
+//       VALUES ($1,$2,$3,$4,$5)
+//       ON CONFLICT (onboarding_id)
+//       DO UPDATE SET
+//         store_image = EXCLUDED.store_image,
+//         store_logo = EXCLUDED.store_logo,
+//         tagline = EXCLUDED.tagline,
+//         description = EXCLUDED.description
+//       RETURNING *;`,
+//       [
+//         onboarding_id,
+//         store_image || null,
+//         store_logo || null,
+//         tagline || null,
+//         description || null,
+//       ]
+//     );
+
+//     // PICKUP
+//     const pickupResult = await client.query(
+//       `INSERT INTO vendor_pickup_addresses (
+//         onboarding_id, address, pincode, city, state, is_store_address
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6)
+//       ON CONFLICT (onboarding_id)
+//       DO UPDATE SET
+//         address = EXCLUDED.address,
+//         pincode = EXCLUDED.pincode,
+//         city = EXCLUDED.city,
+//         state = EXCLUDED.state,
+//         is_store_address = EXCLUDED.is_store_address
+//       RETURNING *;`,
+//       [onboarding_id, address, pincode, city, state, is_store_address]
+//     );
+
+//     // 🔥 ONBOARDING UPDATE (CORRECT WAY)
+//     await client.query(
+//       `UPDATE vendor_onboarding
+//        SET 
+//          current_step = 3,
+//          status = 'in_review',
+//          submitted_at = NOW(),
+//          updated_at = NOW()
+//        WHERE id = $1`,
+//       [onboarding_id]
+//     );
+
+//     await client.query("COMMIT");
+
+//     return res.status(200).json({
+//       message: "Store & pickup details saved successfully",
+//       data: {
+//         store: storeResult.rows[0],
+//         pickup: pickupResult.rows[0],
+//       },
+//     });
+
+//   } catch (err) {
+//     await client.query("ROLLBACK");
+//     console.error(err);
+//     return res.status(500).json({ message: "Server error" });
+//   } finally {
+//     client.release();
+//   }
+// };
 export const upsertStoreAndPickup = async (req, res) => {
   const client = await db.connect();
 
@@ -855,8 +1110,6 @@ export const upsertStoreAndPickup = async (req, res) => {
     }
 
     const {
-      store_image,
-      store_logo,
       tagline,
       description,
       address,
@@ -872,32 +1125,71 @@ export const upsertStoreAndPickup = async (req, res) => {
       });
     }
 
-    // STORE
+    let storeImageUrl = null;
+    let storeLogoUrl = null;
+
+    // ================= STORE IMAGE =================
+
+    if (req.files?.store_image?.[0]) {
+      const uploadedImage = await uploadToCloudinary(
+        req.files.store_image[0],
+        "kavas/store-images"
+      );
+
+      storeImageUrl = uploadedImage.secure_url;
+    }
+
+    // ================= STORE LOGO =================
+
+    if (req.files?.store_logo?.[0]) {
+      const uploadedLogo = await uploadToCloudinary(
+        req.files.store_logo[0],
+        "kavas/store-logos"
+      );
+
+      storeLogoUrl = uploadedLogo.secure_url;
+    }
+
+    // ================= STORE =================
+
     const storeResult = await client.query(
-      `INSERT INTO vendor_store_details (
-        onboarding_id, store_image, store_logo, tagline, description
+      `
+      INSERT INTO vendor_store_details (
+        onboarding_id,
+        store_image,
+        store_logo,
+        tagline,
+        description
       )
       VALUES ($1,$2,$3,$4,$5)
       ON CONFLICT (onboarding_id)
       DO UPDATE SET
-        store_image = EXCLUDED.store_image,
-        store_logo = EXCLUDED.store_logo,
+        store_image = COALESCE(EXCLUDED.store_image, vendor_store_details.store_image),
+        store_logo = COALESCE(EXCLUDED.store_logo, vendor_store_details.store_logo),
         tagline = EXCLUDED.tagline,
         description = EXCLUDED.description
-      RETURNING *;`,
+      RETURNING *;
+      `,
       [
         onboarding_id,
-        store_image || null,
-        store_logo || null,
+        storeImageUrl,
+        storeLogoUrl,
         tagline || null,
         description || null,
       ]
     );
 
-    // PICKUP
+    // ================= PICKUP =================
+
     const pickupResult = await client.query(
-      `INSERT INTO vendor_pickup_addresses (
-        onboarding_id, address, pincode, city, state, is_store_address
+      `
+      INSERT INTO vendor_pickup_addresses (
+        onboarding_id,
+        address,
+        pincode,
+        city,
+        state,
+        is_store_address
       )
       VALUES ($1,$2,$3,$4,$5,$6)
       ON CONFLICT (onboarding_id)
@@ -907,19 +1199,30 @@ export const upsertStoreAndPickup = async (req, res) => {
         city = EXCLUDED.city,
         state = EXCLUDED.state,
         is_store_address = EXCLUDED.is_store_address
-      RETURNING *;`,
-      [onboarding_id, address, pincode, city, state, is_store_address]
+      RETURNING *;
+      `,
+      [
+        onboarding_id,
+        address,
+        pincode,
+        city,
+        state,
+        is_store_address,
+      ]
     );
 
-    // 🔥 ONBOARDING UPDATE (CORRECT WAY)
+    // ================= ONBOARDING =================
+
     await client.query(
-      `UPDATE vendor_onboarding
-       SET 
-         current_step = 3,
-         status = 'in_review',
-         submitted_at = NOW(),
-         updated_at = NOW()
-       WHERE id = $1`,
+      `
+      UPDATE vendor_onboarding
+      SET
+        current_step = 3,
+        status = 'in_review',
+        submitted_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $1
+      `,
       [onboarding_id]
     );
 
@@ -935,8 +1238,14 @@ export const upsertStoreAndPickup = async (req, res) => {
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
+
+    console.error("STORE/PICKUP ERROR:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+
   } finally {
     client.release();
   }

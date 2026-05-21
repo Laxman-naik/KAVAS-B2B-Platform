@@ -13,9 +13,35 @@ export const createCheckout = createAsyncThunk(
   async (data, thunkAPI) => {
     try {
       const res = await createCheckoutAPI(data);
+
       return res.data;
+
     } catch (err) {
-      return thunkAPI.rejectWithValue(normalizeError(err));
+
+      console.log("===== REAL AXIOS ERROR =====");
+
+      console.log("FULL ERROR:", err);
+
+      console.log("MESSAGE:", err.message);
+
+      console.log("STATUS:", err.response?.status);
+
+      console.log("RESPONSE DATA:", err.response?.data);
+
+      console.log("HEADERS:", err.response?.headers);
+
+      console.log("REQUEST:", err.request);
+
+      return thunkAPI.rejectWithValue({
+        message:
+          err.response?.data?.message ||
+          err.message ||
+          "Something went wrong",
+
+        status: err.response?.status,
+
+        data: err.response?.data,
+      });
     }
   }
 );

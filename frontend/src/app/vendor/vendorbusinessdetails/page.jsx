@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import {BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
-import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal, updateOnboardingStep  } from "@/store/slices/vendorSlice";
+import { BadgeCheck, Building2, CheckCircle2, ChevronDown, Circle, HelpCircle, Landmark, Lock, MapPin, Phone, ShieldCheck, } from "lucide-react";
+import { fetchVendorProfile, fetchBusinessDetails, fetchBankDetails, saveBusinessDetails, saveBankDetails, logoutLocal, updateOnboardingStep } from "@/store/slices/vendorSlice";
 
 export default function VendorBusinessDetailsPage() {
   const router = useRouter();
@@ -15,10 +15,10 @@ export default function VendorBusinessDetailsPage() {
   const businessInfoRef = useRef(null);
   const bankDetailsRef = useRef(null);
   const vendor = useSelector((state) => state.vendor.vendor);
-const business = useSelector((state) => state.vendor.business);
-const bank = useSelector((state) => state.vendor.bank);
-const vendorId = vendor?.id;
-  
+  const business = useSelector((state) => state.vendor.business);
+  const bank = useSelector((state) => state.vendor.bank);
+  const vendorId = vendor?.id;
+
 
   const [form, setForm] = useState({
     businessName: "",
@@ -38,58 +38,55 @@ const vendorId = vendor?.id;
 
   const [activeSection, setActiveSection] = useState("business_info");
 
- useEffect(() => {
-  const token = localStorage.getItem("accessToken");
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
 
-  if (!vendorId || !token) return;
+    if (!vendorId || !token) return;
 
-  dispatch(fetchVendorProfile(vendorId));
-  dispatch(fetchBusinessDetails());
-  dispatch(fetchBankDetails());
-}, [vendorId, dispatch]);
+    dispatch(fetchVendorProfile(vendorId));
+    dispatch(fetchBusinessDetails());
+    dispatch(fetchBankDetails());
+  }, [vendorId, dispatch]);
 
-useEffect(() => {
-  if (business) {
-    setForm(prev => ({
-      ...prev,
-      businessName: business.business_name || "",
-      businessType: business.business_type || "",
-      registeredBusinessName: business.registered_name || "",
-      businessPan: business.pan || "",
-      gstin: business.gstin || "",
-      businessRegNo: business.registration_number || "",
-      businessAddress: business.address || "",
-      pincode: business.pincode || "",
-      city: business.city || "",
-      state: business.state || "",
-    }));
-  }
-}, [business]);
+  useEffect(() => {
+    if (business) {
+      setForm(prev => ({
+        ...prev,
+        businessName: business.business_name || "",
+        businessType: business.business_type || "",
+        registeredBusinessName: business.registered_name || "",
+        businessPan: business.pan || "",
+        gstin: business.gstin || "",
+        businessRegNo: business.registration_number || "",
+        businessAddress: business.address || "",
+        pincode: business.pincode || "",
+        city: business.city || "",
+        state: business.state || "",
+      }));
+    }
+  }, [business]);
 
-useEffect(() => {
-  if (bank) {
-    setForm(prev => ({
-      ...prev,
-      accountHolderName: bank.account_holder_name || "",
-      bankAccountNumber: bank.account_number || "",
-      ifsc: bank.ifsc_code || "",
-    }));
-  }
-}, [bank]);
+  useEffect(() => {
+    if (bank) {
+      setForm(prev => ({
+        ...prev,
+        accountHolderName: bank.account_holder_name || "",
+        bankAccountNumber: bank.account_number || "",
+        ifsc: bank.ifsc_code || "",
+      }));
+    }
+  }, [bank]);
 
   const setValue = (key) => (e) => {
     setForm((s) => ({ ...s, [key]: e.target.value }));
   };
 
-const verificationItems = useMemo(() => {
-  const v = vendor; 
-  return [
-    { label: "Mobile Verification", done: v?.phone_verified === true },
-    { label: "Email Verification", done: v?.email_verified === true },
-    // { label: "ID Verification", done: v?.id_verified === true },
-    // { label: "Signature Verification", done: v?.signature_verified === true },
-  ];
-}, [vendor]);
+  const verificationItems = useMemo(() => {
+    const v = vendor;
+    return [
+      { label: "Mobile Verification", done: v?.phone_verified === true },
+    ];
+  }, [vendor]);
 
   const requiredBusinessFields = useMemo(
     () => [
@@ -172,47 +169,47 @@ const verificationItems = useMemo(() => {
   }, []);
 
   const onSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    if (!(businessInfoComplete && bankDetailsComplete)) return;
+    try {
+      if (!(businessInfoComplete && bankDetailsComplete)) return;
 
-    // 1. Save business details
-    await dispatch(saveBusinessDetails({
-      business_name: form.businessName,
-      business_type: form.businessType,
-      registered_name: form.registeredBusinessName,
-      pan: form.businessPan,
-      gstin: form.gstin,
-      registration_number: form.businessRegNo,
-      address: form.businessAddress,
-      pincode: form.pincode,
-      city: form.city,
-      state: form.state,
-    })).unwrap();
+      // 1. Save business details
+      await dispatch(saveBusinessDetails({
+        business_name: form.businessName,
+        business_type: form.businessType,
+        registered_name: form.registeredBusinessName,
+        pan: form.businessPan,
+        gstin: form.gstin,
+        registration_number: form.businessRegNo,
+        address: form.businessAddress,
+        pincode: form.pincode,
+        city: form.city,
+        state: form.state,
+      })).unwrap();
 
-    // 2. Save bank details
-    await dispatch(saveBankDetails({
-      account_holder_name: form.accountHolderName,
-      account_number: form.bankAccountNumber,
-      ifsc_code: form.ifsc,
-    })).unwrap();
+      // 2. Save bank details
+      await dispatch(saveBankDetails({
+        account_holder_name: form.accountHolderName,
+        account_number: form.bankAccountNumber,
+        ifsc_code: form.ifsc,
+      })).unwrap();
 
-    await dispatch(updateOnboardingStep(2)).unwrap();
+      await dispatch(updateOnboardingStep(2)).unwrap();
 
-    // 3. Move to next step only after success
-    router.push("/vendor/vendorstoredetails");
+      // 3. Move to next step only after success
+      router.push("/vendor/vendorstoredetails");
 
-  } catch (err) {
-    console.error("Save failed:", err);
-    alert("Failed to save details");
-  }
-};
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Failed to save details");
+    }
+  };
 
-const handleLogout = () => {
-  dispatch(logoutLocal());
-  router.push("/vendor/vendorlogin");
-};
+  const handleLogout = () => {
+    dispatch(logoutLocal());
+    router.push("/vendor/vendorlogin");
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
@@ -537,8 +534,8 @@ const handleLogout = () => {
                     type="submit"
                     disabled={!(businessInfoComplete && bankDetailsComplete)}
                     className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${businessInfoComplete && bankDetailsComplete
-                        ? "bg-[#0B1F3A]"
-                        : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                      ? "bg-[#0B1F3A]"
+                      : "bg-[#0B1F3A]/40 cursor-not-allowed"
                       }`}
                   >
                     Save &amp; Continue →
