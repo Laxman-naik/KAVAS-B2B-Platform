@@ -1,11 +1,11 @@
 import { authapi } from "../lib/axios";
 
 
-export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data, { skipAuth: true });
+export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data);
 
-export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data, { skipAuth: true });
+export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data);
 
-export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data, { skipAuth: true });
+export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data);
 
 export const loginVendorAPI = async (data) => {
   try {
@@ -26,28 +26,14 @@ export const loginVendorAPI = async (data) => {
     ) {
       // ✅ USE ROLE-BASED STORAGE
       localStorage.setItem("role", "vendor");
-
-      localStorage.setItem(
-        "vendor_accessToken",
-        response.accessToken
-      );
+      localStorage.setItem("vendor_accessToken", response.accessToken);
 
       if (response.refreshToken) {
-        localStorage.setItem(
-          "vendor_refreshToken",
-          response.refreshToken
-        );
+        localStorage.setItem("vendor_refreshToken", response.refreshToken );
       }
 
-      localStorage.setItem(
-        "next_action",
-        response.next_action || "dashboard"
-      );
-
-      localStorage.setItem(
-        "onboarding_step",
-        response.onboarding_step || 1
-      );
+      localStorage.setItem("next_action", response.next_action || "dashboard");
+      localStorage.setItem( "onboarding_step", response.onboarding_step || 1 );
     }
 
     return response;

@@ -28,8 +28,14 @@ export const sendVendorOtp = createAsyncThunk(
       const res = await sendVendorOtpAPI(data);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
-    }
+  console.log("SEND OTP THUNK ERROR:", err);
+  console.log("ERROR RESPONSE:", err.response);
+  console.log("ERROR DATA:", err.response?.data);
+
+  return rejectWithValue(
+    err.response?.data || err.message
+  );
+}
   }
 );
 
@@ -483,9 +489,7 @@ const initialState = {
 
   otp: {
     mobileSent: false,
-    emailSent: false,
     mobileVerified: false,
-    emailVerified: false,
   },
 };
 
@@ -498,6 +502,11 @@ const vendorSlice = createSlice({
   reducers: {
     resetVendorState: () => initialState,
 
+    resetMobileVerification: (state) => {
+      state.otp.mobileSent = false;
+      state.otp.mobileVerified = false;
+    },
+
     logoutLocal: (state) => {
       state.accessToken = null;
       state.refreshToken = null;
@@ -506,9 +515,7 @@ const vendorSlice = createSlice({
 
       state.otp = {
         mobileSent: false,
-        emailSent: false,
         mobileVerified: false,
-        emailVerified: false,
       };
 
       if (typeof window !== "undefined") {
@@ -538,26 +545,14 @@ const vendorSlice = createSlice({
 
         if (typeof window !== "undefined") {
           localStorage.setItem("role", "vendor");
+          localStorage.setItem("vendor_accessToken", payload.accessToken);
 
-localStorage.setItem(
-  "vendor_accessToken",
-  payload.accessToken
-);
-
-if (payload.refreshToken) {
-  localStorage.setItem(
-    "vendor_refreshToken",
-    payload.refreshToken
-  );
-}
+          if (payload.refreshToken) {
+            localStorage.setItem("vendor_refreshToken",payload.refreshToken);
+          }
         }
-
         state.vendor = payload.vendor || null;
-
-        state.onboarding = {
-          current_step: payload.onboarding_step || 1,
-          status: payload.status || "draft",
-        };
+        state.onboarding = {current_step: payload.onboarding_step || 1, status: payload.status || "draft",};
       })
 
       /* ================= REFRESH ================= */
@@ -572,25 +567,23 @@ if (payload.refreshToken) {
 
       /* ================= LOGOUT ================= */
 
-.addCase(logoutVendor.fulfilled, (state) => {
-  state.accessToken = null;
-  state.refreshToken = null;
-  state.isAuthenticated = false;
-  state.vendor = null;
+      .addCase(logoutVendor.fulfilled, (state) => {
+        state.accessToken = null;
+        state.refreshToken = null;
+        state.isAuthenticated = false;
+        state.vendor = null;
 
-  state.otp = {
-    mobileSent: false,
-    emailSent: false,
-    mobileVerified: false,
-    emailVerified: false,
-  };
+        state.otp = {
+          mobileSent: false,
+          mobileVerified: false,
+        };
 
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("vendor_accessToken");
-    localStorage.removeItem("vendor_refreshToken");
-    localStorage.removeItem("role");
-  }
-})
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("vendor_accessToken");
+          localStorage.removeItem("vendor_refreshToken");
+          localStorage.removeItem("role");
+        }
+      })
       /* ================= OTP ================= */
 
       .addCase(sendVendorOtp.pending, (state) => {
@@ -598,16 +591,9 @@ if (payload.refreshToken) {
         state.error = null;
       })
 
-      .addCase(sendVendorOtp.fulfilled, (state, action) => {
+      .addCase(sendVendorOtp.fulfilled, (state) => {
         state.loading = false;
-
-        if (action.meta.arg?.email) {
-          state.otp.emailSent = true;
-        }
-
-        if (action.meta.arg?.phone) {
-          state.otp.mobileSent = true;
-        }
+        state.otp.mobileSent = true;
       })
 
       .addCase(sendVendorOtp.rejected, (state, action) => {
@@ -624,16 +610,9 @@ if (payload.refreshToken) {
         state.error = null;
       })
 
-      .addCase(verifyVendorOtp.fulfilled, (state, action) => {
+      .addCase(verifyVendorOtp.fulfilled, (state) => {
         state.loading = false;
-
-        if (action.meta.arg?.email) {
-          state.otp.emailVerified = true;
-        }
-
-        if (action.meta.arg?.phone) {
-          state.otp.mobileVerified = true;
-        }
+        state.otp.mobileVerified = true;
       })
 
       .addCase(verifyVendorOtp.rejected, (state, action) => {
@@ -743,5 +722,5 @@ if (payload.refreshToken) {
   },
 });
 
-export const { resetVendorState, logoutLocal } = vendorSlice.actions;
+export const { resetVendorState, resetMobileVerification, logoutLocal,} = vendorSlice.actions;
 export default vendorSlice.reducer;

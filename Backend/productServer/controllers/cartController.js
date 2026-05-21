@@ -582,6 +582,232 @@ exports.getCart = async (req, res) => {
 //     });
 //   }
 // };
+// exports.addToCart = async (req, res) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     if (!userId) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Unauthorized",
+//       });
+//     }
+
+//     const {
+//       productId,
+//       variantId = null,
+//       quantity = 1,
+//       image_url = null,
+//     } = req.body;
+
+//     if (!productId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "productId required",
+//       });
+//     }
+
+//     /* ================= FETCH PRODUCT + ORGANIZATION ================= */
+//     const productRes = await pool.query(
+//       `
+//       SELECT 
+//           p.id,
+//           p.name,
+//           p.price,
+//           p.mrp,
+//           p.moq,
+//           p.organization_id,
+//           p.unit,
+
+//           o.name AS organization_name,
+//           o.business_type,
+
+//           pi.image_url
+
+//       FROM products p
+
+//       LEFT JOIN organizations o
+//       ON o.id = p.organization_id
+
+//       LEFT JOIN LATERAL (
+//           SELECT image_url
+//           FROM product_images
+//           WHERE product_id = p.id
+//           ORDER BY is_primary DESC, sort_order ASC
+//           LIMIT 1
+//       ) pi ON true
+
+//       WHERE p.id = $1
+//       AND p.is_active = true
+//       `,
+//       [productId]
+//     );
+
+//     if (!productRes.rows.length) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Product not found",
+//       });
+//     }
+
+//     const product = productRes.rows[0];
+
+//     /* ================= VALIDATIONS ================= */
+
+//     if (!product.price || Number(product.price) <= 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid product price",
+//       });
+//     }
+
+//     if (!product.organization_id) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Product organization missing",
+//       });
+//     }
+
+//     if (!product.organization_name) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Organization not found",
+//       });
+//     }
+
+//     const price = Number(product.price);
+//     const moq = Number(product.moq) || 1;
+
+//     /* ================= MOQ VALIDATION ================= */
+//     const normalizedQty = Math.max(Number(quantity), moq);
+
+//     /* ================= GET OR CREATE CART ================= */
+//     const cart = await getOrCreateCart(userId);
+
+//     /* ================= SINGLE ORGANIZATION VALIDATION ================= */
+//     const existingOrg = await pool.query(
+//       `
+//       SELECT DISTINCT organization_id
+//       FROM cart_items
+//       WHERE cart_id = $1
+//       LIMIT 1
+//       `,
+//       [cart.id]
+//     );
+
+//     if (
+//       existingOrg.rows.length > 0 &&
+//       existingOrg.rows[0].organization_id !== product.organization_id
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message:
+//           "You can only add products from one organization at a time",
+//       });
+//     }
+
+//     /* ================= CHECK EXISTING ITEM ================= */
+//     const existing = await pool.query(
+//       `
+//       SELECT *
+//       FROM cart_items
+//       WHERE cart_id = $1
+//       AND product_id = $2
+//       AND (
+//         variant_id = $3
+//         OR (variant_id IS NULL AND $3 IS NULL)
+//       )
+//       `,
+//       [cart.id, productId, variantId]
+//     );
+
+//     if (existing.rows.length) {
+//       /* ================= UPDATE EXISTING ITEM ================= */
+//       await pool.query(
+//         `
+//         UPDATE cart_items
+//         SET quantity = quantity + $1
+//         WHERE id = $2
+//         `,
+//         [normalizedQty, existing.rows[0].id]
+//       );
+//     } else {
+//       /* ================= INSERT NEW ITEM ================= */
+//       await pool.query(
+//         `
+//         INSERT INTO cart_items
+//         (
+//           cart_id,
+//           product_id,
+//           variant_id,
+//           quantity,
+//           price,
+//           mrp,
+//           moq,
+//           image_url,
+
+//           organization_id,
+//           organization_name,
+
+//           product_name,
+//           unit,
+//           added_at
+//         )
+//         VALUES
+//         (
+//           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,CURRENT_TIMESTAMP
+//         )
+//         `,
+//         [
+//           cart.id,
+//           productId,
+//           variantId,
+//           normalizedQty,
+//           price,
+//           product.mrp,
+//           moq,
+//           image_url || product.image_url || null,
+
+//           product.organization_id,
+//           product.organization_name,
+
+//           product.name,
+//           product.unit,
+//         ]
+//       );
+//     }
+
+//     /* ================= GET UPDATED CART ITEMS ================= */
+//     const items = await getCartItems(cart.id);
+
+//     /* ================= RETURN RESPONSE ================= */
+//     return res.status(200).json({
+//       success: true,
+//       message: "Added to cart",
+
+//       cart: {
+//         ...cart,
+
+//         organization_id:
+//           items.length > 0 ? items[0].organization_id : null,
+
+//         organization_name:
+//           items.length > 0 ? items[0].organization_name : null,
+
+//         items,
+
+//         summary: calculateSummary(items),
+//       },
+//     });
+//   } catch (err) {
+//     console.error("ADD TO CART ERROR:", err);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -607,22 +833,23 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    /* ================= FETCH PRODUCT + ORGANIZATION ================= */
+    /* ================= FETCH PRODUCT ================= */
+
     const productRes = await pool.query(
       `
       SELECT 
-          p.id,
-          p.name,
-          p.price,
-          p.mrp,
-          p.moq,
-          p.organization_id,
-          p.unit,
+        p.id,
+        p.name,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.organization_id,
+        p.unit,
 
-          o.name AS organization_name,
-          o.business_type,
+        o.name AS organization_name,
+        o.business_type,
 
-          pi.image_url
+        pi.image_url
 
       FROM products p
 
@@ -630,11 +857,11 @@ exports.addToCart = async (req, res) => {
       ON o.id = p.organization_id
 
       LEFT JOIN LATERAL (
-          SELECT image_url
-          FROM product_images
-          WHERE product_id = p.id
-          ORDER BY is_primary DESC, sort_order ASC
-          LIMIT 1
+        SELECT image_url
+        FROM product_images
+        WHERE product_id = p.id
+        ORDER BY is_primary DESC, sort_order ASC
+        LIMIT 1
       ) pi ON true
 
       WHERE p.id = $1
@@ -668,45 +895,19 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    if (!product.organization_name) {
-      return res.status(400).json({
-        success: false,
-        message: "Organization not found",
-      });
-    }
-
     const price = Number(product.price);
     const moq = Number(product.moq) || 1;
 
     /* ================= MOQ VALIDATION ================= */
+
     const normalizedQty = Math.max(Number(quantity), moq);
 
     /* ================= GET OR CREATE CART ================= */
+
     const cart = await getOrCreateCart(userId);
 
-    /* ================= SINGLE ORGANIZATION VALIDATION ================= */
-    const existingOrg = await pool.query(
-      `
-      SELECT DISTINCT organization_id
-      FROM cart_items
-      WHERE cart_id = $1
-      LIMIT 1
-      `,
-      [cart.id]
-    );
-
-    if (
-      existingOrg.rows.length > 0 &&
-      existingOrg.rows[0].organization_id !== product.organization_id
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "You can only add products from one organization at a time",
-      });
-    }
-
     /* ================= CHECK EXISTING ITEM ================= */
+
     const existing = await pool.query(
       `
       SELECT *
@@ -723,6 +924,7 @@ exports.addToCart = async (req, res) => {
 
     if (existing.rows.length) {
       /* ================= UPDATE EXISTING ITEM ================= */
+
       await pool.query(
         `
         UPDATE cart_items
@@ -733,6 +935,7 @@ exports.addToCart = async (req, res) => {
       );
     } else {
       /* ================= INSERT NEW ITEM ================= */
+
       await pool.query(
         `
         INSERT INTO cart_items
@@ -778,9 +981,29 @@ exports.addToCart = async (req, res) => {
     }
 
     /* ================= GET UPDATED CART ITEMS ================= */
+
     const items = await getCartItems(cart.id);
 
-    /* ================= RETURN RESPONSE ================= */
+    /* ================= GROUP ITEMS BY ORGANIZATION ================= */
+
+    const groupedOrganizations = {};
+
+    items.forEach((item) => {
+      const orgId = item.organization_id;
+
+      if (!groupedOrganizations[orgId]) {
+        groupedOrganizations[orgId] = {
+          organization_id: orgId,
+          organization_name: item.organization_name,
+          items: [],
+        };
+      }
+
+      groupedOrganizations[orgId].items.push(item);
+    });
+
+    /* ================= RESPONSE ================= */
+
     return res.status(200).json({
       success: true,
       message: "Added to cart",
@@ -788,11 +1011,7 @@ exports.addToCart = async (req, res) => {
       cart: {
         ...cart,
 
-        organization_id:
-          items.length > 0 ? items[0].organization_id : null,
-
-        organization_name:
-          items.length > 0 ? items[0].organization_name : null,
+        organizations: Object.values(groupedOrganizations),
 
         items,
 
