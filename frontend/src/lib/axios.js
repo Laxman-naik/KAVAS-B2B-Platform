@@ -407,14 +407,46 @@ export const productapi = axios.create({
 
 /* ================= REQUEST INTERCEPTOR ================= */
 
+// const attachHeaders = (config) => {
+//   config.headers = config.headers || {};
+
+//   const token = getAccessToken();
+//   const sessionId = getSessionId();
+
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+
+//   if (sessionId) {
+//     config.headers["x-session-id"] = sessionId;
+//   }
+
+//   return config;
+// };
+
+const PUBLIC_ROUTES = [
+  "/api/vendor/send-otp",
+  "/api/vendor/verify-otp",
+  "/api/vendor/register",
+  "/api/vendor/login",
+];
+
 const attachHeaders = (config) => {
   config.headers = config.headers || {};
 
-  const token = getAccessToken();
   const sessionId = getSessionId();
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // skip auth token for public routes
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+    config.url?.includes(route)
+  );
+
+  if (!isPublicRoute) {
+    const token = getAccessToken();
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   if (sessionId) {
@@ -423,7 +455,6 @@ const attachHeaders = (config) => {
 
   return config;
 };
-
 authapi.interceptors.request.use(attachHeaders);
 productapi.interceptors.request.use(attachHeaders);
 

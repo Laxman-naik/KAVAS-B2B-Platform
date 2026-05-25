@@ -230,7 +230,7 @@ const Page = () => {
             </div>
 
             <div className="flex gap-4">
-              <Button onClick={() => router.push("/ordertracking")} className="h-11 rounded-sm border border-[#D4AF37] bg-white px-8 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]">
+              <Button onClick={() => router.push("/buyerorders")} className="h-11 rounded-sm border border-[#D4AF37] bg-white px-8 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]">
                 <ClipboardList className="mr-2" size={16} /> View Orders
               </Button>
 
