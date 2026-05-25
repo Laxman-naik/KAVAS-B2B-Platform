@@ -17,6 +17,7 @@ import {
   Shield,
   LogOut,
 } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,24 +40,29 @@ export default function ProfileSidebar({ user, onLogout }) {
 
   const isActive = (href) => {
     if (href === "/") return pathname === href;
+
     return pathname === href || pathname?.startsWith(`${href}/`);
   };
 
   return (
-    <div className="bg-[#0B1F3A] w-full lg:w-[260px] lg:sticky lg:top-20 h-fit">
-      <Card className="rounded-sm bg-[#0B1F3A] text-[#FFF8EC] border border-white/10 overflow-hidden">
+    <div className="bg-[#0B1F3A] w-full lg:w-65 lg:sticky lg:top-20 min-h-screen pb-12">
+      <Card className="rounded-sm bg-[#0B1F3A] text-[#FFF8EC] overflow-hidden border-0 shadow-none">
         <CardContent className="p-0 flex flex-col h-full">
           <div className="px-5 pt-5 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-sm bg-white/10 flex items-center justify-center text-lg font-bold">
                 {user?.firstName?.[0] || user?.name?.[0] || "U"}
               </div>
+
               <div className="min-w-0">
                 <p className="font-semibold truncate">
                   {user?.firstName || user?.name || "User"}{" "}
                   {user?.lastName || ""}
                 </p>
-                <p className="text-xs opacity-80 truncate">{user?.email || ""}</p>
+
+                <p className="text-xs opacity-80 truncate">
+                  {user?.email || ""}
+                </p>
               </div>
             </div>
           </div>
@@ -78,8 +84,17 @@ export default function ProfileSidebar({ user, onLogout }) {
                         : "text-[#FFF8EC]/90 hover:bg-white/10"
                     )}
                   >
-                    <Icon size={16} className={active ? "text-[#0B1F3A]" : "text-[#FFF8EC]/80"} />
-                    <span className="font-medium flex-1">{item.label}</span>
+                    <Icon
+                      size={16}
+                      className={
+                        active ? "text-[#0B1F3A]" : "text-[#FFF8EC]/80"
+                      }
+                    />
+
+                    <span className="font-medium flex-1">
+                      {item.label}
+                    </span>
+
                     {item.badge ? (
                       <span className="min-w-5 h-5 px-1 rounded-full bg-[#D4AF37] text-[#0B1F3A] text-xs font-semibold flex items-center justify-center">
                         {item.badge}
@@ -91,7 +106,7 @@ export default function ProfileSidebar({ user, onLogout }) {
             </nav>
           </div>
 
-          <div className="p-3 ">
+          <div className="p-3">
             <Button
               type="button"
               variant="ghost"
@@ -102,23 +117,22 @@ export default function ProfileSidebar({ user, onLogout }) {
               <span className="font-medium">Logout</span>
             </Button>
 
-            <div className="mt-4 rounded-sm border border-white/10 bg-white/5 p-4">
+            <div className="mt-4 rounded-sm bg-white/5 p-4">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 rounded-sm bg-[#D4AF37] text-[#0B1F3A] flex items-center justify-center shrink-0">
                   <Headset size={20} />
                 </div>
+
                 <div className="min-w-0">
                   <p className="font-semibold">Need Help?</p>
+
                   <p className="text-xs opacity-80 mt-1">
                     Our support team is here 24/7 to assist you.
                   </p>
                 </div>
               </div>
 
-              <Button
-                asChild
-                className="mt-3 w-full bg-[#D4AF37] text-[#0B1F3A] rounded-sm font-semibold"
-              >
+              <Button className="mt-3 w-full bg-[#D4AF37] hover:bg-[#D4AF37] text-[#0B1F3A] hover:text-white rounded-sm font-semibold">
                 <Link href="/contactus">Contact Support</Link>
               </Button>
             </div>

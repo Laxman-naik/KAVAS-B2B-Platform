@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import {ArrowRight,Boxes,ChevronDown,Clock,CreditCard,Headphones,Mail,MessageCircle,Minus,Package,Phone, Plus, RotateCcw,Search, User,} from "lucide-react";
+import Link from "next/link";
 
 const Page = () => {
   const [query, setQuery] = useState("");
@@ -272,7 +273,7 @@ const Page = () => {
                   );
                 })}
               </div>
-
+              <Link href="/faqs">
               <button
                 type="button"
                 className="mt-4 w-full flex items-center justify-between rounded-sm bg-[#FFF8EC] border border-[#E9DDC9] px-4 py-3 text-sm font-semibold text-[#0B1F3A]"
@@ -280,6 +281,7 @@ const Page = () => {
                 View All FAQs
                 <ArrowRight size={16} />
               </button>
+              </Link>
             </div>
           </div>
         </div>
