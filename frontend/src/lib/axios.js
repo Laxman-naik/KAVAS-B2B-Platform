@@ -398,26 +398,11 @@ const getAccessToken = () => {
   return token;
 };
 
-// const getRefreshToken = () => {
-//   const role = getRole();
-//   if (!role) return null;
-//   return localStorage.getItem(`${role}_refreshToken`);
-// };
-
-const refreshAccessToken = async () => {
+const getRefreshToken = () => {
   const role = getRole();
-  const refreshToken = getRefreshToken();
-  const sessionId = getSessionId();
-
-  console.log("REFRESH DEBUG:", {
-    role,
-    refreshToken,
-    sessionId,
-  });
-
-  if (!role || !refreshToken || !sessionId) {
-    throw new Error("Missing auth state");
-  }
+  if (!role) return null;
+  return localStorage.getItem(`${role}_refreshToken`);
+};
 
 const setAccessToken = (token) => {
   const role = getRole();
