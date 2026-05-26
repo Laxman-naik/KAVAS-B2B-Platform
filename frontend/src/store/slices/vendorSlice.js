@@ -149,6 +149,7 @@ export const saveBusinessDetails = createAsyncThunk(
       const res = await upsertBusinessAPI(data);
       return res.data;
     } catch (err) {
+      console.log(err)
       return rejectWithValue(err.response?.data || err.message);
     }
   }

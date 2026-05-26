@@ -30,11 +30,11 @@ router.post("/refresh", refreshAccessToken);
 router.post("/logout", logoutVendor);
 router.get("/me", authMiddleware, getMe);
 
-router.post("/business", authMiddleware, upsertBusinessDetails);
+router.post("/business", upsertBusinessDetails);
 router.get("/getbusiness", authMiddleware, getBusinessDetails);
-router.post("/bank", authMiddleware, upsertBankDetails);
+router.post("/bank", upsertBankDetails);
 router.get("/getbank", authMiddleware, getBankDetails);
-router.post("/store-details", authMiddleware, upsertStoreAndPickup);
+router.post("/store-details", upsertStoreAndPickup);
 router.get("/getstore", authMiddleware, getStoreAndPickup)
 router.get("/state", authMiddleware, getOnboardingState);
 router.patch("/step", authMiddleware, updateOnboardingStep);
