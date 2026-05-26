@@ -50,7 +50,7 @@ export default function ProductManagementBody() {
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil(totalFiltered / pageSize));
   }, [totalFiltered]);
- 
+
   const safePage = Math.min(Math.max(1, page), totalPages);
 
   const pagedFilteredProducts = useMemo(() => {
@@ -66,11 +66,17 @@ export default function ProductManagementBody() {
   }, [safePage, totalFiltered]);
 
   const categories = useMemo(() => {
-    return [
-      "All",
-      ...new Set(products.map((p) => p?.category).filter(Boolean)),
+    const uniqueCategories = [
+      ...new Set(
+        products
+          .map((p) => p.category)
+          .filter((cat) => typeof cat === "string" && cat.trim())
+      ),
     ];
+
+    return ["All", ...uniqueCategories];
   }, [products]);
+
   const statuses = useMemo(
     () => [
       "All Status",
@@ -83,14 +89,12 @@ export default function ProductManagementBody() {
   );
 
   const enrichedProducts = useMemo(() => {
-    return pagedFilteredProducts.map((p) => {
-      const discount = p.id % 2 === 0 ? 25 : p.id % 3 === 0 ? 17 : 0;
-      const oldPrice = discount
-        ? Math.round(p.price / (1 - discount / 100))
-        : null;
-      const sold = 120 + p.id * 35;
-      const rating = 4.2 + (p.id % 3) * 0.2;
-      const reviews = 120 + p.id * 17;
+    return pagedFilteredProducts.map((p, index) => {
+      const discount = index % 2 === 0 ? 25 : index % 3 === 0 ? 17 : 0;
+      const oldPrice = discount ? Math.round(p.price / (1 - discount / 100)) : null;
+      const sold = 120 + index * 35;
+      const rating = 4.2 + (index % 3) * 0.2;
+      const reviews = 120 + index * 17;
       return { ...p, discount, oldPrice, sold, rating, reviews };
     });
   }, [pagedFilteredProducts]);
@@ -134,13 +138,9 @@ export default function ProductManagementBody() {
               <Download size={16} />
               Export
             </button>
-            <button
-              type="button"
-              onClick={() => setOpenAdd(true)}
+            <button type="button" onClick={() => setOpenAdd(true)}
               className="h-10 rounded-lg bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95 inline-flex items-center gap-2"
-            >
-              <Plus size={16} />
-              Add Product
+            ><Plus size={16} />Add Product
             </button>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default function ProductManagementBody() {
               className="h-11 border border-[#E5E5E5] rounded-xl px-3 bg-white text-sm"
             >
               {categories.map((cat) => (
-                <option key={cat} value={cat}>
+                <option key={`category-${cat}`} value={cat}>
                   {cat === "All" ? "All Categories" : cat}
                 </option>
               ))}
@@ -282,10 +282,7 @@ export default function ProductManagementBody() {
             <div className="col-span-1 text-right">Action</div>
           </div>
           {enrichedProducts.map((p) => (
-            <div
-              key={p.id}
-              className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0"
-            >
+            <div key={p.id || p.sku} className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0">
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
                   src={p.image}
@@ -327,25 +324,15 @@ export default function ProductManagementBody() {
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {enrichedProducts.map((product) => (
             <div
-              key={product.id}
+              key={product.id || product.sku}
               className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden shadow-sm hover:shadow-md transition"
             >
               <div className="relative">
                 <img
-                  src={
-                    product?.images?.find((img) => img.is_primary)?.image_url ||
-                    product?.images?.[0]?.image_url ||
-                    "/placeholder.png"
-                  }
-                  alt={product?.name || "Product"}
-                  className="w-full h-44 object-cover bg-gray-100"
-                />
+                  src={product?.images?.find((img) => img.is_primary)?.image_url ||
+                    product?.images?.[0]?.image_url || "/placeholder.png"} alt={product?.name || "Product"} className="w-full h-44 object-cover bg-gray-100" />
 
-                {product.discount ? (
-                  <span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-extrabold px-3 py-1 rounded-full">
-                    -{product.discount}%
-                  </span>
-                ) : null}
+                {product.discount ? (<span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-extrabold px-3 py-1 rounded-full"> -{product.discount}%  </span>) : null}
 
                 {product.status === "Out of Stock" ? (
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">

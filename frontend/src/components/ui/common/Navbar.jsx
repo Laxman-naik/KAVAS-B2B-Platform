@@ -553,7 +553,7 @@ const Navbar = () => {
                                 <span>Payment Methods</span>
                               </button>
 
-                              <button
+                              {/* <button
                                 onClick={() => {
                                   router.push("/help");
                                   setDropdown(false);
@@ -562,7 +562,7 @@ const Navbar = () => {
                               >
                                 <ClipboardList className="h-5 w-5" />
                                 <span>Bulk Enquiry</span>
-                              </button>
+                              </button> */}
 
                               <button
                                 onClick={() => {

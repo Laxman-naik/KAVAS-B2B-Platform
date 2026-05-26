@@ -4,12 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Heart,
-  ShoppingCart,
-  LayoutGrid,
-  LayoutList,
-} from "lucide-react";
+import { Heart, ShoppingCart, LayoutGrid, LayoutList } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addToFavourites,
@@ -47,12 +42,23 @@ const TrendingViewAllV1 = () => {
   });
 
   const dispatch = useDispatch();
+
   const favouriteItems = useSelector((state) => state.favourites.items);
   const trending = useSelector((state) => state.products.trending || []);
 
-  const liked = favouriteItems.map(
-    (item) => item.productId || item.product_id || item.id || item._id
-  );
+  const liked = useMemo(() => {
+    return (Array.isArray(favouriteItems) ? favouriteItems : [])
+      .map((item) =>
+        String(
+          item?.productId ??
+            item?.product_id ??
+            item?.id ??
+            item?._id ??
+            item
+        )
+      )
+      .filter(Boolean);
+  }, [favouriteItems]);
 
   useEffect(() => {
     dispatch(fetchTrendingProducts());
@@ -79,8 +85,10 @@ const TrendingViewAllV1 = () => {
   }, [dispatch]);
 
   const onToggleFavourite = async (product) => {
-    const productId = product.productId;
-    const isLiked = liked.includes(productId);
+    const productId = product?.productId ?? product?.id ?? product?._id;
+    if (!productId) return;
+
+    const isLiked = liked.includes(String(productId));
 
     try {
       if (isLiked) {
@@ -95,9 +103,12 @@ const TrendingViewAllV1 = () => {
   };
 
   const onAddToCart = (product) => {
+    const productId = product?.productId ?? product?.id ?? product?._id;
+    if (!productId) return;
+
     dispatch(
       addToCart({
-        productId: product.productId,
+        productId,
         quantity: 1,
         variantId: product?.variantId ?? product?.variant_id,
       })
@@ -130,7 +141,7 @@ const TrendingViewAllV1 = () => {
   const normalizedProducts = useMemo(() => {
     return trending.map((product) => ({
       ...product,
-      productId: product.id || product._id,
+      productId: product.id || product._id || product.productId,
       imageUrl: product.image_url || product.imageUrl || "/placeholder.png",
       minOrderQty: Number(product.moq ?? product.minOrderQty ?? 0),
       supplierType: product.supplierType || product.supplier_type || "",
@@ -472,7 +483,7 @@ const TrendingViewAllV1 = () => {
               }
             >
               {paginatedProducts.map((product) => {
-                const isLiked = liked.includes(product.productId);
+                const isLiked = liked.includes(String(product.productId));
 
                 return (
                   <Link
@@ -510,12 +521,13 @@ const TrendingViewAllV1 = () => {
                             </span>
 
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                toggleFavourite(product);
+                                onToggleFavourite(product);
                               }}
-                              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer"
+                              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer z-10"
                               style={{ backgroundColor: COLORS.white }}
                             >
                               <Heart

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Plus,
   Download,
@@ -15,9 +15,12 @@ import {
   Clock,
 } from "lucide-react";
 
+import CreateSupportTicket from "@/components/vendor/CreateSupportTicket";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
 import {
   Select,
   SelectContent,
@@ -25,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Accordion,
   AccordionContent,
@@ -34,8 +38,14 @@ import {
 import { X, Info } from "lucide-react";
 
 const VendorSupportPage = () => {
+  const [openTicket, setOpenTicket] = useState(false);
+
   const [faqTab, setFaqTab] = useState("All");
-  const [ticketStatus, setTicketStatus] = useState("All Status");
+
+  const [ticketStatus, setTicketStatus] =
+    useState("All Status");
+
+  const faqSectionRef = useRef(null);
 
   const faqTabs = useMemo(
     () => [
@@ -104,11 +114,6 @@ const VendorSupportPage = () => {
     [],
   );
 
-  const visibleFaqs = useMemo(() => {
-    if (faqTab === "All") return faqs;
-    return faqs.filter((f) => f.category === faqTab);
-  }, [faqs, faqTab]);
-
   const tickets = useMemo(
     () => [
       {
@@ -175,26 +180,6 @@ const VendorSupportPage = () => {
     [],
   );
 
-  const filteredTickets = useMemo(() => {
-    if (ticketStatus === "All Status") return tickets;
-    return tickets.filter((t) => t.status === ticketStatus);
-  }, [tickets, ticketStatus]);
-
-  const priorityDot = (p) => {
-    if (p === "Urgent") return "bg-red-500";
-    if (p === "High") return "bg-orange-500";
-    if (p === "Medium") return "bg-yellow-500";
-    return "bg-gray-400";
-  };
-
-  const statusPill = (s) => {
-    if (s === "In Progress") return "bg-blue-50 text-blue-700 border-blue-100";
-    if (s === "Open") return "bg-orange-50 text-orange-700 border-orange-100";
-    if (s === "Resolved") return "bg-green-50 text-green-700 border-green-100";
-    if (s === "Closed") return "bg-gray-50 text-gray-700 border-gray-200";
-    return "bg-gray-50 text-gray-700 border-gray-200";
-  };
-
   const quickCards = useMemo(
     () => [
       {
@@ -202,24 +187,28 @@ const VendorSupportPage = () => {
         icon: CreditCard,
         tint: "bg-[#ECFFF6]",
         iconColor: "text-green-700",
+        targetTab: "Payments & Payouts",
       },
       {
         label: "Shipping Help",
         icon: Truck,
         tint: "bg-[#EAF3FF]",
         iconColor: "text-blue-700",
+        targetTab: "Orders & Shipping",
       },
       {
         label: "Order Problem",
         icon: ClipboardList,
         tint: "bg-[#FFF7E6]",
         iconColor: "text-yellow-700",
+        targetTab: "Orders & Shipping",
       },
       {
         label: "Product Listing",
         icon: HelpCircle,
         tint: "bg-[#F3EEFF]",
         iconColor: "text-purple-700",
+        targetTab: "Products & Listings",
       },
     ],
     [],
@@ -264,497 +253,650 @@ const VendorSupportPage = () => {
     setOpenTicketModal(false);
   };
 
+  const visibleFaqs = useMemo(() => {
+    if (faqTab === "All") return faqs;
+    return faqs.filter((faq) => faq.category === faqTab);
+  }, [faqs, faqTab]);
+
+  const filteredTickets = useMemo(() => {
+    if (ticketStatus === "All Status") return tickets;
+    return tickets.filter((ticket) => ticket.status === ticketStatus);
+  }, [tickets, ticketStatus]);
+
+  const handleQuickCardClick = (targetTab) => {
+    setFaqTab(targetTab);
+
+    setTimeout(() => {
+      faqSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  };
+
+  const handleExportCSV = () => {
+    const headers = [
+      "Ticket ID",
+      "Subject",
+      "Category",
+      "Priority",
+      "Status",
+      "Replies",
+      "Last Update",
+      "Updated By",
+    ];
+
+    const rows = filteredTickets.map((ticket) => [
+      ticket.id,
+      ticket.subject,
+      ticket.category,
+      ticket.priority,
+      ticket.status,
+      ticket.replies,
+      ticket.lastUpdate,
+      ticket.updatedBy,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `support-tickets-${ticketStatus
+      .toLowerCase()
+      .replaceAll(" ", "-")}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrintAll = () => {
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) return;
+
+    const tableRows = filteredTickets
+      .map(
+        (ticket) => `
+          <tr>
+            <td>${ticket.id}</td>
+            <td>${ticket.subject}</td>
+            <td>${ticket.category}</td>
+            <td>${ticket.priority}</td>
+            <td>${ticket.status}</td>
+            <td>${ticket.replies}</td>
+            <td>${ticket.lastUpdate}</td>
+            <td>${ticket.updatedBy}</td>
+          </tr>
+        `
+      )
+      .join("");
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Support Tickets</title>
+          <style>
+            * {
+              box-sizing: border-box;
+              font-family: Arial, sans-serif;
+            }
+
+            body {
+              padding: 30px;
+              background: #ffffff;
+              color: #0B1F3A;
+            }
+
+            .header {
+              margin-bottom: 24px;
+              border-bottom: 2px solid #0B1F3A;
+              padding-bottom: 16px;
+            }
+
+            .title {
+              font-size: 28px;
+              font-weight: 800;
+              margin-bottom: 6px;
+            }
+
+            .subtitle {
+              color: #6b7280;
+              font-size: 14px;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+
+            thead {
+              background: #FFF8EC;
+            }
+
+            th {
+              padding: 14px;
+              text-align: left;
+              font-size: 12px;
+              border: 1px solid #E5E5E5;
+              text-transform: uppercase;
+            }
+
+            td {
+              padding: 14px;
+              border: 1px solid #E5E5E5;
+              font-size: 13px;
+            }
+
+            tr:nth-child(even) {
+              background: #fafafa;
+            }
+
+            .footer {
+              margin-top: 24px;
+              font-size: 12px;
+              color: #6b7280;
+            }
+
+            @media print {
+              body {
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <div class="header">
+            <div class="title">Support Tickets Report</div>
+            <div class="subtitle">Filtered Status: ${ticketStatus}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Subject</th>
+                <th>Category</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Replies</th>
+                <th>Last Update</th>
+                <th>Updated By</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Generated from KAVAS Vendor Support Dashboard
+          </div>
+
+          <script>
+            window.onload = function () {
+              window.print();
+              window.onafterprint = function () {
+                window.close();
+              };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
+  const priorityDot = (priority) => {
+    if (priority === "Urgent") return "bg-red-500";
+    if (priority === "High") return "bg-orange-500";
+    if (priority === "Medium") return "bg-yellow-500";
+    return "bg-gray-400";
+  };
+
+  const statusPill = (status) => {
+    if (status === "In Progress") {
+      return "bg-blue-50 text-blue-700 border-blue-100";
+    }
+
+    if (status === "Open") {
+      return "bg-orange-50 text-orange-700 border-orange-100";
+    }
+
+    if (status === "Resolved") {
+      return "bg-green-50 text-green-700 border-green-100";
+    }
+
+    if (status === "Closed") {
+      return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+
+    return "bg-gray-50 text-gray-700 border-gray-200";
+  };
+
   return (
-    <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
-            Help & Support
+    <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#0B1F3A]">
+              Help & Support
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Find answers or get help from our support team
+            </p>
           </div>
-          <div className="mt-1 text-sm text-gray-500">
-            Find answers or get help from our support team
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 px-4 inline-flex items-center gap-2"
-          >
-            <Download size={16} />
-            Export CSV
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 px-4 inline-flex items-center gap-2"
-          >
-            <Printer size={16} />
-            Print All
-          </Button>
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickCards.map((c) => {
-          const Icon = c.icon;
-          return (
-            <Card
-              key={c.label}
-              className="rounded-2xl border border-[#E5E5E5] bg-white text-left hover:shadow-sm transition cursor-pointer"
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              onClick={handleExportCSV}
+              variant="outline"
+              className="h-10 rounded-sm border-[#E5E5E5] bg-white px-4"
             >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-10 w-10 rounded-xl ${c.tint} flex items-center justify-center`}
-                  >
-                    <Icon size={18} className={c.iconColor} />
-                  </div>
-                  <div className="text-sm font-extrabold text-[#0B1F3A]">
-                    {c.label}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+              <Download size={16} />
+              Export CSV
+            </Button>
 
-      <div className="mt-4 rounded-2xl border border-[#F1D99A] bg-[#FFF6DE] px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="text-sm font-extrabold text-[#0B1F3A]">
-            Can’t find what you need?
-          </div>
-          <div className="mt-1 text-xs text-[#8A6D1B]">
-            Our support team typically responds within 2 hours
+            <Button
+              type="button"
+              onClick={handlePrintAll}
+              variant="outline"
+              className="h-10 rounded-sm border-[#E5E5E5] bg-white px-4"
+            >
+              <Printer size={16} />
+              Print All
+            </Button>
           </div>
         </div>
-        <Button
-          type="button"
-          onClick={() => setOpenTicketModal(true)}
-          className="h-10 rounded-xl bg-[#D97B00] text-white px-5 inline-flex items-center gap-2 hover:opacity-95"
-        >
-          <Plus size={16} />
-          Create Ticket
-        </Button>
-      </div>
 
-      <div className="mt-6">
-        <div className="flex items-center gap-2">
-          <LifeBuoy size={16} className="text-gray-600" />
-          <div className="text-sm font-extrabold text-[#0B1F3A]">
-            Frequently Asked Questions
-          </div>
-          <div className="text-xs text-gray-500">{faqs.length} articles</div>
-        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {quickCards.map((card) => {
+            const Icon = card.icon;
 
-        <div className="mt-3 flex items-center gap-2 overflow-x-auto">
-          {faqTabs.map((t) => {
-            const active = faqTab === t;
             return (
-              <Button
-                key={t}
+              <button
+                key={card.label}
                 type="button"
-                onClick={() => {
-                  setFaqTab(t);
-                }}
-                variant={active ? "default" : "outline"}
-                className={`h-9 whitespace-nowrap rounded-xl px-4 text-xs font-extrabold ${active ? "bg-[#0B1F3A] text-white" : "bg-white"}`}
+                onClick={() => handleQuickCardClick(card.targetTab)}
+                className="text-left"
               >
-                {t}
-              </Button>
+                <Card className="rounded-sm border border-[#E5E5E5] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-sm ${card.tint}`}
+                      >
+                        <Icon size={18} className={card.iconColor} />
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-extrabold text-[#0B1F3A]">
+                          {card.label}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          View related FAQs
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </button>
             );
           })}
         </div>
 
-        <Card className="mt-4 rounded-2xl border border-[#E5E5E5] bg-white">
-          <CardContent className="p-4">
-            <Accordion type="single" collapsible className="w-full">
-              {visibleFaqs.map((f) => (
-                <AccordionItem key={f.id} value={f.id} className="border-0">
-                  <AccordionTrigger className="rounded-xl px-3 hover:no-underline">
-                    <div className="flex items-start gap-4 min-w-0 w-full">
-                      <div className="w-28 shrink-0">
-                        <div className="text-[10px] font-extrabold tracking-widest text-gray-400">
-                          {f.category.toUpperCase()}
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-extrabold text-[#0B1F3A] truncate">
-                          {f.q}
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-3 text-sm text-gray-600">
-                    {f.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-8 rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
-        <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 rounded-sm border border-[#F1D99A] bg-[#FFF6DE] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-sm font-extrabold text-[#0B1F3A]">
-              My Support Tickets
-            </div>
-            <div className="mt-1 text-xs text-gray-500">
-              {tickets.length} tickets ·{" "}
-              {tickets.filter((t) => t.status === "In Progress").length} active
-            </div>
+            <h2 className="text-sm font-extrabold text-[#0B1F3A]">
+              Can’t find what you need?
+            </h2>
+            <p className="mt-1 text-xs text-[#8A6D1B]">
+              Our support team typically responds within 2 hours
+            </p>
           </div>
 
-          <Select value={ticketStatus} onValueChange={setTicketStatus}>
-            <SelectTrigger className="h-10 rounded-xl">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              {["All Status", "Open", "In Progress", "Resolved", "Closed"].map(
-                (s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
+          <Button onClick={() => setOpenTicket(true)}>
+  Create Ticket
+</Button>
         </div>
 
-        <div className="hidden md:block">
-          <table className="w-full text-sm">
-            <thead className="bg-[#FFF8EC]">
-              <tr>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  TICKET
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  CATEGORY
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  PRIORITY
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  STATUS
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  REPLIES
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  LAST UPDATE
-                </th>
-                <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                  ACTIONS
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTickets.map((t) => (
-                <tr key={t.id} className="border-t border-[#E5E5E5]">
-                  <td className="p-4">
-                    <div className="text-[11px] font-extrabold text-gray-500">
-                      {t.id}
-                    </div>
-                    <div className="mt-1 font-extrabold text-[#0B1F3A]">
-                      {t.subject}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-gray-700">{t.category}</td>
-                  <td className="p-4">
-                    <div className="inline-flex items-center gap-2 text-sm font-extrabold text-[#0B1F3A]">
-                      <span
-                        className={`h-2 w-2 rounded-full ${priorityDot(t.priority)}`}
-                      />
-                      {t.priority}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <Badge
-                      variant="outline"
-                      className={`h-6 rounded-full border px-3 text-xs font-extrabold ${statusPill(t.status)}`}
+        <section ref={faqSectionRef} className="scroll-mt-6">
+          <div className="flex items-center gap-2">
+            <LifeBuoy size={16} className="text-gray-600" />
+            <h2 className="text-sm font-extrabold text-[#0B1F3A]">
+              Frequently Asked Questions
+            </h2>
+            <span className="text-xs text-gray-500">
+              {visibleFaqs.length} articles
+            </span>
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {faqTabs.map((tab) => {
+              const active = faqTab === tab;
+
+              return (
+                <Button
+                  key={tab}
+                  type="button"
+                  onClick={() => setFaqTab(tab)}
+                  variant={active ? "default" : "outline"}
+                  className={`h-9 whitespace-nowrap rounded-sm px-4 text-xs font-extrabold ${
+                    active
+                      ? "bg-[#0B1F3A] text-white hover:bg-[#0B1F3A]"
+                      : "border-[#E5E5E5] bg-white text-[#0B1F3A]"
+                  }`}
+                >
+                  {tab}
+                </Button>
+              );
+            })}
+          </div>
+
+          <Card className="mt-4 rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
+            <CardContent className="p-4">
+              <Accordion type="single" collapsible className="w-full">
+                {visibleFaqs.map((faq) => (
+                  <AccordionItem
+                    key={faq.id}
+                    value={faq.id}
+                    className="border-b border-[#E5E5E5] last:border-b-0"
+                  >
+                    <AccordionTrigger className="rounded-sm px-3 py-4 text-left hover:no-underline">
+                      <div className="flex w-full items-start gap-4">
+                        <div className="hidden w-32 shrink-0 sm:block">
+                          <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+                            {faq.category}
+                          </p>
+                        </div>
+
+                        <p className="text-sm font-extrabold text-[#0B1F3A]">
+                          {faq.q}
+                        </p>
+                      </div>
+                    </AccordionTrigger>
+
+                    <AccordionContent className="px-3 pb-4 text-sm leading-6 text-gray-600">
+                      {faq.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="overflow-hidden rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
+          <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-extrabold text-[#0B1F3A]">
+                My Support Tickets
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">
+                {tickets.length} tickets ·{" "}
+                {
+                  tickets.filter((ticket) => ticket.status === "In Progress")
+                    .length
+                }{" "}
+                active
+              </p>
+            </div>
+
+            <Select value={ticketStatus} onValueChange={setTicketStatus}>
+              <SelectTrigger className="h-10 rounded-sm border-[#E5E5E5] bg-white sm:w-44">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+
+              <SelectContent className="rounded-sm">
+                {["All Status", "Open", "In Progress", "Resolved", "Closed"].map(
+                  (status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm">
+              <thead className="bg-[#FFF8EC]">
+                <tr>
+                  {[
+                    "Ticket",
+                    "Category",
+                    "Priority",
+                    "Status",
+                    "Replies",
+                    "Last Update",
+                    "Actions",
+                  ].map((heading) => (
+                    <th
+                      key={heading}
+                      className="p-4 text-left text-xs font-extrabold uppercase text-gray-500"
                     >
-                      {t.status}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-sm text-gray-700">{t.replies}</td>
-                  <td className="p-4">
-                    <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {t.lastUpdate}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      by {t.updatedBy}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-4 text-sm font-extrabold">
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="p-0 h-auto text-[#0B1F3A]"
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredTickets.map((ticket) => (
+                  <tr
+                    key={ticket.id}
+                    className="border-t border-[#E5E5E5] transition hover:bg-[#FFF8EC]/60"
+                  >
+                    <td className="p-4">
+                      <p className="text-[11px] font-extrabold text-gray-500">
+                        {ticket.id}
+                      </p>
+                      <p className="mt-1 font-extrabold text-[#0B1F3A]">
+                        {ticket.subject}
+                      </p>
+                    </td>
+
+                    <td className="p-4 text-gray-700">{ticket.category}</td>
+
+                    <td className="p-4">
+                      <div className="inline-flex items-center gap-2 font-extrabold text-[#0B1F3A]">
+                        <span
+                          className={`h-2 w-2 rounded-full ${priorityDot(
+                            ticket.priority
+                          )}`}
+                        />
+                        {ticket.priority}
+                      </div>
+                    </td>
+
+                    <td className="p-4">
+                      <Badge
+                        variant="outline"
+                        className={`rounded-sm border px-3 py-1 text-xs font-extrabold ${statusPill(
+                          ticket.status
+                        )}`}
                       >
-                        View
-                      </Button>
-                      {t.status === "Open" ? (
+                        {ticket.status}
+                      </Badge>
+                    </td>
+
+                    <td className="p-4 text-gray-700">{ticket.replies}</td>
+
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        {ticket.lastUpdate}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        by {ticket.updatedBy}
+                      </p>
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex items-center gap-4">
                         <Button
                           type="button"
                           variant="link"
-                          className="p-0 h-auto text-gray-500"
+                          className="h-auto p-0 font-extrabold text-[#0B1F3A]"
                         >
-                          Close
+                          View
                         </Button>
-                      ) : null}
+
+                        {ticket.status === "Open" ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 font-extrabold text-gray-500"
+                          >
+                            Close
+                          </Button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="space-y-3 p-4 md:hidden">
+            {filteredTickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                className="rounded-sm border border-[#E5E5E5] bg-white p-4"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-extrabold text-gray-500">
+                      {ticket.id}
+                    </p>
+                    <p className="mt-1 font-extrabold text-[#0B1F3A]">
+                      {ticket.subject}
+                    </p>
+                  </div>
+
+                  <Badge
+                    variant="outline"
+                    className={`rounded-sm border px-3 py-1 text-xs font-extrabold ${statusPill(
+                      ticket.status
+                    )}`}
+                  >
+                    {ticket.status}
+                  </Badge>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Category</p>
+                    <p className="font-extrabold text-[#0B1F3A]">
+                      {ticket.category}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Priority</p>
+                    <div className="inline-flex items-center gap-2 font-extrabold text-[#0B1F3A]">
+                      <span
+                        className={`h-2 w-2 rounded-full ${priorityDot(
+                          ticket.priority
+                        )}`}
+                      />
+                      {ticket.priority}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
 
-        <div className="md:hidden p-4 space-y-3">
-          {filteredTickets.map((t) => (
-            <div
-              key={t.id}
-              className="rounded-2xl border border-[#E5E5E5] bg-white p-4"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="text-[11px] font-extrabold text-gray-500">
-                    {t.id}
-                  </div>
-                  <div className="mt-1 font-extrabold text-[#0B1F3A]">
-                    {t.subject}
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={`h-6 rounded-full border px-3 text-xs font-extrabold ${statusPill(t.status)}`}
-                >
-                  {t.status}
-                </Badge>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-xs text-gray-500">Category</div>
-                  <div className="font-extrabold text-[#0B1F3A]">
-                    {t.category}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500">Priority</div>
-                  <div className="font-extrabold text-[#0B1F3A] inline-flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 rounded-full ${priorityDot(t.priority)}`}
-                    />
-                    {t.priority}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <div className="text-gray-500">
-                  Replies:{" "}
-                  <span className="text-[#0B1F3A] font-extrabold">
-                    {t.replies}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="p-0 h-auto text-[#0B1F3A] font-extrabold"
-                >
-                  View
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+                <div className="mt-4 flex items-center justify-between text-sm">
+                  <p className="text-gray-500">
+                    Replies:{" "}
+                    <span className="font-extrabold text-[#0B1F3A]">
+                      {ticket.replies}
+                    </span>
+                  </p>
 
-      <div className="mt-8">
-        <div className="flex items-center gap-2">
-          <LifeBuoy size={16} className="text-gray-600" />
-          <div className="text-sm font-extrabold text-[#0B1F3A]">
-            Contact Your Support Team
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 font-extrabold text-[#0B1F3A]"
+                  >
+                    View
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className="mt-1 text-xs text-gray-500">
-          Dedicated account managers and specialists
-        </div>
+        </section>
 
-        <div className="mt-4 rounded-2xl bg-[#0B1F3A] text-white p-5 flex flex-row flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-11 w-11 rounded-2xl bg-white/10 flex items-center justify-center">
-              <Clock size={18} className="text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-extrabold">24/7 Support Line</div>
-              <div className="mt-1 text-xs text-white/70">
-                For urgent issues only
-              </div>
-            </div>
+        <section>
+          <div className="flex items-center gap-2">
+            <LifeBuoy size={16} className="text-gray-600" />
+            <h2 className="text-sm font-extrabold text-[#0B1F3A]">
+              Contact Your Support Team
+            </h2>
           </div>
 
-          <div className="flex flex-row flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
-              <Phone size={16} className="text-white/80" />
-              <div className="text-sm font-extrabold">+91 1800-123-4567</div>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
-              <Mail size={16} className="text-white/80" />
-              <div className="text-sm font-extrabold">support@kavas.in</div>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-3">
-              <Clock size={16} className="text-white/80" />
-              <div className="text-sm font-extrabold">
-                Mon-Sat, 9 AM - 8 PM IST
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {openTicketModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-3">
-    <div className="w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-sm bg-white shadow-2xl animate-in fade-in zoom-in duration-200">
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-100 px-6 py-3 flex items-start justify-between">
-        <div>
-          <h2 className="text-xl font-extrabold text-[#0B1F3A]">
-            Create Support Ticket
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            We typically respond within 2 hours
+          <p className="mt-1 text-xs text-gray-500">
+            Dedicated account managers and specialists
           </p>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setOpenTicketModal(false)}
-          className="text-gray-400 hover:text-[#0B1F3A] transition"
-        >
-          <X size={22} />
-        </button>
+          <div className="mt-4 flex flex-col gap-4 rounded-sm bg-[#0B1F3A] p-5 text-white lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-11 w-11 items-center justify-center rounded-sm bg-white/10">
+                <Clock size={18} />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-extrabold">24/7 Support Line</h3>
+                <p className="mt-1 text-xs text-white/70">
+                  For urgent issues only
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-sm bg-white/10 px-4 py-3">
+                <Phone size={16} className="text-white/80" />
+                <span className="text-sm font-extrabold">
+                  +91 1800-123-4567
+                </span>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-sm bg-white/10 px-4 py-3">
+                <Mail size={16} className="text-white/80" />
+                <span className="text-sm font-extrabold">support@kavas.in</span>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-sm bg-white/10 px-4 py-3">
+                <Clock size={16} className="text-white/80" />
+                <span className="text-sm font-extrabold">
+                  Mon-Sat, 9 AM - 8 PM IST
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-
-      <form onSubmit={handleTicketSubmit} className="px-6 py-5 space-y-5">
-        <div>
-          <label className="text-sm font-bold text-[#0B1F3A]">
-            Subject *
-          </label>
-          <input
-            name="subject"
-            value={ticketForm.subject}
-            onChange={handleTicketChange}
-            placeholder="Brief description of your issue"
-            className="mt-2 w-full h-12 rounded-sm border border-gray-200 px-4 outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#0B1F3A]/10"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-bold text-[#0B1F3A]">
-              Category *
-            </label>
-            <select
-              name="category"
-              value={ticketForm.category}
-              onChange={handleTicketChange}
-              className="mt-2 w-full h-12 rounded-sm border border-gray-200 px-4 outline-none focus:border-[#0B1F3A] bg-white"
-            >
-              <option value="">Select</option>
-              <option value="Payments">Payments</option>
-              <option value="Orders">Orders</option>
-              <option value="Shipping">Shipping</option>
-              <option value="Products">Products</option>
-              <option value="Account">Account</option>
-              <option value="Returns">Returns</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-bold text-[#0B1F3A]">
-              Priority
-            </label>
-            <select
-              name="priority"
-              value={ticketForm.priority}
-              onChange={handleTicketChange}
-              className="mt-2 w-full h-12 rounded-sm border border-gray-200 px-4 outline-none focus:border-[#0B1F3A] bg-white"
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Urgent">Urgent</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-bold text-[#0B1F3A]">
-            Related Order ID Optional
-          </label>
-          <input
-            name="orderId"
-            value={ticketForm.orderId}
-            onChange={handleTicketChange}
-            placeholder="e.g. ORD-2847"
-            className="mt-2 w-full h-12 rounded-sm border border-gray-200 px-4 outline-none focus:border-[#0B1F3A] focus:ring-2 focus:ring-[#0B1F3A]/10"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-bold text-[#0B1F3A]">
-            Description *
-          </label>
-          <textarea
-            name="description"
-            value={ticketForm.description}
-            onChange={(e) => {
-              if (e.target.value.length <= 500) {
-                handleTicketChange(e);
-              }
-            }}
-            placeholder="Describe your issue in detail..."
-            rows={5}
-            className="mt-2 w-full rounded-sm border border-gray-200 px-4 py-3 outline-none resize-none focus:border-[#0B1F3A]  focus:ring-[#0B1F3A]/10"
-          />
-          <div className="text-right text-xs text-gray-400 mt-1">
-            {ticketForm.description.length}/500
-          </div>
-        </div>
-
-        <div className="rounded-sm bg-[#F7F9FC] border border-gray-100 p-4 flex gap-3 text-sm text-gray-500">
-          <Info size={18} className="text-gray-400 shrink-0 mt-0.5" />
-          <p>
-            For faster resolution, include order IDs, screenshots, and specific
-            error messages. Our team is available Mon-Sat, 9 AM - 8 PM IST.
-          </p>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpenTicketModal(false)}
-            className="h-11 rounded-sm px-6"
-          >
-            Cancel
-          </Button>
-
-          <Button
-            type="submit"
-            className="h-11 rounded-sm px-6 bg-[#D97B00] text-white hover:bg-[#b96500] inline-flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Submit Ticket
-          </Button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      <CreateSupportTicket
+        open={openTicket}
+        onOpenChange={setOpenTicket}
+      />
     </div>
   );
 };

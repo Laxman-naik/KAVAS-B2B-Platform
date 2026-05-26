@@ -20,14 +20,15 @@ export default function TrendingProducts() {
     <div className="bg-white">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <div className="flex  justify-between gap-4">
+        <div className="relative flex items-center justify-center text-center">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <span className="h-px w-5 bg-[#D4AF37]/60"></span>
 
               <div className="text-[11px] font-extrabold tracking-widest text-[#0B1F3A]/60 uppercase">
                 Best Selling Products
               </div>
+
               <span className="h-px w-5 bg-[#D4AF37]/60"></span>
             </div>
             
@@ -38,7 +39,7 @@ export default function TrendingProducts() {
 
           <Link
             href="/trendingviewall"
-            className="text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37]"
+            className="absolute right-0 top-1/2 translate-y-4 text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37] transition-colors"
           >
             View All Products →
           </Link>

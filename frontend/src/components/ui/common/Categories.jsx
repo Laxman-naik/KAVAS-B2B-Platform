@@ -99,27 +99,26 @@ const Categories = () => {
   return (
     <section className="bg-white">
       <div className="w-full px-3 sm:px-4 md:px-6 py-8 sm:py-10">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+        <div className="relative flex items-center justify-center text-center">
+          <div>
+            <div className="flex items-center justify-center gap-2">
+              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
 
-            <span className="text-[11px] sm:text-xs font-semibold tracking-[0.18em] text-[#0B1F3A]/60">
-              SHOP BY CATEGORY
-            </span>
+              <span className="text-[11px] sm:text-xs font-semibold tracking-[0.18em] text-[#0B1F3A]/60">
+                SHOP BY CATEGORY
+              </span>
 
-            <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+            </div>
+
+            <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
+              All Categories
+            </div>
           </div>
 
-          <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
-            All Categories
-          </div>
-
-        </div>
-
-        <div className="mt-4 flex items-center justify-end">
           <Link
             href="/viewallcategories"
-            className="text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37]"
+            className="absolute right-0 top-1/2 translate-y-4 text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37] transition-colors"
           >
             View All Categories →
           </Link>

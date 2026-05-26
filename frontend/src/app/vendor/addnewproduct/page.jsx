@@ -11,96 +11,34 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-  const handleSubmit = async (form) => {
-=======
-=======
->>>>>>> dac18934cdbe69d4c72c9f352c7fbf90d206ba93
-
   const handleSubmit = async (data) => {
-    const payload = {
-      name: data?.name,
-      sku: data?.sku,
-      category: data?.category,
-      unit: data?.unit,
-      status: data?.status,
-      description: data?.description,
-      price: Number(data?.price || 0),
-      mrp: Number(data?.mrp || 0),
-      gst: data?.gst,
-      moq: Number(data?.moq || 0),
-      stock: Number(data?.stock || 0),
-      images: Array.isArray(data?.images) ? data.images.filter((x) => typeof x === "string" && x.trim()) : [],
-    };
-
-    await createProductAPI(payload);
-    router.push("/vendor/products");
-<<<<<<< HEAD
->>>>>>> 112b3e52fd0da3aa73869420330e18ac5c86b7ac
-=======
->>>>>>> dac18934cdbe69d4c72c9f352c7fbf90d206ba93
     try {
       const payload = {
-        name: form.name?.trim(),
-        sku: form.sku?.trim(),
-
-        categories: form.subCategoryId
-          ? [Number(form.subCategoryId)]
-          : form.categoryId
-          ? [Number(form.categoryId)]
-          : [],
-
-        category: form.subCategory || form.category,
-
-        unit: form.unit || "pcs",
-        status: "active",
-        description: form.description,
-
-        price: Number(form.price || 0),
-        mrp: Number(form.mrp || 0),
-        moq: Number(form.moq || 0),
-        stock: Number(form.stock || 0),
-
-        gst: form.taxClass || "",
-        brand: form.brand || "",
-        barcode: form.barcode || "",
-
-        weight: form.productWeight || null,
-        dispatchTimeDays: Number(form.expectedDispatchTime || 0),
-
-        images: Array.isArray(form.images)
-          ? form.images.filter(
-              (url) => typeof url === "string" && url.trim()
-            )
-          : [],
-
-        specifications: Array.isArray(form.specifications)
-          ? form.specifications
-              .filter((s) => s.name?.trim() && s.value?.trim())
-              .map((s) => ({
-                key: s.name.trim(),
-                value: s.value.trim(),
-              }))
-          : [],
-
-        pricingTiers: Array.isArray(form.bulkPricing)
-          ? form.bulkPricing
-              .filter((p) => p.minQty && p.pricePerUnit)
-              .map((p) => ({
-                min_quantity: Number(p.minQty),
-                price: Number(p.pricePerUnit),
-                label: p.maxQty ? `${p.minQty}-${p.maxQty}` : `${p.minQty}+`,
-              }))
+        name: data.name?.trim(),
+        description: data.description?.trim(),
+        price: Number(data.price || 0),
+        mrp: Number(data.mrp || 0),
+        moq: Number(data.moq || 1),
+        stock: Number(data.stock || 0),
+        sku: data.sku?.trim(),
+        unit: data.unit || "pcs",
+        images: Array.isArray(data.images)
+          ? data.images.filter((url) => typeof url === "string" && url.trim())
           : [],
       };
+
+      console.log("FINAL PRODUCT PAYLOAD:", payload);
 
       await dispatch(addProduct(payload)).unwrap();
 
       router.push("/vendor/products");
     } catch (error) {
-      console.error("Product create failed:", error);
-      alert(error?.message || "Failed to create product");
+      console.log("PAGE CREATE ERROR:", error);
+      alert(
+        typeof error === "string"
+          ? error
+          : error?.message || "Failed to create product"
+      );
     }
   };
 

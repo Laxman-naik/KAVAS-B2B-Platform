@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-
 import {
   getProducts,
   getSingleProduct,
@@ -11,259 +10,225 @@ import {
   getVendorProductsAPI,
 } from "../../services/productService";
 
-/* ================= FETCH ALL PRODUCTS ================= */
-
 export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {
     try {
       const res = await getProducts();
-
-      return res.products || [];
+      return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= FETCH SINGLE PRODUCT ================= */
 
 export const fetchSingleProduct = createAsyncThunk(
   "products/fetchOne",
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
-
-      return res;
+      return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= CREATE PRODUCT ================= */
 
 export const addProduct = createAsyncThunk(
-  "products/create",
-  async (formData, thunkAPI) => {
+  "products/add",
+  async (data, thunkAPI) => {
     try {
-      const res = await createProduct(formData);
-      return res.product;
+      console.log("SENDING PRODUCT DATA:", data);
+
+      const res = await createProduct(data);
+
+      console.log("CREATE PRODUCT RESPONSE:", res.data);
+
+      return res.data.product;
     } catch (err) {
-      console.log("CREATE PRODUCT ERROR FULL:", err);
-      console.log("ERROR RESPONSE:", err.response);
-      console.log("ERROR DATA:", err.response?.data);
+      console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
+      console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
+      console.log("CREATE PRODUCT SENT DATA:", data);
 
       return thunkAPI.rejectWithValue(
-        err.response?.data || {
-          message: err.message || "Create product failed",
-        }
+        err.response?.data?.message ||
+          err.response?.data ||
+          err.message ||
+          "Failed to create product"
       );
     }
   }
 );
-
-/* ================= UPDATE PRODUCT ================= */
 
 export const editProduct = createAsyncThunk(
   "products/update",
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-
-      return res.product || res;
+      return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= DELETE PRODUCT ================= */
 
 export const removeProduct = createAsyncThunk(
   "products/delete",
   async (id, thunkAPI) => {
     try {
       await deleteProduct(id);
-
       return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= NEW ARRIVALS ================= */
 
 export const fetchNewArrivals = createAsyncThunk(
   "products/newArrivals",
   async (_, thunkAPI) => {
     try {
       const res = await getNewArrivalsAPI();
-
-      return res.data || [];
+      return res.data?.data || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= TRENDING PRODUCTS ================= */
 
 export const fetchTrendingProducts = createAsyncThunk(
   "products/trending",
   async (_, thunkAPI) => {
     try {
       const res = await getTrendingProductsAPI();
-
-      return res.data || [];
+      return res.data?.data || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-/* ================= VENDOR PRODUCTS ================= */
-
 export const fetchVendorProducts = createAsyncThunk(
-  "products/fetchVendorProducts",
+  "products/vendorProducts",
   async (vendorId, thunkAPI) => {
     try {
       const res = await getVendorProductsAPI(vendorId);
-
-      return res.products || [];
+      return res.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
-/* ================= SLICE ================= */
-
 const productSlice = createSlice({
   name: "products",
-
   initialState: {
     products: [],
-    vendorProducts: [],
     newArrivals: [],
     trending: [],
+    vendorProducts: [],
     product: null,
     loading: false,
     error: null,
   },
 
-  reducers: {},
+  reducers: {
+    clearProductError: (state) => {
+      state.error = null;
+    },
+  },
 
   extraReducers: (builder) => {
     builder
-
-      /* FETCH ALL */
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload;
+        state.products = action.payload?.products || action.payload || [];
       })
-
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* FETCH SINGLE */
       .addCase(fetchSingleProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.product = action.payload;
+        state.product =
+          action.payload?.product || action.payload?.data || action.payload;
       })
-
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* CREATE */
+      .addCase(addProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(addProduct.fulfilled, (state, action) => {
-        state.products.unshift(action.payload);
+        state.loading = false;
+        if (action.payload) {
+          state.products.unshift(action.payload);
+        }
+      })
+      .addCase(addProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
-      /* UPDATE */
       .addCase(editProduct.fulfilled, (state, action) => {
-        state.products = state.products.map((product) =>
-          product.id === action.payload.id
-            ? action.payload
-            : product
+        const updatedProduct =
+          action.payload?.product || action.payload?.data || action.payload;
+
+        state.products = state.products.map((p) =>
+          p.id === updatedProduct?.id ? updatedProduct : p
         );
       })
 
-      /* DELETE */
       .addCase(removeProduct.fulfilled, (state, action) => {
-        state.products = state.products.filter(
-          (product) => product.id !== action.payload
-        );
+        state.products = state.products.filter((p) => p.id !== action.payload);
       })
 
-      /* NEW ARRIVALS */
       .addCase(fetchNewArrivals.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchNewArrivals.fulfilled, (state, action) => {
         state.loading = false;
         state.newArrivals = action.payload;
       })
-
       .addCase(fetchNewArrivals.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* TRENDING */
       .addCase(fetchTrendingProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchTrendingProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.trending = action.payload;
       })
-
       .addCase(fetchTrendingProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* VENDOR PRODUCTS */
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.vendorProducts = action.payload;
+        state.vendorProducts = action.payload?.products || [];
       })
-
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -271,4 +236,5 @@ const productSlice = createSlice({
   },
 });
 
+export const { clearProductError } = productSlice.actions;
 export default productSlice.reducer;

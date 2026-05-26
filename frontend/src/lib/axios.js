@@ -469,8 +469,16 @@ const refreshAccessToken = async () => {
     throw new Error("Missing auth state");
   }
 
+  const refreshEndpointMap = {
+    admin: "/api/admin/refresh",
+    vendor: "/api/vendor/refresh",
+    buyer: "/api/auth/refresh",
+  };
+
+const refreshUrl = refreshEndpointMap[role];
+
   const response = await axios.post(
-    `${AUTH_BASE_URL}/api/auth/refresh`,
+  `${AUTH_BASE_URL}${refreshUrl}`,
     {
       refreshToken,
       sessionId,

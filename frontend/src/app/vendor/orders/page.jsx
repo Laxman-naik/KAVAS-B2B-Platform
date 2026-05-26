@@ -20,13 +20,13 @@ import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
-
   const { orders = [], loading, error } = useSelector((state) => state.order);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
+
   const pageSize = 8;
 
   useEffect(() => {
@@ -39,6 +39,11 @@ export default function OrdersManagementBody() {
     return () => clearInterval(interval);
   }, [dispatch]);
 
+  const statusLabel = (status) => {
+    if (!status) return "Pending";
+    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
+  };
+
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => o.status === "pending").length;
@@ -47,12 +52,6 @@ export default function OrdersManagementBody() {
     const delivered = orders.filter((o) => o.status === "delivered").length;
     const cancelled = orders.filter((o) => o.status === "cancelled").length;
 
-    const deliveredRevenue = orders
-      .filter((o) => o.status === "delivered")
-      .reduce((acc, o) => acc + Number(o.total_amount || 0), 0);
-
-    const needAttention = pending + processing;
-
     return {
       total,
       pending,
@@ -60,28 +59,26 @@ export default function OrdersManagementBody() {
       shipped,
       delivered,
       cancelled,
-      deliveredRevenue,
-      needAttention,
+      needAttention: pending + processing,
     };
   }, [orders]);
 
   const filteredOrders = useMemo(() => {
-    const q = String(search || "").trim().toLowerCase();
+    const q = search.trim().toLowerCase();
 
     return orders.filter((o) => {
+      const paymentValue = o.payment_status || o.payment || "pending";
+
       const matchSearch =
         !q ||
         String(o.id).toLowerCase().includes(q) ||
         String(o.buyer_name || "").toLowerCase().includes(q);
 
-      const matchStatus =
-        statusFilter === "All" || o.status === statusFilter;
-
-      const paymentValue = o.payment_status || o.payment || "pending";
+      const matchStatus = statusFilter === "All" || o.status === statusFilter;
 
       const matchPayment =
         paymentFilter === "All Payments" ||
-        paymentValue.toLowerCase() === paymentFilter.toLowerCase();
+        String(paymentValue).toLowerCase() === paymentFilter.toLowerCase();
 
       return matchSearch && matchStatus && matchPayment;
     });
@@ -103,36 +100,30 @@ export default function OrdersManagementBody() {
     return `Showing ${start}-${end} of ${totalFiltered}`;
   }, [safePage, totalFiltered]);
 
-  const statusLabel = (status) => {
-    if (!status) return "Pending";
-    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
-  };
-
   const statusStyle = (status) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "processing":
-        return "bg-blue-100 text-blue-700";
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "shipped":
-        return "bg-purple-100 text-purple-700";
+        return "bg-purple-50 text-purple-700 border-purple-200";
       case "delivered":
-        return "bg-green-100 text-green-700";
+        return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
-        return "bg-red-100 text-red-700";
+        return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-100";
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const paymentStyle = (payment) => {
     const value = String(payment || "pending").toLowerCase();
 
-    return value === "paid"
-      ? "bg-green-100 text-green-700"
-      : value === "refunded"
-      ? "bg-gray-200 text-gray-600"
-      : "bg-yellow-100 text-yellow-700";
+    if (value === "paid") return "bg-green-50 text-green-700 border-green-200";
+    if (value === "refunded") return "bg-gray-50 text-gray-700 border-gray-200";
+
+    return "bg-yellow-50 text-yellow-700 border-yellow-200";
   };
 
   const tabs = useMemo(
@@ -162,455 +153,453 @@ export default function OrdersManagementBody() {
     [stats]
   );
 
+  const statCards = [
+    {
+      title: "Pending",
+      value: stats.pending,
+      icon: Clock,
+      className: "bg-yellow-50 text-yellow-700",
+    },
+    {
+      title: "Processing",
+      value: stats.processing,
+      icon: RefreshCcw,
+      className: "bg-blue-50 text-blue-700",
+    },
+    {
+      title: "Shipped",
+      value: stats.shipped,
+      icon: Truck,
+      className: "bg-purple-50 text-purple-700",
+    },
+    {
+      title: "Delivered",
+      value: stats.delivered,
+      icon: CheckCircle2,
+      className: "bg-green-50 text-green-700",
+    },
+  ];
+
   return (
-    <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
-            Orders
+    <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="flex flex-col gap-4 border border-[#E5E5E5] bg-white p-5 shadow-sm rounded-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#0B1F3A]">
+              Orders Management
+            </h1>
+            <p className="mt-1 text-sm font-medium text-gray-500">
+              {stats.total} total orders · {stats.needAttention} need attention
+            </p>
           </div>
-          <div className="mt-1 text-sm text-gray-500">
-            {stats.total} total orders · {stats.needAttention} need attention
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="h-10 rounded-lg border border-[#E5E5E5] bg-white px-4 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC] inline-flex items-center gap-2"
-          >
-            <Download size={16} />
-            Export CSV
-          </button>
-          <button
-            type="button"
-            className="h-10 rounded-lg border border-[#E5E5E5] bg-white px-4 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC] inline-flex items-center gap-2"
-          >
-            <Printer size={16} />
-            Print All
-          </button>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 border border-[#E5E5E5] bg-white px-4 text-sm font-bold text-[#0B1F3A] transition hover:bg-[#FFF8EC] rounded-sm"
+            >
+              <Download size={16} />
+              Export CSV
+            </button>
 
-      {loading && (
-        <div className="mt-4 text-sm font-semibold text-[#0B1F3A]">
-          Loading orders...
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-4 rounded-xl bg-red-100 text-red-700 px-4 py-3 text-sm font-semibold">
-          {error}
-        </div>
-      )}
-
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
-          <div className="flex items-center justify-between">
-            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-              <Clock size={18} className="text-yellow-700" />
-            </div>
-            <div className="text-lg font-extrabold text-yellow-700">
-              {stats.pending}
-            </div>
-          </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
-            Pending
+            <button
+              type="button"
+              className="inline-flex h-10 items-center gap-2 border border-[#E5E5E5] bg-white px-4 text-sm font-bold text-[#0B1F3A] transition hover:bg-[#FFF8EC] rounded-sm"
+            >
+              <Printer size={16} />
+              Print All
+            </button>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EAF3FF] p-5">
-          <div className="flex items-center justify-between">
-            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-              <RefreshCcw size={18} className="text-blue-700" />
-            </div>
-            <div className="text-lg font-extrabold text-blue-700">
-              {stats.processing}
-            </div>
+        {loading && (
+          <div className="mt-4 border border-[#E5E5E5] bg-white px-4 py-3 text-sm font-semibold text-[#0B1F3A] rounded-sm">
+            Loading orders...
           </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
-            Processing
-          </div>
-        </div>
+        )}
 
-        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
-          <div className="flex items-center justify-between">
-            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-              <Truck size={18} className="text-purple-700" />
-            </div>
-            <div className="text-lg font-extrabold text-purple-700">
-              {stats.shipped}
-            </div>
+        {error && (
+          <div className="mt-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 rounded-sm">
+            {error}
           </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
-            Shipped
-          </div>
-        </div>
-        <div className="rounded-2xl border border-[#E5E5E5] bg-[#EEF3FF] p-5">
-          <div className="flex items-center justify-between">
-            <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-              <Truck size={18} className="text-purple-700" />
-            </div>
-            <div className="text-lg font-extrabold text-purple-700">
-              {stats.shipped}
-            </div>
-          </div>
-          <div className="mt-3 text-sm font-semibold text-[#0B1F3A]">
-            Delivered
-          </div>
-        </div>
-        
-        
-      </div>
+        )}
 
-      <div className="mt-5 flex flex-col lg:flex-row gap-3">
-        <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-105">
-          <Search size={16} className="text-gray-400" />
-          <input
-            placeholder="Search order ID, buyer..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full px-2 text-sm outline-none bg-transparent"
-          />
-        </div>
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {statCards.map((card) => {
+            const Icon = card.icon;
 
-        <select
-          value={paymentFilter}
-          onChange={(e) => {
-            setPaymentFilter(e.target.value);
-            setPage(1);
-          }}
-          className="h-11 w-full lg:w-47.5 rounded-xl border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
-        >
-          {["All Payments", "paid", "pending", "refunded"].map((x) => (
-            <option key={x} value={x}>
-              {x === "All Payments" ? x : statusLabel(x)}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-[#E5E5E5] bg-white p-2 overflow-x-auto">
-        <div className="flex items-center gap-2 min-w-max">
-          {tabs.map((t) => {
-            const active = statusFilter === t.key;
-            const Icon = t.icon;
             return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => {
-                  setStatusFilter(t.key);
-                  setPage(1);
-                }}
-                className={`h-10 rounded-xl px-4 text-sm font-extrabold inline-flex items-center gap-2 border transition ${
-                  active
-                    ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                    : "bg-white text-[#0B1F3A] border-transparent hover:bg-[#FFF8EC]"
-                }`}
+              <div
+                key={card.title}
+                className="border border-[#E5E5E5] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md rounded-sm"
               >
-                {Icon ? <Icon size={16} /> : <span className="inline-block w-4" />}
-                {t.label}
-                <span
-                  className={`ml-1 rounded-full px-2 py-0.5 text-xs font-extrabold ${
-                    active ? "bg-white/15" : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {t.count}
-                </span>
-              </button>
+                <div className="flex items-center justify-between">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-sm ${card.className}`}
+                  >
+                    <Icon size={18} />
+                  </div>
+
+                  <div className="text-2xl font-extrabold text-[#0B1F3A]">
+                    {card.value}
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm font-bold text-gray-600">
+                  {card.title}
+                </p>
+              </div>
             );
           })}
         </div>
-      </div>
 
-      <div className="mt-4 hidden md:block bg-white border border-[#E5E5E5] rounded-2xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-[#FFF8EC]">
-            <tr>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                ORDER ID
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                BUYER
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                ITEMS
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                AMOUNT
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                PAYMENT
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                STATUS
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                DATE
-              </th>
-              <th className="p-4 text-left text-xs font-extrabold text-gray-500">
-                ACTIONS
-              </th>
-            </tr>
-          </thead>
+        <div className="mt-5 border border-[#E5E5E5] bg-white p-4 shadow-sm rounded-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex h-11 w-full items-center border border-[#E5E5E5] bg-[#FAFAFA] px-3 rounded-sm lg:max-w-md">
+              <Search size={16} className="text-gray-400" />
+              <input
+                placeholder="Search order ID, buyer..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent px-3 text-sm font-medium text-[#0B1F3A] outline-none placeholder:text-gray-400"
+              />
+            </div>
 
-          <tbody>
-            {pagedOrders.map((o) => {
-              const paymentValue = o.payment_status || o.payment || "pending";
+            <select
+              value={paymentFilter}
+              onChange={(e) => {
+                setPaymentFilter(e.target.value);
+                setPage(1);
+              }}
+              className="h-11 w-full border border-[#E5E5E5] bg-[#FAFAFA] px-3 text-sm font-semibold text-[#0B1F3A] outline-none rounded-sm lg:w-48"
+            >
+              {["All Payments", "paid", "pending", "refunded"].map((x) => (
+                <option key={x} value={x}>
+                  {x === "All Payments" ? x : statusLabel(x)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-              const actionLabel =
-                o.status === "pending"
-                  ? "Mark Processing"
-                  : o.status === "processing"
-                  ? "Mark Shipped"
-                  : o.status === "shipped"
-                  ? "Mark Delivered"
-                  : null;
+          <div className="mt-4 overflow-x-auto">
+            <div className="flex min-w-max items-center gap-2">
+              {tabs.map((t) => {
+                const active = statusFilter === t.key;
+                const Icon = t.icon;
 
-              const actionNext =
-                o.status === "pending"
-                  ? "processing"
-                  : o.status === "processing"
-                  ? "shipped"
-                  : o.status === "shipped"
-                  ? "delivered"
-                  : null;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter(t.key);
+                      setPage(1);
+                    }}
+                    className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${
+                      active
+                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                    }`}
+                  >
+                    {Icon ? <Icon size={16} /> : <span className="w-4" />}
+                    {t.label}
+                    <span
+                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${
+                        active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {t.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-              return (
-                <tr
-                  key={o.id}
-                  className="border-t border-[#E5E5E5] hover:bg-[#FFF8EC] transition"
-                >
-                  <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">
-                      {o.id}
-                    </div>
-                  </td>
+        <div className="mt-5 hidden overflow-hidden border border-[#E5E5E5] bg-white shadow-sm rounded-sm md:block">
+          <table className="w-full text-sm">
+            <thead className="bg-[#0B1F3A]">
+              <tr>
+                {[
+                  "ORDER ID",
+                  "BUYER",
+                  "ITEMS",
+                  "AMOUNT",
+                  "PAYMENT",
+                  "STATUS",
+                  "DATE",
+                  "ACTIONS",
+                ].map((head) => (
+                  <th
+                    key={head}
+                    className="p-4 text-left text-xs font-extrabold tracking-wide text-white"
+                  >
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-                  <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">
-                      {o.buyer_name || "Unknown Buyer"}
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      Buyer ID: {o.user_id || "-"}
-                    </div>
-                  </td>
+            <tbody>
+              {pagedOrders.map((o) => {
+                const paymentValue = o.payment_status || o.payment || "pending";
 
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex -space-x-2">
-                        <div className="h-8 w-8 rounded-lg bg-gray-100 border border-white flex items-center justify-center text-sm">
+                const actionLabel =
+                  o.status === "pending"
+                    ? "Mark Processing"
+                    : o.status === "processing"
+                    ? "Mark Shipped"
+                    : o.status === "shipped"
+                    ? "Mark Delivered"
+                    : null;
+
+                const actionNext =
+                  o.status === "pending"
+                    ? "processing"
+                    : o.status === "processing"
+                    ? "shipped"
+                    : o.status === "shipped"
+                    ? "delivered"
+                    : null;
+
+                return (
+                  <tr
+                    key={o.id}
+                    className="border-t border-[#E5E5E5] transition hover:bg-[#FFF8EC]"
+                  >
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">{o.id}</p>
+                    </td>
+
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        {o.buyer_name || "Unknown Buyer"}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-gray-500">
+                        Buyer ID: {o.user_id || "-"}
+                      </p>
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] text-sm rounded-sm">
                           📦
                         </div>
-                      </div>
-
-                      <div>
-                        <div className="text-sm font-extrabold text-[#0B1F3A]">
-                          Order Items
+                        <div>
+                          <p className="font-extrabold text-[#0B1F3A]">
+                            Order Items
+                          </p>
+                          <p className="text-xs font-medium text-gray-500">
+                            View details
+                          </p>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          View details
-                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="p-4">
-                    <div className="font-extrabold text-[#0B1F3A]">
-                      ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {o.payment_method || "-"}
-                    </div>
-                  </td>
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500">
+                        {o.payment_method || "-"}
+                      </p>
+                    </td>
 
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${paymentStyle(
-                        paymentValue
-                      )}`}
-                    >
+                    <td className="p-4">
                       <span
-                        className={`h-2 w-2 rounded-full ${
-                          String(paymentValue).toLowerCase() === "paid"
-                            ? "bg-green-600"
-                            : String(paymentValue).toLowerCase() === "refunded"
-                            ? "bg-gray-500"
-                            : "bg-yellow-600"
-                        }`}
-                      />
-                      {statusLabel(paymentValue)}
-                    </span>
-                  </td>
-
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold ${statusStyle(
-                        o.status
-                      )}`}
-                    >
-                      {statusLabel(o.status)}
-                    </span>
-                  </td>
-
-                  <td className="p-4">
-                    <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {o.created_at
-                        ? new Date(o.created_at).toLocaleDateString()
-                        : "-"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {o.created_at
-                        ? new Date(o.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : ""}
-                    </div>
-                  </td>
-
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="h-10 w-10 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
-                        aria-label="View"
+                        className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
+                          paymentValue
+                        )}`}
                       >
-                        <Eye size={16} className="text-gray-600" />
-                      </button>
+                        {statusLabel(paymentValue)}
+                      </span>
+                    </td>
 
-                      {actionLabel && actionNext ? (
+                    <td className="p-4">
+                      <span
+                        className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
+                          o.status
+                        )}`}
+                      >
+                        {statusLabel(o.status)}
+                      </span>
+                    </td>
+
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        {o.created_at
+                          ? new Date(o.created_at).toLocaleDateString()
+                          : "-"}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500">
+                        {o.created_at
+                          ? new Date(o.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
+                      </p>
+                    </td>
+
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() =>
-                            dispatch(
-                              updateOrderStatus({
-                                orderId: o.id,
-                                status: actionNext,
-                              })
-                            )
-                          }
-                          className="h-10 rounded-xl bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95"
+                          className="inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
+                          aria-label="View"
                         >
-                          {actionLabel}
+                          <Eye size={16} className="text-gray-600" />
                         </button>
-                      ) : (
-                        <div className="h-10" />
-                      )}
-                    </div>
+
+                        {actionLabel && actionNext ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              dispatch(
+                                updateOrderStatus({
+                                  orderId: o.id,
+                                  status: actionNext,
+                                })
+                              )
+                            }
+                            className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
+                          >
+                            {actionLabel}
+                          </button>
+                        ) : (
+                          <div className="h-10" />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {pagedOrders.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center">
+                    <p className="text-sm font-bold text-[#0B1F3A]">
+                      No orders found
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Try changing search or filter options.
+                    </p>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="md:hidden space-y-3">
-        {pagedOrders.map((o) => {
-          const paymentValue = o.payment_status || o.payment || "pending";
-
-          return (
-            <div key={o.id} className="bg-white border rounded-lg p-3">
-              <div className="flex justify-between">
-                <p className="font-medium">{o.id}</p>
-                <span className={`text-xs px-2 py-1 rounded ${statusStyle(o.status)}`}>
-                  {statusLabel(o.status)}
-                </span>
-              </div>
-
-              <p className="text-sm mt-1">{o.buyer_name || "Unknown Buyer"}</p>
-              <p className="text-xs text-gray-400">Order Items</p>
-
-              <div className="flex justify-between mt-2 text-sm">
-                <span>
-                  ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
-                </span>
-                <span className={`px-2 py-1 rounded text-xs ${paymentStyle(paymentValue)}`}>
-                  {statusLabel(paymentValue)}
-                </span>
-              </div>
-
-              <div className="flex gap-2 mt-3">
-                <button className="flex-1 bg-gray-100 py-1 rounded text-sm">
-                  View
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-gray-500">
-        <div>{rangeText}</div>
-
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={safePage <= 1}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage <= 1
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-[#FFF8EC]"
-            }`}
-            aria-label="Previous page"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
-          {Array.from({ length: totalPages })
-            .slice(0, 5)
-            .map((_, idx) => {
-              const p = idx + 1;
-              const active = p === safePage;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPage(p)}
-                  className={`h-9 w-9 rounded-lg text-sm font-extrabold border ${
-                    active
-                      ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
-                      : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
-                  }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
-
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={safePage >= totalPages}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage >= totalPages
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-[#FFF8EC]"
-            }`}
-            aria-label="Next page"
-          >
-            <ChevronRight size={16} />
-          </button>
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function StatCard({ title, value, color }) {
-  return (
-    <div className="bg-white border border-[#E5E5E5] rounded-lg p-3 flex items-center gap-3 hover:shadow-md transition">
-      <div className={`w-8 h-8 rounded-md ${color}`} />
-      <div>
-        <p className="text-xs text-gray-500">{title}</p>
-        <p className="font-semibold text-sm">{value}</p>
+        <div className="mt-5 space-y-3 md:hidden">
+          {pagedOrders.map((o) => {
+            const paymentValue = o.payment_status || o.payment || "pending";
+
+            return (
+              <div
+                key={o.id}
+                className="border border-[#E5E5E5] bg-white p-4 shadow-sm rounded-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-extrabold text-[#0B1F3A]">{o.id}</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-600">
+                      {o.buyer_name || "Unknown Buyer"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
+                      o.status
+                    )}`}
+                  >
+                    {statusLabel(o.status)}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-[#E5E5E5] pt-3">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Amount</p>
+                    <p className="font-extrabold text-[#0B1F3A]">
+                      ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
+                      paymentValue
+                    )}`}
+                  >
+                    {statusLabel(paymentValue)}
+                  </span>
+                </div>
+
+                <button className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] text-sm font-extrabold text-[#0B1F3A] rounded-sm">
+                  <Eye size={15} />
+                  View Details
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-4 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+          <div className="font-semibold">{rangeText}</div>
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={safePage <= 1}
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
+                safePage <= 1
+                  ? "cursor-not-allowed opacity-40"
+                  : "hover:bg-[#FFF8EC]"
+              }`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            {Array.from({ length: totalPages })
+              .slice(0, 5)
+              .map((_, idx) => {
+                const p = idx + 1;
+                const active = p === safePage;
+
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${
+                      active
+                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={safePage >= totalPages}
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
+                safePage >= totalPages
+                  ? "cursor-not-allowed opacity-40"
+                  : "hover:bg-[#FFF8EC]"
+              }`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
