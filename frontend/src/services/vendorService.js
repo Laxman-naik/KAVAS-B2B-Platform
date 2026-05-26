@@ -63,6 +63,13 @@ export const loginVendorAPI = async (data) => {
       localStorage.setItem( "onboarding_step", response.onboarding_step || 1 );
     }
 
+      console.log("LOGIN RESPONSE:", res.data);
+      const role = localStorage.getItem("role");
+  console.log("LOCAL ROLE:", localStorage.getItem("role"));
+  console.log("ACCESS TOKEN:",localStorage.getItem(`${role}_accessToken`));
+  console.log("REFRESH TOKEN:", localStorage.getItem(`${role}_refreshToken`));
+
+
     return response;
 
   } catch (err) {
@@ -83,7 +90,7 @@ export const loginVendorAPI = async (data) => {
 
 export const refreshTokenAPI = async () => {
   const refreshToken = localStorage.getItem("vendor_refreshToken");
-  const res = await axios.post("/api/vendor/refresh", { refreshToken });
+  const res = await authapi.post("/api/vendor/refresh", { refreshToken });
   return res.data;
 };
 

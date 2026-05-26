@@ -68,8 +68,7 @@ export const loginVendor = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const res = await loginVendorAPI(data);
-      console.log("LOGIN THUNK RESPONSE:", res);
-      return res;
+      return res; // service already returns clean payload
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message || err.message || "Login failed"
