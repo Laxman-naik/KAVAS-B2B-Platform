@@ -306,9 +306,9 @@ exports.createProduct = async (req, res) => {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
         [
           product.id,
-          v.variant_type || null,
-          v.variant_value || null,
-          `${v.variant_type || ""} - ${v.variant_value || ""}`,
+          v.variant_type || v.variantName || null,
+          v.variant_value || v.value || null,
+          `${v.variant_type || v.variantName || ""} - ${v.variant_value || v.value || ""}`,
           v.sku || null,
           v.price || 0,
           v.mrp || 0,

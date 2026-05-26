@@ -237,7 +237,7 @@ const Navbar = () => {
               <div className="flex items-center gap-4 text-white/85">
                 <span className="inline-flex items-center gap-2">
                   <Phone className="h-4 w-4 text-[#D4AF37]" />
-                  +91 0000000000
+                  +91 6302259849
                 </span>
                 <span className="text-white/35">|</span>
                 <Link
@@ -285,26 +285,31 @@ const Navbar = () => {
 
               <div className="hidden md:flex flex-1 justify-center min-w-0">
                 <div ref={searchRef} className="w-full max-w-3xl px-2 relative">
-                  <div
-                    className="flex items-stretch rounded-sm overflow-hidden border border-white/15 bg-white shadow-lg relative"
-                  >
-                    <input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={handleSearchKeyDown}
-                      onFocus={() => {
-                        if (debouncedQuery) setShowSearchDropdown(true);
-                      }}
-                      placeholder="Search for products, categories, brands..."
-                      className="h-11 w-full bg-white text-[#1A1A1A] px-4 text-sm outline-none"
-                    />
-                    <button
-                      onClick={handleSearchSubmit}
-                      className="h-11 w-14 flex justify-center items-center bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] shrink-0"
-                      aria-label="Search"
+                  <div className="relative w-full max-w-2xl ml-7">
+                    <div
+                      className=" flex items-center h-11 rounded-full border border-[#D4AF37]/40 bg-white backdrop-blur-md overflow-hidden transition-all duration-300 hover:border-[#D4AF37] focus-within:border-[#D4AF37] "
                     >
-                      <Search size={18} />
-                    </button>
+
+                      <input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        onFocus={() => {
+                          if (debouncedQuery) setShowSearchDropdown(true);
+                        }}
+                        placeholder="Search products, categories, brands..."
+                        className=" flex-1  h-full bg-white  px-3 text-sm text-black placeholder:text-gray-400 outline-none"
+                      />
+
+                      {/* Search Button */}
+                      <button
+                        onClick={handleSearchSubmit}
+                        aria-label="Search"
+                        className=" h-9 w-9 mr-2 rounded-full flex items-center justify-center bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#e0bb45] transition-all duration-300 "
+                      >
+                        <Search size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   {showSearchDropdown && (
@@ -734,25 +739,22 @@ const Navbar = () => {
               </div>
 
               <div
-                className={`fixed inset-0 z-60 lg:hidden ${
-                  mobileMenu ? "" : "pointer-events-none"
-                }`}
+                className={`fixed inset-0 z-60 lg:hidden ${mobileMenu ? "" : "pointer-events-none"
+                  }`}
                 aria-hidden={!mobileMenu}
               >
                 <button
                   type="button"
                   onClick={() => setMobileMenu(false)}
-                  className={`absolute inset-0 bg-black/40 transition-opacity ${
-                    mobileMenu ? "opacity-100" : "opacity-0"
-                  }`}
+                  className={`absolute inset-0 bg-black/40 transition-opacity ${mobileMenu ? "opacity-100" : "opacity-0"
+                    }`}
                   aria-label="Close menu"
                   tabIndex={mobileMenu ? 0 : -1}
                 />
 
                 <div
-                  className={`absolute left-0 top-0 h-full w-[min(22rem,85vw)] bg-white text-black shadow-2xl transition-transform duration-300 dark:bg-gray-800 dark:text-white ${
-                    mobileMenu ? "translate-x-0" : "-translate-x-full"
-                  }`}
+                  className={`absolute left-0 top-0 h-full w-[min(22rem,85vw)] bg-white text-black shadow-2xl transition-transform duration-300 dark:bg-gray-800 dark:text-white ${mobileMenu ? "translate-x-0" : "-translate-x-full"
+                    }`}
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E5E5] dark:border-gray-700">
                     <div className="font-semibold text-[#0B1F3A] dark:text-white">
@@ -1014,7 +1016,7 @@ const Navbar = () => {
           </div>
         </div>
 
-       <SubNavbar />
+        <SubNavbar />
       </div>
 
       {mode === "login" ? (

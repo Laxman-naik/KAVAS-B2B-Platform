@@ -457,7 +457,7 @@ export const loginVendor = async (req, res) => {
       next_action,
       onboarding_step,
       status: vendor.status,
-      role:"vendoe",
+      role:"vendor",
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,

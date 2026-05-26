@@ -69,8 +69,8 @@ const Hero = () => {
 
   return (
     <div className="overflow-x-hidden bg-white">
-      <div className="w-full">
-        <div className="relative overflow-hidden bg-[#0B1F3A]">
+    <div className="px-3 sm:px-6 lg:px:8 w-full mt-3 ">
+        <div className="relative rounded-sm overflow-hidden bg-[#0B1F3A]">
 
           <div
             className="flex w-full transition-transform duration-700 ease-in-out"
@@ -80,9 +80,9 @@ const Hero = () => {
           >
             {slides.map((slide) => (
               <div
-    key={slide.id}
-    className="relative w-full shrink-0"
-  >
+                key={slide.id}
+                className="relative w-full shrink-0"
+              >
                 <img
                   src={slide.image}
                   alt="KAVAS Wholesale Hub"
@@ -198,8 +198,8 @@ const Hero = () => {
                 key={index}
                 onClick={() => setCurrent(index)}
                 className={`h-2.5 rounded-full transition-all duration-300 ${current === index
-                    ? "w-8 bg-[#D4AF37]"
-                    : "w-2.5 bg-white/40"
+                  ? "w-8 bg-[#D4AF37]"
+                  : "w-2.5 bg-white/40"
                   }`}
               />
             ))}

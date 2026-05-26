@@ -20,7 +20,7 @@ export default function TrendingProducts() {
     <div className="bg-white">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex  justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="h-px w-5 bg-[#D4AF37]/60"></span>
@@ -30,8 +30,8 @@ export default function TrendingProducts() {
               </div>
               <span className="h-px w-5 bg-[#D4AF37]/60"></span>
             </div>
-
-            <h2 className="mt-1 text-lg sm:text-3xl font-extrabold text-[#0B1F3A]">
+            
+            <h2 className="mt-1 text-lg  sm:text-3xl font-extrabold text-[#0B1F3A]">
               Trending Products
             </h2>
           </div>

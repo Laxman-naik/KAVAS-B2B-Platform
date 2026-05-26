@@ -121,6 +121,7 @@ export const fetchVendorProfile = createAsyncThunk(
       console.log(res);
       console.log(res.data);
       return res.data;
+
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
