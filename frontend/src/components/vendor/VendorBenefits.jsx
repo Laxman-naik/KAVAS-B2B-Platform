@@ -35,7 +35,7 @@ const VendorBenefits = () => {
           <div className="lg:col-span-6">
             <div className="relative overflow-hidden rounded-sm border border-[#E5E5E5] bg-white">
               <Image
-                src="/vendor-benefits.jpg"
+                src="/kavashub.png"
                 alt="Vendor success"
                 width={1200}
                 height={800}

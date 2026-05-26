@@ -44,13 +44,12 @@
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 
 import VendorSidebar from "../../components/vendor/VendorSidebar";
 import VendorHeader from "../../components/vendor/VendorHeader";
-
 import { fetchVendorme } from "../../store/slices/vendorSlice";
 
 const Layout = ({ children }) => {
@@ -58,23 +57,18 @@ const Layout = ({ children }) => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const accessToken = useSelector(
-    (state) => state.vendor.accessToken
-  );
+  const [collapsed, setCollapsed] = useState(false);
+
+  const accessToken = useSelector((state) => state.vendor.accessToken);
 
   const hideLayout =
     pathname === "/vendor" ||
     pathname.startsWith("/vendor/vendorlogin") ||
     pathname.startsWith("/vendor/vendorregister") ||
-    pathname.startsWith(
-      "/vendor/vendorbusinessdetails"
-    ) ||
-    pathname.startsWith(
-      "/vendor/vendorstoredetails"
-    );
+    pathname.startsWith("/vendor/vendorbusinessdetails") ||
+    pathname.startsWith("/vendor/vendorstoredetails");
 
   useEffect(() => {
-    // ✅ Protected vendor routes
     if (!hideLayout && !accessToken) {
       router.push("/vendor/vendorlogin");
       return;
@@ -83,20 +77,20 @@ const Layout = ({ children }) => {
     if (accessToken) {
       dispatch(fetchVendorme());
     }
-  }, [
-    accessToken,
-    dispatch,
-    router,
-    hideLayout,
-  ]);
+  }, [accessToken, dispatch, router, hideLayout]);
 
   return (
     <div className="flex">
-      {!hideLayout && <VendorSidebar />}
+      {!hideLayout && (
+        <VendorSidebar
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+        />
+      )}
 
       <div
-        className={`flex-1 ${
-          !hideLayout ? "ml-64" : ""
+        className={`flex-1 transition-all duration-200 ${
+          !hideLayout ? (collapsed ? "ml-20" : "ml-64") : ""
         }`}
       >
         {!hideLayout && <VendorHeader />}

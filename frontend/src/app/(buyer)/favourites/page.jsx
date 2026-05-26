@@ -193,7 +193,7 @@ const Page = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-[#0B1F3A]">
+      <div className="min-h-screen ">
         <div className="mx-auto bg-white border rounded-sm border-white/10">
           <div className="text-center py-16 bg-white rounded-sm">
             <div className="text-5xl mb-3">❤️</div>

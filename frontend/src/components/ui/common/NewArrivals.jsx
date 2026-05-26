@@ -101,7 +101,7 @@ export default function NewArrivals() {
                 return (
                   <div
                     key={productId ?? `${title}-${idx}`}
-                    className="group h-full bg-white rounded-2xl border border-[#E5E5E5] shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col"
+                    className="group h-full bg-white rounded-sm border border-[#E5E5E5] shadow-sm hover:shadow-lg transition overflow-hidden flex flex-col"
                   >
                     <div className="relative w-full h-48 sm:h-52 bg-[#FFF8EC] overflow-hidden">
                       <button
