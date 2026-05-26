@@ -439,11 +439,11 @@ export const loginVendor = async (req, res) => {
     }
 
     // optional: verify email/phone
-    if (!vendor.email_verified || !vendor.phone_verified) {
-      return res.status(403).json({
-        message: "Verify email & phone first",
-      });
-    }
+    if (!vendor.phone_verified) {
+  return res.status(403).json({
+    message: "Phone verification required",
+  });
+}
 
     // ✅ update last login
     await db.query(
