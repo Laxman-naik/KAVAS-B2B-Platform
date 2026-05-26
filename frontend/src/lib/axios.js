@@ -377,25 +377,11 @@ const getRole = () => {
 
 /* ================= TOKENS ================= */
 
-// const getAccessToken = () => {
-//   const role = getRole();
-//   console.log("ROLE:", role);
-//   if (!role) return null;
-//   return localStorage.getItem(`${role}_accessToken`);
-// };
-
 const getAccessToken = () => {
   const role = getRole();
-
   console.log("ROLE:", role);
-
   if (!role) return null;
-
-  const token = localStorage.getItem(`${role}_accessToken`);
-
-  console.log("ACCESS TOKEN:", token);
-
-  return token;
+  return localStorage.getItem(`${role}_accessToken`);
 };
 
 const getRefreshToken = () => {

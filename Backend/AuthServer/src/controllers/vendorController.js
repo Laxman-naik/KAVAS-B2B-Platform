@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import axios from "axios";
 import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 const otpStore = new Map();
 
@@ -938,6 +939,107 @@ export const getBankDetails = async (req, res) => {
   }
 };
 
+// export const upsertStoreAndPickup = async (req, res) => {
+//   const client = await db.connect();
+
+//   try {
+//     await client.query("BEGIN");
+
+//     const onboarding_id = req.user?.onboarding_id;
+
+//     if (!onboarding_id) {
+//       return res.status(400).json({
+//         message: "Onboarding ID missing",
+//       });
+//     }
+
+//     const {
+//       store_image,
+//       store_logo,
+//       tagline,
+//       description,
+//       address,
+//       pincode,
+//       city,
+//       state,
+//       is_store_address = true,
+//     } = req.body;
+
+//     if (!address || !pincode || !city || !state) {
+//       return res.status(400).json({
+//         message: "Pickup address fields are required",
+//       });
+//     }
+
+//     // STORE
+//     const storeResult = await client.query(
+//       `INSERT INTO vendor_store_details (
+//         onboarding_id, store_image, store_logo, tagline, description
+//       )
+//       VALUES ($1,$2,$3,$4,$5)
+//       ON CONFLICT (onboarding_id)
+//       DO UPDATE SET
+//         store_image = EXCLUDED.store_image,
+//         store_logo = EXCLUDED.store_logo,
+//         tagline = EXCLUDED.tagline,
+//         description = EXCLUDED.description
+//       RETURNING *;`,
+//       [
+//         onboarding_id,
+//         store_image || null,
+//         store_logo || null,
+//         tagline || null,
+//         description || null,
+//       ]
+//     );
+
+//     // PICKUP
+//     const pickupResult = await client.query(
+//       `INSERT INTO vendor_pickup_addresses (
+//         onboarding_id, address, pincode, city, state, is_store_address
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6)
+//       ON CONFLICT (onboarding_id)
+//       DO UPDATE SET
+//         address = EXCLUDED.address,
+//         pincode = EXCLUDED.pincode,
+//         city = EXCLUDED.city,
+//         state = EXCLUDED.state,
+//         is_store_address = EXCLUDED.is_store_address
+//       RETURNING *;`,
+//       [onboarding_id, address, pincode, city, state, is_store_address]
+//     );
+
+//     // 🔥 ONBOARDING UPDATE (CORRECT WAY)
+//     await client.query(
+//       `UPDATE vendor_onboarding
+//        SET 
+//          current_step = 3,
+//          status = 'in_review',
+//          submitted_at = NOW(),
+//          updated_at = NOW()
+//        WHERE id = $1`,
+//       [onboarding_id]
+//     );
+
+//     await client.query("COMMIT");
+
+//     return res.status(200).json({
+//       message: "Store & pickup details saved successfully",
+//       data: {
+//         store: storeResult.rows[0],
+//         pickup: pickupResult.rows[0],
+//       },
+//     });
+
+//   } catch (err) {
+//     await client.query("ROLLBACK");
+//     console.error(err);
+//     return res.status(500).json({ message: "Server error" });
+//   } finally {
+//     client.release();
+//   }
+// };
 export const upsertStoreAndPickup = async (req, res) => {
   const client = await db.connect();
 
@@ -953,8 +1055,6 @@ export const upsertStoreAndPickup = async (req, res) => {
     }
 
     const {
-      store_image,
-      store_logo,
       tagline,
       description,
       address,
@@ -970,32 +1070,71 @@ export const upsertStoreAndPickup = async (req, res) => {
       });
     }
 
-    // STORE
+    let storeImageUrl = null;
+    let storeLogoUrl = null;
+
+    // ================= STORE IMAGE =================
+
+    if (req.files?.store_image?.[0]) {
+      const uploadedImage = await uploadToCloudinary(
+        req.files.store_image[0],
+        "kavas/store-images"
+      );
+
+      storeImageUrl = uploadedImage.secure_url;
+    }
+
+    // ================= STORE LOGO =================
+
+    if (req.files?.store_logo?.[0]) {
+      const uploadedLogo = await uploadToCloudinary(
+        req.files.store_logo[0],
+        "kavas/store-logos"
+      );
+
+      storeLogoUrl = uploadedLogo.secure_url;
+    }
+
+    // ================= STORE =================
+
     const storeResult = await client.query(
-      `INSERT INTO vendor_store_details (
-        onboarding_id, store_image, store_logo, tagline, description
+      `
+      INSERT INTO vendor_store_details (
+        onboarding_id,
+        store_image,
+        store_logo,
+        tagline,
+        description
       )
       VALUES ($1,$2,$3,$4,$5)
       ON CONFLICT (onboarding_id)
       DO UPDATE SET
-        store_image = EXCLUDED.store_image,
-        store_logo = EXCLUDED.store_logo,
+        store_image = COALESCE(EXCLUDED.store_image, vendor_store_details.store_image),
+        store_logo = COALESCE(EXCLUDED.store_logo, vendor_store_details.store_logo),
         tagline = EXCLUDED.tagline,
         description = EXCLUDED.description
-      RETURNING *;`,
+      RETURNING *;
+      `,
       [
         onboarding_id,
-        store_image || null,
-        store_logo || null,
+        storeImageUrl,
+        storeLogoUrl,
         tagline || null,
         description || null,
       ]
     );
 
-    // PICKUP
+    // ================= PICKUP =================
+
     const pickupResult = await client.query(
-      `INSERT INTO vendor_pickup_addresses (
-        onboarding_id, address, pincode, city, state, is_store_address
+      `
+      INSERT INTO vendor_pickup_addresses (
+        onboarding_id,
+        address,
+        pincode,
+        city,
+        state,
+        is_store_address
       )
       VALUES ($1,$2,$3,$4,$5,$6)
       ON CONFLICT (onboarding_id)
@@ -1005,19 +1144,30 @@ export const upsertStoreAndPickup = async (req, res) => {
         city = EXCLUDED.city,
         state = EXCLUDED.state,
         is_store_address = EXCLUDED.is_store_address
-      RETURNING *;`,
-      [onboarding_id, address, pincode, city, state, is_store_address]
+      RETURNING *;
+      `,
+      [
+        onboarding_id,
+        address,
+        pincode,
+        city,
+        state,
+        is_store_address,
+      ]
     );
 
-    // 🔥 ONBOARDING UPDATE (CORRECT WAY)
+    // ================= ONBOARDING =================
+
     await client.query(
-      `UPDATE vendor_onboarding
-       SET 
-         current_step = 3,
-         status = 'in_review',
-         submitted_at = NOW(),
-         updated_at = NOW()
-       WHERE id = $1`,
+      `
+      UPDATE vendor_onboarding
+      SET
+        current_step = 3,
+        status = 'in_review',
+        submitted_at = NOW(),
+        updated_at = NOW()
+      WHERE id = $1
+      `,
       [onboarding_id]
     );
 
@@ -1033,8 +1183,14 @@ export const upsertStoreAndPickup = async (req, res) => {
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
-    return res.status(500).json({ message: "Server error" });
+
+    console.error("STORE/PICKUP ERROR:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+      error: err.message,
+    });
+
   } finally {
     client.release();
   }

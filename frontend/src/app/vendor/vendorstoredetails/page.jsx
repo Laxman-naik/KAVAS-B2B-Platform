@@ -40,6 +40,9 @@ export default function VendorStoreDetailsPage() {
   const [storeImageUrl, setStoreImageUrl] = useState("");
   const [storeLogoUrl, setStoreLogoUrl] = useState("");
 
+  const [storeImageFile, setStoreImageFile] = useState(null);
+  const [storeLogoFile, setStoreLogoFile] = useState(null);
+
   const [activeSection, setActiveSection] = useState("store_info");
 
   const setValue = (key) => (e) => {
@@ -152,56 +155,94 @@ export default function VendorStoreDetailsPage() {
 
   const onPickFile = (type) => (e) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
-    const url = URL.createObjectURL(file);
+
+    const previewUrl = URL.createObjectURL(file);
+
     if (type === "store_image") {
+      setStoreImageFile(file);
+
       setStoreImageUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
+        if (prev?.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return previewUrl;
       });
     }
+
     if (type === "store_logo") {
+      setStoreLogoFile(file);
+
       setStoreLogoUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
+        if (prev?.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return previewUrl;
       });
     }
   };
 
   const removeFile = (type) => {
     if (type === "store_image") {
-      setStoreImageUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return "";
-      });
+      if (storeImageUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(storeImageUrl);
+      }
+
+      setStoreImageUrl("");
+      setStoreImageFile(null);
     }
+
     if (type === "store_logo") {
-      setStoreLogoUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return "";
-      });
+      if (storeLogoUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(storeLogoUrl);
+      }
+
+      setStoreLogoUrl("");
+      setStoreLogoFile(null);
     }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
+
     if (!(storeInfoComplete && pickupAddressComplete)) return;
 
     try {
-      await dispatch(saveStoreDetails({
-        tagline: form.tagline,
-        description: form.description,
-        address: form.pickupAddress,
-        pincode: form.pincode,
-        city: form.city,
-        state: form.state,
-        store_image: storeImageUrl,
-        store_logo: storeLogoUrl,
-      })).unwrap();
+      const formData = new FormData();
+
+      // STORE INFO
+      formData.append("tagline", form.tagline);
+      formData.append("description", form.description);
+
+      // PICKUP INFO
+      formData.append("address", form.pickupAddress);
+      formData.append("pincode", form.pincode);
+      formData.append("city", form.city);
+      formData.append("state", form.state);
+      formData.append("is_store_address", form.sameAsStore);
+
+      // FILES
+      if (storeImageFile) {
+        formData.append("store_image", storeImageFile);
+      }
+
+      if (storeLogoFile) {
+        formData.append("store_logo", storeLogoFile);
+      }
+
+      await dispatch(saveStoreDetails(formData)).unwrap();
+
       setShowSuccess(true);
+
     } catch (err) {
       console.error("Save failed:", err);
-      alert("Failed to save store details");
+
+      alert(
+        err?.message ||
+        err?.response?.data?.message ||
+        "Failed to save store details"
+      );
     }
   };
 
@@ -602,8 +643,8 @@ export default function VendorStoreDetailsPage() {
                     type="submit"
                     disabled={!(storeInfoComplete && pickupAddressComplete)}
                     className={`h-11 rounded-md px-6 text-sm font-extrabold text-white hover:opacity-95 ${storeInfoComplete && pickupAddressComplete
-                        ? "bg-[#0B1F3A]"
-                        : "bg-[#0B1F3A]/40 cursor-not-allowed"
+                      ? "bg-[#0B1F3A]"
+                      : "bg-[#0B1F3A]/40 cursor-not-allowed"
                       }`}
                   >
                     Submit
