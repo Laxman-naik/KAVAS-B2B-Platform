@@ -36,21 +36,7 @@ router.get("/getbusiness", authMiddleware, getBusinessDetails);
 router.post("/bank", authMiddleware, upsertBankDetails);
 router.get("/getbank", authMiddleware, getBankDetails);
 // router.post("/store-details", authMiddleware, upsertStoreAndPickup);
-router.post(
-  "/store-details",
-  authMiddleware,
-  upload.fields([
-    {
-      name: "store_image",
-      maxCount: 1,
-    },
-    {
-      name: "store_logo",
-      maxCount: 1,
-    },
-  ]),
-  upsertStoreAndPickup
-);
+router.post("/store-details",authMiddleware,upload.fields([{name: "store_image",maxCount: 1,},{name: "store_logo",maxCount: 1,},]),upsertStoreAndPickup );
 router.get("/getstore", authMiddleware, getStoreAndPickup)
 router.get("/state", authMiddleware, getOnboardingState);
 router.patch("/step", authMiddleware, updateOnboardingStep);
