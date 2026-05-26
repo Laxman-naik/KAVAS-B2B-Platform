@@ -379,6 +379,7 @@ const getRole = () => {
 
 const getAccessToken = () => {
   const role = getRole();
+  console.log("ROLE:", role);
   if (!role) return null;
   return localStorage.getItem(`${role}_accessToken`);
 };
