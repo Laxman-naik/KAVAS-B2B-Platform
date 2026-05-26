@@ -481,7 +481,7 @@ export const loginVendor = async (req, res) => {
         onboarding_id: vendor.onboarding_id,
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: "60m" }
+      { expiresIn: "1m" }
     );
 
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
