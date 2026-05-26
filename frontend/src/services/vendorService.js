@@ -5,7 +5,34 @@ export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", d
 
 export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data);
 
-export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data);
+// export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data);
+export const registerVendorAPI = async (data) => {
+  const res = await authapi.post(
+    "/api/vendor/register",
+    data
+  );
+
+  const response = res.data;
+
+  if (
+    typeof window !== "undefined" &&
+    response?.accessToken
+  ) {
+    localStorage.setItem("role", "vendor");
+
+    localStorage.setItem(
+      "vendor_accessToken",
+      response.accessToken
+    );
+
+    localStorage.setItem(
+      "vendor_refreshToken",
+      response.refreshToken
+    );
+  }
+
+  return res;
+};
 
 export const loginVendorAPI = async (data) => {
   try {

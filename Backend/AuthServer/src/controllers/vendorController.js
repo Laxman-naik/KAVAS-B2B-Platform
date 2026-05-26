@@ -3,7 +3,6 @@ import { randomBytes } from "crypto";
 import jwt from "jsonwebtoken";
 import db from "../config/db.js";
 import axios from "axios";
-import { sendEmailOtp } from "../utils/emailService.js";
 import { verifyRefreshToken, generateAccessToken } from "../utils/jwt.js";
 
 const otpStore = new Map();
@@ -309,15 +308,71 @@ export const registerVendor = async (req, res) => {
 
     await client.query("COMMIT");
 
+    /* ================= TOKENS ================= */
+
+const accessToken = jwt.sign(
+  {
+    vendor_id: vendorId,
+    onboarding_id: onboarding.rows[0].id,
+  },
+  process.env.ACCESS_SECRET,
+  { expiresIn: "60m" }
+);
+
+const refreshToken = jwt.sign(
+  {
+    vendor_id: vendorId,
+  },
+  process.env.REFRESH_SECRET,
+  { expiresIn: "7d" }
+);
+
+/* ================= SESSION ================= */
+
+await db.query(
+  `
+    INSERT INTO vendor_sessions
+    (
+      vendor_id,
+      refresh_token,
+      user_agent,
+      ip_address,
+      expires_at
+    )
+    VALUES ($1,$2,$3,$4,NOW() + INTERVAL '7 days')
+  `,
+  [
+    vendorId,
+    refreshToken,
+    req.headers["user-agent"] || null,
+    req.ip || null,
+  ]
+);
+
     // ================= CLEANUP OTP =================
 
     otpStore.delete(`phone:${phone}`);
 
     return res.status(201).json({
-      message: "Registered successfully",
-      onboarding_id: onboarding.rows[0].id,
-      vendor_id: vendorId,
-    });
+  message: "Registered successfully",
+
+  role: "vendor",
+
+  accessToken,
+  refreshToken,
+
+  onboarding_id: onboarding.rows[0].id,
+
+  onboarding_step: 1,
+
+  next_action: "business",
+
+  vendor: {
+    id: vendorId,
+    email,
+    phone,
+  },
+});
 
   } catch (err) {
     await client.query("ROLLBACK");
