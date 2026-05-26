@@ -9,8 +9,8 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 
 router.post("/from-cart", authMiddleware, createOrderFromCart);
 router.post("/", authMiddleware, createOrder);
-router.get("/", getUserOrders);
-router.get("/:id", getOrderDetails);
+router.get("/", authMiddleware, getUserOrders);
+router.get("/:id", authMiddleware, getOrderDetails);
 router.put("/:id/status", updateOrderStatus);
 router.delete("/clear", clearCartAfterOrder )
 router.get("/by-id/:orderId", getOrderById);

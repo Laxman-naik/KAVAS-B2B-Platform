@@ -18,13 +18,13 @@ exports.createOrderFromCart = async (req, res) => {
     await client.query("BEGIN");
 
     const addressRes = await client.query(
-  `SELECT id
+      `SELECT id
    FROM addresses
    WHERE user_id = $1
      AND is_default = true
    LIMIT 1`,
-  [userId]
-);
+      [userId]
+    );
 
     if (!addressRes.rows.length) {
       await client.query("ROLLBACK");
@@ -60,7 +60,7 @@ exports.createOrderFromCart = async (req, res) => {
     const cartId = cartRes.rows[0].id;
 
     const itemsRes = await client.query(
-  `SELECT 
+      `SELECT 
      ci.*, 
      p.stock,
      p.organization_id,
@@ -72,8 +72,8 @@ exports.createOrderFromCart = async (req, res) => {
      ON p.organization_id = o.id
    WHERE ci.cart_id = $1
    FOR UPDATE`,
-  [cartId]
-);
+      [cartId]
+    );
 
     if (!itemsRes.rows.length) {
       throw new Error("Cart is empty");
@@ -131,13 +131,13 @@ exports.createOrderFromCart = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *`,
         [
-         userId,
-         supplierOrgId,
-         totalAmount,
-         status,
-         deliveryStatus,
-         idempotency_key,
-         shippingAddressId,
+          userId,
+          supplierOrgId,
+          totalAmount,
+          status,
+          deliveryStatus,
+          idempotency_key,
+          shippingAddressId,
         ]
       );
 
@@ -148,7 +148,7 @@ exports.createOrderFromCart = async (req, res) => {
           `INSERT INTO order_items 
            (order_id, product_id, quantity, price, organization_name)
             VALUES ($1, $2, $3, $4, $5)`,
-          [order.id, item.product_id, item.quantity, item.price,item.organization_name,]
+          [order.id, item.product_id, item.quantity, item.price, item.organization_name,]
         );
 
         await client.query(
@@ -190,20 +190,26 @@ exports.createOrderFromCart = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      `
       SELECT 
         o.*,
         u.full_name AS buyer_name
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.user_id = $1
       ORDER BY o.created_at DESC
-    `);
+      `,
+      [userId]
+    );
 
     res.json({
       orders: result.rows,
     });
   } catch (err) {
-    console.error("GET ORDERS ERROR:", err);
+    console.error("GET USER ORDERS ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
