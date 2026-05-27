@@ -49,10 +49,14 @@ export const updateProduct = async (id, data) => {
 };
 
 // ================= GET VENDOR PRODUCTS =================
-export const getVendorProductsAPI = async (vendorId) => {
-  const res = await productapi.get(`/api/products/vendor/${vendorId}`, {
-    skipAuth: true,
-  });
+export const getVendorProductsAPI = async (organizationId) => {
+  const res = await productapi.get(
+    `/api/products/vendor/${organizationId}`,
+    {
+      skipAuth: true,
+    }
+  );
+
   return res.data;
 };
 

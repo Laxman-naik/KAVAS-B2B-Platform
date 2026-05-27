@@ -17,7 +17,9 @@ export const fetchProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getProducts();
-      return res.data;
+      console.log("ALL PRODUCTS RESPONSE:", res);
+
+      return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -123,8 +125,9 @@ export const fetchNewArrivals = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getNewArrivalsAPI();
+      console.log("NEW ARRIVALS RESPONSE:", res);
 
-      return res.data || [];
+      return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -138,7 +141,9 @@ export const fetchTrendingProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getTrendingProductsAPI();
-      return res.data?.data || [];
+      console.log("TRENDING PRODUCTS RESPONSE:", res);
+
+      return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -146,13 +151,13 @@ export const fetchTrendingProducts = createAsyncThunk(
 );
 
 export const fetchVendorProducts = createAsyncThunk(
-  "products/vendorProducts",
-  async (vendorId, thunkAPI) => {
+  "products/fetchVendorProducts",
+  async (organizationId, thunkAPI) => {
     try {
-      const res = await getVendorProductsAPI(vendorId);
+      const res = await getVendorProductsAPI(organizationId);
       console.log("VENDOR PRODUCTS RESPONSE:", res);
 
-      return res || [];
+      return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -162,6 +167,8 @@ export const fetchVendorProducts = createAsyncThunk(
 const productSlice = createSlice({
   name: "products",
   initialState: {
+    trending: [],
+    newArrivals: [],
     products: [],
     vendorProducts: [],
     product: null,

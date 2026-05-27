@@ -994,8 +994,16 @@ exports.getSingleProduct = async (req, res) => {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `SELECT * FROM products 
-       WHERE id = $1 AND is_active = true`,
+      `
+    SELECT
+    p.*,
+    o.name AS organization_name
+    FROM products p
+    LEFT JOIN organizations o
+    ON p.organization_id = o.id
+    WHERE p.id = $1
+    AND p.is_active = true
+  `,
       [id]
     );
 
@@ -1077,8 +1085,6 @@ exports.getProductsByCategory = async (req, res) => {
   try {
     const { categorySlug } = req.params;
 
-    const cleanText = categorySlug.replaceAll("-", " ");
-
     const result = await pool.query(
       `
       SELECT DISTINCT ON (p.id)
@@ -1091,20 +1097,22 @@ exports.getProductsByCategory = async (req, res) => {
         p.moq,
         p.stock,
         p.unit,
+        p.weight,
+        p.dispatch_time_days,
         p.created_at,
+        c.id AS category_id,
+        c.slug AS category_slug,
+        NULL::text AS subcategory_slug,
         pi.image_url
       FROM products p
+      JOIN product_categories pc ON pc.product_id = p.id
+      JOIN categories c ON c.id = pc.category_id
       LEFT JOIN product_images pi ON pi.product_id = p.id
-      WHERE p.is_active = true
-      AND (
-        p.name ILIKE $1
-        OR p.description ILIKE $1
-        OR p.slug ILIKE $1
-        OR p.sku ILIKE $1
-      )
-      ORDER BY p.id, p.created_at DESC
+      WHERE c.slug = $1
+        AND p.is_active = true
+      ORDER BY p.id, p.created_at DESC;
       `,
-      [`%${cleanText}%`]
+      [categorySlug]
     );
 
     res.json({
@@ -1113,11 +1121,7 @@ exports.getProductsByCategory = async (req, res) => {
     });
   } catch (err) {
     console.error("getProductsByCategory error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -1242,52 +1246,225 @@ exports.getNewArrivals = async (req, res) => {
   }
 };
 
+// exports.getVendorProducts = async (req, res) => {
+//   try {
+//     const { vendorId } = req.params;
+
+//     if (!vendorId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "vendorId is required",
+//       });
+//     }
+
+//     // STEP 1: GET organization_id FROM vendor onboarding
+//     const vendorResult = await pool.query(
+//       `
+//       SELECT 
+//         vp.id AS vendor_id,
+//         vo.organization_id
+//       FROM vendorprofile vp
+//       LEFT JOIN vendor_onboarding vo 
+//         ON vo.vendor_id = vp.id
+//       WHERE vp.id = $1
+//       `,
+//       [vendorId]
+//     );
+
+//     if (!vendorResult.rows.length) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Vendor not found",
+//       });
+//     }
+
+//     const organizationId = vendorResult.rows[0].organization_id;
+
+//     if (!organizationId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Organization not assigned yet",
+//       });
+//     }
+
+//     // STEP 2: GET ALL PRODUCTS (NO STATUS FILTER)
+//     const result = await pool.query(
+//       `
+//       SELECT 
+//         p.*,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'id', c.id,
+//               'name', c.name,
+//               'slug', c.slug
+//             )
+//           ) FILTER (WHERE c.id IS NOT NULL),
+//           '[]'
+//         ) AS categories,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'id', pi.id,
+//               'image_url', pi.image_url,
+//               'sort_order', pi.sort_order,
+//               'is_primary', pi.is_primary
+//             )
+//           ) FILTER (WHERE pi.media_type = 'image'),
+//           '[]'
+//         ) AS images,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'id', pi.id,
+//               'video_url', pi.image_url,
+//               'sort_order', pi.sort_order
+//             )
+//           ) FILTER (WHERE pi.media_type = 'video'),
+//           '[]'
+//         ) AS videos,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'key', ps.key,
+//               'value', ps.value
+//             )
+//           ) FILTER (WHERE ps.id IS NOT NULL),
+//           '[]'
+//         ) AS specifications,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'minQty', ppt.min_quantity,
+//               'maxQty', ppt.max_quantity,
+//               'price', ppt.price
+//             )
+//           ) FILTER (WHERE ppt.id IS NOT NULL),
+//           '[]'
+//         ) AS bulkPricing,
+
+//         COALESCE(
+//           json_agg(
+//             DISTINCT jsonb_build_object(
+//               'id', pv.id,
+//               'type', pv.variant_type,
+//               'value', pv.variant_value,
+//               'price', pv.price,
+//               'mrp', pv.mrp,
+//               'stock', pv.stock,
+//               'image_url', pv.image_url
+//             )
+//           ) FILTER (WHERE pv.id IS NOT NULL),
+//           '[]'
+//         ) AS variants
+
+//       FROM products p
+
+//       LEFT JOIN product_categories pc 
+//         ON pc.product_id = p.id
+
+//       LEFT JOIN categories c 
+//         ON c.id = pc.category_id
+
+//       LEFT JOIN product_images pi 
+//         ON pi.product_id = p.id
+
+//       LEFT JOIN product_specifications ps 
+//         ON ps.product_id = p.id
+
+//       LEFT JOIN product_pricing_tiers ppt 
+//         ON ppt.product_id = p.id
+
+//       LEFT JOIN product_variants pv 
+//         ON pv.product_id = p.id
+
+//       WHERE p.organization_id = $1
+
+//       GROUP BY p.id
+//       ORDER BY p.created_at DESC
+//       `,
+//       [organizationId]
+//     );
+
+//     return res.json({
+//       success: true,
+//       vendorId,
+//       organizationId,
+//       products: result.rows,
+//     });
+
+//   } catch (err) {
+//     console.error("getVendorProducts error:", err);
+
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
+
 exports.getVendorProducts = async (req, res) => {
   try {
-    const { vendorId } = req.params;
+    const { organizationId } = req.params;
 
-    if (!vendorId) {
-      return res.status(400).json({
-        success: false,
-        message: "vendorId is required",
-      });
-    }
-
-    // STEP 1: GET organization_id FROM vendor onboarding
-    const vendorResult = await pool.query(
-      `
-      SELECT 
-        vp.id AS vendor_id,
-        vo.organization_id
-      FROM vendorprofile vp
-      LEFT JOIN vendor_onboarding vo 
-        ON vo.vendor_id = vp.id
-      WHERE vp.id = $1
-      `,
-      [vendorId]
-    );
-
-    if (!vendorResult.rows.length) {
-      return res.status(404).json({
-        success: false,
-        message: "Vendor not found",
-      });
-    }
-
-    const organizationId = vendorResult.rows[0].organization_id;
+    // ==========================================
+    // VALIDATION
+    // ==========================================
 
     if (!organizationId) {
       return res.status(400).json({
         success: false,
-        message: "Organization not assigned yet",
+        message: "organizationId is required",
       });
     }
 
-    // STEP 2: GET ALL PRODUCTS (NO STATUS FILTER)
+    // ==========================================
+    // GET PRODUCTS BY ORGANIZATION
+    // ==========================================
+
     const result = await pool.query(
       `
       SELECT 
-        p.*,
+        p.id,
+        p.organization_id,
+        p.name,
+        p.description,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.stock,
+        p.slug,
+        p.sku,
+        p.unit,
+        p.is_active,
+        p.is_featured,
+        p.is_top_product,
+        p.avg_rating,
+        p.total_reviews,
+        p.views_count,
+        p.sales_count,
+        p.created_at,
+        p.updated_at,
+
+        -- =====================================
+        -- STATUS
+        -- =====================================
+
+        CASE
+          WHEN p.stock <= 0 THEN 'Out of Stock'
+          WHEN p.stock <= 10 THEN 'Low Stock'
+          WHEN p.is_active = false THEN 'Inactive'
+          ELSE 'Active'
+        END AS status,
+
+        -- =====================================
+        -- CATEGORIES
+        -- =====================================
 
         COALESCE(
           json_agg(
@@ -1300,17 +1477,26 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS categories,
 
+        -- =====================================
+        -- IMAGES
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
               'id', pi.id,
               'image_url', pi.image_url,
+              'media_type', pi.media_type,
               'sort_order', pi.sort_order,
               'is_primary', pi.is_primary
             )
           ) FILTER (WHERE pi.media_type = 'image'),
           '[]'
         ) AS images,
+
+        -- =====================================
+        -- VIDEOS
+        -- =====================================
 
         COALESCE(
           json_agg(
@@ -1323,9 +1509,14 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS videos,
 
+        -- =====================================
+        -- SPECIFICATIONS
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
+              'id', ps.id,
               'key', ps.key,
               'value', ps.value
             )
@@ -1333,9 +1524,14 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS specifications,
 
+        -- =====================================
+        -- BULK PRICING
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
+              'id', ppt.id,
               'minQty', ppt.min_quantity,
               'maxQty', ppt.max_quantity,
               'price', ppt.price
@@ -1344,16 +1540,24 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS bulkPricing,
 
+        -- =====================================
+        -- VARIANTS
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
               'id', pv.id,
               'type', pv.variant_type,
               'value', pv.variant_value,
+              'variant_name', pv.variant_name,
+              'sku', pv.sku,
               'price', pv.price,
               'mrp', pv.mrp,
               'stock', pv.stock,
-              'image_url', pv.image_url
+              'unit', pv.unit,
+              'image_url', pv.image_url,
+              'is_active', pv.is_active
             )
           ) FILTER (WHERE pv.id IS NOT NULL),
           '[]'
@@ -1361,41 +1565,63 @@ exports.getVendorProducts = async (req, res) => {
 
       FROM products p
 
-      LEFT JOIN product_categories pc 
+      LEFT JOIN product_categories pc
         ON pc.product_id = p.id
 
-      LEFT JOIN categories c 
+      LEFT JOIN categories c
         ON c.id = pc.category_id
 
-      LEFT JOIN product_images pi 
+      LEFT JOIN product_images pi
         ON pi.product_id = p.id
 
-      LEFT JOIN product_specifications ps 
+      LEFT JOIN product_specifications ps
         ON ps.product_id = p.id
 
-      LEFT JOIN product_pricing_tiers ppt 
+      LEFT JOIN product_pricing_tiers ppt
         ON ppt.product_id = p.id
 
-      LEFT JOIN product_variants pv 
+      LEFT JOIN product_variants pv
         ON pv.product_id = p.id
 
       WHERE p.organization_id = $1
 
       GROUP BY p.id
+
       ORDER BY p.created_at DESC
       `,
       [organizationId]
     );
 
-    return res.json({
+    // ==========================================
+    // NORMALIZE RESPONSE
+    // ==========================================
+
+    const products = result.rows.map((product) => ({
+      ...product,
+
+      category:
+        product.categories?.[0]?.name || "Uncategorized",
+
+      image:
+        product.images?.find((img) => img.is_primary)?.image_url ||
+        product.images?.[0]?.image_url ||
+        null,
+    }));
+
+    // ==========================================
+    // RESPONSE
+    // ==========================================
+
+    return res.status(200).json({
       success: true,
-      vendorId,
+      count: products.length,
       organizationId,
-      products: result.rows,
+      products,
     });
 
   } catch (err) {
-    console.error("getVendorProducts error:", err);
+    console.error("❌ getVendorProducts error:");
+    console.error(err);
 
     return res.status(500).json({
       success: false,
