@@ -305,7 +305,7 @@ const Navbar = () => {
                       <button
                         onClick={handleSearchSubmit}
                         aria-label="Search"
-                        className=" h-8 w-8 mr-2 rounded-full flex items-center justify-center bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#e0bb45] transition-all duration-300 "
+                        className=" h-9 w-9 mr-2 rounded-full flex items-center justify-center bg-[#D4AF37] text-[#0B1F3A] hover:bg-[#e0bb45] transition-all duration-300 "
                       >
                         <Search size={14} />
                       </button>

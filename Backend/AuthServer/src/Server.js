@@ -18,6 +18,7 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
+
 const allowedOrigins = new Set([
   "http://localhost:3000",
   "https://kavsawholesalehub.netlify.app",

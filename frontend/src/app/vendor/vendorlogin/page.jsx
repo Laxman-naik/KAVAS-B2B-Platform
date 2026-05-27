@@ -17,6 +17,7 @@ export default function VendorLoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const blockedStatuses = ["in_review", "pending", "kyc_pending"];
+  
 
   const leftItems = useMemo(
     () => [
@@ -54,7 +55,7 @@ export default function VendorLoginPage() {
       };
       const data = await dispatch(loginVendor(payload)).unwrap();
 
-      // console.log("LOGIN RESPONSE:", data);
+      console.log("LOGIN RESPONSE:", data);
 
       if (!data) {
         setError("Empty response from server");
@@ -71,7 +72,7 @@ export default function VendorLoginPage() {
 
       // 🚨 safety guard
       if (!status) {
-        setError("Missing status from backend response");
+        setError("Missing status");
         return;
       }
 

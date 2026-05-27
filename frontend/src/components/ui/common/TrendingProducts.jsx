@@ -31,8 +31,8 @@ export default function TrendingProducts() {
 
               <span className="h-px w-5 bg-[#D4AF37]/60"></span>
             </div>
-
-            <h2 className="mt-1 text-lg sm:text-3xl font-extrabold text-[#0B1F3A]">
+            
+            <h2 className="mt-1 text-lg  sm:text-3xl font-extrabold text-[#0B1F3A]">
               Trending Products
             </h2>
           </div>

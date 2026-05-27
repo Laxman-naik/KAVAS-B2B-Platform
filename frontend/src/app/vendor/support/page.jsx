@@ -35,6 +35,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { X, Info } from "lucide-react";
 
 const VendorSupportPage = () => {
   const [openTicket, setOpenTicket] = useState(false);
@@ -56,7 +57,7 @@ const VendorSupportPage = () => {
       "Account & KYC",
       "Returns & Refunds",
     ],
-    []
+    [],
   );
 
   const faqs = useMemo(
@@ -110,7 +111,7 @@ const VendorSupportPage = () => {
         a: "Return eligibility depends on category and reasons. For eligible cases, returns are reviewed and processed as per policy terms.",
       },
     ],
-    []
+    [],
   );
 
   const tickets = useMemo(
@@ -176,7 +177,7 @@ const VendorSupportPage = () => {
         updatedBy: "You",
       },
     ],
-    []
+    [],
   );
 
   const quickCards = useMemo(
@@ -210,8 +211,47 @@ const VendorSupportPage = () => {
         targetTab: "Products & Listings",
       },
     ],
-    []
+    [],
   );
+  const [openTicketModal, setOpenTicketModal] = useState(false);
+
+  const [ticketForm, setTicketForm] = useState({
+    subject: "",
+    category: "",
+    priority: "Medium",
+    orderId: "",
+    description: "",
+  });
+
+  const handleTicketChange = (e) => {
+    const { name, value } = e.target;
+    setTicketForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleTicketSubmit = (e) => {
+    e.preventDefault();
+
+    if (
+      !ticketForm.subject ||
+      !ticketForm.category ||
+      !ticketForm.description
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    alert("Support ticket submitted successfully!");
+
+    setTicketForm({
+      subject: "",
+      category: "",
+      priority: "Medium",
+      orderId: "",
+      description: "",
+    });
+
+    setOpenTicketModal(false);
+  };
 
   const visibleFaqs = useMemo(() => {
     if (faqTab === "All") return faqs;

@@ -8,6 +8,367 @@ const slugify = (value) => {
     .replace(/(^-|-$)+/g, "");
 };
 
+// exports.createProduct = async (req, res) => {
+//   const client = await pool.connect();
+
+//   try {
+//     // =====================================================
+//     // HELPERS
+//     // =====================================================
+
+//     const safeParse = (value, fallback = []) => {
+//   if (!value) return fallback;
+
+//   if (Array.isArray(value)) return value;
+
+//   try {
+//     return JSON.parse(value);
+//   } catch {
+//     return fallback;
+//   }
+// };
+
+//     const slugifyText = (text) =>
+//       String(text || "")
+//         .trim()
+//         .toLowerCase()
+//         .replace(/[^a-z0-9]+/g, "-")
+//         .replace(/^-|-$/g, "");
+
+//     // =====================================================
+//     // BODY
+//     // =====================================================
+
+//     const {
+//       name,
+//       sku,
+//       description,
+//       category,
+//       subCategory,
+//       price,
+//       mrp,
+//       stock,
+//       moq,
+//       unit,
+//       organizationId,
+//       specifications,
+//       bulkPricing,
+//       variants,
+//       images,
+//       videos,
+//     } = req.body || {};
+
+//     if (!String(name || "").trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Product name required",
+//       });
+//     }
+
+//     const resolvedOrganizationId =
+//       organizationId || req.user?.organization_id;
+
+//     if (!resolvedOrganizationId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "organizationId required",
+//       });
+//     }
+
+//     // =====================================================
+//     // TRANSACTION START
+//     // =====================================================
+
+//     await client.query("BEGIN");
+
+//     // =====================================================
+//     // CATEGORY LOGIC
+//     // =====================================================
+
+//     let parentCategoryId = null;
+//     let subCategoryId = null;
+
+//     const uuidRegex =/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+//     if (category?.trim()) {
+//       if (uuidRegex.test(category)) {
+//         parentCategoryId = category;
+//       } else {
+//         const existing = await client.query(
+//           `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+//           [category]
+//         );
+
+//         if (existing.rows.length) {
+//           parentCategoryId = existing.rows[0].id;
+//         } else {
+//           const created = await client.query(
+//             `INSERT INTO categories (name,slug,parent_id)
+//              VALUES ($1,$2,NULL) RETURNING id`,
+//             [category, slugifyText(category)]
+//           );
+
+//           parentCategoryId = created.rows[0].id;
+//         }
+//       }
+//     }
+
+//     if (subCategory?.trim()) {
+//       const existingSub = await client.query(
+//         `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+//         [subCategory]
+//       );
+
+//       if (existingSub.rows.length) {
+//         subCategoryId = existingSub.rows[0].id;
+//       } else {
+//         const createdSub = await client.query(
+//           `INSERT INTO categories (name,slug,parent_id)
+//            VALUES ($1,$2,$3) RETURNING id`,
+//           [subCategory, slugifyText(subCategory), parentCategoryId]
+//         );
+
+//         subCategoryId = createdSub.rows[0].id;
+//       }
+//     }
+
+//     // =====================================================
+//     // PRODUCT INSERT
+//     // =====================================================
+
+//     const productResult = await client.query(
+//       `INSERT INTO products (
+//         organization_id,
+//         name,
+//         description,
+//         price,
+//         mrp,
+//         moq,
+//         stock,
+//         is_active,
+//         slug,
+//         sku,
+//         unit
+//       )
+//       VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
+//       RETURNING *`,
+//       [
+//         resolvedOrganizationId,
+//         name,
+//         description || null,
+//         price || 0,
+//         mrp || 0,
+//         moq || 1,
+//         stock || 0,
+//         slugifyText(name),
+//         sku || null,
+//         unit || null,
+//       ]
+//     );
+
+//     const product = productResult.rows[0];
+
+//     // =====================================================
+//     // PRODUCT CATEGORY MAP
+//     // =====================================================
+
+//     const categories = [];
+
+//     if (parentCategoryId) {
+//       await client.query(
+//         `INSERT INTO product_categories (product_id,category_id)
+//          VALUES ($1,$2)`,
+//         [product.id, parentCategoryId]
+//       );
+
+//       categories.push(parentCategoryId);
+//     }
+
+//     if (subCategoryId) {
+//       await client.query(
+//         `INSERT INTO product_categories (product_id,category_id)
+//          VALUES ($1,$2)`,
+//         [product.id, subCategoryId]
+//       );
+
+//       categories.push(subCategoryId);
+//     }
+
+//     // =====================================================
+//     // IMAGES
+//     // =====================================================
+
+//     const parsedImages = safeParse(images);
+//     const imageList = [];
+
+//     for (let i = 0; i < (parsedImages || []).length; i++) {
+//       await client.query(
+//         `INSERT INTO product_images
+//         (product_id,image_url,media_type,sort_order,is_primary)
+//         VALUES ($1,$2,'image',$3,$4)`,
+//         [product.id, parsedImages[i], i, i === 0]
+//       );
+
+//       imageList.push({
+//         image_url: parsedImages[i],
+//         sort_order: i,
+//         is_primary: i === 0,
+//       });
+//     }
+
+//     // =====================================================
+//     // VIDEOS
+//     // =====================================================
+
+//     const parsedVideos = safeParse(videos);
+//     const videoList = [];
+
+//     for (let i = 0; i < (parsedVideos || []).length; i++) {
+//       await client.query(
+//         `INSERT INTO product_images
+//         (product_id,image_url,media_type,sort_order,is_primary)
+//         VALUES ($1,$2,'video',$3,false)`,
+//         [product.id, parsedVideos[i], i]
+//       );
+
+//       videoList.push({
+//         video_url: parsedVideos[i],
+//         sort_order: i,
+//       });
+//     }
+
+//     // =====================================================
+//     // SPECIFICATIONS
+//     // =====================================================
+
+//     const parsedSpecs = safeParse(specifications);
+//     const specsList = [];
+
+//     for (const spec of (parsedSpecs || [])) {
+//       if (!spec?.name || !spec?.value) continue;
+
+//       await client.query(
+//         `INSERT INTO product_specifications
+//         (product_id,key,value)
+//         VALUES ($1,$2,$3)`,
+//         [product.id, spec.name, spec.value]
+//       );
+
+//       specsList.push(spec);
+//     }
+
+//     // =====================================================
+//     // BULK PRICING
+//     // =====================================================
+
+//     const parsedPricing = safeParse(bulkPricing);
+//     const pricingList = [];
+
+//     for (const tier of (parsedPricing || [])){
+//       await client.query(
+//         `INSERT INTO product_pricing_tiers
+//         (product_id,min_quantity,max_quantity,price)
+//         VALUES ($1,$2,$3,$4)`,
+//         [
+//           product.id,
+//           tier.minQty || 1,
+//           tier.maxQty || null,
+//           tier.pricePerUnit || 0,
+//         ]
+//       );
+
+//       pricingList.push(tier);
+//     }
+
+//     // =====================================================
+//     // VARIANTS
+//     // =====================================================
+
+//     const parsedVariants = safeParse(variants);
+//     const variantList = [];
+
+//     for (const v of (parsedVariants || [])) {
+//       await client.query(
+//         `INSERT INTO product_variants (
+//           product_id,
+//           variant_type,
+//           variant_value,
+//           variant_name,
+//           sku,
+//           price,
+//           mrp,
+//           stock,
+//           unit,
+//           image_url,
+//           is_active
+//         )
+//         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+//         [
+//           product.id,
+//           v.variant_type || v.variantName || null,
+//           v.variant_value || v.value || null,
+//           `${v.variant_type || v.variantName || ""} - ${v.variant_value || v.value || ""}`,
+//           v.sku || null,
+//           v.price || 0,
+//           v.mrp || 0,
+//           v.stock || 0,
+//           v.unit || null,
+//           v.image_url || null,
+//         ]
+//       );
+
+//       variantList.push(v);
+//     }
+
+//     // =====================================================
+//     // COMMIT
+//     // =====================================================
+
+//     await client.query("COMMIT");
+
+//     // =====================================================
+//     // FINAL RESPONSE (FIXED)
+//     // =====================================================
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Product created successfully",
+
+//       product: {
+//         ...product,
+
+//         categories,
+//         images: imageList,
+//         videos: videoList,
+//         specifications: specsList,
+//         bulkPricing: pricingList,
+//         variants: variantList,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("❌ CREATE PRODUCT ERROR STACK:");
+//     console.error(err); // IMPORTANT (not just err.message)
+//     await client.query("ROLLBACK");
+
+//     console.error("createProduct error:", err);
+
+//     if (err.code === "23505") {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Duplicate SKU found",
+//       });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//       stack: err.stack,
+//     });
+//   } finally {
+//     client.release();
+//   }
+// };
+
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
@@ -17,12 +378,12 @@ exports.createProduct = async (req, res) => {
     // =====================================================
 
     const safeParse = (value, fallback = []) => {
-      try {
-        if (Array.isArray(value)) return value;
+      if (!value) return fallback;
 
-        return JSON.parse(
-          value || JSON.stringify(fallback)
-        );
+      if (Array.isArray(value)) return value;
+
+      try {
+        return JSON.parse(value);
       } catch {
         return fallback;
       }
@@ -54,11 +415,13 @@ exports.createProduct = async (req, res) => {
       specifications,
       bulkPricing,
       variants,
-      images,
-      videos,
-    } = req.body || {};
+    } = req.body;
 
-    if (!String(name || "").trim()) {
+    // =====================================================
+    // VALIDATION
+    // =====================================================
+
+    if (!name?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Product name required",
@@ -76,13 +439,13 @@ exports.createProduct = async (req, res) => {
     }
 
     // =====================================================
-    // TRANSACTION START
+    // START TRANSACTION
     // =====================================================
 
     await client.query("BEGIN");
 
     // =====================================================
-    // CATEGORY LOGIC
+    // CATEGORY
     // =====================================================
 
     let parentCategoryId = null;
@@ -105,7 +468,8 @@ exports.createProduct = async (req, res) => {
         } else {
           const created = await client.query(
             `INSERT INTO categories (name,slug,parent_id)
-             VALUES ($1,$2,NULL) RETURNING id`,
+             VALUES ($1,$2,NULL)
+             RETURNING id`,
             [category, slugifyText(category)]
           );
 
@@ -115,26 +479,35 @@ exports.createProduct = async (req, res) => {
     }
 
     if (subCategory?.trim()) {
-      const existingSub = await client.query(
-        `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
-        [subCategory]
-      );
-
-      if (existingSub.rows.length) {
-        subCategoryId = existingSub.rows[0].id;
+      if (uuidRegex.test(subCategory)) {
+        subCategoryId = subCategory;
       } else {
-        const createdSub = await client.query(
-          `INSERT INTO categories (name,slug,parent_id)
-           VALUES ($1,$2,$3) RETURNING id`,
-          [subCategory, slugifyText(subCategory), parentCategoryId]
+        const existingSub = await client.query(
+          `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
+          [subCategory]
         );
 
-        subCategoryId = createdSub.rows[0].id;
+        if (existingSub.rows.length) {
+          subCategoryId = existingSub.rows[0].id;
+        } else {
+          const createdSub = await client.query(
+            `INSERT INTO categories (name,slug,parent_id)
+             VALUES ($1,$2,$3)
+             RETURNING id`,
+            [
+              subCategory,
+              slugifyText(subCategory),
+              parentCategoryId,
+            ]
+          );
+
+          subCategoryId = createdSub.rows[0].id;
+        }
       }
     }
 
     // =====================================================
-    // PRODUCT INSERT
+    // CREATE PRODUCT
     // =====================================================
 
     const productResult = await client.query(
@@ -157,10 +530,10 @@ exports.createProduct = async (req, res) => {
         resolvedOrganizationId,
         name,
         description || null,
-        price || 0,
-        mrp || 0,
-        moq || 1,
-        stock || 0,
+        Number(price) || 0,
+        Number(mrp) || 0,
+        Number(moq) || 1,
+        Number(stock) || 0,
         slugifyText(name),
         sku || null,
         unit || null,
@@ -170,14 +543,14 @@ exports.createProduct = async (req, res) => {
     const product = productResult.rows[0];
 
     // =====================================================
-    // PRODUCT CATEGORY MAP
+    // CATEGORY MAP
     // =====================================================
 
     const categories = [];
 
     if (parentCategoryId) {
       await client.query(
-        `INSERT INTO product_categories (product_id,category_id)
+        `INSERT INTO product_categories (product_id, category_id)
          VALUES ($1,$2)`,
         [product.id, parentCategoryId]
       );
@@ -187,7 +560,7 @@ exports.createProduct = async (req, res) => {
 
     if (subCategoryId) {
       await client.query(
-        `INSERT INTO product_categories (product_id,category_id)
+        `INSERT INTO product_categories (product_id, category_id)
          VALUES ($1,$2)`,
         [product.id, subCategoryId]
       );
@@ -196,46 +569,52 @@ exports.createProduct = async (req, res) => {
     }
 
     // =====================================================
-    // IMAGES
+    // CLOUDINARY FILES
     // =====================================================
 
-    const parsedImages = safeParse(images);
     const imageList = [];
-
-    for (let i = 0; i < parsedImages.length; i++) {
-      await client.query(
-        `INSERT INTO product_images
-        (product_id,image_url,media_type,sort_order,is_primary)
-        VALUES ($1,$2,'image',$3,$4)`,
-        [product.id, parsedImages[i], i, i === 0]
-      );
-
-      imageList.push({
-        image_url: parsedImages[i],
-        sort_order: i,
-        is_primary: i === 0,
-      });
-    }
-
-    // =====================================================
-    // VIDEOS
-    // =====================================================
-
-    const parsedVideos = safeParse(videos);
     const videoList = [];
 
-    for (let i = 0; i < parsedVideos.length; i++) {
+    const files = req.files || [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      const mediaType = file.mimetype.startsWith("video")
+        ? "video"
+        : "image";
+
       await client.query(
         `INSERT INTO product_images
-        (product_id,image_url,media_type,sort_order,is_primary)
-        VALUES ($1,$2,'video',$3,false)`,
-        [product.id, parsedVideos[i], i]
+        (
+          product_id,
+          image_url,
+          media_type,
+          sort_order,
+          is_primary
+        )
+        VALUES ($1,$2,$3,$4,$5)`,
+        [
+          product.id,
+          file.path,
+          mediaType,
+          i,
+          mediaType === "image" && i === 0,
+        ]
       );
 
-      videoList.push({
-        video_url: parsedVideos[i],
-        sort_order: i,
-      });
+      if (mediaType === "image") {
+        imageList.push({
+          image_url: file.path,
+          sort_order: i,
+          is_primary: i === 0,
+        });
+      } else {
+        videoList.push({
+          video_url: file.path,
+          sort_order: i,
+        });
+      }
     }
 
     // =====================================================
@@ -243,6 +622,7 @@ exports.createProduct = async (req, res) => {
     // =====================================================
 
     const parsedSpecs = safeParse(specifications);
+
     const specsList = [];
 
     for (const spec of parsedSpecs) {
@@ -263,12 +643,18 @@ exports.createProduct = async (req, res) => {
     // =====================================================
 
     const parsedPricing = safeParse(bulkPricing);
+
     const pricingList = [];
 
     for (const tier of parsedPricing) {
       await client.query(
         `INSERT INTO product_pricing_tiers
-        (product_id,min_quantity,max_quantity,price)
+        (
+          product_id,
+          min_quantity,
+          max_quantity,
+          price
+        )
         VALUES ($1,$2,$3,$4)`,
         [
           product.id,
@@ -286,6 +672,7 @@ exports.createProduct = async (req, res) => {
     // =====================================================
 
     const parsedVariants = safeParse(variants);
+
     const variantList = [];
 
     for (const v of parsedVariants) {
@@ -306,9 +693,11 @@ exports.createProduct = async (req, res) => {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
         [
           product.id,
-          v.variant_type || null,
-          v.variant_value || null,
-          `${v.variant_type || ""} - ${v.variant_value || ""}`,
+          v.variant_type || v.variantName || null,
+          v.variant_value || v.value || null,
+          `${v.variant_type || v.variantName || ""} - ${
+            v.variant_value || v.value || ""
+          }`,
           v.sku || null,
           v.price || 0,
           v.mrp || 0,
@@ -327,17 +716,12 @@ exports.createProduct = async (req, res) => {
 
     await client.query("COMMIT");
 
-    // =====================================================
-    // FINAL RESPONSE (FIXED)
-    // =====================================================
-
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
 
       product: {
         ...product,
-
         categories,
         images: imageList,
         videos: videoList,
@@ -349,14 +733,7 @@ exports.createProduct = async (req, res) => {
   } catch (err) {
     await client.query("ROLLBACK");
 
-    console.error("createProduct error:", err);
-
-    if (err.code === "23505") {
-      return res.status(400).json({
-        success: false,
-        message: "Duplicate SKU found",
-      });
-    }
+    console.error("❌ CREATE PRODUCT ERROR:", err);
 
     return res.status(500).json({
       success: false,

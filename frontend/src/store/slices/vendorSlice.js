@@ -111,6 +111,7 @@ export const fetchVendorProfile = createAsyncThunk(
     try {
       const res = await getVendorProfileAPI(id);
       return res.data;
+
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
@@ -136,6 +137,7 @@ export const saveBusinessDetails = createAsyncThunk(
       const res = await upsertBusinessAPI(data);
       return res.data;
     } catch (err) {
+      console.log(err)
       return rejectWithValue(err.response?.data || err.message);
     }
   }

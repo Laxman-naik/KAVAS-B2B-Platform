@@ -38,6 +38,7 @@ const Page = () => {
   const { profile } = useSelector((state) => state.profile);
   const { addresses } = useSelector((state) => state.address);
   const { stats, recentOrders } = useSelector((state) => state.order);
+  
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openDetails, setOpenDetails] = useState(false);
