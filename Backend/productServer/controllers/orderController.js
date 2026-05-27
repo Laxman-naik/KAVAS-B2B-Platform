@@ -190,6 +190,12 @@ exports.createOrderFromCart = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
+    console.log("REQ USER:", req.user);
+
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized user" });
+    }
+
     const userId = req.user.id;
 
     const result = await pool.query(
@@ -205,12 +211,12 @@ exports.getUserOrders = async (req, res) => {
       [userId]
     );
 
-    res.json({
+    return res.json({
       orders: result.rows,
     });
   } catch (err) {
     console.error("GET USER ORDERS ERROR:", err);
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ message: err.message });
   }
 };
 
