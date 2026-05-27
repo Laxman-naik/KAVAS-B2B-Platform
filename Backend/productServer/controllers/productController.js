@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const uploadToCloudinary = require("../services/uploadToCloudinary");
 
 const slugify = (value) => {
   return String(value || "")
@@ -402,7 +403,7 @@ exports.createProduct = async (req, res) => {
       variants,
     } = req.body;
 
-    if (!name || !name.trim()) {
+    if (!name?.trim()) {
       return res.status(400).json({ message: "Product name required" });
     }
 
@@ -442,13 +443,15 @@ exports.createProduct = async (req, res) => {
     const images = req.files?.images || [];
     const videos = req.files?.videos || [];
 
-    // IMAGES
+    // ================= IMAGES (CLOUDINARY) =================
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
       if (!file?.path) continue;
 
-      // Use local file path
-      const imageUrl = `/uploads/${file.filename}`;
+      const uploaded = await uploadToCloudinary(
+        file.path,
+        "products/images"
+      );
 
       await client.query(
         `INSERT INTO product_images
@@ -456,21 +459,23 @@ exports.createProduct = async (req, res) => {
          VALUES ($1,$2,'image',$3,$4,$5)`,
         [
           product.id,
-          imageUrl,
-          file.filename,
+          uploaded.url,
+          uploaded.public_id,
           i,
           i === 0,
         ]
       );
     }
 
-    // VIDEOS
+    // ================= VIDEOS (CLOUDINARY) =================
     for (let i = 0; i < videos.length; i++) {
       const file = videos[i];
       if (!file?.path) continue;
 
-      // Use local file path
-      const videoUrl = `/uploads/${file.filename}`;
+      const uploaded = await uploadToCloudinary(
+        file.path,
+        "products/videos"
+      );
 
       await client.query(
         `INSERT INTO product_images
@@ -478,8 +483,8 @@ exports.createProduct = async (req, res) => {
          VALUES ($1,$2,'video',$3,$4,false)`,
         [
           product.id,
-          videoUrl,
-          file.filename,
+          uploaded.url,
+          uploaded.public_id,
           i,
         ]
       );
@@ -546,17 +551,14 @@ exports.createProduct = async (req, res) => {
       message: "Product created successfully",
       product,
     });
-
   } catch (err) {
     await client.query("ROLLBACK");
-
     console.error("CREATE PRODUCT ERROR:", err);
 
     return res.status(500).json({
       success: false,
       message: err.message,
     });
-
   } finally {
     client.release();
   }

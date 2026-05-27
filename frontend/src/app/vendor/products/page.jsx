@@ -19,7 +19,7 @@ export default function ProductManagementBody() {
   const vendorData = useSelector((state) => state.vendor?.vendor);
   const vendorId = vendorData?.id;
   const organizationId = vendorData?.organization_id;
-  // console.log(vendorProducts)
+  console.log(vendorProducts)
 
   useEffect(() => {
     if (organizationId) {
@@ -118,6 +118,13 @@ export default function ProductManagementBody() {
     if (s === "Out of Stock") return "bg-red-100 text-red-700";
     return "bg-gray-100 text-gray-700";
   };
+
+  const getImageUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+
+  return `https://kavas-b2b-platform-4.onrender.com${path}`;
+};
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
@@ -285,9 +292,13 @@ export default function ProductManagementBody() {
             <div key={p.id || p.sku} className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0">
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
-                  src={p.image}
-                  alt=""
-                  className="h-12 w-12 rounded-xl object-cover bg-gray-100"
+                  src={
+                    p?.images?.find((img) => img.is_primary)?.image_url ||
+                    p?.images?.[0]?.image_url ||
+                    "/placeholder.png"
+                  }
+                  alt={p?.name || "Product"}
+                  className="h-12 w-12 rounded-xl object-cover bg-gray-100" 
                 />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
