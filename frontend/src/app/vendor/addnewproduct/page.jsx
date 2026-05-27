@@ -1,104 +1,54 @@
-// "use client";
+"use client";
 
-// import React from "react";
-// import { useRouter } from "next/navigation";
-// import { useDispatch } from "react-redux";
+import React from "react";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 
-// import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
-// import { addProduct } from "../../../redux/slices/productSlice";
+import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
+import { addProduct } from "../../../redux/slices/productSlice";
 
-// export default function AddNewProductPage() {
-//   const router = useRouter();
-//   const dispatch = useDispatch();
+export default function AddNewProductPage() {
+  const router = useRouter();
+  const dispatch = useDispatch();
 
-//   const handleSubmit = async (data) => {
-//     const payload = {
-//       name: data?.name,
-//       sku: data?.sku,
-//       category: data?.category,
-//       unit: data?.unit,
-//       status: data?.status,
-//       description: data?.description,
-//       price: Number(data?.price || 0),
-//       mrp: Number(data?.mrp || 0),
-//       gst: data?.gst,
-//       moq: Number(data?.moq || 0),
-//       stock: Number(data?.stock || 0),
-//       images: Array.isArray(data?.images) ? data.images.filter((x) => typeof x === "string" && x.trim()) : [],
-//     };
-    
-//     router.push("/vendor/products");
-//     try {
-//       const payload = {
-//         name: form.name?.trim(),
-//         sku: form.sku?.trim(),
+  const handleSubmit = async (data) => {
+    try {
+      const payload = {
+        name: data.name?.trim(),
+        description: data.description?.trim(),
+        price: Number(data.price || 0),
+        mrp: Number(data.mrp || 0),
+        moq: Number(data.moq || 1),
+        stock: Number(data.stock || 0),
+        sku: data.sku?.trim(),
+        unit: data.unit || "pcs",
+        images: Array.isArray(data.images)
+          ? data.images.filter((url) => typeof url === "string" && url.trim())
+          : [],
+      };
 
-//         categories: form.subCategoryId
-//           ? [Number(form.subCategoryId)]
-//           : form.categoryId
-//           ? [Number(form.categoryId)]
-//           : [],
+      console.log("FINAL PRODUCT PAYLOAD:", payload);
 
-//         category: form.subCategory || form.category,
+      await dispatch(addProduct(payload)).unwrap();
 
-//         unit: form.unit || "pcs",
-//         status: "active",
-//         description: form.description,
+      router.push("/vendor/products");
+    } catch (error) {
+      console.log("PAGE CREATE ERROR:", error);
+      alert(
+        typeof error === "string"
+          ? error
+          : error?.message || "Failed to create product"
+      );
+    }
+  };
 
-//         price: Number(form.price || 0),
-//         mrp: Number(form.mrp || 0),
-//         moq: Number(form.moq || 0),
-//         stock: Number(form.stock || 0),
-
-//         gst: form.taxClass || "",
-//         brand: form.brand || "",
-//         barcode: form.barcode || "",
-
-//         weight: form.productWeight || null,
-//         dispatchTimeDays: Number(form.expectedDispatchTime || 0),
-
-//         images: Array.isArray(form.images)
-//           ? form.images.filter(
-//               (url) => typeof url === "string" && url.trim()
-//             )
-//           : [],
-
-//         specifications: Array.isArray(form.specifications)
-//           ? form.specifications
-//               .filter((s) => s.name?.trim() && s.value?.trim())
-//               .map((s) => ({
-//                 key: s.name.trim(),
-//                 value: s.value.trim(),
-//               }))
-//           : [],
-
-//         pricingTiers: Array.isArray(form.bulkPricing)
-//           ? form.bulkPricing
-//               .filter((p) => p.minQty && p.pricePerUnit)
-//               .map((p) => ({
-//                 min_quantity: Number(p.minQty),
-//                 price: Number(p.pricePerUnit),
-//                 label: p.maxQty ? `${p.minQty}-${p.maxQty}` : `${p.minQty}+`,
-//               }))
-//           : [],
-//       };
-
-//       await dispatch(addProduct(payload)).unwrap();
-
-//       router.push("/vendor/products");
-//     } catch (error) {
-//       console.error("Product create failed:", error);
-//       alert(error?.message || "Failed to create product");
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-[#FFF8EC]">
-//       <AddNewProductModal
-//         open={true}
-//         onClose={() => router.push("/vendor/products")}
-//         onSubmit={handleSubmit}
-//       />
-//     </div>
-//   );
-// }
+  return (
+    <div className="min-h-screen bg-[#FFF8EC]">
+      <AddNewProductModal
+        open={true}
+        onClose={() => router.push("/vendor/products")}
+        onSubmit={handleSubmit}
+      />
+    </div>
+  );
+}

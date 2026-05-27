@@ -373,7 +373,7 @@ const page = () => {
         </div>
       </div>
 
-      <div className="bg-[#0B1F3A]">
+      {/* <div className="bg-[#0B1F3A]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
             <div className="flex items-center gap-3">
@@ -398,7 +398,7 @@ const page = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

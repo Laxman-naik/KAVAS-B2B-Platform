@@ -5,5 +5,4 @@ const router = express.Router();
 
 router.get("/", searchMarketplace);
 
-
 module.exports = router;

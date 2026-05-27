@@ -14,8 +14,11 @@ import CustomerReviewsSection from "@/components/buyer/CustomerReviewsSection";
 import SpecificationsSection from "@/components/buyer/SpecificationsSection";
 import ProductDetailsSection from "@/components/buyer/ProductDetailsSection";
 import ShippingDeliverySection from "@/components/buyer/ShippingDeliverySection";
+import {
+  addToFavourites,
+  removeFromFavourites,
+} from "@/store/slices/favouritesSlice";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
 
 const C = {
   primary: "#0B1F3A",
@@ -28,7 +31,7 @@ const C = {
   dimmed: "rgba(26,26,26,0.35)",
 };
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+
 
 const fmt = (v) => {
   const n = Number(v);
@@ -56,7 +59,6 @@ const initials = (name) => {
 const discount = (mrp, price) =>
   mrp > 0 && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
-// ─── Media normalizer ─────────────────────────────────────────────────────────
 
 const normalizeMedia = (p) => {
   const seen = new Map();
@@ -82,7 +84,6 @@ const normalizeMedia = (p) => {
   return items.length ? items : [{ src: "/placeholder.png", type: "image" }];
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const Stars = ({ rating, size = 4 }) => {
   const n = clamp(Math.round(Number(rating) || 0), 0, 5);
@@ -155,7 +156,6 @@ const ErrorState = ({ message }) => (
   </div>
 );
 
-// ─── Data hooks / memos ───────────────────────────────────────────────────────
 
 const useNormalized = (p) =>
   useMemo(() => ({
@@ -246,8 +246,6 @@ const useSimilar = (products, currentId, currentProduct) =>
       });
   }, [products, currentId]);
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 export default function ProductView() {
   const { Id: paramId, id: paramIdLower } = useParams() ?? {};
   const id = paramId ?? paramIdLower;
@@ -263,7 +261,28 @@ export default function ProductView() {
   const [qty, setQty] = useState(norm.minQty);
   const [selectedSize, setSelectedSize] = useState(norm.sizes[0]);
   const [selectedColor, setSelectedColor] = useState(norm.colors[0]);
-  const [wishlisted, setWishlisted] = useState(false);
+  const favouriteItems = useSelector((state) => state.favourites.items);
+
+const liked = useMemo(() => {
+  return (Array.isArray(favouriteItems) ? favouriteItems : [])
+    .map((item) =>
+      String(item?._id ?? item?.id ?? item?.productId ?? item)
+    )
+    .filter(Boolean);
+}, [favouriteItems]);
+
+const productId = String(p?._id ?? p?.id ?? id);
+const isWishlisted = liked.includes(productId);
+
+const onToggleFavourite = () => {
+  if (!productId) return;
+
+  if (isWishlisted) {
+    dispatch(removeFromFavourites(productId));
+  } else {
+    dispatch(addToFavourites(productId));
+  }
+};
 
   const thumbsRef = useRef(null);
 
@@ -295,42 +314,29 @@ export default function ProductView() {
   return (
     <div className="min-h-screen" style={{ color: C.text }}>
       <div className="w-full px-4 py-5 sm:px-6 lg:px-8">
-
-        {/* Breadcrumb */}
-        {/* <nav className="mb-5 flex flex-wrap items-center gap-1.5 text-xs" style={{ color: C.muted }}>
-          {[
-            { label: "Home", href: "/" },
-            { label: norm.category },
-            { label: norm.subCategory },
-            { label: norm.title, active: true },
-          ].map((crumb, i, arr) => (
-            <span key={i} className="flex items-center gap-1.5">
-              {crumb.href
-                ? <Link href={crumb.href} style={{ color: C.primary }}>{crumb.label}</Link>
-                : <span style={crumb.active ? { color: C.text } : {}}>{crumb.label}</span>}
-              {i < arr.length - 1 && <ChevronRight className="h-3 w-3" />}
-            </span>
-          ))}
-        </nav> */}
-
-        {/* Main grid */}
+       
         <div className="grid items-start gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-
-          {/* ── Media column ── */}
           <div className="grid gap-3">
 
             {/* Main image */}
             <div className="relative rounded-sm border" style={{ background: C.white, borderColor: C.border }}>
               <div className="absolute right-4 top-4 z-10 flex gap-2">
                 <button
-                  type="button"
-                  onClick={() => setWishlisted(v => !v)}
-                  className="rounded-full border bg-white p-2 shadow-sm"
-                  style={{ borderColor: C.border }}
-                  aria-label="Add to wishlist"
-                >
-                  <Heart className="h-5 w-5" fill={wishlisted ? "#ef4444" : "none"} color={wishlisted ? "#ef4444" : C.primary} />
-                </button>
+  type="button"
+  onClick={onToggleFavourite}
+  className={`rounded-full border bg-white p-2 shadow-sm transition ${
+    isWishlisted ? "border-[#D4AF37]" : "border-[#E5E5E5]"
+  }`}
+  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+>
+  <Heart
+    className={`h-5 w-5 ${
+      isWishlisted
+        ? "text-red-500 fill-red-500"
+        : "text-[#0B1F3A]"
+    }`}
+  />
+</button>
                 <button type="button" className="rounded-full border bg-white p-2 shadow-sm" style={{ borderColor: C.border }} aria-label="Share">
                   <Share2 className="h-5 w-5" style={{ color: C.primary }} />
                 </button>
@@ -399,7 +405,6 @@ export default function ProductView() {
             </div>
           </div>
 
-          {/* ── Info column ── */}
           <div className="space-y-5">
             <div className="rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
               {loading ? <LoadingSkeleton /> : error ? <ErrorState message={error} /> : (
@@ -418,19 +423,15 @@ export default function ProductView() {
                     </div>
                   </div>
 
-                  {/* Title */}
                   <h1 className="mt-3 text-2xl font-bold tracking-tight" style={{ color: C.text }}>{norm.title}</h1>
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>
                     {norm.description}
                   </p>
-                  {/* Meta */}
                   <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
                     <span>Brand: <b style={{ color: C.primary }}>{norm.brand}</b></span>
                     <span>SKU: {norm.sku}</span>
                     <span>GTIN: {norm.gtin}</span>
                   </div>
-
-                  {/* Price */}
                   <div className="mt-5 flex flex-wrap items-end gap-3">
                     <span className="text-3xl font-extrabold" style={{ color: C.primary }}>{fmt(unitPrice)}</span>
                     <span className="pb-1 text-sm" style={{ color: C.muted }}>/ unit</span>
@@ -438,8 +439,6 @@ export default function ProductView() {
                     {discountPct > 0 && <Badge variant="gold">{discountPct}% OFF</Badge>}
                   </div>
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>Prices are exclusive of GST</p>
-
-                  {/* Bulk pricing tiers */}
                   <div className="mt-5 rounded-sm border p-3" style={{ background: C.cream, borderColor: C.border }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -472,9 +471,7 @@ export default function ProductView() {
                     </div>
                   </div>
 
-                  {/* Selectors + CTA */}
                   <div className="mt-5 space-y-5">
-                    {/* Color */}
                     <div>
                       <p className="text-xs font-semibold" style={{ color: C.muted }}>Color</p>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -497,7 +494,6 @@ export default function ProductView() {
                       </div>
                     </div>
 
-                    {/* Warranty */}
                     <div>
                       <p className="text-xs font-semibold" style={{ color: C.muted }}>Warranty</p>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -516,8 +512,6 @@ export default function ProductView() {
                         })}
                       </div>
                     </div>
-
-                    {/* Quantity */}
                     <div>
                       <p className="text-xs font-semibold" style={{ color: C.muted }}>Quantity (Units)</p>
                       <div className="mt-2 flex items-center gap-3">
@@ -550,8 +544,6 @@ export default function ProductView() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Actions */}
                     <div className="space-y-3">
                       <button className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white" style={{ background: C.primary }}>
                         <ShoppingCart className="h-5 w-5" /> Add to Cart
@@ -563,7 +555,6 @@ export default function ProductView() {
                     </div>
                   </div>
 
-                  {/* Trust badges */}
                   <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <TrustBadge Icon={FileText} label="GST Invoice" />
                     <TrustBadge Icon={ShieldCheck} label="Secure Payments" />
@@ -608,8 +599,6 @@ export default function ProductView() {
           <SpecificationsSection specifications={product?.specifications} />
           <CustomerReviewsSection product={product} />
           <ShippingDeliverySection product={product} />
-
-          {/* Similar Products */}
           <section className="mt-6 rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Similar Products</h2>

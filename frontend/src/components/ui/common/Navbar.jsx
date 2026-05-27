@@ -313,7 +313,7 @@ const Navbar = () => {
                   </div>
 
                   {showSearchDropdown && (
-                    <div className="absolute left-2 right-2 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 p-4 max-h-96 overflow-y-auto">
+                    <div className="absolute left-2 right-2 top-full mt-2 bg-white border border-[#E5E5E5] rounded-sm shadow-2xl z-50 p-4 max-h-96 overflow-y-auto text-[#0B1F3A]">
                       {searchLoading ? (
                         <p className="text-sm text-gray-500">Searching...</p>
                       ) : searchResults.products.length === 0 &&
@@ -553,7 +553,7 @@ const Navbar = () => {
                                 <span>Payment Methods</span>
                               </button>
 
-                              <button
+                              {/* <button
                                 onClick={() => {
                                   router.push("/help");
                                   setDropdown(false);
@@ -562,7 +562,7 @@ const Navbar = () => {
                               >
                                 <ClipboardList className="h-5 w-5" />
                                 <span>Bulk Enquiry</span>
-                              </button>
+                              </button> */}
 
                               <button
                                 onClick={() => {

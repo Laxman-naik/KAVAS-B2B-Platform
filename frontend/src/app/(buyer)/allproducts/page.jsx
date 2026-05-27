@@ -1,11 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, LayoutGrid, Rows3, ShoppingCart } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-// import { toggleFavourite } from "@/store/slices/favouritesSlice";
+import {
+  addToFavourites,
+  removeFromFavourites,
+  fetchFavourites,
+} from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchProducts } from "@/store/slices/productSlice";
 
@@ -26,7 +31,6 @@ const Page = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [filters, setFilters] = useState({
     minQty: [],
-
     rating: [],
     supplier: [],
   });
@@ -40,36 +44,92 @@ const Page = () => {
 
   const dispatch = useDispatch();
   const favouriteItems = useSelector((state) => state.favourites.items);
-  const { products: dbProducts, loading } = useSelector((state) => state.products);
+  const { products: dbProducts, loading } = useSelector(
+    (state) => state.products
+  );
+
+  const liked = useMemo(() => {
+    return (Array.isArray(favouriteItems) ? favouriteItems : [])
+      .map((item) =>
+        String(
+          item?.productId ??
+            item?.product_id ??
+            item?.id ??
+            item?._id ??
+            item
+        )
+      )
+      .filter(Boolean);
+  }, [favouriteItems]);
 
   useEffect(() => {
     dispatch(fetchProducts());
+    dispatch(fetchFavourites());
   }, [dispatch]);
 
-  // const onToggleFavourite = (product) => {
-  //   dispatch(toggleFavourite(product));
-  // };
+  const onToggleFavourite = async (product) => {
+    const productId = product?._id ?? product?.id ?? product?.productId;
+    if (!productId) return;
+
+    const isLiked = liked.includes(String(productId));
+
+    try {
+      if (isLiked) {
+        await dispatch(removeFromFavourites(productId)).unwrap();
+      } else {
+        await dispatch(addToFavourites(productId)).unwrap();
+      }
+    } catch (error) {
+      console.error("Favourite error:", error);
+      alert(error || "Unable to update favourites");
+    }
+  };
 
   const onAddToCart = (product) => {
-    dispatch(addToCart(product));
+    const productId = product?._id ?? product?.id ?? product?.productId;
+
+    dispatch(
+      addToCart({
+        productId,
+        quantity: 1,
+        variantId: product?.variantId ?? product?.variant_id,
+      })
+    );
   };
 
   const normalizeDbProduct = (p) => {
     if (!p) return null;
+
     const id = p._id ?? p.id ?? p.productId;
     const name = p.name ?? p.title ?? "";
     const category = p.category ?? "";
     const supplier = p.supplier ?? p.company ?? p.supplierType ?? "";
-    const price = typeof p.price === "number" ? p.price : Number(p.priceValue ?? p.price ?? 0);
+    const price =
+      typeof p.price === "number"
+        ? p.price
+        : Number(p.priceValue ?? p.price ?? 0);
+
     const minQty =
       typeof p.minQty === "number"
         ? p.minQty
         : typeof p.moq === "number"
-          ? p.moq
-          : Number(String(p.min ?? "").match(/\d+/)?.[0] ?? 0);
-    const image = p.image ?? p.image_url ?? null;
+        ? p.moq
+        : Number(String(p.min ?? "").match(/\d+/)?.[0] ?? 0);
 
-    return { ...p, _id: id, id, name, category, supplier, price, minQty, image };
+    const image = p.image ?? p.image_url ?? p.imageUrl ?? null;
+
+    return {
+      ...p,
+      _id: id,
+      id,
+      productId: id,
+      name,
+      category,
+      supplier,
+      price,
+      minQty,
+      image,
+    };
   };
 
   const handleFilterChange = (type, value) => {
@@ -104,7 +164,8 @@ const Page = () => {
     .filter((product) => {
       if (
         activeCategory !== "All" &&
-        String(product.category || "").toLowerCase() !== activeCategory.toLowerCase()
+        String(product.category || "").toLowerCase() !==
+          activeCategory.toLowerCase()
       ) {
         return false;
       }
@@ -122,16 +183,19 @@ const Page = () => {
           if (range === "50–200 units") return qty >= 50 && qty <= 200;
           if (range === "200–500 units") return qty > 200 && qty <= 500;
           if (range === "500+ units") return qty > 500;
+          return false;
         });
 
         if (!matchQty) return false;
       }
+
       if (filters.rating.length > 0) {
         const matchRating = filters.rating.some(
           (r) => (product.rating || 0) >= parseFloat(r)
         );
         if (!matchRating) return false;
       }
+
       if (filters.supplier.length > 0) {
         const matchSupplier = filters.supplier.includes(product.supplier);
         if (!matchSupplier) return false;
@@ -143,9 +207,11 @@ const Page = () => {
       if (sortOption === "Price low to high") {
         return a.price - b.price;
       }
+
       if (sortOption === "Price high to low") {
         return b.price - a.price;
       }
+
       return 0;
     });
 
@@ -168,7 +234,9 @@ const Page = () => {
       <div className="max-w-350 mx-auto px-4 sm:px-6 py-6">
         <div className="mb-5">
           <p className="text-xs text-gray-600">
-            <Link href="/" className="hover:underline">Home</Link>
+            <Link href="/" className="hover:underline">
+              Home
+            </Link>
             <span className="mx-2">››</span>
             <span className="font-semibold text-gray-900">Products</span>
           </p>
@@ -176,10 +244,13 @@ const Page = () => {
           <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
             All Products
           </h1>
+
           <p className="mt-1 text-sm text-gray-700 max-w-2xl">
-            Discover our wide range of premium quality products at unbeatable wholesale prices.
+            Discover our wide range of premium quality products at unbeatable
+            wholesale prices.
           </p>
         </div>
+
         <div className="rounded-sm bg-white border border-[#E9DDC9] p-4 sm:p-5">
           <div className="md:hidden mb-4">
             <Button
@@ -196,17 +267,18 @@ const Page = () => {
             <aside className={`${showFilters ? "block" : "hidden"} md:block`}>
               <div className="rounded-2xl border border-[#E9DDC9] bg-white p-4 sticky top-24">
                 <div className="pb-3 border-b border-[#F0E6D6]">
-                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">CATEGORIES</h3>
+                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">
+                    CATEGORIES
+                  </h3>
                 </div>
 
                 <div className="mt-3 space-y-1">
                   {categories.map((cat) => {
                     const count =
-                      cat === "All"
-                        ? allProducts.length
-                        : categoryCounts[cat] || 0;
+                      cat === "All" ? allProducts.length : categoryCounts[cat] || 0;
 
                     const isActive = activeCategory === cat;
+
                     return (
                       <button
                         key={cat}
@@ -214,12 +286,15 @@ const Page = () => {
                           setActiveCategory(cat);
                           setCurrentPage(1);
                         }}
-                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition border ${isActive
+                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition border ${
+                          isActive
                             ? "bg-[#FFF3D6] border-[#D4AF37] text-[#0B1F3A]"
                             : "bg-white border-transparent hover:bg-[#FFF3D6]/60 text-gray-700"
-                          }`}
+                        }`}
                       >
-                        <span className="font-medium">{cat === "All" ? "All Categories" : cat}</span>
+                        <span className="font-medium">
+                          {cat === "All" ? "All Categories" : cat}
+                        </span>
                         <span className="text-xs text-gray-600">({count})</span>
                       </button>
                     );
@@ -227,7 +302,9 @@ const Page = () => {
                 </div>
 
                 <div className="mt-5 pt-4 border-t border-[#F0E6D6]">
-                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">PRICE RANGE</h3>
+                  <h3 className="text-xs font-extrabold tracking-wide text-gray-700">
+                    PRICE RANGE
+                  </h3>
 
                   <div className="mt-3 space-y-3">
                     <input
@@ -237,11 +314,15 @@ const Page = () => {
                       value={priceRange.min}
                       onChange={(e) => {
                         const value = Number(e.target.value);
-                        setPriceRange((prev) => ({ ...prev, min: Math.min(value, prev.max) }));
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          min: Math.min(value, prev.max),
+                        }));
                         setCurrentPage(1);
                       }}
                       className="w-full accent-[#0B1F3A]"
                     />
+
                     <input
                       type="range"
                       min={0}
@@ -249,7 +330,10 @@ const Page = () => {
                       value={priceRange.max}
                       onChange={(e) => {
                         const value = Number(e.target.value);
-                        setPriceRange((prev) => ({ ...prev, max: Math.max(value, prev.min) }));
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          max: Math.max(value, prev.min),
+                        }));
                         setCurrentPage(1);
                       }}
                       className="w-full accent-[#0B1F3A]"
@@ -279,9 +363,13 @@ const Page = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-xl bg-[#0B1F3A]  p-4 text-white">
-                  <p className="text-xs font-extrabold tracking-wide opacity-90">BULK ORDER?</p>
-                  <p className="mt-1 text-sm font-semibold">Get Special Wholesale Pricing!</p>
+                <div className="mt-5 rounded-xl bg-[#0B1F3A] p-4 text-white">
+                  <p className="text-xs font-extrabold tracking-wide opacity-90">
+                    BULK ORDER?
+                  </p>
+                  <p className="mt-1 text-sm font-semibold">
+                    Get Special Wholesale Pricing!
+                  </p>
                   <Button className="mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]">
                     Enquire Now
                   </Button>
@@ -292,8 +380,14 @@ const Page = () => {
             <main>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="text-sm text-gray-700">
-                  Showing <span className="font-semibold">{startIndex + 1}</span>–
-                  <span className="font-semibold">{endIndex}</span> of <span className="font-semibold">{totalProducts}</span> Products
+                  Showing{" "}
+                  <span className="font-semibold">
+                    {totalProducts === 0 ? 0 : startIndex + 1}
+                  </span>
+                  –
+                  <span className="font-semibold">{endIndex}</span> of{" "}
+                  <span className="font-semibold">{totalProducts}</span>{" "}
+                  Products
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -312,9 +406,15 @@ const Page = () => {
 
                   <button
                     type="button"
-                    onClick={() => setViewMode((m) => (m === "grid" ? "list" : "grid"))}
+                    onClick={() =>
+                      setViewMode((m) => (m === "grid" ? "list" : "grid"))
+                    }
                     className="h-10 w-10 rounded-lg border border-[#E9DDC9] bg-white flex items-center justify-center text-[#0B1F3A] hover:bg-[#FFF3D6] transition"
-                    aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                    aria-label={
+                      viewMode === "grid"
+                        ? "Switch to list view"
+                        : "Switch to grid view"
+                    }
                   >
                     {viewMode === "grid" ? (
                       <LayoutGrid className="h-4 w-4" />
@@ -326,7 +426,9 @@ const Page = () => {
               </div>
 
               {loading ? (
-                <div className="py-10 text-center text-sm text-gray-600">Loading products...</div>
+                <div className="py-10 text-center text-sm text-gray-600">
+                  Loading products...
+                </div>
               ) : (
                 <div
                   className={
@@ -336,18 +438,24 @@ const Page = () => {
                   }
                 >
                   {paginatedProducts.map((product, index) => {
-                    const productId = product?._id ?? product?.id ?? product?.productId;
-                    const isLiked = favouriteItems.some(
-                      (i) => String(i._id ?? i.id) === String(productId)
-                    );
+                    const productId =
+                      product?._id ?? product?.id ?? product?.productId;
+
+                    const isLiked = liked.includes(String(productId));
+
                     const discount = index % 2 === 0 ? 25 : 30;
+
                     const originalPrice =
                       typeof product?.price === "number"
                         ? Math.round(product.price * (1 + discount / 100))
                         : null;
 
                     return (
-                      <Link key={productId} href={`/product/${productId}`} className="block">
+                      <Link
+                        key={productId}
+                        href={`/product/${productId}`}
+                        className="block"
+                      >
                         <Card className="rounded-2xl border border-[#E9DDC9] bg-white hover:shadow-md transition overflow-hidden">
                           <CardContent className={viewMode === "grid" ? "p-0" : "p-0"}>
                             <div className={viewMode === "grid" ? "" : "flex gap-4"}>
@@ -366,14 +474,22 @@ const Page = () => {
                                   type="button"
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    // onToggleFavourite({ ...product, _id: productId });
+                                    e.stopPropagation();
+                                    onToggleFavourite({
+                                      ...product,
+                                      productId,
+                                      _id: productId,
+                                      id: productId,
+                                    });
                                   }}
-                                  className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
+                                  className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/90 flex items-center justify-center border border-[#E9DDC9]"
                                   aria-label="Toggle favourite"
                                 >
                                   <Heart
                                     size={16}
-                                    className={isLiked ? "text-red-500" : "text-gray-600"}
+                                    className={
+                                      isLiked ? "text-red-500" : "text-gray-600"
+                                    }
                                     fill={isLiked ? "currentColor" : "none"}
                                   />
                                 </button>
@@ -385,28 +501,54 @@ const Page = () => {
                                 />
                               </div>
 
-                              <div className={viewMode === "grid" ? "p-3" : "flex-1 py-4 pr-4"}>
-                                <h3 className={viewMode === "grid" ? "text-sm font-semibold text-[#0B1F3A] line-clamp-2 min-h-10" : "text-sm sm:text-base font-semibold text-[#0B1F3A] line-clamp-2"}>
+                              <div
+                                className={
+                                  viewMode === "grid" ? "p-3" : "flex-1 py-4 pr-4"
+                                }
+                              >
+                                <h3
+                                  className={
+                                    viewMode === "grid"
+                                      ? "text-sm font-semibold text-[#0B1F3A] line-clamp-2 min-h-10"
+                                      : "text-sm sm:text-base font-semibold text-[#0B1F3A] line-clamp-2"
+                                  }
+                                >
                                   {product.name}
                                 </h3>
 
                                 <div className="mt-1">
-                                  <span className="text-sm font-extrabold text-[#0B1F3A]">₹{product.price}</span>
+                                  <span className="text-sm font-extrabold text-[#0B1F3A]">
+                                    ₹{product.price}
+                                  </span>
                                   {originalPrice ? (
-                                    <span className="ml-2 text-xs text-gray-500 line-through">₹{originalPrice}</span>
+                                    <span className="ml-2 text-xs text-gray-500 line-through">
+                                      ₹{originalPrice}
+                                    </span>
                                   ) : null}
                                 </div>
 
                                 <p className="mt-1 text-xs text-gray-600">
-                                  Min. Order: <span className="font-semibold">{product.minQty}</span> Units
+                                  Min. Order:{" "}
+                                  <span className="font-semibold">
+                                    {product.minQty}
+                                  </span>{" "}
+                                  Units
                                 </p>
 
                                 <div className={viewMode === "grid" ? "" : "mt-3 flex gap-2"}>
                                   <Button
-                                    className={viewMode === "grid" ? "mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]" : "bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] px-4"}
+                                    className={
+                                      viewMode === "grid"
+                                        ? "mt-3 w-full bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A]"
+                                        : "bg-[#D4AF37] hover:bg-[#caa734] text-[#0B1F3A] px-4"
+                                    }
                                     onClick={(e) => {
                                       e.preventDefault();
-                                      onAddToCart({ ...product, productId });
+                                      e.stopPropagation();
+                                      onAddToCart({
+                                        ...product,
+                                        productId,
+                                      });
                                     }}
                                   >
                                     <ShoppingCart size={14} className="mr-2" />
@@ -422,6 +564,7 @@ const Page = () => {
                   })}
                 </div>
               )}
+
               <div className="mt-6 flex items-center justify-center gap-2">
                 <button
                   type="button"
@@ -438,12 +581,16 @@ const Page = () => {
                   const groupPages = Array.from({ length: 5 })
                     .map((_, i) => groupStart + i)
                     .filter((n) => n <= totalPages);
-                  const showLast = totalPages > 5 && groupPages[groupPages.length - 1] < totalPages;
+
+                  const showLast =
+                    totalPages > 5 &&
+                    groupPages[groupPages.length - 1] < totalPages;
 
                   return (
                     <>
                       {groupPages.map((pageNum) => {
                         const isActive = pageNum === safePage;
+
                         return (
                           <button
                             key={pageNum}
@@ -466,7 +613,7 @@ const Page = () => {
                           <button
                             type="button"
                             onClick={() => setCurrentPage(totalPages)}
-                            className={`h-8 min-w-8 px-2 rounded-md text-sm font-semibold border bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]`}
+                            className="h-8 min-w-8 px-2 rounded-md text-sm font-semibold border bg-white text-[#0B1F3A] border-[#E9DDC9] hover:bg-[#FFF3D6]"
                           >
                             {totalPages}
                           </button>
@@ -478,7 +625,9 @@ const Page = () => {
 
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
                   disabled={safePage === totalPages}
                   className="h-8 w-8 rounded-md border border-[#E9DDC9] bg-white text-[#0B1F3A] disabled:opacity-50"
                   aria-label="Next page"

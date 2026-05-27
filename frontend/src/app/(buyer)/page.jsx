@@ -37,6 +37,7 @@ import WhyChoose from "@/components/ui/common/WhyChoose"
 export default function BuyerHome() {
   return (
     <>
+     <main className="w-full min-h-screen overflow-y-auto no-scrollbar bg-white">
       <Home />
        <TrendingProducts />
        <FlashDeals />
@@ -47,7 +48,7 @@ export default function BuyerHome() {
       <AllProducts />
        
       {/* <FeaturedSuppliers /> */}
-      
+      </main>
     </>
   );
 }

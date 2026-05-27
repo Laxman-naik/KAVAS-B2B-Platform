@@ -21,9 +21,7 @@ export const fetchProducts = createAsyncThunk(
 
       return res.products || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -38,9 +36,7 @@ export const fetchSingleProduct = createAsyncThunk(
 
       return res;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -51,23 +47,27 @@ export const addProduct = createAsyncThunk(
   "products/create",
   async (formData, thunkAPI) => {
     try {
-      const res = await createProduct(formData);
-      return res.product;
+      console.log("SENDING PRODUCT DATA:", data);
+
+      const res = await createProduct(data);
+
+      console.log("CREATE PRODUCT RESPONSE:", res.data);
+
+      return res.data.product;
     } catch (err) {
-      console.log("CREATE PRODUCT ERROR FULL:", err);
-      console.log("ERROR RESPONSE:", err.response);
-      console.log("ERROR DATA:", err.response?.data);
+      console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
+      console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
+      console.log("CREATE PRODUCT SENT DATA:", data);
 
       return thunkAPI.rejectWithValue(
-        err.response?.data || {
-          message: err.message || "Create product failed",
-        }
+        err.response?.data?.message ||
+          err.response?.data ||
+          err.message ||
+          "Failed to create product"
       );
     }
   }
 );
-
-/* ================= UPDATE PRODUCT ================= */
 
 export const editProduct = createAsyncThunk(
   "products/update",
@@ -77,14 +77,10 @@ export const editProduct = createAsyncThunk(
 
       return res.product || res;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= DELETE PRODUCT ================= */
 
 export const removeProduct = createAsyncThunk(
   "products/delete",
@@ -94,9 +90,7 @@ export const removeProduct = createAsyncThunk(
 
       return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -111,9 +105,7 @@ export const fetchNewArrivals = createAsyncThunk(
 
       return res.data || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -145,14 +137,10 @@ export const fetchVendorProducts = createAsyncThunk(
 
       return res.products || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= SLICE ================= */
 
 const productSlice = createSlice({
   name: "products",
@@ -167,12 +155,14 @@ const productSlice = createSlice({
     error: null,
   },
 
-  reducers: {},
+  reducers: {
+    clearProductError: (state) => {
+      state.error = null;
+    },
+  },
 
   extraReducers: (builder) => {
     builder
-
-      /* FETCH ALL */
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
       })
@@ -192,39 +182,44 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.product = action.payload;
+        state.product =
+          action.payload?.product || action.payload?.data || action.payload;
       })
-
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* CREATE */
+      .addCase(addProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(addProduct.fulfilled, (state, action) => {
-        state.products.unshift(action.payload);
+        state.loading = false;
+        if (action.payload) {
+          state.products.unshift(action.payload);
+        }
+      })
+      .addCase(addProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
-      /* UPDATE */
       .addCase(editProduct.fulfilled, (state, action) => {
-        state.products = state.products.map((product) =>
-          product.id === action.payload.id
-            ? action.payload
-            : product
+        const updatedProduct =
+          action.payload?.product || action.payload?.data || action.payload;
+
+        state.products = state.products.map((p) =>
+          p.id === updatedProduct?.id ? updatedProduct : p
         );
       })
 
-      /* DELETE */
       .addCase(removeProduct.fulfilled, (state, action) => {
-        state.products = state.products.filter(
-          (product) => product.id !== action.payload
-        );
+        state.products = state.products.filter((p) => p.id !== action.payload);
       })
 
-      /* NEW ARRIVALS */
       .addCase(fetchNewArrivals.pending, (state) => {
         state.loading = true;
       })
@@ -239,7 +234,6 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* TRENDING */
       .addCase(fetchTrendingProducts.pending, (state) => {
         state.loading = true;
       })
@@ -257,13 +251,12 @@ const productSlice = createSlice({
       /* VENDOR PRODUCTS */
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.vendorProducts = action.payload;
+        state.vendorProducts = action.payload?.products || [];
       })
-
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -271,4 +264,5 @@ const productSlice = createSlice({
   },
 });
 
+export const { clearProductError } = productSlice.actions;
 export default productSlice.reducer;
