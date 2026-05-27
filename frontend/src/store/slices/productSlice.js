@@ -38,13 +38,44 @@ export const fetchSingleProduct = createAsyncThunk(
   }
 );
 
+/* ================= CREATE PRODUCT ================= */
+
+// export const addProduct = createAsyncThunk(
+//   "products/create",
+//   async (formData, thunkAPI) => {
+//     try {
+//       console.log("SENDING PRODUCT DATA:", data);
+
+//       const res = await createProduct(data);
+
+//       console.log("CREATE PRODUCT RESPONSE:", res.data);
+
+//       return res.data.product;
+//     } catch (err) {
+//       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
+//       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
+//       console.log("CREATE PRODUCT SENT DATA:", data);
+
+//       return thunkAPI.rejectWithValue(
+//         err.response?.data?.message ||
+//           err.response?.data ||
+//           err.message ||
+//           "Failed to create product"
+//       );
+//     }
+//   }
+// );
 export const addProduct = createAsyncThunk(
   "products/add",
   async (data, thunkAPI) => {
     try {
-      console.log("SENDING PRODUCT DATA:", data);
+      console.log("SENDING PRODUCT DATA:");
 
-      const res = await createProduct(data);
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
+      const res = await createProduct(formData);
 
       console.log("CREATE PRODUCT RESPONSE:", res.data);
 
@@ -52,13 +83,12 @@ export const addProduct = createAsyncThunk(
     } catch (err) {
       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
-      console.log("CREATE PRODUCT SENT DATA:", data);
 
       return thunkAPI.rejectWithValue(
         err.response?.data?.message ||
-          err.response?.data ||
-          err.message ||
-          "Failed to create product"
+        err.response?.data ||
+        err.message ||
+        "Failed to create product"
       );
     }
   }
@@ -120,8 +150,9 @@ export const fetchVendorProducts = createAsyncThunk(
   async (vendorId, thunkAPI) => {
     try {
       const res = await getVendorProductsAPI(vendorId);
+      console.log("VENDOR PRODUCTS RESPONSE:", res);
 
-      return res.products || [];
+      return res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }

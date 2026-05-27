@@ -403,7 +403,7 @@ export const loginVendor = async (req, res) => {
 
     if (email) {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE LOWER(vp.email) = LOWER($1)
@@ -411,7 +411,7 @@ export const loginVendor = async (req, res) => {
       values = [email];
     } else {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE vp.phone = $1
@@ -514,11 +514,13 @@ export const loginVendor = async (req, res) => {
       onboarding_step,
       status: vendor.status,
       role:"vendor",
+      organization_id: vendor.organization_id,
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
         id: vendor.id,
         email: vendor.email,
         phone: vendor.phone,
+        organization_id: vendor.organization_id,
       },
     });
 
@@ -595,7 +597,7 @@ export const getMe = async (req, res) => {
 
     const result = await db.query(
       `SELECT vp.id, vp.email, vp.phone, vp.email_verified, vp.phone_verified, vp.is_active,
-              vo.id as onboarding_id, vo.status, vo.current_step
+              vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step
        FROM vendorprofile vp
        LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
        WHERE vp.id = $1`,
