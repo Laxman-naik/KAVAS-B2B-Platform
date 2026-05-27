@@ -19,6 +19,7 @@ export default function ProductManagementBody() {
   const vendorData = useSelector((state) => state.vendor?.vendor);
   const vendorId = vendorData?.id;
   const organizationId = vendorData?.organization_id;
+  console.log(vendorProducts)
 
   useEffect(() => {
     if (organizationId) {
