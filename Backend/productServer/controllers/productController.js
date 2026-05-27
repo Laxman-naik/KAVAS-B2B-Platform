@@ -17,16 +17,16 @@ exports.createProduct = async (req, res) => {
     // =====================================================
 
     const safeParse = (value, fallback = []) => {
-      try {
-        if (Array.isArray(value)) return value;
+  if (!value) return fallback;
 
-        return JSON.parse(
-          value || JSON.stringify(fallback)
-        );
-      } catch {
-        return fallback;
-      }
-    };
+  if (Array.isArray(value)) return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
 
     const slugifyText = (text) =>
       String(text || "")
@@ -88,8 +88,7 @@ exports.createProduct = async (req, res) => {
     let parentCategoryId = null;
     let subCategoryId = null;
 
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
     if (category?.trim()) {
       if (uuidRegex.test(category)) {
@@ -202,7 +201,7 @@ exports.createProduct = async (req, res) => {
     const parsedImages = safeParse(images);
     const imageList = [];
 
-    for (let i = 0; i < parsedImages.length; i++) {
+    for (let i = 0; i < (parsedImages || []).length; i++) {
       await client.query(
         `INSERT INTO product_images
         (product_id,image_url,media_type,sort_order,is_primary)
@@ -224,7 +223,7 @@ exports.createProduct = async (req, res) => {
     const parsedVideos = safeParse(videos);
     const videoList = [];
 
-    for (let i = 0; i < parsedVideos.length; i++) {
+    for (let i = 0; i < (parsedVideos || []).length; i++) {
       await client.query(
         `INSERT INTO product_images
         (product_id,image_url,media_type,sort_order,is_primary)
@@ -245,7 +244,7 @@ exports.createProduct = async (req, res) => {
     const parsedSpecs = safeParse(specifications);
     const specsList = [];
 
-    for (const spec of parsedSpecs) {
+    for (const spec of (parsedSpecs || [])) {
       if (!spec?.name || !spec?.value) continue;
 
       await client.query(
@@ -265,7 +264,7 @@ exports.createProduct = async (req, res) => {
     const parsedPricing = safeParse(bulkPricing);
     const pricingList = [];
 
-    for (const tier of parsedPricing) {
+    for (const tier of (parsedPricing || [])){
       await client.query(
         `INSERT INTO product_pricing_tiers
         (product_id,min_quantity,max_quantity,price)
@@ -288,7 +287,7 @@ exports.createProduct = async (req, res) => {
     const parsedVariants = safeParse(variants);
     const variantList = [];
 
-    for (const v of parsedVariants) {
+    for (const v of (parsedVariants || [])) {
       await client.query(
         `INSERT INTO product_variants (
           product_id,
@@ -347,6 +346,8 @@ exports.createProduct = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("❌ CREATE PRODUCT ERROR STACK:");
+    console.error(err); // IMPORTANT (not just err.message)
     await client.query("ROLLBACK");
 
     console.error("createProduct error:", err);
@@ -361,6 +362,7 @@ exports.createProduct = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: err.message,
+      stack: err.stack,
     });
   } finally {
     client.release();

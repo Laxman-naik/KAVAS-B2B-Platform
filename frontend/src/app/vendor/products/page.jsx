@@ -17,7 +17,7 @@ export default function ProductManagementBody() {
   const pageSize = 8;
   const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
   const { vendorProducts, loading } = useSelector((state) => state.products);
-  // console.log(vendorProducts);
+  console.log(vendorProducts);
 
   useEffect(() => {
     if (vendorId) {

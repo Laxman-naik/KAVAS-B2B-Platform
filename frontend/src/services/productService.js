@@ -90,11 +90,14 @@ export const getTrendingProductsAPI = async () => {
   return res.data;
 };
 export const createProduct = async (data) => {
-  const res = await productapi.post("/api/products", data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  console.log("🔥 CREATE PRODUCT HIT");
+  const res = await productapi.post(
+    "/api/products",
+    data,
+    {
+      headers: {"Content-Type": "application/json",},
+    }
+  );
 
   return res.data;
 };
