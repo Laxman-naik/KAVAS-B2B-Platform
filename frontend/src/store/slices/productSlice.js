@@ -159,9 +159,9 @@ export const fetchTrendingProducts = createAsyncThunk(
 
 export const fetchVendorProducts = createAsyncThunk(
   "products/fetchVendorProducts",
-  async (vendorId, thunkAPI) => {
+  async (organizationId, thunkAPI) => {
     try {
-      const res = await getVendorProductsAPI(vendorId);
+      const res = await getVendorProductsAPI(organizationId);
       console.log("VENDOR PRODUCTS RESPONSE:", res);
 
       return res || [];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {Search,Plus,MoreVertical,Download,LayoutGrid,List,Pencil,ChevronLeft,ChevronRight,} from "lucide-react";
+import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight, } from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "../../../store/slices/productSlice";
@@ -15,15 +15,20 @@ export default function ProductManagementBody() {
   const [openAdd, setOpenAdd] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 8;
-  const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
+  // const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
   const { vendorProducts, loading } = useSelector((state) => state.products);
+  const vendorData = useSelector((state) => state.vendor?.vendor);
+  const vendorId = vendorData?.id;
+  const organizationId = vendorData?.organization_id;
   console.log(vendorProducts);
+  // console.log(organizationId)
+  // console.log(vendorData)
 
   useEffect(() => {
     if (vendorId) {
-      dispatch(fetchVendorProducts(vendorId));
+      dispatch(fetchVendorProducts(organizationId));
     }
-  }, [dispatch, vendorId]);
+  }, [dispatch, organizationId]);
 
   const products = useMemo(() => {
     return Array.isArray(vendorProducts) ? vendorProducts : [];
@@ -246,11 +251,10 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                  viewMode === "grid"
-                    ? "bg-[#0B1F3A] text-white"
-                    : "text-gray-600 hover:bg-[#FFF8EC]"
-                }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "grid"
+                  ? "bg-[#0B1F3A] text-white"
+                  : "text-gray-600 hover:bg-[#FFF8EC]"
+                  }`}
                 aria-label="Grid view"
               >
                 <LayoutGrid size={16} />
@@ -258,11 +262,10 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
-                  viewMode === "list"
-                    ? "bg-[#0B1F3A] text-white"
-                    : "text-gray-600 hover:bg-[#FFF8EC]"
-                }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "list"
+                  ? "bg-[#0B1F3A] text-white"
+                  : "text-gray-600 hover:bg-[#FFF8EC]"
+                  }`}
                 aria-label="List view"
               >
                 <List size={16} />
@@ -430,11 +433,10 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage <= 1
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-[#FFF8EC]"
-            }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage <= 1
+              ? "opacity-40 cursor-not-allowed"
+              : "hover:bg-[#FFF8EC]"
+              }`}
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
@@ -452,21 +454,20 @@ export default function ProductManagementBody() {
                   ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
                   : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
                   }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
+              >
+                {p}
+              </button>
+            );
+          })}
 
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
-              safePage >= totalPages
-                ? "opacity-40 cursor-not-allowed"
-                : "hover:bg-[#FFF8EC]"
-            }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage >= totalPages
+              ? "opacity-40 cursor-not-allowed"
+              : "hover:bg-[#FFF8EC]"
+              }`}
             aria-label="Next page"
           >
             <ChevronRight size={16} />

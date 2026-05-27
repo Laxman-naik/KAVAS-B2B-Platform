@@ -50,7 +50,7 @@ export const updateProduct = async (id, data) => {
 
 // ================= GET VENDOR PRODUCTS =================
 export const getVendorProductsAPI = async (vendorId) => {
-  const res = await productapi.get(`/api/products/vendor/${vendorId}`, {
+  const res = await productapi.get(`/api/products/vendor/${organizationId}`, {
     skipAuth: true,
   });
   return res.data;
