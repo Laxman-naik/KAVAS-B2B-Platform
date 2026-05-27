@@ -21,7 +21,7 @@ export default function ProductManagementBody() {
   const vendorId = vendorData?.id;
   const organizationId = vendorData?.organization_id;
   console.log(vendorProducts);
-  // console.log(organizationId)
+  console.log(organizationId)
   // console.log(vendorData)
 
   useEffect(() => {

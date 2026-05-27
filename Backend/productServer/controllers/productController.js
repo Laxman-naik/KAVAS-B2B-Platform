@@ -1408,6 +1408,10 @@ exports.getVendorProducts = async (req, res) => {
   try {
     const { organizationId } = req.params;
 
+    // ==========================================
+    // VALIDATION
+    // ==========================================
+
     if (!organizationId) {
       return res.status(400).json({
         success: false,
@@ -1415,10 +1419,48 @@ exports.getVendorProducts = async (req, res) => {
       });
     }
 
+    // ==========================================
+    // GET PRODUCTS BY ORGANIZATION
+    // ==========================================
+
     const result = await pool.query(
       `
       SELECT 
-        p.*,
+        p.id,
+        p.organization_id,
+        p.name,
+        p.description,
+        p.price,
+        p.mrp,
+        p.moq,
+        p.stock,
+        p.slug,
+        p.sku,
+        p.unit,
+        p.is_active,
+        p.is_featured,
+        p.is_top_product,
+        p.avg_rating,
+        p.total_reviews,
+        p.views_count,
+        p.sales_count,
+        p.created_at,
+        p.updated_at,
+
+        -- =====================================
+        -- STATUS
+        -- =====================================
+
+        CASE
+          WHEN p.stock <= 0 THEN 'Out of Stock'
+          WHEN p.stock <= 10 THEN 'Low Stock'
+          WHEN p.is_active = false THEN 'Inactive'
+          ELSE 'Active'
+        END AS status,
+
+        -- =====================================
+        -- CATEGORIES
+        -- =====================================
 
         COALESCE(
           json_agg(
@@ -1430,6 +1472,10 @@ exports.getVendorProducts = async (req, res) => {
           ) FILTER (WHERE c.id IS NOT NULL),
           '[]'
         ) AS categories,
+
+        -- =====================================
+        -- IMAGES
+        -- =====================================
 
         COALESCE(
           json_agg(
@@ -1444,6 +1490,10 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS images,
 
+        -- =====================================
+        -- VIDEOS
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
@@ -1455,9 +1505,14 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS videos,
 
+        -- =====================================
+        -- SPECIFICATIONS
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
+              'id', ps.id,
               'key', ps.key,
               'value', ps.value
             )
@@ -1465,9 +1520,14 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS specifications,
 
+        -- =====================================
+        -- BULK PRICING
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
+              'id', ppt.id,
               'minQty', ppt.min_quantity,
               'maxQty', ppt.max_quantity,
               'price', ppt.price
@@ -1476,16 +1536,24 @@ exports.getVendorProducts = async (req, res) => {
           '[]'
         ) AS bulkPricing,
 
+        -- =====================================
+        -- VARIANTS
+        -- =====================================
+
         COALESCE(
           json_agg(
             DISTINCT jsonb_build_object(
               'id', pv.id,
               'type', pv.variant_type,
               'value', pv.variant_value,
+              'variant_name', pv.variant_name,
+              'sku', pv.sku,
               'price', pv.price,
               'mrp', pv.mrp,
               'stock', pv.stock,
-              'image_url', pv.image_url
+              'unit', pv.unit,
+              'image_url', pv.image_url,
+              'is_active', pv.is_active
             )
           ) FILTER (WHERE pv.id IS NOT NULL),
           '[]'
@@ -1493,40 +1561,63 @@ exports.getVendorProducts = async (req, res) => {
 
       FROM products p
 
-      LEFT JOIN product_categories pc 
+      LEFT JOIN product_categories pc
         ON pc.product_id = p.id
 
-      LEFT JOIN categories c 
+      LEFT JOIN categories c
         ON c.id = pc.category_id
 
-      LEFT JOIN product_images pi 
+      LEFT JOIN product_images pi
         ON pi.product_id = p.id
 
-      LEFT JOIN product_specifications ps 
+      LEFT JOIN product_specifications ps
         ON ps.product_id = p.id
 
-      LEFT JOIN product_pricing_tiers ppt 
+      LEFT JOIN product_pricing_tiers ppt
         ON ppt.product_id = p.id
 
-      LEFT JOIN product_variants pv 
+      LEFT JOIN product_variants pv
         ON pv.product_id = p.id
 
       WHERE p.organization_id = $1
 
       GROUP BY p.id
+
       ORDER BY p.created_at DESC
       `,
       [organizationId]
     );
 
+    // ==========================================
+    // NORMALIZE RESPONSE
+    // ==========================================
+
+    const products = result.rows.map((product) => ({
+      ...product,
+
+      category:
+        product.categories?.[0]?.name || "Uncategorized",
+
+      image:
+        product.images?.find((img) => img.is_primary)?.image_url ||
+        product.images?.[0]?.image_url ||
+        null,
+    }));
+
+    // ==========================================
+    // RESPONSE
+    // ==========================================
+
     return res.status(200).json({
       success: true,
+      count: products.length,
       organizationId,
-      products: result.rows,
+      products,
     });
 
   } catch (err) {
-    console.error("getOrganizationProducts error:", err);
+    console.error("❌ getVendorProducts error:");
+    console.error(err);
 
     return res.status(500).json({
       success: false,
