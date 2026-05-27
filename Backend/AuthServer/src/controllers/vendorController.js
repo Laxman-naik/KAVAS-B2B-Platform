@@ -481,7 +481,7 @@ export const loginVendor = async (req, res) => {
         onboarding_id: vendor.onboarding_id,
       },
       process.env.ACCESS_SECRET,
-      { expiresIn: "60m" }
+      { expiresIn: "1d" }
     );
 
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
@@ -524,7 +524,7 @@ export const loginVendor = async (req, res) => {
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    return res.status(500).json({ message: "Login failed" });
+    return res.status(500).json({ message: err });
   }
 };
 

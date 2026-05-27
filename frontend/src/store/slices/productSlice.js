@@ -10,6 +10,8 @@ import {
   getVendorProductsAPI,
 } from "../../services/productService";
 
+/* ================= FETCH ALL PRODUCTS ================= */
+
 export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {
@@ -21,6 +23,8 @@ export const fetchProducts = createAsyncThunk(
     }
   }
 );
+
+/* ================= FETCH SINGLE PRODUCT ================= */
 
 export const fetchSingleProduct = createAsyncThunk(
   "products/fetchOne",
@@ -89,12 +93,15 @@ export const fetchNewArrivals = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getNewArrivalsAPI();
-      return res.data?.data || [];
+
+      return res.data || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
+
+/* ================= TRENDING PRODUCTS ================= */
 
 export const fetchTrendingProducts = createAsyncThunk(
   "products/trending",
@@ -113,7 +120,8 @@ export const fetchVendorProducts = createAsyncThunk(
   async (vendorId, thunkAPI) => {
     try {
       const res = await getVendorProductsAPI(vendorId);
-      return res.data;
+
+      return res.products || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -124,8 +132,6 @@ const productSlice = createSlice({
   name: "products",
   initialState: {
     products: [],
-    newArrivals: [],
-    trending: [],
     vendorProducts: [],
     product: null,
     loading: false,
@@ -146,13 +152,14 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload?.products || action.payload || [];
+        state.products = action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
+      /* FETCH SINGLE */
       .addCase(fetchSingleProduct.pending, (state) => {
         state.loading = true;
         state.error = null;

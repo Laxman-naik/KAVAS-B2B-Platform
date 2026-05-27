@@ -1,36 +1,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  Trash2,
-  Upload,
-  X,
-  Check,
-  Package,
-  Image,
-  Layers,
-  Archive,
-  Tag,
-  Settings,
-} from "lucide-react";
+import {Plus,Trash2,Upload,X,Check,Package,Image,Layers,Archive,Tag,Settings,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getMainCategoriesThunk,
-  getSubcategoriesByParentThunk,
-  clearSubcategories,
-} from "@/store/slices/categorySlice";
+import {getMainCategoriesThunk,getSubcategoriesByParentThunk} from "@/store/slices/categorySlice";
 import { addProduct } from "@/store/slices/productSlice";
 
 const Field = ({ label, required, children, className = "" }) => (
@@ -43,8 +21,7 @@ const Field = ({ label, required, children, className = "" }) => (
   </div>
 );
 
-const inputCls =
-  "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
+const inputCls ="h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 const VARIANT_TYPES = ["Color", "Size", "Unit", "Custom"];
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Standard", "Premium"];
 const UNIT_OPTIONS = ["pcs", "kg", "litre", "meter", "box", "set"];
@@ -57,11 +34,7 @@ const COLOR_OPTIONS = [
   { label: "Yellow", value: "Yellow", swatch: "#eab308" },
 ];
 
-const parseCsv = (value) =>
-  String(value || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+const parseCsv = (value) =>String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 const toggleCsvValue = (csv, value) => {
   const set = new Set(parseCsv(csv));
@@ -72,10 +45,7 @@ const toggleCsvValue = (csv, value) => {
 
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   const dispatch = useDispatch();
-  const { mainCategories, subcategories, loading } = useSelector(
-    (state) => state.category,
-  );
-
+  const { mainCategories, subcategories, loading } = useSelector((state) => state.category,);
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [form, setForm] = useState({
@@ -83,7 +53,6 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     sku: "",
     category: "",
     subCategory: "",
-    brand: "",
     modelSku: "",
     hsnCode: "",
     countryOfOrigin: "",
@@ -116,9 +85,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
         stock: "",
       },
     ],
-    bulkPricing: [
-      { id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },
-    ],
+    bulkPricing: [ { id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },],
     specifications: [{ id: 1, name: "", value: "" }],
     shippingMethods: [
       {
@@ -142,9 +109,9 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     shipsFrom: "",
     expectedDispatchTime: "",
     shippingClass: "Standard",
-    returnPolicy: "30 Days Return",
+    returnPolicy: "",
     returnShipping: "Buyer Pays",
-    warrantyPeriod: "12 Months",
+    warrantyPeriod: "",
     warrantyType: "Manufacturer Warranty",
     supportEmail: "",
     supportPhone: "",
@@ -212,8 +179,6 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   );
   const close = () => typeof onClose === "function" && onClose();
 
-  // const categoriesLevel1 = ["Tools & Equipment","Industrial Hardware","Electrical","Raw Materials","Chemicals"];
-  // const categoriesLevel2 = ["Cleaning Equipment","Pressure Washers","Bearings","Fasteners","Pipes & Fittings"];
   useEffect(() => {
     dispatch(getMainCategoriesThunk());
   }, [dispatch]);
@@ -298,9 +263,9 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     });
 
     // ================= VIDEOS =================
-   form.videos.forEach((video) => {
-  formData.append("videos", video);
-});
+    form.videos.forEach((video) => {
+      formData.append("videos", video);
+    });
 
     try {
       const resultAction = await dispatch(addProduct(formData));
@@ -317,8 +282,8 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
         alert(
           resultAction.payload?.message ||
-            resultAction.error?.message ||
-            "Product creation failed",
+          resultAction.error?.message ||
+          "Product creation failed",
         );
       }
     } catch (err) {
@@ -374,18 +339,11 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
             <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
-                className="h-9 rounded-sm text-xs font-semibold"
-              >
-                Save as Draft
-              </Button>
-              <Button
-                type="button"
                 className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
                 disabled={!canSubmit || loading}
                 onClick={handlePublishProduct}
               >
-                {loading ? "Publishing..." : "Publish Product"}
+                {loading ? "Saving..." : "Save Product"}
               </Button>
               <button
                 onClick={close}
@@ -420,7 +378,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
                     <div className="px-5 py-5">
                       <div className="grid gap-4 lg:grid-cols-3">
-                        <Field label="Product Title" required>
+                        <Field label="Product Name" required>
                           <Input
                             className={inputCls}
                             value={form.name}
@@ -428,14 +386,14 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                             placeholder="Enter product title"
                           />
                         </Field>
-                        <Field label="Brand" required>
+                        {/* <Field label="Brand" required>
                           <Input
                             className={inputCls}
                             value={form.brand}
                             onChange={(e) => update("brand")(e.target.value)}
                             placeholder="Enter brand name"
                           />
-                        </Field>
+                        </Field> */}
                         <Field label="Category" required>
                           <Select
                             value={form.category}
@@ -458,9 +416,6 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                             </SelectContent>
                           </Select>
                         </Field>
-                      </div>
-
-                      <div className="mt-4 grid gap-4 lg:grid-cols-3">
                         <Field label="Sub Category" required>
                           <Select
                             value={form.subCategory}
@@ -487,6 +442,9 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                             </SelectContent>
                           </Select>
                         </Field>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 lg:grid-cols-3">
                         <Field label="SKU" required>
                           <Input
                             className={inputCls}
@@ -506,7 +464,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                       </div>
 
                       <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                        <Field label="Selling Price (Per Unit)" required>
+                        <Field label="Price (Per Unit)" required>
                           <Input
                             className={inputCls}
                             value={form.price}
@@ -897,384 +855,384 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                         </div>
                       </div>
                       {/* Upload Videos */}
-<div className="mt-3">
-  <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
-    <Upload className="h-6 w-6 text-slate-500" />
+                      <div className="mt-3">
+                        <label className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition">
+                          <Upload className="h-6 w-6 text-slate-500" />
 
-    <span className="mt-2 text-sm font-medium text-slate-700">
-      Click to Upload Videos
-    </span>
+                          <span className="mt-2 text-sm font-medium text-slate-700">
+                            Click to Upload Videos
+                          </span>
 
-    <span className="text-xs text-slate-500">
-      MP4, MOV, WEBM (Max 5)
-    </span>
+                          <span className="text-xs text-slate-500">
+                            MP4, MOV, WEBM (Max 5)
+                          </span>
 
-    <input
-      type="file"
-      multiple
-      accept="video/*"
-      className="hidden"
-      onChange={handleVideoUpload}
-    />
-  </label>
-</div>
+                          <input
+                            type="file"
+                            multiple
+                            accept="video/*"
+                            className="hidden"
+                            onChange={handleVideoUpload}
+                          />
+                        </label>
+                      </div>
 
                       {(form.videos || []).length ? (
-  <div className="mt-4 grid grid-cols-2 gap-3">
-    {(form.videos || []).map((video, idx) => (
-      <div
-        key={idx}
-        className="relative overflow-hidden rounded-md border border-slate-200 bg-black"
-      >
-        <video
-          src={URL.createObjectURL(video)}
-          controls
-          className="h-40 w-full object-cover"
-        />
-
-        <button
-          type="button"
-          onClick={() => removeVideo(idx)}
-          className="absolute right-2 top-2 rounded-full bg-white p-1 shadow"
-        >
-          <X className="h-4 w-4 text-red-500" />
-        </button>
-      </div>
-    ))}
-  </div>
-) : null}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-sm border border-slate-200 bg-white">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
-                          <Layers className="h-4.5 w-4.5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">
-                            Product Variants
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Add available sizes / variants for this product.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="px-5 py-5">
-                      <div className="space-y-3">
-                        {(form.variants || []).map((row) => (
-                          <div
-                            key={row.id}
-                            className="rounded-sm border border-slate-200 bg-white p-3"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                  Variant Type
-                                </p>
-                                <Select
-                                  value={row.variantName || "Custom"}
-                                  onValueChange={(v) =>
-                                    updateRow("variants", row.id, {
-                                      variantName: v,
-                                      value: "",
-                                    })
-                                  }
-                                >
-                                  <SelectTrigger
-                                    className={inputCls + " w-full"}
-                                  >
-                                    <SelectValue placeholder="Select variant" />
-                                  </SelectTrigger>
-                                  <SelectContent
-                                    position="popper"
-                                    align="start"
-                                  >
-                                    {VARIANT_TYPES.map((t) => (
-                                      <SelectItem key={t} value={t}>
-                                        {t}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          {(form.videos || []).map((video, idx) => (
+                            <div
+                              key={idx}
+                              className="relative overflow-hidden rounded-md border border-slate-200 bg-black"
+                            >
+                              <video
+                                src={URL.createObjectURL(video)}
+                                controls
+                                className="h-40 w-full object-cover"
+                              />
 
                               <button
                                 type="button"
-                                onClick={() => removeRow("variants", row.id)}
-                                className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-500 hover:bg-slate-50"
-                                aria-label="Remove variant"
+                                onClick={() => removeVideo(idx)}
+                                className="absolute right-2 top-2 rounded-full bg-white p-1 shadow"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <X className="h-4 w-4 text-red-500" />
                               </button>
                             </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
 
-                            <div className="mt-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                Values
-                              </p>
-                              <div className="mt-2">
-                                {row.variantName === "Color" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {COLOR_OPTIONS.map((c) => {
-                                      const selected = parseCsv(row.value);
-                                      const active = selected.includes(c.value);
-                                      return (
-                                        <button
-                                          key={c.value}
-                                          type="button"
-                                          onClick={() =>
-                                            updateRow("variants", row.id, {
-                                              value: toggleCsvValue(
-                                                row.value,
-                                                c.value,
-                                              ),
-                                            })
-                                          }
-                                          className="flex w-full items-center justify-start gap-2 rounded-sm border px-2 py-2 text-xs font-semibold"
-                                          style={{
-                                            borderColor: active
-                                              ? "#0B1F3A"
-                                              : "#e2e8f0",
-                                            background: active
-                                              ? "#FFF8EC"
-                                              : "#ffffff",
-                                            color: "#1A1A1A",
-                                          }}
-                                        >
-                                          <span
-                                            className="relative h-4 w-4 rounded-sm border"
-                                            style={{
-                                              background: c.swatch,
-                                              borderColor: "#e2e8f0",
-                                            }}
-                                          >
-                                            {active ? (
-                                              <span className="absolute inset-0 grid place-items-center">
-                                                <Check
-                                                  className="h-3 w-3"
-                                                  style={{
-                                                    color:
-                                                      c.value === "White"
-                                                        ? "#0f172a"
-                                                        : "#ffffff",
-                                                  }}
-                                                />
-                                              </span>
-                                            ) : null}
-                                          </span>
-                                          {c.label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                ) : row.variantName === "Size" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {SIZE_OPTIONS.map((s) => {
-                                      const selected = parseCsv(row.value);
-                                      const checked = selected.includes(s);
-                                      return (
-                                        <label
-                                          key={s}
-                                          className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="h-4 w-4 accent-slate-900"
-                                            checked={checked}
-                                            onChange={() =>
-                                              updateRow("variants", row.id, {
-                                                value: toggleCsvValue(
-                                                  row.value,
-                                                  s,
-                                                ),
-                                              })
-                                            }
-                                          />
-                                          {s}
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                ) : row.variantName === "Unit" ? (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {UNIT_OPTIONS.map((u) => {
-                                      const selected = parseCsv(row.value);
-                                      const checked = selected.includes(u);
-                                      return (
-                                        <label
-                                          key={u}
-                                          className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            className="h-4 w-4 accent-slate-900"
-                                            checked={checked}
-                                            onChange={() =>
-                                              updateRow("variants", row.id, {
-                                                value: toggleCsvValue(
-                                                  row.value,
-                                                  u,
-                                                ),
-                                              })
-                                            }
-                                          />
-                                          {u}
-                                        </label>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <Input
-                                    className={inputCls + " w-full"}
-                                    value={row.value}
-                                    onChange={(e) =>
-                                      updateRow("variants", row.id, {
-                                        value: e.target.value,
-                                      })
-                                    }
-                                    placeholder="Enter value"
-                                  />
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-                              <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
-                                {row.variantName || "Custom"}
-                              </span>
-                              {parseCsv(row.value).map((v) => (
-                                <span
-                                  key={v}
-                                  className="rounded-sm border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700"
-                                >
-                                  {v}
-                                </span>
-                              ))}
-                              {!parseCsv(row.value).length ? (
-                                <span className="text-slate-500">
-                                  No values selected
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-9 w-full rounded-sm text-xs font-semibold"
-                          onClick={() =>
-                            addRow("variants", {
-                              variantName: "",
-                              value: "",
-                              sku: "",
-                              price: "",
-                              stock: "",
-                            })
-                          }
-                        >
-                          <Plus className="mr-1 h-4 w-4" />
-                          Add Variant
-                        </Button>
+                <div className="rounded-sm border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
+                        <Layers className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          Product Variants
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Add available sizes / variants for this product.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-sm border border-slate-200 bg-white">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
-                          <Archive className="h-4.5 w-4.5" />
+                  <div className="px-5 py-5">
+                    <div className="space-y-3">
+                      {(form.variants || []).map((row) => (
+                        <div
+                          key={row.id}
+                          className="rounded-sm border border-slate-200 bg-white p-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                Variant Type
+                              </p>
+                              <Select
+                                value={row.variantName || "Custom"}
+                                onValueChange={(v) =>
+                                  updateRow("variants", row.id, {
+                                    variantName: v,
+                                    value: "",
+                                  })
+                                }
+                              >
+                                <SelectTrigger
+                                  className={inputCls + " w-full"}
+                                >
+                                  <SelectValue placeholder="Select variant" />
+                                </SelectTrigger>
+                                <SelectContent
+                                  position="popper"
+                                  align="start"
+                                >
+                                  {VARIANT_TYPES.map((t) => (
+                                    <SelectItem key={t} value={t}>
+                                      {t}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeRow("variants", row.id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-500 hover:bg-slate-50"
+                              aria-label="Remove variant"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="mt-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                              Values
+                            </p>
+                            <div className="mt-2">
+                              {row.variantName === "Color" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {COLOR_OPTIONS.map((c) => {
+                                    const selected = parseCsv(row.value);
+                                    const active = selected.includes(c.value);
+                                    return (
+                                      <button
+                                        key={c.value}
+                                        type="button"
+                                        onClick={() =>
+                                          updateRow("variants", row.id, {
+                                            value: toggleCsvValue(
+                                              row.value,
+                                              c.value,
+                                            ),
+                                          })
+                                        }
+                                        className="flex w-full items-center justify-start gap-2 rounded-sm border px-2 py-2 text-xs font-semibold"
+                                        style={{
+                                          borderColor: active
+                                            ? "#0B1F3A"
+                                            : "#e2e8f0",
+                                          background: active
+                                            ? "#FFF8EC"
+                                            : "#ffffff",
+                                          color: "#1A1A1A",
+                                        }}
+                                      >
+                                        <span
+                                          className="relative h-4 w-4 rounded-sm border"
+                                          style={{
+                                            background: c.swatch,
+                                            borderColor: "#e2e8f0",
+                                          }}
+                                        >
+                                          {active ? (
+                                            <span className="absolute inset-0 grid place-items-center">
+                                              <Check
+                                                className="h-3 w-3"
+                                                style={{
+                                                  color:
+                                                    c.value === "White"
+                                                      ? "#0f172a"
+                                                      : "#ffffff",
+                                                }}
+                                              />
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                        {c.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : row.variantName === "Size" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {SIZE_OPTIONS.map((s) => {
+                                    const selected = parseCsv(row.value);
+                                    const checked = selected.includes(s);
+                                    return (
+                                      <label
+                                        key={s}
+                                        className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-4 w-4 accent-slate-900"
+                                          checked={checked}
+                                          onChange={() =>
+                                            updateRow("variants", row.id, {
+                                              value: toggleCsvValue(
+                                                row.value,
+                                                s,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {s}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : row.variantName === "Unit" ? (
+                                <div className="grid grid-cols-2 gap-2">
+                                  {UNIT_OPTIONS.map((u) => {
+                                    const selected = parseCsv(row.value);
+                                    const checked = selected.includes(u);
+                                    return (
+                                      <label
+                                        key={u}
+                                        className="flex w-full cursor-pointer items-center gap-2 rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          className="h-4 w-4 accent-slate-900"
+                                          checked={checked}
+                                          onChange={() =>
+                                            updateRow("variants", row.id, {
+                                              value: toggleCsvValue(
+                                                row.value,
+                                                u,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {u}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <Input
+                                  className={inputCls + " w-full"}
+                                  value={row.value}
+                                  onChange={(e) =>
+                                    updateRow("variants", row.id, {
+                                      value: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Enter value"
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                            <span className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-700">
+                              {row.variantName || "Custom"}
+                            </span>
+                            {parseCsv(row.value).map((v) => (
+                              <span
+                                key={v}
+                                className="rounded-sm border border-slate-200 bg-white px-2 py-1 font-semibold text-slate-700"
+                              >
+                                {v}
+                              </span>
+                            ))}
+                            {!parseCsv(row.value).length ? (
+                              <span className="text-slate-500">
+                                No values selected
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">
-                            Product Summary
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Review your product information before publishing.
-                          </p>
-                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 w-full rounded-sm text-xs font-semibold"
+                        onClick={() =>
+                          addRow("variants", {
+                            variantName: "",
+                            value: "",
+                            sku: "",
+                            price: "",
+                            stock: "",
+                          })
+                        }
+                      >
+                        <Plus className="mr-1 h-4 w-4" />
+                        Add Variant
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-sm border border-slate-200 bg-white">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-amber-50 text-amber-700">
+                        <Archive className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          Product Summary
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Review your product information before publishing.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-5 py-5">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Product Title</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Category</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Selling Price</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.sellingPrice}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Stock</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.stock}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Variants</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.variants}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-slate-500">Bulk Tiers</span>
+                        <span className="font-semibold text-slate-900">
+                          {summary.bulkTiers}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="px-5 py-5">
-                      <div className="space-y-3 text-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Product Title</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.title}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Category</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Selling Price</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.sellingPrice}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Stock</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.stock}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Variants</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.variants}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-slate-500">Bulk Tiers</span>
-                          <span className="font-semibold text-slate-900">
-                            {summary.bulkTiers}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 rounded-sm border border-amber-200 bg-amber-50 p-4">
-                        <p className="text-xs font-semibold text-amber-900">
-                          Please review all information before publishing.
-                        </p>
-                        <p className="mt-1 text-[11px] text-amber-900/70">
-                          Your product will be visible to buyers after approval.
-                        </p>
-                      </div>
+                    <div className="mt-5 rounded-sm border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-xs font-semibold text-amber-900">
+                        Please review all information before publishing.
+                      </p>
+                      <p className="mt-1 text-[11px] text-amber-900/70">
+                        Your product will be visible to buyers after approval.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-9 rounded-sm text-xs font-semibold"
-              onClick={close}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
-              disabled={!canSubmit || loading}
-              onClick={handlePublishProduct}
-            >
-              {loading ? "Publishing..." : "Publish Product"}
-            </Button>
-          </div>
         </div>
+
+        {/* <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4 shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-sm text-xs font-semibold"
+            onClick={close}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="h-9 rounded-sm bg-amber-500 text-xs font-semibold text-white hover:bg-amber-600"
+            disabled={!canSubmit || loading}
+            onClick={handlePublishProduct}
+          >
+            {loading ? "Publishing..." : "Publish Product"}
+          </Button>
+        </div> */}
+      </div>
     </>
   );
 };

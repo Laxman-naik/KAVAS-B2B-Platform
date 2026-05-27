@@ -28,14 +28,17 @@ const DashboardBody = () => {
       (order) =>
         order?.vendorId === vendorId ||
         order?.vendor?._id === vendorId ||
-        order?.vendor?.id === vendorId
+        order?.vendor?.id === vendorId,
     );
   }, [allOrders, vendorId]);
 
   const totalRevenue = useMemo(() => {
     return orders
       .filter((o) => o.status !== "Cancelled")
-      .reduce((sum, o) => sum + Number(o.amount || o.totalAmount || o.total || 0), 0);
+      .reduce(
+        (sum, o) => sum + Number(o.amount || o.totalAmount || o.total || 0),
+        0,
+      );
   }, [orders]);
 
   const totalOrders = orders.length;
@@ -49,7 +52,8 @@ const DashboardBody = () => {
   }, [orders]);
 
   const lowStock = useMemo(() => {
-    return products.filter((p) => Number(p.stock || p.quantity || 0) <= 10).length;
+    return products.filter((p) => Number(p.stock || p.quantity || 0) <= 10)
+      .length;
   }, [products]);
 
   const todaysOrdersList = useMemo(() => {
@@ -67,7 +71,7 @@ const DashboardBody = () => {
   const todaysRevenue = useMemo(() => {
     return todaysOrdersList.reduce(
       (sum, o) => sum + Number(o.amount || o.totalAmount || o.total || 0),
-      0
+      0,
     );
   }, [todaysOrdersList]);
 
@@ -100,15 +104,22 @@ const DashboardBody = () => {
         icon: Package,
         accent: "bg-green-100 text-green-700",
       },
-      {
-        title: "Cancelled Orders",
-        value: cancelledOrders,
-        change: `${totalOrders ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : 0}%`,
-        icon: BarChart3,
-        accent: "bg-orange-100 text-orange-700",
-      },
+      // {
+      //   title: "Cancelled Orders",
+      //   value: cancelledOrders,
+      //   change: `${totalOrders ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : 0}%`,
+      //   icon: BarChart3,
+      //   accent: "bg-orange-100 text-orange-700",
+      // },
     ],
-    [totalRevenue, totalOrders, pendingOrders, products.length, lowStock, cancelledOrders]
+    [
+      totalRevenue,
+      totalOrders,
+      pendingOrders,
+      products.length,
+      lowStock,
+      cancelledOrders,
+    ],
   );
 
   const getStatusStyle = (status) => {
@@ -130,7 +141,7 @@ const DashboardBody = () => {
 
   const recentOrderTabs = useMemo(
     () => ["All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
-    []
+    [],
   );
 
   const filteredOrders = useMemo(() => {
@@ -165,7 +176,7 @@ const DashboardBody = () => {
         href: "/vendor/payments",
       },
     ],
-    []
+    [],
   );
 
   const alerts = useMemo(
@@ -192,7 +203,7 @@ const DashboardBody = () => {
         icon: Wallet,
       },
     ],
-    [pendingOrders, lowStock, pendingPayments]
+    [pendingOrders, lowStock, pendingPayments],
   );
 
   const getOrderId = (order) => {
@@ -217,7 +228,10 @@ const DashboardBody = () => {
     if (order.units) return Number(order.units);
     if (order.quantity) return Number(order.quantity);
     if (Array.isArray(order.items)) {
-      return order.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+      return order.items.reduce(
+        (sum, item) => sum + Number(item.quantity || 0),
+        0,
+      );
     }
     return 0;
   };
@@ -227,7 +241,8 @@ const DashboardBody = () => {
       <div className="rounded-sm bg-[#0B1F3A] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
           <div className="text-xl sm:text-2xl font-extrabold">
-            Welcome back, {vendor?.business?.business_name || vendor?.name || "Vendor"}
+            Welcome back,{" "}
+            {vendor?.business?.business_name || vendor?.name || "Vendor"}
           </div>
 
           <div className="mt-1 text-sm text-white/75">
@@ -267,7 +282,7 @@ const DashboardBody = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {statsData.map((card) => {
           const Icon = card.icon;
 
@@ -277,7 +292,9 @@ const DashboardBody = () => {
               className="bg-white border border-[#E5E5E5] rounded-sm p-5 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className={`h-10 w-10 rounded-sm flex items-center justify-center ${card.accent}`}>
+                <div
+                  className={`h-10 w-10 rounded-sm flex items-center justify-center ${card.accent}`}
+                >
                   <Icon size={18} />
                 </div>
 
@@ -438,7 +455,7 @@ const DashboardBody = () => {
 
                         <span
                           className={`px-3 py-1 rounded-sm text-xs font-semibold ${getStatusStyle(
-                            o.status
+                            o.status,
                           )}`}
                         >
                           {o.status || "Pending"}

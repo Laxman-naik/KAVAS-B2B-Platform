@@ -37,12 +37,14 @@ export default function SubCategoryPage() {
       try {
         setRoute({ category, subcategory });
 
-        const [metaRes, productsRes] = await Promise.all([
-          productapi.get(`/api/categories/slug/${category}`),
-          productapi.get(`/api/products/category/${category}/${subcategory}`),
-        ]);
+        const productsRes = await productapi.get(
+          `/api/products/category/${category}`
+        );
 
-        setCategoryMeta(metaRes?.data?.data || null);
+        setCategoryMeta({
+          name: category.replaceAll("-", " "),
+          subcategories: [],
+        });
 
         const rawProducts = Array.isArray(productsRes?.data?.data)
           ? productsRes.data.data

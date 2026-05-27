@@ -55,7 +55,7 @@ export default function VendorLoginPage() {
       };
       const data = await dispatch(loginVendor(payload)).unwrap();
 
-      // console.log("LOGIN RESPONSE:", data);
+      console.log("LOGIN RESPONSE:", data);
 
       if (!data) {
         setError("Empty response from server");

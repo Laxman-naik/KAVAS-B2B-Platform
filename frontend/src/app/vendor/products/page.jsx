@@ -29,15 +29,8 @@ export default function ProductManagementBody() {
   const pageSize = 8;
 
   const vendorId = useSelector((state) => state.vendor.vendor?.vendor?.id);
-  const organizationId = useSelector(
-    (state) =>
-      state.vendor.vendor?.vendor?.organization_id ||
-      state.vendor.vendor?.vendor?.organizationId ||
-      state.vendor.vendor?.organization_id ||
-      state.vendor.vendor?.organizationId
-  );
-
-  const { vendorProducts = [], loading } = useSelector((state) => state.products);
+  const { vendorProducts, loading } = useSelector((state) => state.products);
+  console.log(vendorProducts);
 
   useEffect(() => {
     if (vendorId) {
