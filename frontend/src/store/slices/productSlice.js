@@ -134,8 +134,9 @@ export const fetchVendorProducts = createAsyncThunk(
   async (vendorId, thunkAPI) => {
     try {
       const res = await getVendorProductsAPI(vendorId);
+      console.log("VENDOR PRODUCTS RESPONSE:", res);
 
-      return res.products || [];
+      return res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }

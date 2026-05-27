@@ -45,6 +45,8 @@ const toggleCsvValue = (csv, value) => {
 
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   const dispatch = useDispatch();
+  const vendor = useSelector((state) => state.vendor?.vendor);
+  console.log(vendor)
   const { mainCategories, subcategories, loading } = useSelector((state) => state.category,);
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -216,8 +218,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
       user.organizationId ||
       user.organization?.id ||
       user.vendor?.organization_id ||
-      user.vendor?.organizationId ||
-      "42519fc0-c043-4f67-92e9-7f7b3c60472a";
+      user.vendor?.organizationId;
 
     if (!organizationId) {
       alert("Organization ID not found. Please login again as vendor.");
@@ -238,35 +239,11 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     formData.append("stock", Number(form.stock));
     formData.append("description", form.description);
     formData.append("unit", form.unit || "");
-
-    // ================= JSON FIELDS =================
-    formData.append(
-      "specifications",
-      JSON.stringify(form.specifications.filter((s) => s.name && s.value)),
-    );
-
-    formData.append(
-      "variants",
-      JSON.stringify(form.variants.filter((v) => v.variantName && v.value)),
-    );
-
-    formData.append(
-      "bulkPricing",
-      JSON.stringify(
-        form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit),
-      ),
-    );
-
-    // ================= IMAGES =================
-    form.images.forEach((image) => {
-      formData.append("images", image);
-    });
-
-    // ================= VIDEOS =================
-    form.videos.forEach((video) => {
-      formData.append("videos", video);
-    });
-
+    formData.append("specifications", JSON.stringify(form.specifications.filter((s) => s.name && s.value)),);
+    formData.append("variants",JSON.stringify(form.variants.filter((v) => v.variantName && v.value)),);
+    formData.append("bulkPricing", JSON.stringify(form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit),),);
+    form.images.forEach((image) => {formData.append("images", image);});
+    form.videos.forEach((video) => {formData.append("videos", video);});
     try {
       const resultAction = await dispatch(addProduct(formData));
 

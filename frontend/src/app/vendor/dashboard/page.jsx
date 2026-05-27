@@ -1,26 +1,18 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import {
-  BarChart3,
-  Bell,
-  ClipboardList,
-  Package,
-  Receipt,
-  ShoppingBag,
-  Wallet,
-} from "lucide-react";
+import {BarChart3,Bell,ClipboardList,Package,Receipt,ShoppingBag,Wallet,} from "lucide-react";
 import { useSelector } from "react-redux";
 
 const DashboardBody = () => {
   const vendor = useSelector((state) => state.vendor?.vendor);
+  const business = useSelector((state) => state.vendor?.business);
   const allOrders = useSelector((state) => state.orders?.orders || []);
   const products = useSelector((state) => state.products?.products || []);
   const payments = useSelector((state) => state.payments?.payments || []);
-
   const [ordersFilter, setOrdersFilter] = useState("All");
-
   const vendorId = vendor?._id || vendor?.id;
+  // console.log(business)
 
   const orders = useMemo(() => {
     if (!vendorId) return allOrders;
@@ -227,7 +219,7 @@ const DashboardBody = () => {
       <div className="rounded-sm bg-[#0B1F3A] text-white p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
           <div className="text-xl sm:text-2xl font-extrabold">
-            Welcome back, {vendor?.business?.business_name || vendor?.name || "Vendor"}
+            Welcome back, {business?.business_name || "Vendor"}
           </div>
 
           <div className="mt-1 text-sm text-white/75">

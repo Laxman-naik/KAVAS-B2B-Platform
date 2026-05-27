@@ -403,7 +403,7 @@ export const loginVendor = async (req, res) => {
 
     if (email) {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE LOWER(vp.email) = LOWER($1)
@@ -411,7 +411,7 @@ export const loginVendor = async (req, res) => {
       values = [email];
     } else {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.status, vo.current_step, vo.rejection_reason
+        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
         FROM vendorprofile vp
         LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
         WHERE vp.phone = $1

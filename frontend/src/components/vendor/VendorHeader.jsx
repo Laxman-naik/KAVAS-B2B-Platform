@@ -14,6 +14,8 @@ const VendorHeader = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const vendor = useSelector((state) => state.vendor.vendor);
+  const business = useSelector((state) => state.vendor?.business);
+  // console.log(business)
 
   const pageTitle = useMemo(() => {
     if (!pathname) return "";
@@ -89,7 +91,7 @@ const VendorHeader = () => {
 
               <div className="hidden sm:block leading-tight">
                 <div className="text-sm font-bold text-[#0B1F3A]">
-                  {vendor?.business?.business_name}
+                  {business?.business_name}
                 </div>
                 <div className="text-[11px] text-gray-500">
                   Seller Account
