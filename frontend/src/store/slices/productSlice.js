@@ -9,6 +9,8 @@ import {
   getNewArrivalsAPI,
   getTrendingProductsAPI,
   getVendorProductsAPI,
+  getFlashDealsAPI,
+  addFlashDealToCartAPI,
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */
@@ -68,6 +70,7 @@ export const fetchSingleProduct = createAsyncThunk(
 //     }
 //   }
 // );
+
 export const addProduct = createAsyncThunk(
   "products/create",
   async (formData, thunkAPI) => {
@@ -89,9 +92,9 @@ export const addProduct = createAsyncThunk(
 
       return thunkAPI.rejectWithValue(
         err.response?.data?.message ||
-        err.response?.data ||
-        err.message ||
-        "Failed to create product"
+          err.response?.data ||
+          err.message ||
+          "Failed to create product"
       );
     }
   }
@@ -148,9 +151,40 @@ export const fetchTrendingProducts = createAsyncThunk(
 
       return res.data || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+/* ================= FLASH DEALS ================= */
+
+export const fetchFlashDeals = createAsyncThunk(
+  "products/flashDeals",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getFlashDealsAPI();
+
+      return res.products || res.data || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+/* ================= ADD FLASH DEAL TO CART ================= */
+
+export const addFlashDealToCart = createAsyncThunk(
+  "products/addFlashDealToCart",
+  async ({ productId, quantity = 1 }, thunkAPI) => {
+    try {
+      const res = await addFlashDealToCartAPI({
+        productId,
+        quantity,
+      });
+
+      return res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
@@ -179,14 +213,26 @@ const productSlice = createSlice({
     vendorProducts: [],
     newArrivals: [],
     trending: [],
+    flashDeals: [],
+
     product: null,
+
     loading: false,
+    flashDealsLoading: false,
+
+    cartLoading: false,
+    cartSuccess: false,
+
     error: null,
   },
 
   reducers: {
     clearProductError: (state) => {
       state.error = null;
+    },
+
+    clearCartSuccess: (state) => {
+      state.cartSuccess = false;
     },
   },
 
@@ -211,11 +257,13 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.product =
           action.payload?.product || action.payload?.data || action.payload;
       })
+
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -225,12 +273,15 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(addProduct.fulfilled, (state, action) => {
         state.loading = false;
+
         if (action.payload) {
           state.products.unshift(action.payload);
         }
       })
+
       .addCase(addProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -277,15 +328,51 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
+      /* FLASH DEALS */
+      .addCase(fetchFlashDeals.pending, (state) => {
+        state.flashDealsLoading = true;
+        state.error = null;
+      })
+
+      .addCase(fetchFlashDeals.fulfilled, (state, action) => {
+        state.flashDealsLoading = false;
+        state.flashDeals = action.payload;
+      })
+
+      .addCase(fetchFlashDeals.rejected, (state, action) => {
+        state.flashDealsLoading = false;
+        state.error = action.payload;
+      })
+
+      /* ADD FLASH DEAL TO CART */
+      .addCase(addFlashDealToCart.pending, (state) => {
+        state.cartLoading = true;
+        state.cartSuccess = false;
+        state.error = null;
+      })
+
+      .addCase(addFlashDealToCart.fulfilled, (state) => {
+        state.cartLoading = false;
+        state.cartSuccess = true;
+      })
+
+      .addCase(addFlashDealToCart.rejected, (state, action) => {
+        state.cartLoading = false;
+        state.cartSuccess = false;
+        state.error = action.payload;
+      })
+
       /* VENDOR PRODUCTS */
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.vendorProducts = action.payload?.products || [];
       })
+
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -293,5 +380,6 @@ const productSlice = createSlice({
   },
 });
 
-export const { clearProductError } = productSlice.actions;
+export const { clearProductError, clearCartSuccess } = productSlice.actions;
+
 export default productSlice.reducer;

@@ -135,7 +135,7 @@ export default function NewArrivals() {
                           {title}
                         </h3>
                       </Link>
-                      <div className=" flex items-center gap-1">
+                      {/* <div className=" flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, i) => {
                           const filled = rating >= i + 1;
                           return (
@@ -151,7 +151,7 @@ export default function NewArrivals() {
                         <span className="text-[11px] text-gray-500 ml-1">
                           ({Number.isFinite(rating) ? rating.toFixed(1) : "0.0"})
                         </span>
-                      </div>
+                      </div> */}
                       <div className="mt-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[#0B1F3A] font-extrabold text-lg">

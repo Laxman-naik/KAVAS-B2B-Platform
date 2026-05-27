@@ -6,15 +6,32 @@ const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 router.post("/", upload.array("files", 15), productController.createProduct);
+
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
-router.get("/category/:categorySlug/:subcategorySlug", productController.getProductsByCategoryAndSubcategory);
-router.get("/category/:categorySlug", productController.getProductsByCategory);
+
+router.get(
+  "/category/:categorySlug/:subcategorySlug",
+  productController.getProductsByCategoryAndSubcategory
+);
+
+router.get(
+  "/category/:categorySlug",
+  productController.getProductsByCategory
+);
+
 router.get("/trending", productController.getTrendingProducts);
+
 router.get("/new-arrivals", productController.getNewArrivals);
+
 router.get("/vendor/:vendorId", productController.getVendorProducts);
+
+router.get("/flash-deals", productController.getFlashDeals);
+
 router.get("/:id", productController.getSingleProduct);
+
 router.put("/:id", authMiddleware, productController.updateProduct);
+
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 
 module.exports = router;

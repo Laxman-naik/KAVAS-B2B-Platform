@@ -975,6 +975,60 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.getFlashDeals = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        p.*,
+
+        COALESCE(
+          (
+            SELECT pi.image_url
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+            LIMIT 1
+          ),
+          null
+        ) AS image_url,
+
+        CASE 
+          WHEN p.mrp > p.price
+          THEN CONCAT(
+            '-',
+            ROUND(((p.mrp - p.price) / p.mrp) * 100),
+            '%'
+          )
+          ELSE '-0%'
+        END AS discount
+
+      FROM products p
+
+      WHERE 
+        p.is_active = true
+        AND p.is_flash_deal = true
+        AND (
+          p.flash_deal_end IS NULL
+          OR p.flash_deal_end > NOW()
+        )
+
+      ORDER BY p.created_at DESC
+    `);
+
+    return res.json({
+      success: true,
+      products: result.rows,
+    });
+
+  } catch (err) {
+    console.error("getFlashDeals error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 exports.getSingleProduct = async (req, res) => {
   const client = await pool.connect();
 

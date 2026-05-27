@@ -15,7 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 
-import CreateSupportTicket from "@/components/vendor/CreateSupportTicket";
+
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,8 +42,7 @@ const VendorSupportPage = () => {
 
   const [faqTab, setFaqTab] = useState("All");
 
-  const [ticketStatus, setTicketStatus] =
-    useState("All Status");
+
 
   const faqSectionRef = useRef(null);
 
@@ -114,71 +113,7 @@ const VendorSupportPage = () => {
     [],
   );
 
-  const tickets = useMemo(
-    () => [
-      {
-        id: "TKT-2847",
-        subject: "Payment not received for order ORD-2830",
-        category: "Payments",
-        priority: "High",
-        status: "In Progress",
-        replies: 3,
-        lastUpdate: "27 Apr",
-        updatedBy: "Support Agent",
-      },
-      {
-        id: "TKT-2846",
-        subject: "Product listing approval pending for 3 days",
-        category: "Products",
-        priority: "Medium",
-        status: "Open",
-        replies: 1,
-        lastUpdate: "26 Apr",
-        updatedBy: "You",
-      },
-      {
-        id: "TKT-2845",
-        subject: "Need to update GSTIN after business restructuring",
-        category: "Account",
-        priority: "Low",
-        status: "Resolved",
-        replies: 4,
-        lastUpdate: "24 Apr",
-        updatedBy: "Support Agent",
-      },
-      {
-        id: "TKT-2844",
-        subject: "Bulk upload template not accepting SKU format",
-        category: "Products",
-        priority: "Medium",
-        status: "Resolved",
-        replies: 2,
-        lastUpdate: "22 Apr",
-        updatedBy: "Support Agent",
-      },
-      {
-        id: "TKT-2843",
-        subject: "Warehouse address change request",
-        category: "Account",
-        priority: "Low",
-        status: "Closed",
-        replies: 2,
-        lastUpdate: "17 Apr",
-        updatedBy: "Support Agent",
-      },
-      {
-        id: "TKT-2842",
-        subject: "Urgent: Wrong product delivered to customer",
-        category: "Orders",
-        priority: "Urgent",
-        status: "In Progress",
-        replies: 1,
-        lastUpdate: "28 Apr",
-        updatedBy: "You",
-      },
-    ],
-    [],
-  );
+  
 
   const quickCards = useMemo(
     () => [
@@ -213,55 +148,20 @@ const VendorSupportPage = () => {
     ],
     [],
   );
-  const [openTicketModal, setOpenTicketModal] = useState(false);
+  
 
-  const [ticketForm, setTicketForm] = useState({
-    subject: "",
-    category: "",
-    priority: "Medium",
-    orderId: "",
-    description: "",
-  });
+  
 
-  const handleTicketChange = (e) => {
-    const { name, value } = e.target;
-    setTicketForm((prev) => ({ ...prev, [name]: value }));
-  };
+ 
 
-  const handleTicketSubmit = (e) => {
-    e.preventDefault();
-
-    if (
-      !ticketForm.subject ||
-      !ticketForm.category ||
-      !ticketForm.description
-    ) {
-      alert("Please fill all required fields");
-      return;
-    }
-
-    alert("Support ticket submitted successfully!");
-
-    setTicketForm({
-      subject: "",
-      category: "",
-      priority: "Medium",
-      orderId: "",
-      description: "",
-    });
-
-    setOpenTicketModal(false);
-  };
+ 
 
   const visibleFaqs = useMemo(() => {
     if (faqTab === "All") return faqs;
     return faqs.filter((faq) => faq.category === faqTab);
   }, [faqs, faqTab]);
 
-  const filteredTickets = useMemo(() => {
-    if (ticketStatus === "All Status") return tickets;
-    return tickets.filter((ticket) => ticket.status === ticketStatus);
-  }, [tickets, ticketStatus]);
+
 
   const handleQuickCardClick = (targetTab) => {
     setFaqTab(targetTab);
@@ -562,20 +462,7 @@ const VendorSupportPage = () => {
           })}
         </div>
 
-        <div className="flex flex-col gap-4 rounded-sm border border-[#F1D99A] bg-[#FFF6DE] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-extrabold text-[#0B1F3A]">
-              Can’t find what you need?
-            </h2>
-            <p className="mt-1 text-xs text-[#8A6D1B]">
-              Our support team typically responds within 2 hours
-            </p>
-          </div>
-
-          <Button onClick={() => setOpenTicket(true)}>
-  Create Ticket
-</Button>
-        </div>
+       
 
         <section ref={faqSectionRef} className="scroll-mt-6">
           <div className="flex items-center gap-2">
@@ -643,206 +530,7 @@ const VendorSupportPage = () => {
           </Card>
         </section>
 
-        <section className="overflow-hidden rounded-sm border border-[#E5E5E5] bg-white shadow-sm">
-          <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-sm font-extrabold text-[#0B1F3A]">
-                My Support Tickets
-              </h2>
-              <p className="mt-1 text-xs text-gray-500">
-                {tickets.length} tickets ·{" "}
-                {
-                  tickets.filter((ticket) => ticket.status === "In Progress")
-                    .length
-                }{" "}
-                active
-              </p>
-            </div>
-
-            <Select value={ticketStatus} onValueChange={setTicketStatus}>
-              <SelectTrigger className="h-10 rounded-sm border-[#E5E5E5] bg-white sm:w-44">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-
-              <SelectContent className="rounded-sm">
-                {["All Status", "Open", "In Progress", "Resolved", "Closed"].map(
-                  (status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full text-sm">
-              <thead className="bg-[#FFF8EC]">
-                <tr>
-                  {[
-                    "Ticket",
-                    "Category",
-                    "Priority",
-                    "Status",
-                    "Replies",
-                    "Last Update",
-                    "Actions",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="p-4 text-left text-xs font-extrabold uppercase text-gray-500"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredTickets.map((ticket) => (
-                  <tr
-                    key={ticket.id}
-                    className="border-t border-[#E5E5E5] transition hover:bg-[#FFF8EC]/60"
-                  >
-                    <td className="p-4">
-                      <p className="text-[11px] font-extrabold text-gray-500">
-                        {ticket.id}
-                      </p>
-                      <p className="mt-1 font-extrabold text-[#0B1F3A]">
-                        {ticket.subject}
-                      </p>
-                    </td>
-
-                    <td className="p-4 text-gray-700">{ticket.category}</td>
-
-                    <td className="p-4">
-                      <div className="inline-flex items-center gap-2 font-extrabold text-[#0B1F3A]">
-                        <span
-                          className={`h-2 w-2 rounded-full ${priorityDot(
-                            ticket.priority
-                          )}`}
-                        />
-                        {ticket.priority}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <Badge
-                        variant="outline"
-                        className={`rounded-sm border px-3 py-1 text-xs font-extrabold ${statusPill(
-                          ticket.status
-                        )}`}
-                      >
-                        {ticket.status}
-                      </Badge>
-                    </td>
-
-                    <td className="p-4 text-gray-700">{ticket.replies}</td>
-
-                    <td className="p-4">
-                      <p className="font-extrabold text-[#0B1F3A]">
-                        {ticket.lastUpdate}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        by {ticket.updatedBy}
-                      </p>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="h-auto p-0 font-extrabold text-[#0B1F3A]"
-                        >
-                          View
-                        </Button>
-
-                        {ticket.status === "Open" ? (
-                          <Button
-                            type="button"
-                            variant="link"
-                            className="h-auto p-0 font-extrabold text-gray-500"
-                          >
-                            Close
-                          </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="space-y-3 p-4 md:hidden">
-            {filteredTickets.map((ticket) => (
-              <div
-                key={ticket.id}
-                className="rounded-sm border border-[#E5E5E5] bg-white p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-extrabold text-gray-500">
-                      {ticket.id}
-                    </p>
-                    <p className="mt-1 font-extrabold text-[#0B1F3A]">
-                      {ticket.subject}
-                    </p>
-                  </div>
-
-                  <Badge
-                    variant="outline"
-                    className={`rounded-sm border px-3 py-1 text-xs font-extrabold ${statusPill(
-                      ticket.status
-                    )}`}
-                  >
-                    {ticket.status}
-                  </Badge>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-xs text-gray-500">Category</p>
-                    <p className="font-extrabold text-[#0B1F3A]">
-                      {ticket.category}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500">Priority</p>
-                    <div className="inline-flex items-center gap-2 font-extrabold text-[#0B1F3A]">
-                      <span
-                        className={`h-2 w-2 rounded-full ${priorityDot(
-                          ticket.priority
-                        )}`}
-                      />
-                      {ticket.priority}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-sm">
-                  <p className="text-gray-500">
-                    Replies:{" "}
-                    <span className="font-extrabold text-[#0B1F3A]">
-                      {ticket.replies}
-                    </span>
-                  </p>
-
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="h-auto p-0 font-extrabold text-[#0B1F3A]"
-                  >
-                    View
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        
 
         <section>
           <div className="flex items-center gap-2">
@@ -874,7 +562,7 @@ const VendorSupportPage = () => {
               <div className="inline-flex items-center gap-2 rounded-sm bg-white/10 px-4 py-3">
                 <Phone size={16} className="text-white/80" />
                 <span className="text-sm font-extrabold">
-                  +91 1800-123-4567
+                  +91 6302259849
                 </span>
               </div>
 
@@ -893,10 +581,7 @@ const VendorSupportPage = () => {
           </div>
         </section>
       </div>
-      <CreateSupportTicket
-        open={openTicket}
-        onOpenChange={setOpenTicket}
-      />
+      
     </div>
   );
 };

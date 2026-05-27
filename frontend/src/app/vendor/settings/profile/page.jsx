@@ -15,8 +15,7 @@ export default function ProfilePage() {
   const [profilePic, setProfilePic] = useState(null);
 
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
     phone: "",
     bio: "",
@@ -28,7 +27,7 @@ export default function ProfilePage() {
     dispatch(fetchVendorme());
   }, [dispatch]);
 
-  const fullName = useMemo(() => {
+  const vendorFullName = useMemo(() => {
     return (
       vendor?.name ||
       vendor?.full_name ||
@@ -45,14 +44,13 @@ export default function ProfilePage() {
       localStorage.getItem("vendorProfileData") || "{}"
     );
 
-    const nameParts = fullName.trim().split(" ");
-
     setForm({
-      firstName: savedProfile.firstName || vendor?.first_name || nameParts[0] || "",
-      lastName:
-        savedProfile.lastName ||
-        vendor?.last_name ||
-        nameParts.slice(1).join(" ") ||
+      fullName:
+        savedProfile.fullName ||
+        vendor?.full_name ||
+        vendor?.name ||
+        vendor?.business_name ||
+        vendorFullName ||
         "",
       email: vendor?.email || savedProfile.email || "",
       phone: vendor?.phone || vendor?.mobile || savedProfile.phone || "",
@@ -65,13 +63,20 @@ export default function ProfilePage() {
     });
 
     setProfilePic(savedProfile.profilePic || vendor?.profile_image || null);
-  }, [vendor, fullName]);
+  }, [vendor, vendorFullName]);
 
   const initials = useMemo(() => {
-    const first = form.firstName?.charAt(0) || "";
-    const last = form.lastName?.charAt(0) || "";
-    return `${first}${last}`.toUpperCase() || "U";
-  }, [form.firstName, form.lastName]);
+    const names = form.fullName?.trim().split(" ") || [];
+
+    const letters = names
+      .filter(Boolean)
+      .map((name) => name.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+    return letters || "U";
+  }, [form.fullName]);
 
   const handleChange = (e) => {
     if (!isEditing) return;
@@ -89,8 +94,8 @@ export default function ProfilePage() {
   const handleSave = () => {
     if (!isEditing) return;
 
-    if (!form.firstName.trim()) {
-      alert("Please enter first name");
+    if (!form.fullName.trim()) {
+      alert("Please enter full name");
       return;
     }
 
@@ -115,14 +120,13 @@ export default function ProfilePage() {
       localStorage.getItem("vendorProfileData") || "{}"
     );
 
-    const nameParts = fullName.trim().split(" ");
-
     setForm({
-      firstName: savedProfile.firstName || vendor?.first_name || nameParts[0] || "",
-      lastName:
-        savedProfile.lastName ||
-        vendor?.last_name ||
-        nameParts.slice(1).join(" ") ||
+      fullName:
+        savedProfile.fullName ||
+        vendor?.full_name ||
+        vendor?.name ||
+        vendor?.business_name ||
+        vendorFullName ||
         "",
       email: vendor?.email || savedProfile.email || "",
       phone: vendor?.phone || vendor?.mobile || savedProfile.phone || "",
@@ -273,24 +277,11 @@ export default function ProfilePage() {
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="text-sm font-semibold text-gray-700">
-              First Name
+              Full Name
             </label>
             <input
-              name="firstName"
-              value={form.firstName}
-              onChange={handleChange}
-              disabled={!isEditing}
-              className="mt-2 h-11 w-full rounded-sm border border-[#E5E5E5] px-3 text-sm outline-none focus:border-[#0B1F3A] disabled:bg-gray-100 disabled:text-gray-600"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-700">
-              Last Name
-            </label>
-            <input
-              name="lastName"
-              value={form.lastName}
+              name="fullName"
+              value={form.fullName}
               onChange={handleChange}
               disabled={!isEditing}
               className="mt-2 h-11 w-full rounded-sm border border-[#E5E5E5] px-3 text-sm outline-none focus:border-[#0B1F3A] disabled:bg-gray-100 disabled:text-gray-600"
