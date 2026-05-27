@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -18,6 +18,7 @@ import {
   addToFavourites,
   removeFromFavourites,
 } from "@/store/slices/favouritesSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 
 
 const C = {
@@ -160,7 +161,7 @@ const ErrorState = ({ message }) => (
 const useNormalized = (p) =>
   useMemo(() => ({
     title: str(p?.title, p?.name, p?.productName, "Product"),
-    brand: str(p?.brand, p?.company, p?.manufacturer, "KAVAS"),
+    brand: str(p?.brand, p?.company, p?.manufacturer, p?.organization_name, "KAVAS"),
     sku: str(p?.sku, p?.SKU, p?.code, "-"),
     gtin: str(p?.gtin, p?.GTIN, "-"),
     category: str(p?.category, p?.mainCategory, "Home"),
@@ -175,7 +176,16 @@ const useNormalized = (p) =>
     colors: (Array.isArray(p?.colors) && p.colors.length) ? p.colors : ["White", "Black", "Blue"],
     warranty: str(p?.warranty, "1 Year Manufacturer"),
     returnPolicy: str(p?.returnPolicy, "7 Days Replacement"),
-    supplier: p?.supplier ?? p?.vendor ?? null,
+    supplier:
+      p?.supplier ??
+      p?.vendor ??
+      p?.organization ?? {
+        name:
+          p?.supplier_name ??
+          p?.vendor_name ??
+          p?.organization_name ??
+          "",
+      },
     description: str(p?.shortDescription, p?.description, p?.about, "Designed for everyday use with reliable performance, bulk-friendly pricing, and support for business buying."),
     highlights: (Array.isArray(p?.highlights ?? p?.features) ? (p.highlights ?? p.features) : [])
       .map((x) => (typeof x === "string" ? x : str(x?.text, x?.title, ""))).filter(Boolean).slice(0, 5),
@@ -250,9 +260,10 @@ export default function ProductView() {
   const { Id: paramId, id: paramIdLower } = useParams() ?? {};
   const id = paramId ?? paramIdLower;
   const dispatch = useDispatch();
+  const router = useRouter();
   const { product, loading, error, products } = useSelector((s) => s.products);
   useEffect(() => { if (id) dispatch(fetchSingleProduct(id)); }, [dispatch, id]);
-  const p = product ?? {};
+  const p = product?.product ?? product ?? {};
   const norm = useNormalized(p);
   const mediaItems = useMemo(() => normalizeMedia(p), [product]);
   const tiers = useTiers(product?.pricingTiers, norm.baseUnit, norm.minQty);
@@ -263,26 +274,52 @@ export default function ProductView() {
   const [selectedColor, setSelectedColor] = useState(norm.colors[0]);
   const favouriteItems = useSelector((state) => state.favourites.items);
 
-const liked = useMemo(() => {
-  return (Array.isArray(favouriteItems) ? favouriteItems : [])
-    .map((item) =>
-      String(item?._id ?? item?.id ?? item?.productId ?? item)
-    )
-    .filter(Boolean);
-}, [favouriteItems]);
+  const liked = useMemo(() => {
+    return (Array.isArray(favouriteItems) ? favouriteItems : [])
+      .map((item) =>
+        String(item?._id ?? item?.id ?? item?.productId ?? item)
+      )
+      .filter(Boolean);
+  }, [favouriteItems]);
 
-const productId = String(p?._id ?? p?.id ?? id);
-const isWishlisted = liked.includes(productId);
+  const productId = String(p?._id ?? p?.id ?? id);
+  const isWishlisted = liked.includes(productId);
 
-const onToggleFavourite = () => {
-  if (!productId) return;
+  const onAddToCart = () => {
+    if (!productId) return;
 
-  if (isWishlisted) {
-    dispatch(removeFromFavourites(productId));
-  } else {
-    dispatch(addToFavourites(productId));
-  }
-};
+    dispatch(
+      addToCart({
+        productId,
+        quantity: qty,
+        variantId: p?.variantId ?? p?.variant_id,
+      })
+    );
+  };
+
+  const onBuyNow = () => {
+    if (!productId) return;
+
+    dispatch(
+      addToCart({
+        productId,
+        quantity: qty,
+        variantId: p?.variantId ?? p?.variant_id,
+      })
+    );
+
+    router.push("/cart");
+  };
+
+  const onToggleFavourite = () => {
+    if (!productId) return;
+
+    if (isWishlisted) {
+      dispatch(removeFromFavourites(productId));
+    } else {
+      dispatch(addToFavourites(productId));
+    }
+  };
 
   const thumbsRef = useRef(null);
 
@@ -314,7 +351,7 @@ const onToggleFavourite = () => {
   return (
     <div className="min-h-screen" style={{ color: C.text }}>
       <div className="w-full px-4 py-5 sm:px-6 lg:px-8">
-       
+
         <div className="grid items-start gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="grid gap-3">
 
@@ -322,21 +359,19 @@ const onToggleFavourite = () => {
             <div className="relative rounded-sm border" style={{ background: C.white, borderColor: C.border }}>
               <div className="absolute right-4 top-4 z-10 flex gap-2">
                 <button
-  type="button"
-  onClick={onToggleFavourite}
-  className={`rounded-full border bg-white p-2 shadow-sm transition ${
-    isWishlisted ? "border-[#D4AF37]" : "border-[#E5E5E5]"
-  }`}
-  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
->
-  <Heart
-    className={`h-5 w-5 ${
-      isWishlisted
-        ? "text-red-500 fill-red-500"
-        : "text-[#0B1F3A]"
-    }`}
-  />
-</button>
+                  type="button"
+                  onClick={onToggleFavourite}
+                  className={`rounded-full border bg-white p-2 shadow-sm transition ${isWishlisted ? "border-[#D4AF37]" : "border-[#E5E5E5]"
+                    }`}
+                  aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart
+                    className={`h-5 w-5 ${isWishlisted
+                      ? "text-red-500 fill-red-500"
+                      : "text-[#0B1F3A]"
+                      }`}
+                  />
+                </button>
                 <button type="button" className="rounded-full border bg-white p-2 shadow-sm" style={{ borderColor: C.border }} aria-label="Share">
                   <Share2 className="h-5 w-5" style={{ color: C.primary }} />
                 </button>
@@ -427,11 +462,11 @@ const onToggleFavourite = () => {
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>
                     {norm.description}
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
+                  {/* <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
                     <span>Brand: <b style={{ color: C.primary }}>{norm.brand}</b></span>
                     <span>SKU: {norm.sku}</span>
                     <span>GTIN: {norm.gtin}</span>
-                  </div>
+                  </div> */}
                   <div className="mt-5 flex flex-wrap items-end gap-3">
                     <span className="text-3xl font-extrabold" style={{ color: C.primary }}>{fmt(unitPrice)}</span>
                     <span className="pb-1 text-sm" style={{ color: C.muted }}>/ unit</span>
@@ -544,17 +579,38 @@ const onToggleFavourite = () => {
                         </div>
                       </div>
                     </div>
+
+
                     <div className="space-y-3">
-                      <button className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white" style={{ background: C.primary }}>
-                        <ShoppingCart className="h-5 w-5" /> Add to Cart
-                      </button>
-                      <button className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold" style={{ borderColor: C.primary, color: C.primary }}>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={onBuyNow}
+                          className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white cursor-pointer"
+                          style={{ background: C.gold }}
+                        >
+                          <Zap className="h-5 w-5" /> Buy Now
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={onAddToCart}
+                          className="flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-sm font-bold text-white cursor-pointer"
+                          style={{ background: C.primary }}
+                        >
+                          <ShoppingCart className="h-5 w-5" /> Add to Cart
+                        </button>
+                      </div>
+                      <Link href="/rfqform">
+                      <button className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold cursor-pointer" style={{ borderColor: C.primary, color: C.primary }}>
                         <FileText className="h-5 w-5" /> Request for Quote (RFQ)
                       </button>
-                      <p className="text-center text-xs" style={{ color: C.muted }}>Submit RFQ for larger quantities — our team will respond promptly.</p>
+                      </Link>
+                      <p className="text-center mt-3 text-xs" style={{ color: C.muted }}>Submit RFQ for larger quantities — our team will respond promptly.</p>
                     </div>
                   </div>
 
+                  {/* Trust badges */}
                   <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <TrustBadge Icon={FileText} label="GST Invoice" />
                     <TrustBadge Icon={ShieldCheck} label="Secure Payments" />
@@ -571,10 +627,10 @@ const onToggleFavourite = () => {
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-sm font-bold text-white text-sm" style={{ background: C.primary }}>
-                      {initials(norm.supplier?.name ?? norm.brand)}
+                      {initials(norm.supplier?.name || "Supplier")}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{norm.supplier?.name ?? norm.brand}</p>
+                      <p className="text-sm font-semibold">{norm.supplier?.name || "Supplier"}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <Stars rating={4.6} size={14} />
                         <span className="text-xs font-semibold" style={{ color: C.muted }}>4.6 ({Math.max(1, norm.reviewCount)} ratings)</span>
@@ -599,6 +655,8 @@ const onToggleFavourite = () => {
           <SpecificationsSection specifications={product?.specifications} />
           <CustomerReviewsSection product={product} />
           <ShippingDeliverySection product={product} />
+
+          {/* Similar Products */}
           <section className="mt-6 rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Similar Products</h2>

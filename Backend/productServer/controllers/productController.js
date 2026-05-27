@@ -994,8 +994,16 @@ exports.getSingleProduct = async (req, res) => {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `SELECT * FROM products 
-       WHERE id = $1 AND is_active = true`,
+      `
+    SELECT
+    p.*,
+    o.name AS organization_name
+    FROM products p
+    LEFT JOIN organizations o
+    ON p.organization_id = o.id
+    WHERE p.id = $1
+    AND p.is_active = true
+  `,
       [id]
     );
 
@@ -1077,8 +1085,6 @@ exports.getProductsByCategory = async (req, res) => {
   try {
     const { categorySlug } = req.params;
 
-    const cleanText = categorySlug.replaceAll("-", " ");
-
     const result = await pool.query(
       `
       SELECT DISTINCT ON (p.id)
@@ -1091,20 +1097,22 @@ exports.getProductsByCategory = async (req, res) => {
         p.moq,
         p.stock,
         p.unit,
+        p.weight,
+        p.dispatch_time_days,
         p.created_at,
+        c.id AS category_id,
+        c.slug AS category_slug,
+        NULL::text AS subcategory_slug,
         pi.image_url
       FROM products p
+      JOIN product_categories pc ON pc.product_id = p.id
+      JOIN categories c ON c.id = pc.category_id
       LEFT JOIN product_images pi ON pi.product_id = p.id
-      WHERE p.is_active = true
-      AND (
-        p.name ILIKE $1
-        OR p.description ILIKE $1
-        OR p.slug ILIKE $1
-        OR p.sku ILIKE $1
-      )
-      ORDER BY p.id, p.created_at DESC
+      WHERE c.slug = $1
+        AND p.is_active = true
+      ORDER BY p.id, p.created_at DESC;
       `,
-      [`%${cleanText}%`]
+      [categorySlug]
     );
 
     res.json({
@@ -1113,11 +1121,7 @@ exports.getProductsByCategory = async (req, res) => {
     });
   } catch (err) {
     console.error("getProductsByCategory error:", err);
-
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
