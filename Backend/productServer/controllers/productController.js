@@ -373,13 +373,8 @@ exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    // =====================================================
-    // HELPERS
-    // =====================================================
-
     const safeParse = (value, fallback = []) => {
       if (!value) return fallback;
-
       if (Array.isArray(value)) return value;
 
       try {
@@ -395,10 +390,6 @@ exports.createProduct = async (req, res) => {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-|-$/g, "");
-
-    // =====================================================
-    // BODY
-    // =====================================================
 
     const {
       name,
@@ -417,10 +408,6 @@ exports.createProduct = async (req, res) => {
       variants,
     } = req.body;
 
-    // =====================================================
-    // VALIDATION
-    // =====================================================
-
     if (!name?.trim()) {
       return res.status(400).json({
         success: false,
@@ -438,16 +425,9 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    // =====================================================
-    // START TRANSACTION
-    // =====================================================
-
     await client.query("BEGIN");
 
-    // =====================================================
-    // CATEGORY
-    // =====================================================
-
+    // ================= CATEGORY =================
     let parentCategoryId = null;
     let subCategoryId = null;
 
@@ -467,8 +447,8 @@ exports.createProduct = async (req, res) => {
           parentCategoryId = existing.rows[0].id;
         } else {
           const created = await client.query(
-            `INSERT INTO categories (name,slug,parent_id)
-             VALUES ($1,$2,NULL)
+            `INSERT INTO categories (name, slug, parent_id)
+             VALUES ($1, $2, NULL)
              RETURNING id`,
             [category, slugifyText(category)]
           );
@@ -482,34 +462,27 @@ exports.createProduct = async (req, res) => {
       if (uuidRegex.test(subCategory)) {
         subCategoryId = subCategory;
       } else {
-        const existingSub = await client.query(
+        const existing = await client.query(
           `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
           [subCategory]
         );
 
-        if (existingSub.rows.length) {
-          subCategoryId = existingSub.rows[0].id;
+        if (existing.rows.length) {
+          subCategoryId = existing.rows[0].id;
         } else {
-          const createdSub = await client.query(
-            `INSERT INTO categories (name,slug,parent_id)
-             VALUES ($1,$2,$3)
+          const created = await client.query(
+            `INSERT INTO categories (name, slug, parent_id)
+             VALUES ($1, $2, $3)
              RETURNING id`,
-            [
-              subCategory,
-              slugifyText(subCategory),
-              parentCategoryId,
-            ]
+            [subCategory, slugifyText(subCategory), parentCategoryId]
           );
 
-          subCategoryId = createdSub.rows[0].id;
+          subCategoryId = created.rows[0].id;
         }
       }
     }
 
-    // =====================================================
-    // CREATE PRODUCT
-    // =====================================================
-
+    // ================= PRODUCT =================
     const productResult = await client.query(
       `INSERT INTO products (
         organization_id,
@@ -542,10 +515,7 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // =====================================================
-    // CATEGORY MAP
-    // =====================================================
-
+    // ================= CATEGORY MAP =================
     const categories = [];
 
     if (parentCategoryId) {
@@ -554,7 +524,6 @@ exports.createProduct = async (req, res) => {
          VALUES ($1,$2)`,
         [product.id, parentCategoryId]
       );
-
       categories.push(parentCategoryId);
     }
 
@@ -564,97 +533,84 @@ exports.createProduct = async (req, res) => {
          VALUES ($1,$2)`,
         [product.id, subCategoryId]
       );
-
       categories.push(subCategoryId);
     }
 
-    // =====================================================
-    // CLOUDINARY FILES
-    // =====================================================
-
+    // ================= CLOUDINARY FILES FIX =================
     const imageList = [];
     const videoList = [];
 
     const files = req.files || [];
 
+    if (!Array.isArray(files)) {
+      throw new Error("Files not received. Check multer middleware.");
+    }
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
 
-      const mediaType = file.mimetype.startsWith("video")
-        ? "video"
-        : "image";
+      const isVideo = file.mimetype.startsWith("video");
 
       await client.query(
-        `INSERT INTO product_images
-        (
+        `INSERT INTO product_images (
           product_id,
           image_url,
           media_type,
+          public_id,
           sort_order,
           is_primary
         )
-        VALUES ($1,$2,$3,$4,$5)`,
+        VALUES ($1,$2,$3,$4,$5,$6)`,
         [
           product.id,
-          file.path,
-          mediaType,
+          file.path,          // Cloudinary URL
+          isVideo ? "video" : "image",
+          file.filename,      // Cloudinary public_id
           i,
-          mediaType === "image" && i === 0,
+          !isVideo && i === 0,
         ]
       );
 
-      if (mediaType === "image") {
-        imageList.push({
-          image_url: file.path,
-          sort_order: i,
-          is_primary: i === 0,
-        });
-      } else {
+      if (isVideo) {
         videoList.push({
           video_url: file.path,
+          public_id: file.filename,
           sort_order: i,
+        });
+      } else {
+        imageList.push({
+          image_url: file.path,
+          public_id: file.filename,
+          sort_order: i,
+          is_primary: i === 0,
         });
       }
     }
 
-    // =====================================================
-    // SPECIFICATIONS
-    // =====================================================
-
+    // ================= SPECIFICATIONS =================
     const parsedSpecs = safeParse(specifications);
-
     const specsList = [];
 
     for (const spec of parsedSpecs) {
       if (!spec?.name || !spec?.value) continue;
 
       await client.query(
-        `INSERT INTO product_specifications
-        (product_id,key,value)
-        VALUES ($1,$2,$3)`,
+        `INSERT INTO product_specifications (product_id, key, value)
+         VALUES ($1,$2,$3)`,
         [product.id, spec.name, spec.value]
       );
 
       specsList.push(spec);
     }
 
-    // =====================================================
-    // BULK PRICING
-    // =====================================================
-
+    // ================= BULK PRICING =================
     const parsedPricing = safeParse(bulkPricing);
-
     const pricingList = [];
 
     for (const tier of parsedPricing) {
       await client.query(
         `INSERT INTO product_pricing_tiers
-        (
-          product_id,
-          min_quantity,
-          max_quantity,
-          price
-        )
+        (product_id, min_quantity, max_quantity, price)
         VALUES ($1,$2,$3,$4)`,
         [
           product.id,
@@ -667,12 +623,8 @@ exports.createProduct = async (req, res) => {
       pricingList.push(tier);
     }
 
-    // =====================================================
-    // VARIANTS
-    // =====================================================
-
+    // ================= VARIANTS =================
     const parsedVariants = safeParse(variants);
-
     const variantList = [];
 
     for (const v of parsedVariants) {
@@ -695,9 +647,7 @@ exports.createProduct = async (req, res) => {
           product.id,
           v.variant_type || v.variantName || null,
           v.variant_value || v.value || null,
-          `${v.variant_type || v.variantName || ""} - ${
-            v.variant_value || v.value || ""
-          }`,
+          `${v.variant_type || v.variantName || ""}-${v.value || ""}`,
           v.sku || null,
           v.price || 0,
           v.mrp || 0,
@@ -710,16 +660,11 @@ exports.createProduct = async (req, res) => {
       variantList.push(v);
     }
 
-    // =====================================================
-    // COMMIT
-    // =====================================================
-
     await client.query("COMMIT");
 
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
-
       product: {
         ...product,
         categories,
