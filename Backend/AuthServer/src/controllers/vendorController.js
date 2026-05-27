@@ -597,7 +597,7 @@ export const getMe = async (req, res) => {
 
     const result = await db.query(
       `SELECT vp.id, vp.email, vp.phone, vp.email_verified, vp.phone_verified, vp.is_active,
-              vo.id as onboarding_id, vo.status, vo.current_step
+              vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step
        FROM vendorprofile vp
        LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
        WHERE vp.id = $1`,

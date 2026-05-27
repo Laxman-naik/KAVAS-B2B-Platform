@@ -209,16 +209,8 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     const formData = new FormData();
 
     // ================= ORGANIZATION ID FIX =================
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-    const organizationId =
-      localStorage.getItem("organizationId") ||
-      localStorage.getItem("organization_id") ||
-      user.organization_id ||
-      user.organizationId ||
-      user.organization?.id ||
-      user.vendor?.organization_id ||
-      user.vendor?.organizationId;
+    const organizationId = vendor?.organization_id
+    console.log(organizationId) 
 
     if (!organizationId) {
       alert("Organization ID not found. Please login again as vendor.");
