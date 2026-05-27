@@ -82,10 +82,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex">
       {!hideLayout && (
-        <VendorSidebar
-          collapsed={collapsed}
-          setCollapsed={setCollapsed}
-        />
+        <VendorSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       )}
 
       <div
@@ -93,11 +90,9 @@ const Layout = ({ children }) => {
           !hideLayout ? (collapsed ? "ml-20" : "ml-64") : ""
         }`}
       >
-        {!hideLayout && <VendorHeader />}
+        {!hideLayout && <VendorHeader collapsed={collapsed} />}
 
-        <main className={!hideLayout ? "pt-16" : ""}>
-          {children}
-        </main>
+        <main className={!hideLayout ? "pt-16" : ""}>{children}</main>
       </div>
     </div>
   );

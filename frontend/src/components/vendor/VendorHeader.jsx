@@ -7,7 +7,7 @@ import { vendorNavItems } from "./vendorNavConfig";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutVendor } from "../../store/slices/vendorSlice";
 
-const VendorHeader = () => {
+const VendorHeader = ({ collapsed }) => {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useDispatch();
@@ -18,12 +18,11 @@ const VendorHeader = () => {
   const pageTitle = useMemo(() => {
     if (!pathname) return "";
     const match = vendorNavItems.find(
-      (x) => pathname === x.href || pathname.startsWith(`${x.href}/`)
+      (x) => pathname === x.href || pathname.startsWith(`${x.href}/`),
     );
     return match?.label || "Dashboard";
   }, [pathname]);
 
- 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -45,7 +44,13 @@ const VendorHeader = () => {
   };
 
   return (
-    <header className="fixed top-0 right-0 z-30 h-16 w-[calc(100%-16rem)] bg-white border-b border-[#E5E5E5]">
+    <header
+      className={`fixed top-0 right-0 z-30 h-16 bg-white border-b border-[#E5E5E5] transition-all duration-200 ${
+        collapsed
+          ? "left-20 w-[calc(100%-5rem)]"
+          : "left-64 w-[calc(100%-16rem)]"
+      }`}
+    >
       <div className="h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
         <div className="text-base sm:text-lg font-extrabold text-[#0B1F3A]">
           {pageTitle}
@@ -77,33 +82,35 @@ const VendorHeader = () => {
             <HelpCircle size={16} className="text-gray-700" />
           </button>
 
-        
           <div className="relative" ref={dropdownRef}>
             <div
               onClick={() => setOpen(!open)}
               className="flex items-center gap-3 pl-1 cursor-pointer"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1F3A] text-white text-xs font-bold">
-                {vendor?.business?.business_name ?.split(" ") ?.map((word) => word[0]) ?.slice(0, 2) ?.join("") ?.toUpperCase()}
+                {vendor?.business?.business_name
+                  ?.split(" ")
+                  ?.map((word) => word[0])
+                  ?.slice(0, 2)
+                  ?.join("")
+                  ?.toUpperCase()}
               </div>
 
               <div className="hidden sm:block leading-tight">
                 <div className="text-sm font-bold text-[#0B1F3A]">
                   {vendor?.business?.business_name}
                 </div>
-                <div className="text-[11px] text-gray-500">
-                  Seller Account
-                </div>
+                <div className="text-[11px] text-gray-500">Seller Account</div>
               </div>
 
               <ChevronDown
                 size={16}
-                className={`text-gray-500 transition ${open ? "rotate-180" : ""
-                  }`}
+                className={`text-gray-500 transition ${
+                  open ? "rotate-180" : ""
+                }`}
               />
             </div>
 
-           
             {open && (
               <div className="absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg border z-50">
                 <ul className="py-2 text-sm text-gray-700">
