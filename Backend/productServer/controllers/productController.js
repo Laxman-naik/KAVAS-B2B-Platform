@@ -373,23 +373,17 @@ exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const safeParse = (value, fallback = []) => {
-      if (!value) return fallback;
+    const safeParseArray = (value) => {
+      if (!value) return [];
       if (Array.isArray(value)) return value;
 
       try {
-        return JSON.parse(value);
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
-        return fallback;
+        return [];
       }
     };
-
-    const slugifyText = (text) =>
-      String(text || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
 
     const {
       name,
@@ -408,96 +402,26 @@ exports.createProduct = async (req, res) => {
       variants,
     } = req.body;
 
-    if (!name?.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Product name required",
-      });
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Product name required" });
     }
 
     const resolvedOrganizationId =
       organizationId || req.user?.organization_id;
 
     if (!resolvedOrganizationId) {
-      return res.status(400).json({
-        success: false,
-        message: "organizationId required",
-      });
+      return res.status(400).json({ message: "organizationId required" });
     }
 
     await client.query("BEGIN");
 
-    // ================= CATEGORY =================
-    let parentCategoryId = null;
-    let subCategoryId = null;
-
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-    if (category?.trim()) {
-      if (uuidRegex.test(category)) {
-        parentCategoryId = category;
-      } else {
-        const existing = await client.query(
-          `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
-          [category]
-        );
-
-        if (existing.rows.length) {
-          parentCategoryId = existing.rows[0].id;
-        } else {
-          const created = await client.query(
-            `INSERT INTO categories (name, slug, parent_id)
-             VALUES ($1, $2, NULL)
-             RETURNING id`,
-            [category, slugifyText(category)]
-          );
-
-          parentCategoryId = created.rows[0].id;
-        }
-      }
-    }
-
-    if (subCategory?.trim()) {
-      if (uuidRegex.test(subCategory)) {
-        subCategoryId = subCategory;
-      } else {
-        const existing = await client.query(
-          `SELECT id FROM categories WHERE LOWER(name)=LOWER($1) LIMIT 1`,
-          [subCategory]
-        );
-
-        if (existing.rows.length) {
-          subCategoryId = existing.rows[0].id;
-        } else {
-          const created = await client.query(
-            `INSERT INTO categories (name, slug, parent_id)
-             VALUES ($1, $2, $3)
-             RETURNING id`,
-            [subCategory, slugifyText(subCategory), parentCategoryId]
-          );
-
-          subCategoryId = created.rows[0].id;
-        }
-      }
-    }
-
     // ================= PRODUCT =================
     const productResult = await client.query(
       `INSERT INTO products (
-        organization_id,
-        name,
-        description,
-        price,
-        mrp,
-        moq,
-        stock,
-        is_active,
-        slug,
-        sku,
-        unit
+        organization_id, name, description, price, mrp, moq, stock,
+        is_active, sku, unit
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9)
       RETURNING *`,
       [
         resolvedOrganizationId,
@@ -507,7 +431,6 @@ exports.createProduct = async (req, res) => {
         Number(mrp) || 0,
         Number(moq) || 1,
         Number(stock) || 0,
-        slugifyText(name),
         sku || null,
         unit || null,
       ]
@@ -515,149 +438,99 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // ================= CATEGORY MAP =================
-    const categories = [];
+    // ================= FILES =================
+    const images = req.files?.images || [];
+    const videos = req.files?.videos || [];
 
-    if (parentCategoryId) {
-      await client.query(
-        `INSERT INTO product_categories (product_id, category_id)
-         VALUES ($1,$2)`,
-        [product.id, parentCategoryId]
-      );
-      categories.push(parentCategoryId);
-    }
-
-    if (subCategoryId) {
-      await client.query(
-        `INSERT INTO product_categories (product_id, category_id)
-         VALUES ($1,$2)`,
-        [product.id, subCategoryId]
-      );
-      categories.push(subCategoryId);
-    }
-
-    // ================= CLOUDINARY FILES FIX =================
-    const imageList = [];
-    const videoList = [];
-
-    const files = req.files || [];
-
-    if (!Array.isArray(files)) {
-      throw new Error("Files not received. Check multer middleware.");
-    }
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      const isVideo = file.mimetype.startsWith("video");
+    // IMAGES
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      if (!file?.path) continue;
 
       await client.query(
-        `INSERT INTO product_images (
-          product_id,
-          image_url,
-          media_type,
-          public_id,
-          sort_order,
-          is_primary
-        )
-        VALUES ($1,$2,$3,$4,$5,$6)`,
+        `INSERT INTO product_images
+         (product_id, image_url, media_type, public_id, sort_order, is_primary)
+         VALUES ($1,$2,'image',$3,$4,$5)`,
         [
           product.id,
-          file.path,          // Cloudinary URL
-          isVideo ? "video" : "image",
-          file.filename,      // Cloudinary public_id
+          file.path,
+          file.filename,
           i,
-          !isVideo && i === 0,
+          i === 0,
         ]
       );
+    }
 
-      if (isVideo) {
-        videoList.push({
-          video_url: file.path,
-          public_id: file.filename,
-          sort_order: i,
-        });
-      } else {
-        imageList.push({
-          image_url: file.path,
-          public_id: file.filename,
-          sort_order: i,
-          is_primary: i === 0,
-        });
-      }
+    // VIDEOS
+    for (let i = 0; i < videos.length; i++) {
+      const file = videos[i];
+      if (!file?.path) continue;
+
+      await client.query(
+        `INSERT INTO product_images
+         (product_id, image_url, media_type, public_id, sort_order, is_primary)
+         VALUES ($1,$2,'video',$3,$4,false)`,
+        [
+          product.id,
+          file.path,
+          file.filename,
+          i,
+        ]
+      );
     }
 
     // ================= SPECIFICATIONS =================
-    const parsedSpecs = safeParse(specifications);
-    const specsList = [];
+    const specs = safeParseArray(specifications);
 
-    for (const spec of parsedSpecs) {
-      if (!spec?.name || !spec?.value) continue;
+    for (const s of specs) {
+      if (!s?.name || !s?.value) continue;
 
       await client.query(
         `INSERT INTO product_specifications (product_id, key, value)
          VALUES ($1,$2,$3)`,
-        [product.id, spec.name, spec.value]
+        [product.id, s.name, s.value]
       );
-
-      specsList.push(spec);
-    }
-
-    // ================= BULK PRICING =================
-    const parsedPricing = safeParse(bulkPricing);
-    const pricingList = [];
-
-    for (const tier of parsedPricing) {
-      await client.query(
-        `INSERT INTO product_pricing_tiers
-        (product_id, min_quantity, max_quantity, price)
-        VALUES ($1,$2,$3,$4)`,
-        [
-          product.id,
-          tier.minQty || 1,
-          tier.maxQty || null,
-          tier.pricePerUnit || 0,
-        ]
-      );
-
-      pricingList.push(tier);
     }
 
     // ================= VARIANTS =================
-    const parsedVariants = safeParse(variants);
-    const variantList = [];
+    const parsedVariants = safeParseArray(variants);
 
     for (const v of parsedVariants) {
+      if (!v?.variant_type || !v?.variant_value) continue;
+
       await client.query(
         `INSERT INTO product_variants (
-          product_id,
-          variant_type,
-          variant_value,
-          variant_name,
-          sku,
-          price,
-          mrp,
-          stock,
-          unit,
-          image_url,
-          is_active
+          product_id, variant_type, variant_value,
+          sku, price, mrp, stock, is_active
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)`,
+        VALUES ($1,$2,$3,$4,$5,$6,$7,true)`,
         [
           product.id,
-          v.variant_type || v.variantName || null,
-          v.variant_value || v.value || null,
-          `${v.variant_type || v.variantName || ""}-${v.value || ""}`,
+          v.variant_type,
+          v.variant_value,
           v.sku || null,
           v.price || 0,
           v.mrp || 0,
           v.stock || 0,
-          v.unit || null,
-          v.image_url || null,
         ]
       );
+    }
 
-      variantList.push(v);
+    // ================= BULK PRICING =================
+    const pricing = safeParseArray(bulkPricing);
+
+    for (const b of pricing) {
+      await client.query(
+        `INSERT INTO product_pricing_tiers
+         (product_id, min_quantity, max_quantity, price)
+         VALUES ($1,$2,$3,$4)`,
+        [
+          product.id,
+          Number(b.minQty || 0),
+          Number(b.maxQty || 0),
+          Number(b.pricePerUnit || 0),
+        ]
+      );
     }
 
     await client.query("COMMIT");
@@ -665,25 +538,19 @@ exports.createProduct = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
-      product: {
-        ...product,
-        categories,
-        images: imageList,
-        videos: videoList,
-        specifications: specsList,
-        bulkPricing: pricingList,
-        variants: variantList,
-      },
+      product,
     });
+
   } catch (err) {
     await client.query("ROLLBACK");
 
-    console.error("❌ CREATE PRODUCT ERROR:", err);
+    console.error("CREATE PRODUCT ERROR:", err);
 
     return res.status(500).json({
       success: false,
       message: err.message,
     });
+
   } finally {
     client.release();
   }
