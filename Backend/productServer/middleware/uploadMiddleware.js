@@ -1,26 +1,22 @@
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const cloudinary = require("../config/cloudinary");
+const path = require("path");
+const fs = require("fs");
 
-const storage = new CloudinaryStorage({
-  cloudinary,
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
-  params: async (req, file) => {
-    const isVideo = file.mimetype.startsWith("video");
-
-    return {
-      folder: "products",
-      resource_type: isVideo ? "video" : "image",
-      allowed_formats: isVideo
-        ? ["mp4", "mov", "webm"]
-        : ["jpg", "jpeg", "png", "webp"],
-
-      public_id:
-        Date.now() +
-        "-" +
-        file.originalname.split(".")[0],
-    };
+// Use local storage instead of Cloudinary
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
   },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
 const upload = multer({

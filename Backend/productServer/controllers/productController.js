@@ -447,13 +447,16 @@ exports.createProduct = async (req, res) => {
       const file = images[i];
       if (!file?.path) continue;
 
+      // Use local file path
+      const imageUrl = `/uploads/${file.filename}`;
+
       await client.query(
         `INSERT INTO product_images
          (product_id, image_url, media_type, public_id, sort_order, is_primary)
          VALUES ($1,$2,'image',$3,$4,$5)`,
         [
           product.id,
-          file.path,
+          imageUrl,
           file.filename,
           i,
           i === 0,
@@ -466,13 +469,16 @@ exports.createProduct = async (req, res) => {
       const file = videos[i];
       if (!file?.path) continue;
 
+      // Use local file path
+      const videoUrl = `/uploads/${file.filename}`;
+
       await client.query(
         `INSERT INTO product_images
          (product_id, image_url, media_type, public_id, sort_order, is_primary)
          VALUES ($1,$2,'video',$3,$4,false)`,
         [
           product.id,
-          file.path,
+          videoUrl,
           file.filename,
           i,
         ]
