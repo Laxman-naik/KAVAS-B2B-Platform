@@ -12,6 +12,9 @@ const orderRoutes = require("./routes/orderRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const favouritesRoutes = require("./routes/favouritesRoutes");
+const rfqRoutes = require("./routes/rfqRoutes");
+
+
 
 
 const app = express();
@@ -31,6 +34,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/favourites", favouritesRoutes);
+app.use("/api/rfqs", rfqRoutes);
 
 
 app.get("/", (req, res) => {
