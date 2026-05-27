@@ -5,7 +5,7 @@ const productController = require("../controllers/productController");
 const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", upload.array("images", 10), productController.createProduct);
+router.post("/api/products", upload.array("files", 15), productController.createProduct);
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug", productController.getProductsByCategoryAndSubcategory);

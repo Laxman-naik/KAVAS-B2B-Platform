@@ -46,7 +46,6 @@ const toggleCsvValue = (csv, value) => {
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   const dispatch = useDispatch();
   const vendor = useSelector((state) => state.vendor?.vendor);
-  console.log(vendor)
   const { mainCategories, subcategories, loading } = useSelector((state) => state.category,);
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
