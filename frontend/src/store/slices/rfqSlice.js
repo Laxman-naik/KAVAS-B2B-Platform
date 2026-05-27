@@ -1,14 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import {
-  createRFQAPI,
-  getRFQsAPI,
-  getSingleRFQAPI,
-  getBuyerRFQsAPI,
-  updateRFQStatusAPI,
-  deleteRFQAPI,
-} from "../services/rfqService";
-
+import { createRFQAPI, getRFQsAPI, getSingleRFQAPI,getBuyerRFQsAPI,updateRFQStatusAPI,deleteRFQAPI, } from "@/services/rfqService";
 export const createRFQ = createAsyncThunk(
   "rfq/createRFQ",
   async (payload, { rejectWithValue }) => {
@@ -115,7 +107,10 @@ const rfqSlice = createSlice({
       .addCase(createRFQ.fulfilled, (state, action) => {
         state.loading = false;
         state.success = true;
-        state.rfqs.unshift(action.payload.rfq);
+
+        if (action.payload?.rfq) {
+          state.rfqs.unshift(action.payload.rfq);
+        }
       })
       .addCase(createRFQ.rejected, (state, action) => {
         state.loading = false;
@@ -128,7 +123,7 @@ const rfqSlice = createSlice({
       })
       .addCase(fetchRFQs.fulfilled, (state, action) => {
         state.loading = false;
-        state.rfqs = action.payload.rfqs || [];
+        state.rfqs = action.payload?.rfqs || [];
       })
       .addCase(fetchRFQs.rejected, (state, action) => {
         state.loading = false;
@@ -141,7 +136,7 @@ const rfqSlice = createSlice({
       })
       .addCase(fetchSingleRFQ.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedRFQ = action.payload.rfq;
+        state.selectedRFQ = action.payload?.rfq || null;
       })
       .addCase(fetchSingleRFQ.rejected, (state, action) => {
         state.loading = false;
@@ -154,30 +149,54 @@ const rfqSlice = createSlice({
       })
       .addCase(fetchBuyerRFQs.fulfilled, (state, action) => {
         state.loading = false;
-        state.rfqs = action.payload.rfqs || [];
+        state.rfqs = action.payload?.rfqs || [];
       })
       .addCase(fetchBuyerRFQs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
+      .addCase(updateRFQStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateRFQStatus.fulfilled, (state, action) => {
+        state.loading = false;
         state.success = true;
 
-        const updatedRFQ = action.payload.rfq;
+        const updatedRFQ = action.payload?.rfq;
 
-        state.rfqs = state.rfqs.map((rfq) =>
-          rfq.id === updatedRFQ.id ? updatedRFQ : rfq
-        );
+        if (updatedRFQ) {
+          state.rfqs = state.rfqs.map((rfq) =>
+            rfq.id === updatedRFQ.id ? updatedRFQ : rfq
+          );
 
-        if (state.selectedRFQ?.id === updatedRFQ.id) {
-          state.selectedRFQ = updatedRFQ;
+          if (state.selectedRFQ?.id === updatedRFQ.id) {
+            state.selectedRFQ = updatedRFQ;
+          }
         }
       })
+      .addCase(updateRFQStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
+      .addCase(deleteRFQ.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deleteRFQ.fulfilled, (state, action) => {
+        state.loading = false;
         state.success = true;
         state.rfqs = state.rfqs.filter((rfq) => rfq.id !== action.payload);
+
+        if (state.selectedRFQ?.id === action.payload) {
+          state.selectedRFQ = null;
+        }
+      })
+      .addCase(deleteRFQ.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

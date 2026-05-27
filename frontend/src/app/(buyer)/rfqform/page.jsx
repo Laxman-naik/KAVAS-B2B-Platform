@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { createRFQ } from "@/store/slices/rfqSlice";
 import {
   Box,
   Building2,
@@ -14,11 +16,11 @@ import {
   UploadCloud,
   Send,
   Lock,
-  ShoppingCart,
-  FileCheck2,
 } from "lucide-react";
 
 export default function RFQPage() {
+  const dispatch = useDispatch();
+
   const [form, setForm] = useState({
     productName: "",
     quantity: "",
@@ -35,15 +37,6 @@ export default function RFQPage() {
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
-
-  const COLORS = {
-    primary: "#0B1F3A",
-    gold: "#D4AF37",
-    cream: "#FFF8EC",
-    white: "#FFFFFF",
-    text: "#1A1A1A",
-    border: "#E5E5E5",
-  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -76,51 +69,7 @@ export default function RFQPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!validateForm()) return;
-
-  try {
-    setSubmitted(true);
-
-    const payload = {
-      buyer_org_id: "YOUR_ORGANIZATION_ID",
-
-      product_id: null,
-
-      title: form.productName,
-
-      description: form.requirements,
-
-      quantity: Number(form.quantity),
-
-      budget: form.targetPrice
-        ? Number(form.targetPrice)
-        : null,
-    };
-
-    const response = await fetch(
-      "http://localhost:5002/api/rfqs",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Failed to submit RFQ"
-      );
-    }
-
-    alert("RFQ submitted successfully!");
-
+  const resetForm = () => {
     setForm({
       productName: "",
       quantity: "",
@@ -134,15 +83,48 @@ export default function RFQPage() {
       requirements: "",
       file: null,
     });
+  };
 
-  } catch (error) {
-    console.error(error);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    alert(error.message);
-  } finally {
-    setSubmitted(false);
-  }
-};
+    if (!validateForm()) return;
+
+    try {
+      setSubmitted(true);
+
+      const payload = {
+        buyer_org_id: "PASTE_YOUR_ORGANIZATION_UUID_HERE",
+        product_id: null,
+        title: form.productName,
+        description: `
+Company Name: ${form.companyName}
+Buyer Name: ${form.buyerName}
+Email: ${form.email}
+Phone: ${form.phone}
+Delivery Location: ${form.deliveryLocation}
+Unit: ${form.unit}
+Requirements: ${form.requirements}
+        `,
+        quantity: Number(form.quantity),
+        budget: form.targetPrice ? Number(form.targetPrice) : null,
+      };
+
+      const result = await dispatch(createRFQ(payload));
+
+      if (createRFQ.fulfilled.match(result)) {
+        alert("RFQ submitted successfully!");
+        resetForm();
+      } else {
+        alert(result.payload || "Failed to submit RFQ");
+      }
+    } catch (error) {
+      console.error("RFQ submit error:", error);
+      alert("Something went wrong");
+    } finally {
+      setSubmitted(false);
+    }
+  };
 
   const benefits = [
     {
@@ -169,10 +151,7 @@ export default function RFQPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-3 sm:p-5 lg:p-6 text-[#1A1A1A]">
-      {/* Hero */}
       <div className="relative overflow-hidden rounded-sm bg-[#0B1F3A] px-5 py-4 sm:px-8 lg:px-12 lg:py-5 shadow-xl">
-        <div className="absolute right-0 top-0 hidden h-full w-[34%]  lg:block [clip-path:polygon(38%_0,100%_0,100%_100%,0_100%)]" />
-
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-[#D4AF37]">
@@ -189,26 +168,21 @@ export default function RFQPage() {
             </p>
           </div>
 
-          <div className="hidden lg:flex items-center gap-4">
-            <div className="hidden lg:flex items-center">
-              <img
-                src="/rfq.png"
-                alt="RFQ Illustration"
-                className="w-105 object-contain drop-shadow-2xl hover:scale-105 transition-all duration-500"
-              />
-            </div>
+          <div className="hidden lg:flex items-center">
+            <img
+              src="/rfq.png"
+              alt="RFQ Illustration"
+              className="w-105 object-contain drop-shadow-2xl hover:scale-105 transition-all duration-500"
+            />
           </div>
         </div>
       </div>
 
-      {/* Main */}
       <div className="mt-3 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_420px]">
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="rounded-sm border border-[#E5E5E5] bg-white p-5 sm:p-7 shadow-lg transition-all duration-300 hover:shadow-2xl"
         >
-          {/* Product Requirement */}
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-[#0B1F3A] p-3 text-white">
               <Box size={26} />
@@ -279,7 +253,6 @@ export default function RFQPage() {
 
           <hr className="my-7 border-[#E5E5E5]" />
 
-          {/* Buyer Details */}
           <div className="flex items-center gap-4">
             <div className="rounded-full bg-[#0B1F3A] p-3 text-white">
               <Building2 size={26} />
@@ -406,7 +379,6 @@ export default function RFQPage() {
           </div>
         </form>
 
-        {/* Sidebar */}
         <aside className="space-y-3">
           <div className="rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] p-4 shadow-lg">
             <h3 className="mb-6 text-2xl font-bold text-[#1A1A1A]">
@@ -416,6 +388,7 @@ export default function RFQPage() {
             <div className="space-y-3">
               {benefits.map((item, index) => {
                 const Icon = item.icon;
+
                 return (
                   <div
                     key={index}
@@ -425,8 +398,12 @@ export default function RFQPage() {
                       <Icon size={18} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-[#1A1A1A]">{item.title}</h4>
-                      <p className="mt-1 text-sm text-gray-600">{item.desc}</p>
+                      <h4 className="font-bold text-[#1A1A1A]">
+                        {item.title}
+                      </h4>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {item.desc}
+                      </p>
                     </div>
                   </div>
                 );
@@ -434,7 +411,7 @@ export default function RFQPage() {
             </div>
           </div>
 
-          <div className="rounded-sm bg-[#0B1F3A] p-6 text-white shadow-lg transition-all duration-300 ">
+          <div className="rounded-sm bg-[#0B1F3A] p-6 text-white shadow-lg transition-all duration-300">
             <h3 className="text-2xl font-bold text-[#D4AF37]">Need Help?</h3>
             <p className="mt-2 text-sm text-white/90">
               Our team is here to assist you.
@@ -448,7 +425,7 @@ export default function RFQPage() {
               <ContactItem icon={MapPin} text="Hyderabad, Telangana, India" />
             </div>
 
-            <button className="mt-7 w-full rounded-lg border border-[#D4AF37] bg-[#D4AF37] px-5 py-3 font-bold text-[#0B1F3A] transition-all duration-300 hover:scale-105 hover:bg-transparent hover:text-[#D4AF37]">
+            <button className="mt-7 w-full rounded-sm border border-[#D4AF37] bg-[#D4AF37] px-5 py-3 font-bold text-[#0B1F3A] transition-all duration-300 hover:scale-105 hover:bg-transparent hover:text-[#D4AF37]">
               Contact Support
             </button>
           </div>
@@ -480,7 +457,7 @@ function InputBox({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-lg border px-3 py-2 outline-none transition-all duration-300 hover:border-[#D4AF37] focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${
+        className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 hover:border-[#D4AF37] focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${
           error ? "border-red-400" : "border-[#E5E5E5]"
         }`}
       />
