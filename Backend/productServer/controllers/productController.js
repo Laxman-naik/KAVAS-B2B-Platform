@@ -369,7 +369,6 @@ const slugify = (value) => {
 //     client.release();
 //   }
 // };
-
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
