@@ -890,7 +890,7 @@ export const upsertBankDetails = async (req, res) => {
     ifsc_code = ifsc_code?.trim().toUpperCase();
     bank_name = bank_name?.trim();
     branch_name = branch_name?.trim();
-    account_type = account_type?.trim();
+    account_type = account_type?.trim().toUpperCase();;
 
 
     if (!onboarding_id) {
@@ -912,7 +912,7 @@ export const upsertBankDetails = async (req, res) => {
       });
     }
 
-    const validAccountTypes = ["Savings", "Current"];
+    const validAccountTypes = ["savings", "current"];
 
     if (!validAccountTypes.includes(account_type)) {
       return res.status(400).json({

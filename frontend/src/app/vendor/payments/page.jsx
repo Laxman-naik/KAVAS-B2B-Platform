@@ -36,12 +36,13 @@ export default function PaymentsPayoutsBody() {
   const handleSave = async () => {
     try {
       const resultAction = await dispatch(saveBankDetails(bankDetails));
-      if (saveBankDetails.fulfilled.match(resultAction))
-         { setIsEditing(false); }
+      if (saveBankDetails.fulfilled.match(resultAction)) { setIsEditing(false); }
+      console.log("BANK DETAILS PAYLOAD:", bankDetails)
+
     }
     catch (err) {
-       console.log(err);
-   }
+      console.log(err);
+    }
   };
 
   const transactions = [
@@ -146,16 +147,16 @@ export default function PaymentsPayoutsBody() {
         <div className="flex justify-between mb-2">
           <h2 className="font-semibold">Bank Account Details</h2>
 
-          <button
+          {/* <butt
             onClick={() => setIsEditing(!isEditing)}
             className="text-sm flex items-center gap-1 bg-amber-300 cursor-pointer px-3 border rounded-2xl text-orange-500"
-          >
+          > */}
             {/* {isEditing ? <Save size={14} /> : <Edit size={14} />} */}
             {isEditing ? (<button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-green-50 border-green-200 text-green-700" > <Save size={15} />
               {loading ? "Saving..." : "Save"} </button>) :
               (<button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border bg-amber-50 border-amber-300 text-amber-700" >
                 <Edit size={15} /> Edit </button>)}
-          </button>
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
