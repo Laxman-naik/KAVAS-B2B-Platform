@@ -890,7 +890,7 @@ export const upsertBankDetails = async (req, res) => {
     ifsc_code = ifsc_code?.trim().toUpperCase();
     bank_name = bank_name?.trim();
     branch_name = branch_name?.trim();
-    account_type = account_type?.trim().toUpperCase();;
+    account_type = account_type?.trim().toLowerCase();
 
 
     if (!onboarding_id) {
