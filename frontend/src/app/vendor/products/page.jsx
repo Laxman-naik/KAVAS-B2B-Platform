@@ -21,8 +21,7 @@ export default function ProductManagementBody() {
   const vendorData = useSelector((state) => state.vendor?.vendor);
   const vendorId = vendorData?.id;
   const organizationId = vendorData?.organization_id;
-  // console.log(vendorProducts)
-  
+  console.log(vendorProducts)
 
   useEffect(() => {
     if (organizationId) {
@@ -135,115 +134,12 @@ export default function ProductManagementBody() {
     return "bg-gray-100 text-gray-700";
   };
 
-  const handleCreateProduct = async (data) => {
-    try {
-      let localVendor = {};
+  const getImageUrl = (path) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
 
-      try {
-        localVendor = JSON.parse(localStorage.getItem("vendor") || "{}");
-      } catch {
-        localVendor = {};
-      }
-
-      const finalOrganizationId =
-        organizationId ||
-        localVendor?.organization_id ||
-        localVendor?.organizationId ||
-        localVendor?.vendor?.organization_id ||
-        localVendor?.vendor?.organizationId;
-
-      const payload = {
-        organizationId: finalOrganizationId,
-
-        name: data?.name?.trim(),
-        sku: data?.sku?.trim(),
-
-        category: data?.category || null,
-        subCategory: data?.subCategory || null,
-
-        unit: data?.unit || "pcs",
-        status: "active",
-        description: data?.description || "",
-
-        price: Number(data?.price || 0),
-        mrp: Number(data?.mrp || 0),
-        moq: Number(data?.moq || 1),
-        stock: Number(data?.stock || 0),
-
-        gst: data?.gst || "",
-        brand: data?.brand || "",
-        barcode: data?.barcode || "",
-
-        weight: data?.productWeight || null,
-        dispatchTimeDays: Number(data?.expectedDispatchTime || 0),
-
-        images: Array.isArray(data?.images)
-          ? data.images.filter((x) => typeof x === "string" && x.trim())
-          : [],
-
-        videos: Array.isArray(data?.videos)
-          ? data.videos.filter((x) => typeof x === "string" && x.trim())
-          : [],
-
-        specifications: Array.isArray(data?.specifications)
-          ? data.specifications
-              .filter((s) => s?.name?.trim() && s?.value?.trim())
-              .map((s) => ({
-                name: s.name.trim(),
-                value: s.value.trim(),
-              }))
-          : [],
-
-        bulkPricing: Array.isArray(data?.bulkPricing)
-          ? data.bulkPricing
-              .filter((p) => p?.minQty && p?.pricePerUnit)
-              .map((p) => ({
-                minQty: Number(p.minQty),
-                maxQty: p.maxQty ? Number(p.maxQty) : null,
-                pricePerUnit: Number(p.pricePerUnit),
-              }))
-          : [],
-
-        variants: Array.isArray(data?.variants)
-          ? data.variants
-              .filter((v) => v?.value?.trim())
-              .map((v) => ({
-                variant_type: v.variantName,
-                variant_value: v.value,
-                sku: v.sku || null,
-                price: Number(v.price || data.price || 0),
-                mrp: Number(v.mrp || data.mrp || 0),
-                stock: Number(v.stock || 0),
-                unit: data.unit || "pcs",
-              }))
-          : [],
-      };
-
-      if (!payload.organizationId) {
-        alert("organizationId missing. Please check vendor login data.");
-        return;
-      }
-
-      const res = await createProductAPI(payload);
-
-      console.log("Product created:", res.data);
-
-      if (vendorId) {
-        dispatch(fetchVendorProducts(vendorId));
-      }
-
-      setPage(1);
-      setOpenAdd(false);
-    } catch (err) {
-      console.error("Create product API error:", err.response?.data || err);
-
-      alert(
-        err.response?.data?.message ||
-          err.response?.data?.error ||
-          "Product create failed"
-      );
-    }
-  };
+  return `https://kavas-b2b-platform-4.onrender.com${path}`;
+};
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
@@ -397,8 +293,8 @@ export default function ProductManagementBody() {
                     p?.images?.[0]?.image_url ||
                     "/placeholder.png"
                   }
-                  alt=""
-                  className="h-12 w-12 rounded-xl object-cover bg-gray-100"
+                  alt={p?.name || "Product"}
+                  className="h-12 w-12 rounded-xl object-cover bg-gray-100" 
                 />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
