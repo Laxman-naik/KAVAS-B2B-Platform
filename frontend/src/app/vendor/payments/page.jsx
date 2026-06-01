@@ -445,7 +445,7 @@ function Table({ title, children }) {
     <section className="bg-white border border-[#E5E5E5] rounded-2xl p-5 shadow-sm mb-5 overflow-hidden">
       <h3 className="text-lg font-bold text-[#0B1F3A] mb-4">{title}</h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[850px]">{children}</table>
+        <table className="w-full min-w-212.5">{children}</table>
       </div>
     </section>
   );
