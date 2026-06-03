@@ -415,6 +415,16 @@ exports.createProduct = async (req, res) => {
       specifications,
       bulkPricing,
       variants,
+      brand,
+      warranty,
+      returnPolicy,
+      returnDays,
+      codAvailable,
+      isOriginal,
+      gstInvoiceAvailable,
+      securePaymentAvailable,
+      returnExchangeAvailable,
+      fastDeliveryAvailable,
     } = req.body;
 
     // =====================================================
@@ -512,20 +522,33 @@ exports.createProduct = async (req, res) => {
 
     const productResult = await client.query(
       `INSERT INTO products (
-        organization_id,
-        name,
-        description,
-        price,
-        mrp,
-        moq,
-        stock,
-        is_active,
-        slug,
-        sku,
-        unit
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10)
-      RETURNING *`,
+    organization_id,
+    name,
+    description,
+    price,
+    mrp,
+    moq,
+    stock,
+    is_active,
+    slug,
+    sku,
+    unit,
+    brand,
+    warranty,
+    return_policy,
+    return_days,
+    cod_available,
+    is_original,
+    gst_invoice_available,
+    secure_payment_available,
+    return_exchange_available,
+    fast_delivery_available
+  )
+  VALUES (
+    $1,$2,$3,$4,$5,$6,$7,true,$8,$9,$10,
+    $11,$12,$13,$14,$15,$16,$17,$18,$19,$20
+  )
+  RETURNING *`,
       [
         resolvedOrganizationId,
         name,
@@ -537,6 +560,18 @@ exports.createProduct = async (req, res) => {
         slugifyText(name),
         sku || null,
         unit || null,
+
+        brand || null,
+        warranty || null,
+        returnPolicy || null,
+        Number(returnDays) || 7,
+
+        codAvailable === "false" ? false : true,
+        isOriginal === "false" ? false : true,
+        gstInvoiceAvailable === "false" ? false : true,
+        securePaymentAvailable === "false" ? false : true,
+        returnExchangeAvailable === "false" ? false : true,
+        fastDeliveryAvailable === "false" ? false : true,
       ]
     );
 
@@ -695,8 +730,7 @@ exports.createProduct = async (req, res) => {
           product.id,
           v.variant_type || v.variantName || null,
           v.variant_value || v.value || null,
-          `${v.variant_type || v.variantName || ""} - ${
-            v.variant_value || v.value || ""
+          `${v.variant_type || v.variantName || ""} - ${v.variant_value || v.value || ""
           }`,
           v.sku || null,
           v.price || 0,
