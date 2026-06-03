@@ -14,6 +14,9 @@ const searchRoutes = require("./routes/searchRoutes");
 const favouritesRoutes = require("./routes/favouritesRoutes");
 const rfqRoutes = require("./routes/rfqRoutes");
 
+const vendorPayoutRoutes = require("./routes/vendorPayoutRoutes");
+const adminPayoutRoutes = require("./routes/adminPayoutRoutes");
+
 
 
 
@@ -35,8 +38,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/favourites", favouritesRoutes);
 app.use("/api/rfqs", rfqRoutes);
-
-
+app.use("/api/vendor-payouts", vendorPayoutRoutes);
+app.use("/api/admin/payouts", adminPayoutRoutes);
 app.get("/", (req, res) => {
   res.send("Product Server Running");
 });

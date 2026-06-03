@@ -875,19 +875,56 @@ export const getBusinessDetails = async (req, res) => {
 export const upsertBankDetails = async (req, res) => {
   try {
     const onboarding_id = req.user?.onboarding_id;
-    const {
+
+    let {
       account_holder_name,
       account_number,
       ifsc_code,
+      bank_name,
+      branch_name,
+      account_type,
     } = req.body;
 
+    account_holder_name = account_holder_name?.trim();
+    account_number = account_number?.trim();
+    ifsc_code = ifsc_code?.trim().toUpperCase();
+    bank_name = bank_name?.trim();
+    branch_name = branch_name?.trim();
+    account_type = account_type?.trim().toLowerCase();
+
+
     if (!onboarding_id) {
-      return res.status(400).json({ message: "Onboarding ID missing" });
+      return res.status(400).json({
+        message: "Onboarding ID missing",
+      });
     }
 
-    if (!account_holder_name || !account_number || !ifsc_code) {
+    if (
+      !account_holder_name ||
+      !account_number ||
+      !ifsc_code ||
+      !bank_name ||
+      !branch_name ||
+      !account_type
+    ) {
       return res.status(400).json({
         message: "Required bank details missing",
+      });
+    }
+
+    const validAccountTypes = ["savings", "current"];
+
+    if (!validAccountTypes.includes(account_type)) {
+      return res.status(400).json({
+        message: "Invalid account type",
+      });
+    }
+
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+
+    if (!ifscRegex.test(ifsc_code)) {
+      return res.status(400).json({
+        message: "Invalid IFSC code",
       });
     }
 
@@ -896,14 +933,23 @@ export const upsertBankDetails = async (req, res) => {
         onboarding_id,
         account_holder_name,
         account_number,
-        ifsc_code
+        ifsc_code,
+        bank_name,
+        branch_name,
+        account_type
       )
-      VALUES ($1,$2,$3,$4)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
+
       ON CONFLICT (onboarding_id)
+
       DO UPDATE SET
         account_holder_name = EXCLUDED.account_holder_name,
         account_number = EXCLUDED.account_number,
-        ifsc_code = EXCLUDED.ifsc_code
+        ifsc_code = EXCLUDED.ifsc_code,
+        bank_name = EXCLUDED.bank_name,
+        branch_name = EXCLUDED.branch_name,
+        account_type = EXCLUDED.account_type
+
       RETURNING *;
     `;
 
@@ -912,17 +958,24 @@ export const upsertBankDetails = async (req, res) => {
       account_holder_name,
       account_number,
       ifsc_code,
+      bank_name,
+      branch_name,
+      account_type,
     ];
 
     const result = await db.query(query, values);
 
     return res.status(200).json({
-      message: "Bank details saved",
+      message: "Bank details saved successfully",
       data: result.rows[0],
     });
+
   } catch (err) {
     console.error("Bank Details Error:", err);
-    return res.status(500).json({ message: err });
+
+    return res.status(500).json({
+      message: err.message || "Internal server error",
+    });
   }
 };
 

@@ -1,36 +1,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  Trash2,
-  Upload,
-  X,
-  Check,
-  Package,
-  Image,
-  Layers,
-  Archive,
-  Tag,
-  Settings,
-  ShieldCheck,
-} from "lucide-react";
+import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getMainCategoriesThunk,
-  getSubcategoriesByParentThunk,
-} from "@/store/slices/categorySlice";
+import { getMainCategoriesThunk, getSubcategoriesByParentThunk } from "@/store/slices/categorySlice";
 import { addProduct } from "@/store/slices/productSlice";
 
 const Field = ({ label, required, children, className = "" }) => (
@@ -43,21 +21,7 @@ const Field = ({ label, required, children, className = "" }) => (
   </div>
 );
 
-const CheckBoxField = ({ label, checked, onChange }) => (
-  <label className="flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      className="h-4 w-4 accent-[#0B1F3A]"
-    />
-    {label}
-  </label>
-);
-
-const inputCls =
-  "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
-
+const inputCls = "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 const VARIANT_TYPES = ["Color", "Size", "Unit", "Custom"];
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Standard", "Premium"];
 const UNIT_OPTIONS = ["pcs", "kg", "litre", "meter", "box", "set"];
@@ -71,11 +35,7 @@ const COLOR_OPTIONS = [
   { label: "Yellow", value: "Yellow", swatch: "#eab308" },
 ];
 
-const parseCsv = (value) =>
-  String(value || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+const parseCsv = (value) => String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 const toggleCsvValue = (csv, value) => {
   const set = new Set(parseCsv(csv));
@@ -126,11 +86,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     variants: [
       { id: 1, variantName: "Color", value: "", sku: "", price: "", stock: "" },
     ],
-
-    bulkPricing: [
-      { id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },
-    ],
-
+    bulkPricing: [{ id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },],
     specifications: [{ id: 1, name: "", value: "" }],
   });
 
@@ -207,97 +163,94 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     };
   }, [form]);
 
+  if (!open) return null;
   const handlePublishProduct = async () => {
     if (!canSubmit) return;
 
-    const organizationId = vendor?.organization_id;
+    const formData = new FormData();
 
+    const organizationId = vendor?.organization_id;
     if (!organizationId) {
-      alert("Organization ID not found. Please login again as vendor.");
+      alert("Organization ID missing");
       return;
     }
 
-    const formData = new FormData();
-
+    // ================= BASIC =================
     formData.append("organizationId", organizationId);
-
     formData.append("name", form.name);
     formData.append("sku", form.sku);
-    formData.append("brand", form.brand || "");
+    formData.append("description", form.description);
     formData.append("category", form.category);
-    formData.append("subCategory", form.subCategory);
+    formData.append("subCategory", form.subCategory || "");
     formData.append("price", Number(form.price));
     formData.append("mrp", Number(form.mrp || 0));
     formData.append("moq", Number(form.moq));
     formData.append("stock", Number(form.stock));
-    formData.append("description", form.description);
-    formData.append("unit", form.unit || "pcs");
+    formData.append("unit", form.unit || "");
 
-    formData.append("warranty", form.warrantyPeriod || "");
-    formData.append("returnPolicy", form.returnPolicy || "");
-    formData.append("returnDays", Number(form.returnDays || 7));
-
-    formData.append("codAvailable", String(form.codAvailable));
-    formData.append("isOriginal", String(form.isOriginal));
-    formData.append("gstInvoiceAvailable", String(form.gstInvoiceAvailable));
-    formData.append(
-      "securePaymentAvailable",
-      String(form.securePaymentAvailable)
-    );
-    formData.append(
-      "returnExchangeAvailable",
-      String(form.returnExchangeAvailable)
-    );
-    formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
-
+    // ================= SPECIFICATIONS =================
     formData.append(
       "specifications",
       JSON.stringify(
-        form.specifications.filter((s) => s.name && s.value)
+        form.specifications.filter(s => s.name && s.value)
       )
     );
 
+    // ================= VARIANTS (MATCH BACKEND) =================
     formData.append(
       "variants",
       JSON.stringify(
-        form.variants.filter((v) => v.variantName && v.value)
+        form.variants
+          .filter(v => v.value)
+          .map(v => ({
+            variant_type: v.variantName,
+            variant_value: v.value,
+            sku: v.sku || null,
+            price: Number(v.price || 0),
+            mrp: Number(v.mrp || 0),
+            stock: Number(v.stock || 0),
+          }))
       )
     );
 
+    // ================= BULK PRICING =================
     formData.append(
       "bulkPricing",
       JSON.stringify(
-        form.bulkPricing.filter((b) => b.minQty && b.pricePerUnit)
+        form.bulkPricing
+          .filter(b => b.minQty && b.pricePerUnit)
+          .map(b => ({
+            minQty: Number(b.minQty),
+            maxQty: Number(b.maxQty || 0),
+            pricePerUnit: Number(b.pricePerUnit),
+          }))
       )
     );
 
-    form.images.forEach((image) => {
-      formData.append("files", image);
+    // ================= FILES =================
+    form.images.forEach(file => {
+      formData.append("images", file);
     });
 
-    form.videos.forEach((video) => {
-      formData.append("files", video);
+    form.videos.forEach(file => {
+      formData.append("videos", file);
     });
 
     try {
-      const resultAction = await dispatch(addProduct(formData));
+      const result = await dispatch(addProduct(formData));
 
-      if (addProduct.fulfilled.match(resultAction)) {
-        alert("Product created successfully!");
-        onSubmit?.(resultAction.payload);
+      if (addProduct.fulfilled.match(result)) {
+        alert("Product created successfully");
         close();
       } else {
-        alert(
-          resultAction.payload?.message ||
-            resultAction.error?.message ||
-            "Product creation failed"
-        );
+        console.error(result);
+        alert(result.payload?.message || "Failed to create product");
       }
     } catch (err) {
-      console.error("Product create error:", err);
-      alert("Something went wrong while creating product");
+      console.error("CREATE PRODUCT ERROR:", err);
     }
   };
+
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);

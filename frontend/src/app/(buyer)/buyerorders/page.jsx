@@ -43,6 +43,8 @@ const Page = () => {
   const authUser = useSelector((state) => state.auth.user);
   const { profile } = useSelector((state) => state.profile);
   const { orders = [], loading, error } = useSelector((state) => state.order);
+  const loggedUserId =
+    authUser?.id || authUser?._id || profile?.id || profile?._id;
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -53,10 +55,7 @@ const Page = () => {
   const activeUser = profile || authUser || {};
 
   const fullName =
-    activeUser?.full_name ||
-    activeUser?.fullName ||
-    activeUser?.name ||
-    "";
+    activeUser?.full_name || activeUser?.fullName || activeUser?.name || "";
 
   const [firstName = "", ...rest] = String(fullName)
     .trim()
@@ -88,14 +87,27 @@ const Page = () => {
   const getStatusClass = (status) => {
     const s = String(status || "").toLowerCase();
 
-    if (s === "delivered") return "bg-green-100 text-green-700 hover:bg-green-100";
+    if (s === "delivered")
+      return "bg-green-100 text-green-700 hover:bg-green-100";
     if (s === "shipped") return "bg-blue-100 text-blue-700 hover:bg-blue-100";
     if (s === "cancelled") return "bg-red-100 text-red-700 hover:bg-red-100";
 
     return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100";
   };
 
-  const filteredOrders = orders.filter((order) => {
+  const myOrders = orders.filter((order) => {
+    const orderUserId =
+      order.user_id ||
+      order.userId ||
+      order.buyer_id ||
+      order.buyerId ||
+      order.user?.id ||
+      order.user?._id;
+
+    return String(orderUserId) === String(loggedUserId);
+  });
+
+  const filteredOrders = myOrders.filter((order) => {
     const orderStatus = String(order.status || "").toLowerCase();
     const selectedStatus = statusFilter.toLowerCase();
 
@@ -107,29 +119,35 @@ const Page = () => {
     const searchMatch =
       !search ||
       String(order.id).toLowerCase().includes(search) ||
-      String(order.buyer_name || "").toLowerCase().includes(search) ||
-      String(order.total_amount || "").toLowerCase().includes(search) ||
-      String(order.status || "").toLowerCase().includes(search);
+      String(order.buyer_name || "")
+        .toLowerCase()
+        .includes(search) ||
+      String(order.total_amount || "")
+        .toLowerCase()
+        .includes(search) ||
+      String(order.status || "")
+        .toLowerCase()
+        .includes(search);
 
     return statusMatch && searchMatch;
   });
 
   const statusCounts = {
-    all: orders.length,
-    pending: orders.filter((o) =>
-      ["pending", "processing"].includes(String(o.status || "").toLowerCase())
+    all: myOrders.length,
+    pending: myOrders.filter((o) =>
+      ["pending", "processing"].includes(String(o.status || "").toLowerCase()),
     ).length,
     processing: orders.filter(
-      (o) => String(o.status || "").toLowerCase() === "processing"
+      (o) => String(o.status || "").toLowerCase() === "processing",
     ).length,
     shipped: orders.filter(
-      (o) => String(o.status || "").toLowerCase() === "shipped"
+      (o) => String(o.status || "").toLowerCase() === "shipped",
     ).length,
     delivered: orders.filter(
-      (o) => String(o.status || "").toLowerCase() === "delivered"
+      (o) => String(o.status || "").toLowerCase() === "delivered",
     ).length,
     cancelled: orders.filter(
-      (o) => String(o.status || "").toLowerCase() === "cancelled"
+      (o) => String(o.status || "").toLowerCase() === "cancelled",
     ).length,
   };
 
@@ -219,12 +237,42 @@ const Page = () => {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                ["All Orders", statusCounts.all, Package, "bg-blue-50 text-blue-600"],
-                ["Pending", statusCounts.pending, Hourglass, "bg-yellow-50 text-yellow-600"],
-                ["Processing", statusCounts.processing, RotateCcw, "bg-indigo-50 text-indigo-600"],
-                ["Shipped", statusCounts.shipped, Truck, "bg-purple-50 text-purple-600"],
-                ["Delivered", statusCounts.delivered, CheckCircle, "bg-green-50 text-green-600"],
-                ["Cancelled", statusCounts.cancelled, XCircle, "bg-red-50 text-red-600"],
+                [
+                  "All Orders",
+                  statusCounts.all,
+                  Package,
+                  "bg-blue-50 text-blue-600",
+                ],
+                [
+                  "Pending",
+                  statusCounts.pending,
+                  Hourglass,
+                  "bg-yellow-50 text-yellow-600",
+                ],
+                [
+                  "Processing",
+                  statusCounts.processing,
+                  RotateCcw,
+                  "bg-indigo-50 text-indigo-600",
+                ],
+                [
+                  "Shipped",
+                  statusCounts.shipped,
+                  Truck,
+                  "bg-purple-50 text-purple-600",
+                ],
+                [
+                  "Delivered",
+                  statusCounts.delivered,
+                  CheckCircle,
+                  "bg-green-50 text-green-600",
+                ],
+                [
+                  "Cancelled",
+                  statusCounts.cancelled,
+                  XCircle,
+                  "bg-red-50 text-red-600",
+                ],
               ].map(([label, count, Icon, color]) => (
                 <Card
                   key={label}
@@ -257,7 +305,9 @@ const Page = () => {
                         <th className="text-left font-medium px-5 py-4">
                           Order Details
                         </th>
-                        <th className="text-left font-medium px-5 py-4">Date</th>
+                        <th className="text-left font-medium px-5 py-4">
+                          Date
+                        </th>
                         <th className="text-left font-medium px-5 py-4">
                           Amount
                         </th>
@@ -310,7 +360,10 @@ const Page = () => {
                             <td className="px-5 py-4">
                               <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 rounded-sm border border-[#E5E5E5] bg-gray-50 flex items-center justify-center">
-                                  <Package size={20} className="text-[#0B1F3A]" />
+                                  <Package
+                                    size={20}
+                                    className="text-[#0B1F3A]"
+                                  />
                                 </div>
 
                                 <div className="min-w-0">
@@ -319,11 +372,13 @@ const Page = () => {
                                   </p>
 
                                   <p className="font-semibold text-[#0B1F3A] truncate">
-                                    #{String(order.id).slice(0, 8).toUpperCase()}
+                                    #
+                                    {String(order.id).slice(0, 8).toUpperCase()}
                                   </p>
 
                                   <p className="text-xs text-gray-500 truncate">
-                                    Buyer: {order.buyer_name || user.firstName || "-"}
+                                    Buyer:{" "}
+                                    {order.buyer_name || user.firstName || "-"}
                                   </p>
                                 </div>
                               </div>
@@ -336,7 +391,7 @@ const Page = () => {
                             <td className="px-5 py-4 font-semibold text-[#0B1F3A]">
                               ₹
                               {Number(order.total_amount || 0).toLocaleString(
-                                "en-IN"
+                                "en-IN",
                               )}
                             </td>
 
@@ -347,7 +402,12 @@ const Page = () => {
                             </td>
 
                             <td className="px-5 py-4 text-gray-600">
-                              {order.payment_method || "Online Payment"}
+                              {order.payment_method
+                                ? order.payment_method.toUpperCase() === "COD"
+                                  ? "Cash on Delivery"
+                                  : "Online Payment"
+                                : "Online Payment"}
+                                
                             </td>
 
                             <td className="px-5 py-4">
