@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-
 import {
   getProducts,
   getSingleProduct,
@@ -18,8 +17,9 @@ export const fetchProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getProducts();
+      console.log("ALL PRODUCTS RESPONSE:", res);
 
-      return res.products || [];
+      return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -33,8 +33,7 @@ export const fetchSingleProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
-
-      return res;
+      return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -69,8 +68,8 @@ export const fetchSingleProduct = createAsyncThunk(
 //   }
 // );
 export const addProduct = createAsyncThunk(
-  "products/create",
-  async (formData, thunkAPI) => {
+  "products/add",
+  async (data, thunkAPI) => {
     try {
       console.log("SENDING PRODUCT DATA:");
 
@@ -102,8 +101,7 @@ export const editProduct = createAsyncThunk(
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-
-      return res.product || res;
+      return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -115,7 +113,6 @@ export const removeProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       await deleteProduct(id);
-
       return id;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -123,15 +120,14 @@ export const removeProduct = createAsyncThunk(
   }
 );
 
-/* ================= NEW ARRIVALS ================= */
-
 export const fetchNewArrivals = createAsyncThunk(
   "products/newArrivals",
   async (_, thunkAPI) => {
     try {
       const res = await getNewArrivalsAPI();
+      console.log("NEW ARRIVALS RESPONSE:", res);
 
-      return res.data || [];
+      return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -145,17 +141,14 @@ export const fetchTrendingProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getTrendingProductsAPI();
+      console.log("TRENDING PRODUCTS RESPONSE:", res);
 
-      return res.data || [];
+      return res?.products || res?.data || res || [];
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data || err.message
-      );
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
-
-/* ================= VENDOR PRODUCTS ================= */
 
 export const fetchVendorProducts = createAsyncThunk(
   "products/fetchVendorProducts",
@@ -173,12 +166,11 @@ export const fetchVendorProducts = createAsyncThunk(
 
 const productSlice = createSlice({
   name: "products",
-
   initialState: {
+    trending: [],
+    newArrivals: [],
     products: [],
     vendorProducts: [],
-    newArrivals: [],
-    trending: [],
     product: null,
     loading: false,
     error: null,
@@ -194,13 +186,12 @@ const productSlice = createSlice({
     builder
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload;
       })
-
       .addCase(fetchProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -251,13 +242,12 @@ const productSlice = createSlice({
 
       .addCase(fetchNewArrivals.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchNewArrivals.fulfilled, (state, action) => {
         state.loading = false;
         state.newArrivals = action.payload;
       })
-
       .addCase(fetchNewArrivals.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -265,19 +255,17 @@ const productSlice = createSlice({
 
       .addCase(fetchTrendingProducts.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
-
       .addCase(fetchTrendingProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.trending = action.payload;
       })
-
       .addCase(fetchTrendingProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* VENDOR PRODUCTS */
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
         state.error = null;

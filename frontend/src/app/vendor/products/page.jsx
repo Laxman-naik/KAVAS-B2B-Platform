@@ -29,9 +29,7 @@ export default function ProductManagementBody() {
     }
   }, [dispatch, organizationId]);
 
-  const products = useMemo(() => {
-    return Array.isArray(vendorProducts) ? vendorProducts : [];
-  }, [vendorProducts]);
+  const products = Array.isArray(vendorProducts) ? vendorProducts : [];
 
   const filteredProducts = useMemo(() => {
     const q = String(search || "")
@@ -39,12 +37,25 @@ export default function ProductManagementBody() {
       .toLowerCase();
 
     return products.filter((p) => {
+      const productName = String(p?.name || "").toLowerCase();
+      const productSku = String(p?.sku || "").toLowerCase();
+
+      const productCategory =
+        p?.category ||
+        p?.categories?.[0]?.name ||
+        "";
+
+      const productStatus = p?.status || "";
+
       const matchSearch =
-        !q ||
-        p.name.toLowerCase().includes(q) ||
-        String(p.sku).toLowerCase().includes(q);
-      const matchCategory = category === "All" || p.category === category;
-      const matchStatus = status === "All Status" || p.status === status;
+        !q || productName.includes(q) || productSku.includes(q);
+
+      const matchCategory =
+        category === "All" || productCategory === category;
+
+      const matchStatus =
+        status === "All Status" || productStatus === status;
+
       return matchSearch && matchCategory && matchStatus;
     });
   }, [products, search, category, status]);
@@ -70,47 +81,49 @@ export default function ProductManagementBody() {
   }, [safePage, totalFiltered]);
 
   const categories = useMemo(() => {
-    const uniqueCategories = [
-      ...new Set(
-        products
-          .map((p) => p.category)
-          .filter((cat) => typeof cat === "string" && cat.trim())
-      ),
-    ];
+    const list = products
+      .map((p) => p?.category || p?.categories?.[0]?.name)
+      .filter(Boolean);
 
-    return ["All", ...uniqueCategories];
+    return ["All", ...new Set(list)];
   }, [products]);
 
   const statuses = useMemo(
-    () => [
-      "All Status",
-      "Active",
-      "Pending Review",
-      "Low Stock",
-      "Out of Stock",
-    ],
-    [],
+    () => ["All Status", "active", "pending", "rejected", "inactive"],
+    []
   );
 
   const enrichedProducts = useMemo(() => {
     return pagedFilteredProducts.map((p, index) => {
-      const discount = index % 2 === 0 ? 25 : index % 3 === 0 ? 17 : 0;
-      const oldPrice = discount ? Math.round(p.price / (1 - discount / 100)) : null;
-      const sold = 120 + index * 35;
-      const rating = 4.2 + (index % 3) * 0.2;
-      const reviews = 120 + index * 17;
-      return { ...p, discount, oldPrice, sold, rating, reviews };
+      const numericId = index + 1;
+      const discount = numericId % 2 === 0 ? 25 : numericId % 3 === 0 ? 17 : 0;
+      const price = Number(p?.price || 0);
+      const oldPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
+
+      return {
+        ...p,
+        discount,
+        oldPrice,
+        sold: Number(p?.sales_count || 0),
+        rating: Number(p?.avg_rating || 0),
+        reviews: Number(p?.total_reviews || 0),
+      };
     });
   }, [pagedFilteredProducts]);
 
   const summary = useMemo(() => {
-    const active = products.filter((p) => p.status === "Active").length;
-    const pending = products.filter(
-      (p) => p.status === "Pending Review",
-    ).length;
-    const low = products.filter((p) => p.status === "Low Stock").length;
-    const out = products.filter((p) => p.status === "Out of Stock").length;
-    return { active, pending, low, out, total: products.length };
+    const active = products.filter((p) => p.status === "active").length;
+    const pending = products.filter((p) => p.status === "pending").length;
+    const rejected = products.filter((p) => p.status === "rejected").length;
+    const inactive = products.filter((p) => p.status === "inactive").length;
+
+    return {
+      active,
+      pending,
+      rejected,
+      inactive,
+      total: products.length,
+    };
   }, [products]);
 
   const statusPill = (s) => {
@@ -149,7 +162,10 @@ export default function ProductManagementBody() {
               <Download size={16} />
               Export
             </button>
-            <button type="button" onClick={() => setOpenAdd(true)}
+
+            <button
+              type="button"
+              onClick={() => setOpenAdd(true)}
               className="h-10 rounded-lg bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95 inline-flex items-center gap-2"
             ><Plus size={16} />Add Product
             </button>
@@ -158,49 +174,29 @@ export default function ProductManagementBody() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#EFFFF6] p-4">
-            <div className="flex items-start justify-between">
-              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-                <span className="h-3 w-3 rounded-full bg-green-500" />
-              </div>
-              <div className="text-sm font-extrabold text-green-700">
-                {summary.active}
-              </div>
+            <div className="text-sm font-extrabold text-green-700">
+              {summary.active}
             </div>
             <div className="mt-3 text-xs text-gray-600">Active Products</div>
           </div>
 
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-4">
-            <div className="flex items-start justify-between">
-              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-                <span className="h-3 w-3 rounded-full bg-yellow-500" />
-              </div>
-              <div className="text-sm font-extrabold text-yellow-700">
-                {summary.pending}
-              </div>
+            <div className="text-sm font-extrabold text-yellow-700">
+              {summary.pending}
             </div>
             <div className="mt-3 text-xs text-gray-600">Pending Review</div>
           </div>
 
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF3E6] p-4">
-            <div className="flex items-start justify-between">
-              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-                <span className="h-3 w-3 rounded-full bg-orange-500" />
-              </div>
-              <div className="text-sm font-extrabold text-orange-700">
-                {summary.low}
-              </div>
+          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFECEC] p-4">
+            <div className="text-sm font-extrabold text-red-700">
+              {summary.rejected}
             </div>
             <div className="mt-3 text-xs text-gray-600">Rejected</div>
           </div>
 
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFECEC] p-4">
-            <div className="flex items-start justify-between">
-              <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
-                <span className="h-3 w-3 rounded-full bg-red-500" />
-              </div>
-              <div className="text-sm font-extrabold text-red-700">
-                {summary.out}
-              </div>
+          <div className="rounded-2xl border border-[#E5E5E5] bg-white p-4">
+            <div className="text-sm font-extrabold text-gray-700">
+              {summary.inactive}
             </div>
             <div className="mt-3 text-xs text-gray-600">Inactive</div>
           </div>
@@ -286,7 +282,10 @@ export default function ProductManagementBody() {
       ) : viewMode === "list" ? (
         <div className="mt-6 rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
           {enrichedProducts.map((p) => (
-            <div key={p.id || p.sku} className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0">
+            <div
+              key={p.id}
+              className="grid grid-cols-12 gap-3 px-5 py-4 border-b border-[#E5E5E5] last:border-b-0"
+            >
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
                   src={
@@ -304,18 +303,9 @@ export default function ProductManagementBody() {
                   <div className="mt-1 text-xs text-gray-500">{p.sku}</div>
                 </div>
               </div>
+
               <div className="col-span-2 text-sm font-extrabold text-[#0B1F3A]">
-                ₹{Number(p.price).toLocaleString("en-IN")}
-              </div>
-              <div className="col-span-2 text-sm text-gray-600">
-                {Number(p.stock).toLocaleString("en-IN")}
-              </div>
-              <div className="col-span-2">
-                <span
-                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusPill(p.status)}`}
-                >
-                  {p.status}
-                </span>
+                ₹{Number(p.price || 0).toLocaleString("en-IN")}
               </div>
 
               <div className="col-span-2 text-sm text-gray-600">
@@ -355,18 +345,10 @@ export default function ProductManagementBody() {
                   src={product?.images?.find((img) => img.is_primary)?.image_url ||
                     product?.images?.[0]?.image_url || "/placeholder.png"} alt={product?.name || "Product"} className="w-full h-44 object-cover bg-gray-100" />
 
-                {product.discount ? (<span className="absolute top-3 right-3 bg-green-500 text-white text-xs font-extrabold px-3 py-1 rounded-full"> -{product.discount}%  </span>) : null}
-
-                {product.status === "Out of Stock" ? (
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <span className="rounded-full bg-red-500 text-white text-xs font-extrabold px-4 py-2">
-                      Out of Stock
-                    </span>
-                  </div>
-                ) : null}
-
                 <span
-                  className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(product.status)}`}
+                  className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(
+                    product.status
+                  )}`}
                 >
                   {product.status}
                 </span>
@@ -374,22 +356,19 @@ export default function ProductManagementBody() {
 
               <div className="p-4">
                 <div className="text-[11px] text-gray-400">{product.sku}</div>
+
                 <div className="mt-1 text-sm font-extrabold text-[#0B1F3A] line-clamp-2">
                   {product.name}
                 </div>
+
                 <span className="inline-flex mt-2 text-[11px] bg-[#FFF8EC] text-gray-700 px-3 py-1 rounded-full border border-[#E5E5E5]">
                   {product?.categories?.[0]?.name || product.category || "No Category"}
                 </span>
 
                 <div className="mt-3 flex items-end gap-2">
                   <div className="text-lg font-extrabold text-[#0B1F3A]">
-                    ₹{Number(product.price).toLocaleString("en-IN")}
+                    ₹{Number(product.price || 0).toLocaleString("en-IN")}
                   </div>
-                  {product.oldPrice ? (
-                    <div className="text-sm text-gray-400 line-through">
-                      ₹{Number(product.oldPrice).toLocaleString("en-IN")}
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
@@ -402,35 +381,17 @@ export default function ProductManagementBody() {
 
                   <div>
                     <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {Number(product.stock).toLocaleString("en-IN")}
+                      {Number(product.stock || 0).toLocaleString("en-IN")}
                     </div>
                     <div className="text-[11px] text-gray-500">Stock</div>
                   </div>
 
                   <div>
                     <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {Number(product.sold).toLocaleString("en-IN")}
+                      {Number(product.sold || 0).toLocaleString("en-IN")}
                     </div>
                     <div className="text-[11px] text-gray-500">Sold</div>
                   </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${product.status === "Active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${product.status === "Active" ? "bg-green-600" : "bg-gray-500"}`}
-                    />
-                    {product.status === "Active" ? "Active" : "Inactive"}
-                  </span>
-
-                  <button
-                    type="button"
-                    className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
-                  >
-                    <MoreVertical size={16} className="text-gray-600" />
-                  </button>
                 </div>
 
                 <button
@@ -480,11 +441,11 @@ export default function ProductManagementBody() {
                       ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
                       : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
                   }`}
-                >
-                  {p}
-                </button>
-              );
-            })}
+              >
+                {p}
+              </button>
+            );
+          })}
 
           <button
             type="button"
@@ -504,14 +465,7 @@ export default function ProductManagementBody() {
       <AddNewProductModal
         open={openAdd}
         onClose={() => setOpenAdd(false)}
-        onSubmit={async () => {
-          if (vendorId) {
-            await dispatch(fetchVendorProducts(vendorId));
-          }
-
-          setPage(1);
-          setOpenAdd(false);
-        }}
+        onSubmit={handleCreateProduct}
       />
     </div>
   );
