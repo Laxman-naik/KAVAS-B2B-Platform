@@ -577,10 +577,6 @@ exports.createProduct = async (req, res) => {
 
     const product = productResult.rows[0];
 
-    // =====================================================
-    // CATEGORY MAP
-    // =====================================================
-
     const categories = [];
 
     if (parentCategoryId) {
