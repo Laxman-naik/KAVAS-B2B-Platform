@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight, } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreVertical,
+  Download,
+  LayoutGrid,
+  List,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "../../../store/slices/productSlice";
@@ -17,11 +27,11 @@ export default function ProductManagementBody() {
   const [page, setPage] = useState(1);
 
   const pageSize = 8;
+
   const { vendorProducts, loading } = useSelector((state) => state.products);
   const vendorData = useSelector((state) => state.vendor?.vendor);
-  const vendorId = vendorData?.id;
+
   const organizationId = vendorData?.organization_id;
-  console.log(vendorProducts)
 
   useEffect(() => {
     if (organizationId) {
@@ -29,12 +39,25 @@ export default function ProductManagementBody() {
     }
   }, [dispatch, organizationId]);
 
+  const handleCreateProduct = async () => {
+    setOpenAdd(false);
+
+    if (organizationId) {
+      dispatch(fetchVendorProducts(organizationId));
+    }
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return "/placeholder.png";
+    if (path.startsWith("http")) return path;
+
+    return `https://kavas-b2b-platform-4.onrender.com${path}`;
+  };
+
   const products = Array.isArray(vendorProducts) ? vendorProducts : [];
 
   const filteredProducts = useMemo(() => {
-    const q = String(search || "")
-      .trim()
-      .toLowerCase();
+    const q = String(search || "").trim().toLowerCase();
 
     return products.filter((p) => {
       const productName = String(p?.name || "").toLowerCase();
@@ -51,7 +74,7 @@ export default function ProductManagementBody() {
         !q || productName.includes(q) || productSku.includes(q);
 
       const matchCategory =
-        category === "All" || productCategory === category;
+        category === "All" || productProductCategoryCompare(productCategory) === category;
 
       const matchStatus =
         status === "All Status" || productStatus === status;
@@ -59,6 +82,10 @@ export default function ProductManagementBody() {
       return matchSearch && matchCategory && matchStatus;
     });
   }, [products, search, category, status]);
+
+  function productProductCategoryCompare(value) {
+    return value || "";
+  }
 
   const totalFiltered = filteredProducts.length;
 
@@ -94,16 +121,9 @@ export default function ProductManagementBody() {
   );
 
   const enrichedProducts = useMemo(() => {
-    return pagedFilteredProducts.map((p, index) => {
-      const numericId = index + 1;
-      const discount = numericId % 2 === 0 ? 25 : numericId % 3 === 0 ? 17 : 0;
-      const price = Number(p?.price || 0);
-      const oldPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
-
+    return pagedFilteredProducts.map((p) => {
       return {
         ...p,
-        discount,
-        oldPrice,
         sold: Number(p?.sales_count || 0),
         rating: Number(p?.avg_rating || 0),
         reviews: Number(p?.total_reviews || 0),
@@ -134,12 +154,12 @@ export default function ProductManagementBody() {
     return "bg-gray-100 text-gray-700";
   };
 
-  const getImageUrl = (path) => {
-  if (!path) return "/placeholder.png";
-  if (path.startsWith("http")) return path;
-
-  return `https://kavas-b2b-platform-4.onrender.com${path}`;
-};
+  const getPrimaryImage = (product) => {
+    return getImageUrl(
+      product?.images?.find((img) => img.is_primary)?.image_url ||
+        product?.images?.[0]?.image_url
+    );
+  };
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
@@ -167,12 +187,14 @@ export default function ProductManagementBody() {
               type="button"
               onClick={() => setOpenAdd(true)}
               className="h-10 rounded-lg bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95 inline-flex items-center gap-2"
-            ><Plus size={16} />Add Product
+            >
+              <Plus size={16} />
+              Add Product
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#EFFFF6] p-4">
             <div className="text-sm font-extrabold text-green-700">
               {summary.active}
@@ -200,7 +222,7 @@ export default function ProductManagementBody() {
             </div>
             <div className="mt-3 text-xs text-gray-600">Inactive</div>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -253,21 +275,24 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "grid"
-                  ? "bg-[#0B1F3A] text-white"
-                  : "text-gray-600 hover:bg-[#FFF8EC]"
-                  }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
+                  viewMode === "grid"
+                    ? "bg-[#0B1F3A] text-white"
+                    : "text-gray-600 hover:bg-[#FFF8EC]"
+                }`}
                 aria-label="Grid view"
               >
                 <LayoutGrid size={16} />
               </button>
+
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "list"
-                  ? "bg-[#0B1F3A] text-white"
-                  : "text-gray-600 hover:bg-[#FFF8EC]"
-                  }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
+                  viewMode === "list"
+                    ? "bg-[#0B1F3A] text-white"
+                    : "text-gray-600 hover:bg-[#FFF8EC]"
+                }`}
                 aria-label="List view"
               >
                 <List size={16} />
@@ -288,14 +313,11 @@ export default function ProductManagementBody() {
             >
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
-                  src={
-                    p?.images?.find((img) => img.is_primary)?.image_url ||
-                    p?.images?.[0]?.image_url ||
-                    "/placeholder.png"
-                  }
+                  src={getPrimaryImage(p)}
                   alt={p?.name || "Product"}
-                  className="h-12 w-12 rounded-xl object-cover bg-gray-100" 
+                  className="h-12 w-12 rounded-xl object-cover bg-gray-100"
                 />
+
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
                     {p.name}
@@ -342,8 +364,10 @@ export default function ProductManagementBody() {
             >
               <div className="relative">
                 <img
-                  src={product?.images?.find((img) => img.is_primary)?.image_url ||
-                    product?.images?.[0]?.image_url || "/placeholder.png"} alt={product?.name || "Product"} className="w-full h-44 object-cover bg-gray-100" />
+                  src={getPrimaryImage(product)}
+                  alt={product?.name || "Product"}
+                  className="w-full h-44 object-cover bg-gray-100"
+                />
 
                 <span
                   className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(
@@ -362,7 +386,9 @@ export default function ProductManagementBody() {
                 </div>
 
                 <span className="inline-flex mt-2 text-[11px] bg-[#FFF8EC] text-gray-700 px-3 py-1 rounded-full border border-[#E5E5E5]">
-                  {product?.categories?.[0]?.name || product.category || "No Category"}
+                  {product?.categories?.[0]?.name ||
+                    product.category ||
+                    "No Category"}
                 </span>
 
                 <div className="mt-3 flex items-end gap-2">
@@ -416,10 +442,11 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage <= 1
-              ? "opacity-40 cursor-not-allowed"
-              : "hover:bg-[#FFF8EC]"
-              }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage <= 1
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
@@ -441,20 +468,21 @@ export default function ProductManagementBody() {
                       ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
                       : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
                   }`}
-              >
-                {p}
-              </button>
-            );
-          })}
+                >
+                  {p}
+                </button>
+              );
+            })}
 
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage >= totalPages
-              ? "opacity-40 cursor-not-allowed"
-              : "hover:bg-[#FFF8EC]"
-              }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage >= totalPages
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
             aria-label="Next page"
           >
             <ChevronRight size={16} />

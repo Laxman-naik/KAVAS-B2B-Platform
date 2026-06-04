@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Clock,
   CheckCircle,
@@ -11,82 +12,63 @@ import {
   FileCheck2,
 } from "lucide-react";
 
-const initialRequests = [
-  {
-    id: "PAYOUT-2024-022",
-    vendor: "Srikanth",
-    amount: 25000,
-    date: "12 May 2024",
-    bank: "SBI •••• 4023",
-    account: "623015794218",
-    remarks: "Monthly payout request",
-    status: "Pending",
-  },
-  {
-    id: "PAYOUT-2024-020",
-    vendor: "Ravi Kumar",
-    amount: 35000,
-    date: "11 May 2024",
-    bank: "HDFC •••• 5678",
-    account: "987654321098",
-    remarks: "Weekly settlement",
-    status: "Pending",
-  },
-  {
-    id: "PAYOUT-2024-019",
-    vendor: "Priya Sharma",
-    amount: 20000,
-    date: "10 May 2024",
-    bank: "ICICI •••• 1234",
-    account: "456789123456",
-    remarks: "Approved payout",
-    status: "Approved",
-  },
-  {
-    id: "PAYOUT-2024-018",
-    vendor: "Meena Patel",
-    amount: 15000,
-    date: "08 May 2024",
-    bank: "SBI •••• 4023",
-    account: "623015794218",
-    remarks: "Payment completed",
-    status: "Approved & Paid",
-  },
-  {
-    id: "PAYOUT-2024-017",
-    vendor: "Arjun Verma",
-    amount: 30000,
-    date: "07 May 2024",
-    bank: "AXIS •••• 7890",
-    account: "112233445566",
-    remarks: "Payment completed",
-    status: "Approved & Paid",
-  },
-];
+import {
+  getAdminPayouts,
+  approveAdminPayout,
+  rejectAdminPayout,
+  markAdminPayoutPaid,
+} from "@/store/slices/adminPayoutSlice";
 
 export default function AdminPayoutRequestsBody() {
-  const [requests, setRequests] = useState(initialRequests);
-  const [selected, setSelected] = useState(initialRequests[0]);
+  const dispatch = useDispatch();
+
+  const { loading, error, payouts } = useSelector(
+    (state) => state.adminPayout || { payouts: [] }
+  );
+
+  const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [adminRemarks, setAdminRemarks] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
+
+  useEffect(() => {
+    dispatch(getAdminPayouts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!selected && payouts?.length > 0) {
+      setSelected(payouts[0]);
+    }
+  }, [payouts, selected]);
+
+  const statusLabel = (status) => {
+    if (status === "PENDING") return "Pending";
+    if (status === "APPROVED") return "Approved";
+    if (status === "PAID") return "Approved & Paid";
+    if (status === "REJECTED") return "Rejected";
+    return status;
+  };
 
   const filteredRequests = useMemo(() => {
-    return requests.filter((item) => {
-      const statusMatch = filter === "All" || item.status === filter;
-      const searchMatch =
-        item.vendor.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase());
+    return (payouts || []).filter((item) => {
+      const label = statusLabel(item.payout_status);
+
+      const statusMatch = filter === "All" || label === filter;
+
+      const searchValue = `${item.business_name || ""} ${item.vendor_email || ""} ${item.id || ""}`.toLowerCase();
+
+      const searchMatch = searchValue.includes(search.toLowerCase());
 
       return statusMatch && searchMatch;
     });
-  }, [requests, filter, search]);
+  }, [payouts, filter, search]);
 
   const summary = useMemo(() => {
-    const pending = requests.filter((i) => i.status === "Pending");
-    const approved = requests.filter((i) => i.status === "Approved");
-    const paid = requests.filter((i) => i.status === "Approved & Paid");
-    const rejected = requests.filter((i) => i.status === "Rejected");
+    const pending = payouts.filter((i) => i.payout_status === "PENDING");
+    const approved = payouts.filter((i) => i.payout_status === "APPROVED");
+    const paid = payouts.filter((i) => i.payout_status === "PAID");
+    const rejected = payouts.filter((i) => i.payout_status === "REJECTED");
 
     return {
       pendingCount: pending.length,
@@ -97,38 +79,56 @@ export default function AdminPayoutRequestsBody() {
       paidAmount: sumAmount(paid),
       rejectedCount: rejected.length,
       rejectedAmount: sumAmount(rejected),
-      totalCount: requests.length,
-      totalAmount: sumAmount(requests),
+      totalCount: payouts.length,
+      totalAmount: sumAmount(payouts),
     };
-  }, [requests]);
+  }, [payouts]);
 
-  const updateStatus = (id, status) => {
-    const updated = requests.map((item) =>
-      item.id === id
-        ? {
-            ...item,
-            status,
-            processedDate:
-              status === "Approved & Paid"
-                ? new Date().toLocaleDateString()
-                : "-",
-            paymentRef:
-              status === "Approved & Paid"
-                ? `REF${Math.floor(Math.random() * 999999999)}`
-                : "-",
-            adminRemarks,
-          }
-        : item
+  const handleApprove = async (id) => {
+    await dispatch(
+      approveAdminPayout({
+        id,
+        admin_note: adminRemarks,
+      })
     );
 
-    setRequests(updated);
-    setSelected(updated.find((item) => item.id === id));
     setAdminRemarks("");
+    dispatch(getAdminPayouts());
+  };
+
+  const handleReject = async (id) => {
+    await dispatch(
+      rejectAdminPayout({
+        id,
+        admin_note: adminRemarks || "Rejected by admin",
+      })
+    );
+
+    setAdminRemarks("");
+    dispatch(getAdminPayouts());
+  };
+
+  const handlePaid = async (id) => {
+    if (!referenceNumber.trim()) {
+      alert("Please enter payment reference number");
+      return;
+    }
+
+    await dispatch(
+      markAdminPayoutPaid({
+        id,
+        reference_number: referenceNumber,
+        admin_note: adminRemarks,
+      })
+    );
+
+    setAdminRemarks("");
+    setReferenceNumber("");
+    dispatch(getAdminPayouts());
   };
 
   return (
     <div className="p-4 md:p-8 bg-[#0b1220] min-h-screen text-white">
-      {/* Title + Search */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Payout Requests</h1>
@@ -160,70 +160,42 @@ export default function AdminPayoutRequestsBody() {
               placeholder="Search payouts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64 px-4 py-2 pr-10 rounded-lg bg-[#111827] border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-64 px-4 py-2 pr-10 rounded-lg bg-[#111827] border border-gray-700 text-white focus:outline-none"
             />
           </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {error && (
+        <div className="mb-5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
-        <Card
-          title="Pending Requests"
-          count={summary.pendingCount}
-          amount={summary.pendingAmount}
-          icon={<Clock />}
-          color="yellow"
-        />
-        <Card
-          title="Approved"
-          count={summary.approvedCount}
-          amount={summary.approvedAmount}
-          icon={<FileCheck2 />}
-          color="blue"
-        />
-        <Card
-          title="Approved & Paid"
-          count={summary.paidCount}
-          amount={summary.paidAmount}
-          icon={<CheckCircle />}
-          color="green"
-        />
-        <Card
-          title="Rejected"
-          count={summary.rejectedCount}
-          amount={summary.rejectedAmount}
-          icon={<XCircle />}
-          color="red"
-        />
-        <Card
-          title="Total Payouts"
-          count={summary.totalCount}
-          amount={summary.totalAmount}
-          icon={<Coins />}
-          color="orange"
-        />
+        <Card title="Pending Requests" count={summary.pendingCount} amount={summary.pendingAmount} icon={<Clock />} color="yellow" />
+        <Card title="Approved" count={summary.approvedCount} amount={summary.approvedAmount} icon={<FileCheck2 />} color="blue" />
+        <Card title="Approved & Paid" count={summary.paidCount} amount={summary.paidAmount} icon={<CheckCircle />} color="green" />
+        <Card title="Rejected" count={summary.rejectedCount} amount={summary.rejectedAmount} icon={<XCircle />} color="red" />
+        <Card title="Total Payouts" count={summary.totalCount} amount={summary.totalAmount} icon={<Coins />} color="orange" />
       </div>
 
-      {/* Request Table + Details */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-6">
         <div className="xl:col-span-2 rounded-2xl border border-gray-800 bg-[#0b1220] overflow-hidden">
           <div className="flex flex-wrap gap-3 p-4 border-b border-gray-800">
-            {["All", "Pending", "Approved", "Approved & Paid", "Rejected"].map(
-              (item) => (
-                <button
-                  key={item}
-                  onClick={() => setFilter(item)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium transition ${
-                    filter === item
-                      ? "bg-orange-500 text-white"
-                      : "bg-[#111827] text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {item}
-                </button>
-              )
-            )}
+            {["All", "Pending", "Approved", "Approved & Paid", "Rejected"].map((item) => (
+              <button
+                key={item}
+                onClick={() => setFilter(item)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition ${
+                  filter === item
+                    ? "bg-orange-500 text-white"
+                    : "bg-[#111827] text-gray-400 hover:text-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
           </div>
 
           <table className="w-full text-sm table-fixed">
@@ -238,36 +210,40 @@ export default function AdminPayoutRequestsBody() {
             </thead>
 
             <tbody>
-              {filteredRequests.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-6 text-gray-400">
+                    Loading payouts...
+                  </td>
+                </tr>
+              ) : filteredRequests.length > 0 ? (
                 filteredRequests.map((item) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelected(item)}
                     className={`border-t border-gray-800 cursor-pointer transition ${
-                      selected?.id === item.id
-                        ? "bg-[#111827]"
-                        : "hover:bg-[#111827]"
+                      selected?.id === item.id ? "bg-[#111827]" : "hover:bg-[#111827]"
                     }`}
                   >
-                    <Td>{item.vendor}</Td>
+                    <Td>{item.business_name || item.vendor_email || "Vendor"}</Td>
                     <Td>
-                      <span className="text-blue-400">{item.id}</span>
+                      <span className="text-blue-400">{item.id.slice(0, 8)}...</span>
                     </Td>
                     <Td>
                       <span className="text-orange-400 font-medium">
-                        {formatCurrency(item.amount)}
+                        {formatCurrency(item.payout_amount)}
                       </span>
                     </Td>
                     <Td>
-                      <Badge status={item.status} />
+                      <Badge status={statusLabel(item.payout_status)} />
                     </Td>
                     <Td>
-                      {item.status === "Pending" ? (
+                      {item.payout_status === "PENDING" ? (
                         <div className="flex flex-wrap gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              updateStatus(item.id, "Approved");
+                              handleApprove(item.id);
                             }}
                             className="px-3 py-1 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30"
                           >
@@ -276,7 +252,7 @@ export default function AdminPayoutRequestsBody() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              updateStatus(item.id, "Rejected");
+                              handleReject(item.id);
                             }}
                             className="px-3 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
                           >
@@ -302,62 +278,84 @@ export default function AdminPayoutRequestsBody() {
           </table>
         </div>
 
-        {/* Details */}
-        <div className="rounded-2xl border border-gray-800 bg-[#0b1220] p-5">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-semibold">Request Details</h2>
-            <Badge status={selected.status} />
-          </div>
+        {selected && (
+          <div className="rounded-2xl border border-gray-800 bg-[#0b1220] p-5">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold">Request Details</h2>
+              <Badge status={statusLabel(selected.payout_status)} />
+            </div>
 
-          <div className="space-y-4 text-sm">
-            <Info label="Request ID" value={selected.id} />
-            <Info label="Vendor Name" value={selected.vendor} />
-            <Info label="Amount" value={formatCurrency(selected.amount)} />
-            <Info label="Request Date" value={selected.date} />
-            <Info
-              label="Bank Details"
-              value={`${selected.bank} | A/C: ${selected.account}`}
-            />
-            <Info label="Remarks" value={selected.remarks || "-"} />
-          </div>
+            <div className="space-y-4 text-sm">
+              <Info label="Request ID" value={selected.id} />
+              <Info label="Vendor Name" value={selected.business_name || selected.vendor_email} />
+              <Info label="Vendor Phone" value={selected.vendor_phone || "-"} />
+              <Info label="Amount" value={formatCurrency(selected.payout_amount)} />
+              <Info label="Request Date" value={formatDate(selected.created_at)} />
+              <Info
+                label="Bank Details"
+                value={`${selected.bank_name || "-"} | A/C: ${selected.account_number || "-"} | IFSC: ${selected.ifsc_code || "-"}`}
+              />
+              <Info label="Account Holder" value={selected.account_holder_name || "-"} />
+              <Info label="Vendor Remarks" value={selected.remarks || "-"} />
+              <Info label="Admin Note" value={selected.admin_note || "-"} />
+              <Info label="Reference Number" value={selected.reference_number || "-"} />
+            </div>
 
-          <div className="mt-5">
-            <label className="text-sm text-gray-400">
-              Admin Remarks Optional
-            </label>
-            <textarea
-              value={adminRemarks}
-              onChange={(e) => setAdminRemarks(e.target.value)}
-              maxLength={200}
-              placeholder="Add remarks..."
-              className="mt-2 w-full h-24 px-4 py-3 rounded-lg bg-[#111827] border border-gray-700 text-white focus:outline-none resize-none"
-            />
-            <p className="text-right text-xs text-gray-500">
-              {adminRemarks.length}/200
-            </p>
-          </div>
+            <div className="mt-5">
+              <label className="text-sm text-gray-400">Admin Remarks Optional</label>
+              <textarea
+                value={adminRemarks}
+                onChange={(e) => setAdminRemarks(e.target.value)}
+                maxLength={200}
+                placeholder="Add remarks..."
+                className="mt-2 w-full h-24 px-4 py-3 rounded-lg bg-[#111827] border border-gray-700 text-white focus:outline-none resize-none"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
-            <button
-              onClick={() => updateStatus(selected.id, "Rejected")}
-              disabled={selected.status === "Approved & Paid"}
-              className="py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-50"
-            >
-              Reject
-            </button>
+            {selected.payout_status === "APPROVED" && (
+              <div className="mt-4">
+                <label className="text-sm text-gray-400">
+                  Payment Reference Number
+                </label>
+                <input
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  placeholder="Enter UTR / REF number"
+                  className="mt-2 w-full px-4 py-3 rounded-lg bg-[#111827] border border-gray-700 text-white focus:outline-none"
+                />
+              </div>
+            )}
 
-            <button
-              onClick={() => updateStatus(selected.id, "Approved & Paid")}
-              disabled={selected.status === "Approved & Paid"}
-              className="py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
-            >
-              Approve & Pay
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => handleReject(selected.id)}
+                disabled={selected.payout_status === "PAID"}
+                className="py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-50"
+              >
+                Reject
+              </button>
+
+              {selected.payout_status === "PENDING" ? (
+                <button
+                  onClick={() => handleApprove(selected.id)}
+                  className="py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white"
+                >
+                  Approve
+                </button>
+              ) : (
+                <button
+                  onClick={() => handlePaid(selected.id)}
+                  disabled={selected.payout_status === "PAID"}
+                  className="py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50"
+                >
+                  Mark as Paid
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Recent Activity - no horizontal scrollbar */}
       <div className="rounded-2xl border border-gray-800 bg-[#0b1220] overflow-hidden">
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
           <h2 className="font-semibold">Recent Payout Activity</h2>
@@ -379,20 +377,20 @@ export default function AdminPayoutRequestsBody() {
           </thead>
 
           <tbody>
-            {requests.map((item) => (
+            {payouts.map((item) => (
               <tr key={item.id} className="border-t border-gray-800">
-                <Td>{item.id}</Td>
-                <Td>{item.vendor}</Td>
+                <Td>{item.id.slice(0, 8)}...</Td>
+                <Td>{item.business_name || item.vendor_email}</Td>
                 <Td>
                   <span className="text-orange-400 font-medium">
-                    {formatCurrency(item.amount)}
+                    {formatCurrency(item.payout_amount)}
                   </span>
                 </Td>
                 <Td>
-                  <Badge status={item.status} />
+                  <Badge status={statusLabel(item.payout_status)} />
                 </Td>
-                <Td>{item.processedDate || "-"}</Td>
-                <Td>{item.paymentRef || "-"}</Td>
+                <Td>{formatDate(item.paid_at || item.approved_at)}</Td>
+                <Td>{item.reference_number || "-"}</Td>
               </tr>
             ))}
           </tbody>
@@ -412,9 +410,7 @@ function Card({ title, count, amount, icon, color }) {
   };
 
   return (
-    <div
-      className={`rounded-2xl border p-5 hover:opacity-90 transition ${styles[color]}`}
-    >
+    <div className={`rounded-2xl border p-5 hover:opacity-90 transition ${styles[color]}`}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm">{title}</p>
@@ -436,35 +432,25 @@ function Badge({ status }) {
   };
 
   return (
-    <span
-      className={`px-3 py-1 rounded text-xs ${
-        styles[status] || "bg-gray-500/20 text-gray-400"
-      }`}
-    >
+    <span className={`px-3 py-1 rounded text-xs ${styles[status] || "bg-gray-500/20 text-gray-400"}`}>
       {status}
     </span>
   );
 }
 
 function Th({ children }) {
-  return (
-    <th className="px-4 py-3 text-left font-medium truncate">{children}</th>
-  );
+  return <th className="px-4 py-3 text-left font-medium truncate">{children}</th>;
 }
 
 function Td({ children }) {
-  return (
-    <td className="px-4 py-4 text-gray-300 truncate align-middle">
-      {children}
-    </td>
-  );
+  return <td className="px-4 py-4 text-gray-300 truncate align-middle">{children}</td>;
 }
 
 function Info({ label, value }) {
   return (
     <div>
       <p className="text-gray-500 text-xs mb-1">{label}</p>
-      <p className="text-gray-200 font-medium wrap-break-words">{value}</p>
+      <p className="text-gray-200 font-medium break-words">{value}</p>
     </div>
   );
 }
@@ -474,5 +460,10 @@ function formatCurrency(value) {
 }
 
 function sumAmount(items) {
-  return items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  return items.reduce((sum, item) => sum + Number(item.payout_amount || 0), 0);
+}
+
+function formatDate(date) {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("en-IN");
 }

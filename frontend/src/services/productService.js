@@ -98,6 +98,22 @@ export const createProduct = async (data) => {
   const res = await productapi.post("/api/products", data);
   return res.data;
 };
+// ================= GET FLASH DEALS =================
+export const getFlashDealsAPI = async () => {
+  const res = await productapi.get("/api/products/flash-deals", {
+    skipAuth: true,
+  });
+  return res.data;
+};
 
+// ================= ADD FLASH DEAL TO CART =================
+export const addFlashDealToCartAPI = async ({ productId, quantity = 1 }) => {
+  const res = await productapi.post("/api/cart", {
+    product_id: productId,
+    quantity,
+  });
+
+  return res.data;
+};
 
 // export const getVendorProductsAPI = (vendorId) => productapi.get(`/api/products/vendor/${vendorId}`, {skipAuth: true,});

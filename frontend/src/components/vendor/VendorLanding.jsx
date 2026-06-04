@@ -96,7 +96,6 @@ const VendorLanding = () => {
           </div>
         </div>
       </section>
-
       <VendorFeatures />
       <VendorBenefits />
       <VendorReviews />
