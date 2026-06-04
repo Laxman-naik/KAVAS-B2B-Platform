@@ -35,44 +35,26 @@ export const fetchSingleProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
-      return res.data;
+
+      console.log("SINGLE PRODUCT RESPONSE:", res);
+
+      return res?.product || res?.data || res;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || {
+          message: err.message || "Failed to fetch product",
+        }
+      );
     }
   }
 );
 
-/* ================= CREATE PRODUCT ================= */
 
-// export const addProduct = createAsyncThunk(
-//   "products/create",
-//   async (formData, thunkAPI) => {
-//     try {
-//       console.log("SENDING PRODUCT DATA:", data);
 
-//       const res = await createProduct(data);
-
-//       console.log("CREATE PRODUCT RESPONSE:", res.data);
-
-//       return res.data.product;
-//     } catch (err) {
-//       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
-//       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
-//       console.log("CREATE PRODUCT SENT DATA:", data);
-
-//       return thunkAPI.rejectWithValue(
-//         err.response?.data?.message ||
-//           err.response?.data ||
-//           err.message ||
-//           "Failed to create product"
-//       );
-//     }
-//   }
-// );
 
 export const addProduct = createAsyncThunk(
   "products/add",
-  async (data, thunkAPI) => {
+  async (formData, thunkAPI) => {
     try {
       console.log("SENDING PRODUCT DATA:");
 
@@ -82,18 +64,17 @@ export const addProduct = createAsyncThunk(
 
       const res = await createProduct(formData);
 
-      console.log("CREATE PRODUCT RESPONSE:", res.data);
+      console.log("CREATE PRODUCT RESPONSE:", res);
 
-      return res.data.product;
+      return res.product || res.data || res;
     } catch (err) {
       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
 
       return thunkAPI.rejectWithValue(
-        err.response?.data?.message ||
-          err.response?.data ||
-          err.message ||
-          "Failed to create product"
+        err.response?.data || {
+          message: err.message || "Failed to create product",
+        }
       );
     }
   }

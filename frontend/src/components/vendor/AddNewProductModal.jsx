@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Upload, X, Check, Package, Image, Layers, Archive, Tag, Settings, } from "lucide-react";
+import { Plus, Trash2, Upload, X, Check,ShieldCheck, Package, Image, Layers, Archive, Tag, Settings, } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,25 @@ const Field = ({ label, required, children, className = "" }) => (
     </Label>
     {children}
   </div>
+);
+const CheckBoxField = ({
+  label,
+  checked,
+  onChange,
+  disabled = false,
+}) => (
+  <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 cursor-pointer hover:bg-slate-50">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={onChange}
+      disabled={disabled}
+      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+    />
+    <span className="text-sm font-medium text-slate-700">
+      {label}
+    </span>
+  </label>
 );
 
 const inputCls = "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
@@ -177,16 +196,29 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
     // ================= BASIC =================
     formData.append("organizationId", organizationId);
-    formData.append("name", form.name);
-    formData.append("sku", form.sku);
-    formData.append("description", form.description);
-    formData.append("category", form.category);
-    formData.append("subCategory", form.subCategory || "");
-    formData.append("price", Number(form.price));
-    formData.append("mrp", Number(form.mrp || 0));
-    formData.append("moq", Number(form.moq));
-    formData.append("stock", Number(form.stock));
-    formData.append("unit", form.unit || "");
+formData.append("name", form.name);
+formData.append("sku", form.sku);
+formData.append("description", form.description);
+formData.append("category", form.category);
+formData.append("subCategory", form.subCategory || "");
+formData.append("price", Number(form.price));
+formData.append("mrp", Number(form.mrp || 0));
+formData.append("moq", Number(form.moq));
+formData.append("stock", Number(form.stock));
+formData.append("unit", form.unit || "");
+
+// ADD THESE HERE
+formData.append("brand", form.brand || "");
+formData.append("warranty", form.warrantyPeriod || "");
+formData.append("returnPolicy", form.returnPolicy || "");
+formData.append("returnDays", form.returnDays || 7);
+
+formData.append("codAvailable", String(form.codAvailable));
+formData.append("isOriginal", String(form.isOriginal));
+formData.append("gstInvoiceAvailable", String(form.gstInvoiceAvailable));
+formData.append("securePaymentAvailable", String(form.securePaymentAvailable));
+formData.append("returnExchangeAvailable", String(form.returnExchangeAvailable));
+formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
 
     // ================= SPECIFICATIONS =================
     formData.append(
