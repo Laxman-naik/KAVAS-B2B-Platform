@@ -277,42 +277,69 @@ export default function PaymentsPayoutsBody() {
     remarks: "",
   });
 
-  useEffect(() => {
-    dispatch(getMyVendorPayouts());
-    dispatch(getVendorPayoutSummary());
-  }, [dispatch]);
+  const payoutRequests = [
+    {
+      id: "PAYOUT-2024-025",
+      amount: "₹50,000",
+      date: "20 May 2024, 10:30 AM",
+      status: "Approved & Paid",
+    },
+    {
+      id: "PAYOUT-2024-024",
+      amount: "₹45,000",
+      date: "18 May 2024, 02:15 PM",
+      status: "Approved & Paid",
+    },
+    {
+      id: "PAYOUT-2024-023",
+      amount: "₹30,000",
+      date: "15 May 2024, 11:45 AM",
+      status: "Approved",
+    },
+    {
+      id: "PAYOUT-2024-022",
+      amount: "₹25,000",
+      date: "12 May 2024, 09:20 AM",
+      status: "Pending",
+    },
+    {
+      id: "PAYOUT-2024-021",
+      amount: "₹40,000",
+      date: "10 May 2024, 04:10 PM",
+      status: "Rejected",
+    },
+  ];
 
-  useEffect(() => {
-    if (success) {
-      setShowPopup(false);
-      setForm({
-        amount: "",
-        remarks: "",
-      });
-
-      dispatch(getMyVendorPayouts());
-      dispatch(getVendorPayoutSummary());
-
-      setTimeout(() => {
-        dispatch(clearVendorPayoutState());
-      }, 1500);
-    }
-  }, [success, dispatch]);
-
-  const formatMoney = (value) => {
-    return `₹${Number(value || 0).toLocaleString("en-IN")}`;
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const recentPayouts = [
+    {
+      id: "PAY-2024-018",
+      amount: "₹50,000",
+      date: "20 May 2024, 02:30 PM",
+      ref: "REF123456789",
+      status: "Paid",
+    },
+    {
+      id: "PAY-2024-017",
+      amount: "₹45,000",
+      date: "18 May 2024, 04:15 PM",
+      ref: "REF123456788",
+      status: "Paid",
+    },
+    {
+      id: "PAY-2024-016",
+      amount: "₹30,000",
+      date: "15 May 2024, 01:20 PM",
+      ref: "REF123456787",
+      status: "Paid",
+    },
+    {
+      id: "PAY-2024-015",
+      amount: "₹40,000",
+      date: "10 May 2024, 05:30 PM",
+      ref: "REF123456786",
+      status: "Paid",
+    },
+  ];
 
   const statusStyle = (status) => {
     if (status === "PAID") return "bg-green-100 text-green-700";
@@ -673,7 +700,7 @@ function Table({ title, children }) {
     <section className="bg-white border border-[#E5E5E5] rounded-sm p-5 shadow-sm mb-5 overflow-hidden">
       <h3 className="text-lg font-bold text-[#0B1F3A] mb-4">{title}</h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">{children}</table>
+        <table className="w-full min-w-212.5">{children}</table>
       </div>
     </section>
   );
