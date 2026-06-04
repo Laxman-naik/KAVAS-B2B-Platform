@@ -6,9 +6,8 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { vendorNavItems } from "./vendorNavConfig";
 
-const VendorSidebar = () => {
+const VendorSidebar = ({ collapsed, setCollapsed }) => {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
 
   const navItems = useMemo(() => vendorNavItems, []);
 
