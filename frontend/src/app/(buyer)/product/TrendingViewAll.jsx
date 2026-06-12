@@ -92,7 +92,7 @@ export default function TrendingProducts() {
     <div className="bg-gray-100 min-h-screen">
 
       {/* 🔥 HEADER */}
-      <div className="bg-gradient-to-r from-[#2c1a0c] to-[#d46a00] text-white p-6">
+      <div className="bg-linear-to-r from-[#2c1a0c] to-[#d46a00] text-white p-6">
         <div className="max-w-7xl mx-auto">
           <p className="text-sm opacity-80">Home › Trending Products</p>
 
