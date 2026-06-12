@@ -154,8 +154,8 @@ export default function VendorRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EC]">
-      <header className="w-full">
+    <div className="min-h-screen bg-white">
+      <header className="w-full bg-[#0B1F3A] mb-10">
         <div className="w-full px-4 sm:px-6 lg:px-10 py-4 flex items-center justify-between">
           <Link href="/vendor" className="flex items-center gap-3">
 
@@ -171,9 +171,13 @@ export default function VendorRegisterPage() {
             </div>
           </Link>
 
-          <div className="text-xs text-gray-600">
-            Already a seller?
-            <Link href="/vendor/vendorlogin" className="ml-1 font-semibold text-[#0B1F3A] hover:underline">
+          <div className="flex items-center gap-3 text-sm text-gray-300">
+            <span>Already a seller?</span>
+
+            <Link
+              href="/vendor/vendorlogin"
+              className="rounded-full bg-white px-5 py-2 font-bold text-[#0B1F3A] shadow-sm transition-all duration-200 hover:bg-[#D4AF37] hover:text-white hover:shadow-md"
+            >
               Login
             </Link>
           </div>
@@ -181,7 +185,7 @@ export default function VendorRegisterPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-12">
-        <div className="rounded-2xl bg-white shadow-[0_10px_40px_rgba(13,38,76,0.10)] border border-[#E5E5E5] overflow-hidden">
+        <div className="rounded-sm bg-white shadow-[0_10px_40px_rgba(13,38,76,0.10)] border border-[#E5E5E5] overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <section className="lg:col-span-7 p-6 sm:p-10">
               <div className="text-xl sm:text-2xl font-extrabold text-[#0B1F3A]">
@@ -308,25 +312,7 @@ export default function VendorRegisterPage() {
                       </div>
                     )}
 
-                    {/* <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Mail size={16} />
-                      </span>
-                      <input
-                        value={form.email}
-                        onChange={setValue("email")}
-                        placeholder="Email ID"
-                        className="w-full h-11 rounded-md border border-[#E5E5E5] bg-white pl-10 pr-24 text-sm text-[#1A1A1A] outline-none focus:border-[#0B1F3A]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => sendOtp("email")}
-                        disabled={otp.emailVerified || !String(form.email).trim()}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0B1F3A] hover:underline"
-                      >
-                        {otp.emailVerified ? "Verified" : otp.emailSent ? "Resend OTP" : "Send OTP"}
-                      </button>
-                    </div> */}
+
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                         <Mail size={16} />
@@ -341,39 +327,7 @@ export default function VendorRegisterPage() {
                       />
                     </div>
 
-                    {/* {otp.emailSent && !otp.emailVerified && (
-                      <div className="-mt-1 rounded-md border border-[#E5E5E5] bg-white p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-[11px] font-semibold text-gray-600">Enter 6-digit OTP</div>
-                          <button
-                            type="button"
-                            onClick={() => verifyOtp("email")}
-                            disabled={otpDigits.email.join("").length !== 6}
-                            className={`h-8 rounded-md px-3 text-[11px] font-bold text-white ${otpDigits.email.join("").length === 6
-                              ? "bg-[#0B1F3A] hover:opacity-95"
-                              : "bg-[#0B1F3A]/40 cursor-not-allowed"
-                              }`}
-                          >
-                            Verify
-                          </button>
-                        </div>
-                        <div className="mt-2 flex items-center gap-2">
-                          {otpDigits.email.map((d, i) => (
-                            <input
-                              key={i}
-                              inputMode="numeric"
-                              value={d}
-                              onChange={onOtpChange("email", i)}
-                              onKeyDown={onOtpKeyDown("email", i)}
-                              ref={(el) => {
-                                otpRefs.current.email[i] = el;
-                              }}
-                              className="h-10 w-10 rounded-md border border-[#E5E5E5] text-center text-sm font-bold text-[#0B1F3A] outline-none focus:border-[#0B1F3A]"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )} */}
+
 
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -492,61 +446,81 @@ export default function VendorRegisterPage() {
               </div>
             </section>
 
-            <aside className="lg:col-span-5 bg-[#0B1F3A] p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5]">
-              <div className="mt-6 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(13,38,76,0.18)] border border-[#0B1F3A]/15">
-                <div className="   relative">
-                  <Link href="/vendor" className="flex items-center gap-3">
-                    <Image
-                      src="/LOGOKAVAS.png"
-                      alt="KAVAS"
-                      width={180}
-                      height={60}
-                      className="h-14 w-auto"
-                      priority
-                    />
+            <aside className="relative lg:col-span-5 bg-[#0B1F3A] p-6 sm:p-10 border-t lg:border-t-0 lg:border-l border-[#E5E5E5] overflow-hidden">
+              {/* Background glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0B1F3A] via-[#102B4D] to-[#061426]" />
 
-                  </Link>
-                  <div className="mt-2 text-2xl font-extrabold leading-tight text-white">
-                    GROW <span className="text-[#D4AF37]">FASTER</span>,
+              {/* Building image */}
+              <div className="absolute bottom-0 left-0 right-0 h-[48%] opacity-75">
+                <Image
+                  src="/kavas-building.png"
+                  alt="Kavas Wholesale Hub Building"
+                  fill
+                  className="object-cover object-center"
+                  priority
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1F3A]/20 via-[#0B1F3A]/55 to-[#0B1F3A]" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex min-h-[620px] flex-col">
+                <Link href="/vendor" className="flex items-center gap-3">
+                  <Image
+                    src="/LOGOKAVAS.png"
+                    alt="KAVAS"
+                    width={190}
+                    height={65}
+                    className="h-14 w-auto"
+                    priority
+                  />
+                </Link>
+
+                <div className="mt-10">
+
+                  <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight text-white">
+                    GROW YOUR
                     <br />
-                    EARN <span className="text-[#D4AF37]">MORE</span>
-                  </div>
-                  <div className="mt-2 text-xs text-white/75">
-                    List in multiple categories and unlock endless opportunities.
-                  </div>
+                    WHOLESALE BUSINESS
+                    <br />
+                    <span className="text-[#D4AF37]">FASTER</span>
+                  </h2>
 
-                  <div className="mt-5 grid gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
-                        <BadgeCheck size={16} className="text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white">0% Commission</div>
-                        <div className="text-[11px] text-white/70">for the first 45 days</div>
-                      </div>
+                  <p className="mt-4 max-w-sm text-sm leading-6 text-white/75">
+                    List your products, reach more buyers, manage orders, and grow your
+                    business with Kavas Seller Hub.
+                  </p>
+                </div>
+
+                <div className="mt-7 grid gap-4">
+                  <div className="flex items-start gap-3 rounded-sm border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+                    <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <BadgeCheck size={17} className="text-[#D4AF37]" />
                     </div>
-                    <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
-                        <Wallet size={16} className="text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white">Low Fees</div>
-                        <div className="text-[11px] text-white/70">Big Returns</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center">
-                        <Headset size={16} className="text-white" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white">Dedicated Support</div>
-                        <div className="text-[11px] text-white/70">Every step of the way</div>
-                      </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">0% Commission</div>
+                      <div className="text-xs text-white/70">for the first 45 days</div>
                     </div>
                   </div>
 
-                  <div className="pointer-events-none absolute -right-6 -bottom-10 opacity-20">
-                    <Image src="/lotussymbol.png" alt="" width={240} height={240} className="h-auto w-60" />
+                  <div className="flex items-start gap-3 rounded-sm border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+                    <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <Wallet size={17} className="text-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">Low Fees</div>
+                      <div className="text-xs text-white/70">Big returns for sellers</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 rounded-sm border border-white/10 bg-white/10 p-3 backdrop-blur-sm">
+                    <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <Headset size={17} className="text-[#D4AF37]" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">Dedicated Support</div>
+                      <div className="text-xs text-white/70">Support at every step</div>
+                    </div>
                   </div>
                 </div>
               </div>
