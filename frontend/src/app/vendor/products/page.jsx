@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus, MoreVertical, Download, LayoutGrid, List, Pencil, ChevronLeft, ChevronRight, } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MoreVertical,
+  Download,
+  LayoutGrid,
+  List,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import AddNewProductModal from "../../../components/vendor/AddNewProductModal";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchVendorProducts } from "../../../store/slices/productSlice";
@@ -21,7 +31,7 @@ export default function ProductManagementBody() {
   const vendorData = useSelector((state) => state.vendor?.vendor);
   const vendorId = vendorData?.id;
   const organizationId = vendorData?.organization_id;
-  console.log(vendorProducts)
+  console.log(vendorProducts);
 
   useEffect(() => {
     if (organizationId) {
@@ -40,21 +50,16 @@ export default function ProductManagementBody() {
       const productName = String(p?.name || "").toLowerCase();
       const productSku = String(p?.sku || "").toLowerCase();
 
-      const productCategory =
-        p?.category ||
-        p?.categories?.[0]?.name ||
-        "";
+      const productCategory = p?.category || p?.categories?.[0]?.name || "";
 
       const productStatus = p?.status || "";
 
       const matchSearch =
         !q || productName.includes(q) || productSku.includes(q);
 
-      const matchCategory =
-        category === "All" || productCategory === category;
+      const matchCategory = category === "All" || productCategory === category;
 
-      const matchStatus =
-        status === "All Status" || productStatus === status;
+      const matchStatus = status === "All Status" || productStatus === status;
 
       return matchSearch && matchCategory && matchStatus;
     });
@@ -90,7 +95,7 @@ export default function ProductManagementBody() {
 
   const statuses = useMemo(
     () => ["All Status", "active", "pending", "rejected", "inactive"],
-    []
+    [],
   );
 
   const enrichedProducts = useMemo(() => {
@@ -98,7 +103,9 @@ export default function ProductManagementBody() {
       const numericId = index + 1;
       const discount = numericId % 2 === 0 ? 25 : numericId % 3 === 0 ? 17 : 0;
       const price = Number(p?.price || 0);
-      const oldPrice = discount ? Math.round(price / (1 - discount / 100)) : null;
+      const oldPrice = discount
+        ? Math.round(price / (1 - discount / 100))
+        : null;
 
       return {
         ...p,
@@ -135,11 +142,35 @@ export default function ProductManagementBody() {
   };
 
   const getImageUrl = (path) => {
-  if (!path) return "/placeholder.png";
-  if (path.startsWith("http")) return path;
+    if (!path) return "/placeholder.png";
+    if (path.startsWith("http")) return path;
 
-  return `https://kavas-b2b-platform-4.onrender.com${path}`;
-};
+    return `https://kavas-b2b-platform-4.onrender.com${path}`;
+  };
+
+  const handleCreateProduct = async (formData) => {
+    try {
+      if (!organizationId) {
+        alert("Organization ID not found. Please login again as vendor.");
+        return;
+      }
+
+      formData.append("organizationId", organizationId);
+
+      const result = await dispatch(addProduct(formData));
+
+      if (addProduct.fulfilled.match(result)) {
+        alert("Product created successfully");
+        setOpenAdd(false);
+        dispatch(fetchVendorProducts(organizationId));
+      } else {
+        alert(result.payload?.message || "Product creation failed");
+      }
+    } catch (error) {
+      console.error("Create product error:", error);
+      alert("Something went wrong");
+    }
+  };
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
@@ -167,7 +198,9 @@ export default function ProductManagementBody() {
               type="button"
               onClick={() => setOpenAdd(true)}
               className="h-10 rounded-lg bg-[#0B1F3A] text-white px-4 text-sm font-extrabold hover:opacity-95 inline-flex items-center gap-2"
-            ><Plus size={16} />Add Product
+            >
+              <Plus size={16} />
+              Add Product
             </button>
           </div>
         </div>
@@ -253,10 +286,11 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "grid"
-                  ? "bg-[#0B1F3A] text-white"
-                  : "text-gray-600 hover:bg-[#FFF8EC]"
-                  }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
+                  viewMode === "grid"
+                    ? "bg-[#0B1F3A] text-white"
+                    : "text-gray-600 hover:bg-[#FFF8EC]"
+                }`}
                 aria-label="Grid view"
               >
                 <LayoutGrid size={16} />
@@ -264,10 +298,11 @@ export default function ProductManagementBody() {
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
-                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${viewMode === "list"
-                  ? "bg-[#0B1F3A] text-white"
-                  : "text-gray-600 hover:bg-[#FFF8EC]"
-                  }`}
+                className={`h-9 w-9 rounded-lg inline-flex items-center justify-center ${
+                  viewMode === "list"
+                    ? "bg-[#0B1F3A] text-white"
+                    : "text-gray-600 hover:bg-[#FFF8EC]"
+                }`}
                 aria-label="List view"
               >
                 <List size={16} />
@@ -294,7 +329,7 @@ export default function ProductManagementBody() {
                     "/placeholder.png"
                   }
                   alt={p?.name || "Product"}
-                  className="h-12 w-12 rounded-xl object-cover bg-gray-100" 
+                  className="h-12 w-12 rounded-xl object-cover bg-gray-100"
                 />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
@@ -315,7 +350,7 @@ export default function ProductManagementBody() {
               <div className="col-span-2">
                 <span
                   className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusPill(
-                    p.status
+                    p.status,
                   )}`}
                 >
                   {p.status}
@@ -342,12 +377,18 @@ export default function ProductManagementBody() {
             >
               <div className="relative">
                 <img
-                  src={product?.images?.find((img) => img.is_primary)?.image_url ||
-                    product?.images?.[0]?.image_url || "/placeholder.png"} alt={product?.name || "Product"} className="w-full h-44 object-cover bg-gray-100" />
+                  src={
+                    product?.images?.find((img) => img.is_primary)?.image_url ||
+                    product?.images?.[0]?.image_url ||
+                    "/placeholder.png"
+                  }
+                  alt={product?.name || "Product"}
+                  className="w-full h-44 object-cover bg-gray-100"
+                />
 
                 <span
                   className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(
-                    product.status
+                    product.status,
                   )}`}
                 >
                   {product.status}
@@ -362,7 +403,9 @@ export default function ProductManagementBody() {
                 </div>
 
                 <span className="inline-flex mt-2 text-[11px] bg-[#FFF8EC] text-gray-700 px-3 py-1 rounded-full border border-[#E5E5E5]">
-                  {product?.categories?.[0]?.name || product.category || "No Category"}
+                  {product?.categories?.[0]?.name ||
+                    product.category ||
+                    "No Category"}
                 </span>
 
                 <div className="mt-3 flex items-end gap-2">
@@ -416,10 +459,11 @@ export default function ProductManagementBody() {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage <= 1
-              ? "opacity-40 cursor-not-allowed"
-              : "hover:bg-[#FFF8EC]"
-              }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage <= 1
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
             aria-label="Previous page"
           >
             <ChevronLeft size={16} />
@@ -441,20 +485,21 @@ export default function ProductManagementBody() {
                       ? "bg-[#0B1F3A] text-white border-[#0B1F3A]"
                       : "bg-white text-[#0B1F3A] border-[#E5E5E5] hover:bg-[#FFF8EC]"
                   }`}
-              >
-                {p}
-              </button>
-            );
-          })}
+                >
+                  {p}
+                </button>
+              );
+            })}
 
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
-            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${safePage >= totalPages
-              ? "opacity-40 cursor-not-allowed"
-              : "hover:bg-[#FFF8EC]"
-              }`}
+            className={`h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center ${
+              safePage >= totalPages
+                ? "opacity-40 cursor-not-allowed"
+                : "hover:bg-[#FFF8EC]"
+            }`}
             aria-label="Next page"
           >
             <ChevronRight size={16} />
