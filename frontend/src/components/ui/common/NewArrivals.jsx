@@ -1,33 +1,39 @@
 "use client";
+
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { addToCart } from "@/store/slices/cartSlice";
-import { addToFavourites, removeFromFavourites } from "@/store/slices/favouritesSlice";
-import { Heart, ShoppingCart, Star } from "lucide-react";
+import {
+  addToFavourites,
+  removeFromFavourites,
+} from "@/store/slices/favouritesSlice";
+import { Heart, ShoppingCart, Star, CheckCircle } from "lucide-react";
 
 export default function NewArrivals() {
   const dispatch = useDispatch();
   const { newArrivals, loading } = useSelector((state) => state.products);
   const favouriteItems = useSelector((state) => state.favourites.items);
 
+  const [toast, setToast] = useState("");
+
   useEffect(() => {
     dispatch(fetchNewArrivals());
   }, [dispatch]);
 
+  const showToast = (message) => {
+    setToast(message);
+
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  };
+
   const liked = useMemo(() => {
-    return (Array.isArray(favouriteItems)
-      ? favouriteItems
-      : []
-    )
+    return (Array.isArray(favouriteItems) ? favouriteItems : [])
       .map((item) =>
-        String(
-          item?._id ??
-          item?.id ??
-          item?.productId ??
-          item
-        )
+        String(item?._id ?? item?.id ?? item?.productId ?? item)
       )
       .filter(Boolean);
   }, [favouriteItems]);
@@ -35,16 +41,20 @@ export default function NewArrivals() {
   const onToggleFavourite = (product) => {
     const productId = product?._id ?? product?.id ?? product?.productId;
     if (!productId) return;
+
     if (liked.includes(String(productId))) {
       dispatch(removeFromFavourites(productId));
+      showToast("Removed from wishlist");
     } else {
       dispatch(addToFavourites(productId));
+      showToast("Added to wishlist");
     }
   };
 
   const onAddToCart = (product) => {
     const productId = product?._id ?? product?.id ?? product?.productId;
     if (!productId) return;
+
     dispatch(
       addToCart({
         productId,
@@ -52,12 +62,21 @@ export default function NewArrivals() {
         variantId: product?.variantId ?? product?.variant_id,
       })
     );
+
+    showToast("Added to cart");
   };
 
   const products = Array.isArray(newArrivals) ? newArrivals : [];
 
   return (
-    <section className="py-10 bg-white">
+    <section className="relative py-10 bg-white">
+      {toast && (
+        <div className="fixed top-30 right-5 z-50 flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-[#0B1F3A] shadow-lg">
+          <CheckCircle className="h-5 w-5 text-[#D4AF37]" />
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <div className="text-[11px] font-extrabold tracking-widest text-[#D4AF37] uppercase">
@@ -91,7 +110,9 @@ export default function NewArrivals() {
                   );
                 }
 
-                const productId = String(item?._id ?? item?.id ?? item?.productId);
+                const productId = String(
+                  item?._id ?? item?.id ?? item?.productId
+                );
                 const isLiked = liked.includes(productId);
                 const imageUrl =
                   item?.image_url || item?.imageUrl || "/placeholder.png";
@@ -107,16 +128,18 @@ export default function NewArrivals() {
                       <button
                         type="button"
                         onClick={() => onToggleFavourite(item)}
-                        className={`absolute right-3 top-3 z-10 h-9 w-9 rounded-full border flex items-center justify-center bg-white/90 backdrop-blur shadow-sm transition ${isLiked
-                          ? "border-[#D4AF37] text-[#D4AF37]"
-                          : "border-[#E5E5E5] text-[#0B1F3A] hover:border-[#D4AF37]"
-                          }`}
+                        className={`absolute right-3 top-3 z-10 h-9 w-9 rounded-full border flex items-center justify-center bg-white/90 backdrop-blur shadow-sm transition ${
+                          isLiked
+                            ? "border-[#D4AF37] text-[#D4AF37]"
+                            : "border-[#E5E5E5] text-[#0B1F3A] hover:border-[#D4AF37]"
+                        }`}
                       >
                         <Heart
-                          className={`h-4 w-4 ${isLiked
+                          className={`h-4 w-4 ${
+                            isLiked
                               ? "text-red-500 fill-red-500"
                               : "text-[#0B1F3A]"
-                            }`}
+                          }`}
                         />
                       </button>
 
@@ -128,30 +151,14 @@ export default function NewArrivals() {
                         />
                       </Link>
                     </div>
-                    <div className="px-4 pb-4 flex flex-col flex-1">
 
+                    <div className="px-4 pb-4 flex flex-col flex-1">
                       <Link href={`/product/${productId}`}>
                         <h3 className="mt-3 text-sm font-semibold text-[#1A1A1A] line-clamp-2 min-h-10">
                           {title}
                         </h3>
                       </Link>
-                      {/* <div className=" flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          const filled = rating >= i + 1;
-                          return (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${filled
-                                ? "text-[#D4AF37] fill-[#D4AF37]"
-                                : "text-gray-300"
-                                }`}
-                            />
-                          );
-                        })}
-                        <span className="text-[11px] text-gray-500 ml-1">
-                          ({Number.isFinite(rating) ? rating.toFixed(1) : "0.0"})
-                        </span>
-                      </div> */}
+
                       <div className="mt-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[#0B1F3A] font-extrabold text-lg">
@@ -166,6 +173,7 @@ export default function NewArrivals() {
                           10% OFF
                         </div>
                       </div>
+
                       <button
                         type="button"
                         onClick={() => onAddToCart(item)}

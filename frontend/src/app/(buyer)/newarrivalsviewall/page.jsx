@@ -4,9 +4,19 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, ShoppingCart, LayoutGrid, LayoutList, } from "lucide-react";
+import {
+  Heart,
+  ShoppingCart,
+  LayoutGrid,
+  LayoutList,
+  CheckCircle,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { addToFavourites, removeFromFavourites, fetchFavourites, } from "@/store/slices/favouritesSlice";
+import {
+  addToFavourites,
+  removeFromFavourites,
+  fetchFavourites,
+} from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchNewArrivals } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
@@ -30,15 +40,28 @@ const Page = () => {
   const [mainCategories, setMainCategories] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({ minQty: [], rating: [], supplier: [], });
+  const [toast, setToast] = useState("");
+  const [filters, setFilters] = useState({
+    minQty: [],
+    rating: [],
+    supplier: [],
+  });
 
   const dispatch = useDispatch();
   const newArrivals = useSelector((state) => state.products.newArrivals || []);
   const favouriteItems = useSelector((state) => state.favourites.items || []);
 
+  const showToast = (message) => {
+    setToast(message);
+
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  };
+
   useEffect(() => {
-  dispatch(fetchNewArrivals());
-  dispatch(fetchFavourites());
+    dispatch(fetchNewArrivals());
+    dispatch(fetchFavourites());
 
     const loadCategories = async () => {
       try {
@@ -47,8 +70,8 @@ const Page = () => {
         const rawCategories = Array.isArray(res?.data?.data)
           ? res.data.data
           : Array.isArray(res?.data)
-            ? res.data
-            : [];
+          ? res.data
+          : [];
 
         const parentCategories = rawCategories.filter((cat) => !cat.parent_id);
         setMainCategories(parentCategories);
@@ -66,14 +89,17 @@ const Page = () => {
 
     if (isLiked) {
       dispatch(removeFromFavourites(productId));
+      showToast("Removed from wishlist");
     } else {
       dispatch(addToFavourites(productId));
+      showToast("Added to wishlist");
     }
   };
 
   const onAddToCart = (product) => {
     const productId = product?._id ?? product?.id ?? product?.productId;
     if (!productId) return;
+
     dispatch(
       addToCart({
         productId: product.productId,
@@ -81,6 +107,8 @@ const Page = () => {
         variantId: product?.variantId ?? product?.variant_id,
       })
     );
+
+    showToast("Added to cart");
   };
 
   const handleFilterChange = (type, value) => {
@@ -214,6 +242,13 @@ const Page = () => {
       className="bg-[#FFF8EC] min-h-screen text-[#1A1A1A]"
       style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
     >
+      {toast && (
+        <div className="fixed top-30 right-5 z-50 flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-[#0B1F3A] shadow-lg">
+          <CheckCircle className="h-5 w-5 text-[#D4AF37]" />
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="mb-5">
           <p className="text-xs text-gray-600" style={{ color: COLORS.muted }}>
@@ -259,15 +294,15 @@ const Page = () => {
                 style={
                   activeCategory === cat.slug
                     ? {
-                      backgroundColor: COLORS.accent,
-                      color: COLORS.primary,
-                      borderColor: COLORS.accent,
-                    }
+                        backgroundColor: COLORS.accent,
+                        color: COLORS.primary,
+                        borderColor: COLORS.accent,
+                      }
                     : {
-                      backgroundColor: COLORS.white,
-                      color: COLORS.text,
-                      borderColor: COLORS.border,
-                    }
+                        backgroundColor: COLORS.white,
+                        color: COLORS.text,
+                        borderColor: COLORS.border,
+                      }
                 }
               >
                 {cat.name}
@@ -292,8 +327,9 @@ const Page = () => {
           </div>
 
           <div
-            className={`${showFilters ? "block" : "hidden"
-              } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
+            className={`${
+              showFilters ? "block" : "hidden"
+            } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
             style={{
               backgroundColor: COLORS.white,
               borderColor: COLORS.border,
@@ -449,7 +485,9 @@ const Page = () => {
               }
             >
               {paginatedProducts.map((product) => {
-                const isLiked = favouriteItems.map(String).includes(String(product.productId));
+                const isLiked = favouriteItems
+                  .map(String)
+                  .includes(String(product.productId));
 
                 return (
                   <Link
@@ -497,7 +535,9 @@ const Page = () => {
                             >
                               <Heart
                                 size={16}
-                                className={isLiked ? "text-red-500" : "text-gray-600"}
+                                className={
+                                  isLiked ? "text-red-500" : "text-gray-600"
+                                }
                                 fill={isLiked ? "currentColor" : "none"}
                               />
                             </button>
@@ -547,10 +587,11 @@ const Page = () => {
 
                             <div className="mt-3">
                               <Button
-                                className={`flex items-center gap-2 rounded-md cursor-pointer ${viewMode === "grid"
+                                className={`flex items-center gap-2 rounded-md cursor-pointer ${
+                                  viewMode === "grid"
                                     ? "w-full text-sm py-2 justify-center"
                                     : "text-xs px-3 py-1.5"
-                                  }`}
+                                }`}
                                 style={{
                                   backgroundColor: COLORS.accent,
                                   color: COLORS.primary,
@@ -601,32 +642,34 @@ const Page = () => {
                   ‹
                 </button>
 
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                  const pageNum = i + 1;
-                  return (
-                    <button
-                      key={pageNum}
-                      type="button"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className="h-9 w-9 rounded-lg border text-sm cursor-pointer"
-                      style={
-                        safePage === pageNum
-                          ? {
-                            backgroundColor: COLORS.primary,
-                            color: COLORS.cream,
-                            borderColor: COLORS.primary,
-                          }
-                          : {
-                            backgroundColor: COLORS.white,
-                            color: COLORS.primary,
-                            borderColor: COLORS.border,
-                          }
-                      }
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                {Array.from({ length: Math.min(5, totalPages) }).map(
+                  (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        type="button"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="h-9 w-9 rounded-lg border text-sm cursor-pointer"
+                        style={
+                          safePage === pageNum
+                            ? {
+                                backgroundColor: COLORS.primary,
+                                color: COLORS.cream,
+                                borderColor: COLORS.primary,
+                              }
+                            : {
+                                backgroundColor: COLORS.white,
+                                color: COLORS.primary,
+                                borderColor: COLORS.border,
+                              }
+                        }
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+                )}
 
                 {totalPages > 5 && (
                   <>
@@ -640,15 +683,15 @@ const Page = () => {
                       style={
                         safePage === totalPages
                           ? {
-                            backgroundColor: COLORS.primary,
-                            color: COLORS.cream,
-                            borderColor: COLORS.primary,
-                          }
+                              backgroundColor: COLORS.primary,
+                              color: COLORS.cream,
+                              borderColor: COLORS.primary,
+                            }
                           : {
-                            backgroundColor: COLORS.white,
-                            color: COLORS.primary,
-                            borderColor: COLORS.border,
-                          }
+                              backgroundColor: COLORS.white,
+                              color: COLORS.primary,
+                              borderColor: COLORS.border,
+                            }
                       }
                     >
                       {totalPages}

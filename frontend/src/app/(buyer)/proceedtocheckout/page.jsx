@@ -250,14 +250,14 @@ const Page = () => {
   }, [products]);
 
   return (
-    <main className="min-h-screen bg-[#001a35] px-4 py-5 text-[#0b1324] md:px-8">
-      <section className="mb-5 flex flex-col gap-5 text-white lg:flex-row lg:items-center lg:justify-between">
+    <main className="min-h-screen bg-white px-4 py-5 text-[#0b1324] md:px-8">
+      <section className="mb-5 flex flex-col gap-5 text-[#001a35] lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold md:text-4xl">
             Checkout
           </h1>
 
-          <p className="mt-1 text-sm text-white/75">
+          <p className="mt-1 text-sm text-[#001a35]/75">
             Review your order and complete your purchase
           </p>
         </div>
