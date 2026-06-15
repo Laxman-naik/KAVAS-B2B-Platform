@@ -11,12 +11,7 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-<<<<<<< HEAD
-
   const handleSubmit = async (form) => {
-=======
-  const handleSubmit = async (data) => {
->>>>>>> 1203b69b9fa6095149608017295cb33533f6c6ff
     try {
       const payload = {
         name: form.name?.trim(),
@@ -51,50 +46,51 @@ export default function AddNewProductPage() {
 
         specifications: Array.isArray(form.specifications)
           ? form.specifications
-            .filter((s) => s.name?.trim() && s.value?.trim())
-            .map((s) => ({
-              name: s.name.trim(),
-              value: s.value.trim(),
-            }))
+              .filter((s) => s.name?.trim() && s.value?.trim())
+              .map((s) => ({
+                name: s.name.trim(),
+                value: s.value.trim(),
+              }))
           : [],
 
         bulkPricing: Array.isArray(form.bulkPricing)
           ? form.bulkPricing
-            .filter((p) => p.minQty && p.pricePerUnit)
-            .map((p) => ({
-              minQty: Number(p.minQty),
-              maxQty: p.maxQty ? Number(p.maxQty) : null,
-              pricePerUnit: Number(p.pricePerUnit),
-            }))
+              .filter((p) => p.minQty && p.pricePerUnit)
+              .map((p) => ({
+                minQty: Number(p.minQty),
+                maxQty: p.maxQty ? Number(p.maxQty) : null,
+                pricePerUnit: Number(p.pricePerUnit),
+              }))
           : [],
 
         variants: Array.isArray(form.variants)
           ? form.variants
-            .filter((v) => v.value?.trim())
-            .map((v) => ({
-              variant_type: v.variantName,
-              variant_value: v.value,
-              sku: v.sku || null,
-              price: Number(v.price || form.price || 0),
-              mrp: Number(v.mrp || form.mrp || 0),
-              stock: Number(v.stock || 0),
-              unit: form.unit || "pcs",
-            }))
+              .filter((v) => v.value?.trim())
+              .map((v) => ({
+                variant_type: v.variantName,
+                variant_value: v.value,
+                sku: v.sku || null,
+                price: Number(v.price || form.price || 0),
+                mrp: Number(v.mrp || form.mrp || 0),
+                stock: Number(v.stock || 0),
+                unit: form.unit || "pcs",
+              }))
           : [],
       };
 
       console.log("FINAL PRODUCT PAYLOAD:", payload);
 
       await dispatch(addProduct(payload)).unwrap();
+
       router.push("/vendor/products");
     } catch (error) {
       console.error("Product create failed:", error);
 
       alert(
         error?.response?.data?.message ||
-        error?.data?.message ||
-        error?.message ||
-        "Failed to create product"
+          error?.data?.message ||
+          error?.message ||
+          "Failed to create product"
       );
     }
   };

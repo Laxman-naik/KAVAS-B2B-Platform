@@ -10,6 +10,11 @@ import paymentReducer from "./slices/paymentSlice"
 import orderReducer from "./slices/orderSlice"
 import vendorReducer from "./slices/vendorSlice";
 import profileReducer from "./slices/profileSlice";
+import vendorPayoutReducer from "./slices/vendorPayoutSlice";
+import adminPayoutReducer from "./slices/adminPayoutSlice";
+
+
+
 
 export const store = configureStore({
   reducer: {
@@ -23,5 +28,7 @@ export const store = configureStore({
     order: orderReducer,
     vendor: vendorReducer,
     profile: profileReducer,
+    vendorPayout: vendorPayoutReducer,
+    adminPayout: adminPayoutReducer,
   },
 });

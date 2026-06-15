@@ -146,11 +146,7 @@ export default function VendorLoginPage() {
                 className="h-12 w-auto object-contain"
                 priority
               />
-              <div className="pt-1">
-                <div className="text-sm font-semibold tracking-wide text-white/90">
-                  SELLER HUB
-                </div>
-              </div>
+              
             </div>
 
             <h1 className="mt-12 text-4xl font-extrabold leading-tight text-white">

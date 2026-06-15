@@ -27,11 +27,11 @@ export default function ProductManagementBody() {
   const [page, setPage] = useState(1);
 
   const pageSize = 8;
+
   const { vendorProducts, loading } = useSelector((state) => state.products);
   const vendorData = useSelector((state) => state.vendor?.vendor);
-  const vendorId = vendorData?.id;
+
   const organizationId = vendorData?.organization_id;
-  console.log(vendorProducts);
 
   useEffect(() => {
     if (organizationId) {
@@ -39,12 +39,25 @@ export default function ProductManagementBody() {
     }
   }, [dispatch, organizationId]);
 
+  const handleCreateProduct = async () => {
+    setOpenAdd(false);
+
+    if (organizationId) {
+      dispatch(fetchVendorProducts(organizationId));
+    }
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return "/placeholder.png";
+    if (path.startsWith("http")) return path;
+
+    return `https://kavas-b2b-platform-4.onrender.com${path}`;
+  };
+
   const products = Array.isArray(vendorProducts) ? vendorProducts : [];
 
   const filteredProducts = useMemo(() => {
-    const q = String(search || "")
-      .trim()
-      .toLowerCase();
+    const q = String(search || "").trim().toLowerCase();
 
     return products.filter((p) => {
       const productName = String(p?.name || "").toLowerCase();
@@ -57,13 +70,18 @@ export default function ProductManagementBody() {
       const matchSearch =
         !q || productName.includes(q) || productSku.includes(q);
 
-      const matchCategory = category === "All" || productCategory === category;
+      const matchCategory =
+        category === "All" || productProductCategoryCompare(productCategory) === category;
 
       const matchStatus = status === "All Status" || productStatus === status;
 
       return matchSearch && matchCategory && matchStatus;
     });
   }, [products, search, category, status]);
+
+  function productProductCategoryCompare(value) {
+    return value || "";
+  }
 
   const totalFiltered = filteredProducts.length;
 
@@ -99,18 +117,9 @@ export default function ProductManagementBody() {
   );
 
   const enrichedProducts = useMemo(() => {
-    return pagedFilteredProducts.map((p, index) => {
-      const numericId = index + 1;
-      const discount = numericId % 2 === 0 ? 25 : numericId % 3 === 0 ? 17 : 0;
-      const price = Number(p?.price || 0);
-      const oldPrice = discount
-        ? Math.round(price / (1 - discount / 100))
-        : null;
-
+    return pagedFilteredProducts.map((p) => {
       return {
         ...p,
-        discount,
-        oldPrice,
         sold: Number(p?.sales_count || 0),
         rating: Number(p?.avg_rating || 0),
         reviews: Number(p?.total_reviews || 0),
@@ -141,35 +150,11 @@ export default function ProductManagementBody() {
     return "bg-gray-100 text-gray-700";
   };
 
-  const getImageUrl = (path) => {
-    if (!path) return "/placeholder.png";
-    if (path.startsWith("http")) return path;
-
-    return `https://kavas-b2b-platform-4.onrender.com${path}`;
-  };
-
-  const handleCreateProduct = async (formData) => {
-    try {
-      if (!organizationId) {
-        alert("Organization ID not found. Please login again as vendor.");
-        return;
-      }
-
-      formData.append("organizationId", organizationId);
-
-      const result = await dispatch(addProduct(formData));
-
-      if (addProduct.fulfilled.match(result)) {
-        alert("Product created successfully");
-        setOpenAdd(false);
-        dispatch(fetchVendorProducts(organizationId));
-      } else {
-        alert(result.payload?.message || "Product creation failed");
-      }
-    } catch (error) {
-      console.error("Create product error:", error);
-      alert("Something went wrong");
-    }
+  const getPrimaryImage = (product) => {
+    return getImageUrl(
+      product?.images?.find((img) => img.is_primary)?.image_url ||
+        product?.images?.[0]?.image_url
+    );
   };
 
   return (
@@ -205,7 +190,7 @@ export default function ProductManagementBody() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl border border-[#E5E5E5] bg-[#EFFFF6] p-4">
             <div className="text-sm font-extrabold text-green-700">
               {summary.active}
@@ -233,7 +218,7 @@ export default function ProductManagementBody() {
             </div>
             <div className="mt-3 text-xs text-gray-600">Inactive</div>
           </div>
-        </div>
+        </div> */}
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -295,6 +280,7 @@ export default function ProductManagementBody() {
               >
                 <LayoutGrid size={16} />
               </button>
+
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
@@ -323,14 +309,11 @@ export default function ProductManagementBody() {
             >
               <div className="col-span-5 flex items-center gap-3 min-w-0">
                 <img
-                  src={
-                    p?.images?.find((img) => img.is_primary)?.image_url ||
-                    p?.images?.[0]?.image_url ||
-                    "/placeholder.png"
-                  }
+                  src={getPrimaryImage(p)}
                   alt={p?.name || "Product"}
                   className="h-12 w-12 rounded-xl object-cover bg-gray-100"
                 />
+
                 <div className="min-w-0">
                   <div className="truncate text-sm font-extrabold text-[#0B1F3A]">
                     {p.name}
@@ -377,11 +360,7 @@ export default function ProductManagementBody() {
             >
               <div className="relative">
                 <img
-                  src={
-                    product?.images?.find((img) => img.is_primary)?.image_url ||
-                    product?.images?.[0]?.image_url ||
-                    "/placeholder.png"
-                  }
+                  src={getPrimaryImage(product)}
                   alt={product?.name || "Product"}
                   className="w-full h-44 object-cover bg-gray-100"
                 />

@@ -9,13 +9,8 @@ import {
   Package,
   Truck,
   Heart,
-  CreditCard,
-  MessageSquareText,
-  Bell,
   KeyRound,
   Headset,
-  Shield,
-  LogOut,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,14 +23,10 @@ const navItems = [
   { href: "/ordertracking", label: "Track Order", icon: Truck },
   { href: "/favourites", label: "Wishlist", icon: Heart },
   { href: "/myaddresses", label: "Addresses", icon: MapPin },
-  // { href: "/paymentmethods", label: "Payment Methods", icon: CreditCard },
-  // { href: "/bulk-enquiry", label: "Bulk Enquiry", icon: MessageSquareText },
-  // { href: "/notifications", label: "Notifications", icon: Bell, badge: 3 },
   { href: "/changepassword", label: "Change Password", icon: KeyRound },
-  // { href: "/help", label: "Help Centre", icon: Shield },
 ];
 
-export default function ProfileSidebar({ user, onLogout }) {
+export default function ProfileSidebar({ user }) {
   const pathname = usePathname();
 
   const isActive = (href) => {
@@ -51,13 +42,18 @@ export default function ProfileSidebar({ user, onLogout }) {
           <div className="px-5 pt-5 pb-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-sm bg-white/10 flex items-center justify-center text-lg font-bold">
-                {user?.firstName?.[0] || user?.name?.[0] || "U"}
+                {user?.firstName?.[0] ||
+                  user?.full_name?.[0] ||
+                  user?.name?.[0] ||
+                  "U"}
               </div>
 
               <div className="min-w-0">
                 <p className="font-semibold truncate">
-                  {user?.firstName || user?.name || "User"}{" "}
-                  {user?.lastName || ""}
+                  {user?.full_name ||
+                    `${user?.firstName || user?.name || "User"} ${
+                      user?.lastName || ""
+                    }`}
                 </p>
 
                 <p className="text-xs opacity-80 truncate">
@@ -68,7 +64,7 @@ export default function ProfileSidebar({ user, onLogout }) {
           </div>
 
           <div className="p-3 flex-1 overflow-y-auto">
-            <nav className="space-y-1">
+            <nav className="space-y-3">
               {navItems.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
@@ -94,30 +90,14 @@ export default function ProfileSidebar({ user, onLogout }) {
                     <span className="font-medium flex-1">
                       {item.label}
                     </span>
-
-                    {item.badge ? (
-                      <span className="min-w-5 h-5 px-1 rounded-full bg-[#D4AF37] text-[#0B1F3A] text-xs font-semibold flex items-center justify-center">
-                        {item.badge}
-                      </span>
-                    ) : null}
                   </Link>
                 );
               })}
             </nav>
           </div>
 
-          <div className="p-3">
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full justify-start gap-3 rounded-sm text-[#FFF8EC]/90 hover:bg-white/10 hover:text-[#FFF8EC]"
-              onClick={onLogout}
-            >
-              <LogOut size={16} className="text-[#FFF8EC]/80" />
-              <span className="font-medium">Logout</span>
-            </Button>
-
-            <div className="mt-4 rounded-sm bg-white/5 p-4">
+          <div className="p-3  border-white/10">
+            <div className="mt-2 rounded-sm bg-white/5 p-4">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 rounded-sm bg-[#D4AF37] text-[#0B1F3A] flex items-center justify-center shrink-0">
                   <Headset size={20} />

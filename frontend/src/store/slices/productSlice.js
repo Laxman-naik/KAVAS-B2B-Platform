@@ -8,6 +8,8 @@ import {
   getNewArrivalsAPI,
   getTrendingProductsAPI,
   getVendorProductsAPI,
+  getFlashDealsAPI,
+  addFlashDealToCartAPI,
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */
@@ -33,43 +35,26 @@ export const fetchSingleProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
-      return res.data;
+
+      console.log("SINGLE PRODUCT RESPONSE:", res);
+
+      return res?.product || res?.data || res;
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+      return thunkAPI.rejectWithValue(
+        err.response?.data || {
+          message: err.message || "Failed to fetch product",
+        }
+      );
     }
   }
 );
 
-/* ================= CREATE PRODUCT ================= */
 
-// export const addProduct = createAsyncThunk(
-//   "products/create",
-//   async (formData, thunkAPI) => {
-//     try {
-//       console.log("SENDING PRODUCT DATA:", data);
 
-//       const res = await createProduct(data);
 
-//       console.log("CREATE PRODUCT RESPONSE:", res.data);
-
-//       return res.data.product;
-//     } catch (err) {
-//       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
-//       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
-//       console.log("CREATE PRODUCT SENT DATA:", data);
-
-//       return thunkAPI.rejectWithValue(
-//         err.response?.data?.message ||
-//           err.response?.data ||
-//           err.message ||
-//           "Failed to create product"
-//       );
-//     }
-//   }
-// );
 export const addProduct = createAsyncThunk(
   "products/add",
-  async (data, thunkAPI) => {
+  async (formData, thunkAPI) => {
     try {
       console.log("SENDING PRODUCT DATA:");
 
@@ -79,18 +64,17 @@ export const addProduct = createAsyncThunk(
 
       const res = await createProduct(formData);
 
-      console.log("CREATE PRODUCT RESPONSE:", res.data);
+      console.log("CREATE PRODUCT RESPONSE:", res);
 
-      return res.data.product;
+      return res.product || res.data || res;
     } catch (err) {
       console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
       console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
 
       return thunkAPI.rejectWithValue(
-        err.response?.data?.message ||
-        err.response?.data ||
-        err.message ||
-        "Failed to create product"
+        err.response?.data || {
+          message: err.message || "Failed to create product",
+        }
       );
     }
   }
@@ -172,13 +156,23 @@ const productSlice = createSlice({
     products: [],
     vendorProducts: [],
     product: null,
+
     loading: false,
+    flashDealsLoading: false,
+
+    cartLoading: false,
+    cartSuccess: false,
+
     error: null,
   },
 
   reducers: {
     clearProductError: (state) => {
       state.error = null;
+    },
+
+    clearCartSuccess: (state) => {
+      state.cartSuccess = false;
     },
   },
 
@@ -202,11 +196,13 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.product =
           action.payload?.product || action.payload?.data || action.payload;
       })
+
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -216,12 +212,15 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(addProduct.fulfilled, (state, action) => {
         state.loading = false;
+
         if (action.payload) {
           state.products.unshift(action.payload);
         }
       })
+
       .addCase(addProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -270,10 +269,12 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.vendorProducts = action.payload?.products || [];
       })
+
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -281,5 +282,6 @@ const productSlice = createSlice({
   },
 });
 
-export const { clearProductError } = productSlice.actions;
+export const { clearProductError, clearCartSuccess } = productSlice.actions;
+
 export default productSlice.reducer;

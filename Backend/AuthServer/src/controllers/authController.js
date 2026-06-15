@@ -156,6 +156,8 @@ const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 /* ================= REGISTER ================= */
 exports.register = async (req, res) => {
@@ -384,4 +386,77 @@ exports.logout = async (req, res) => {
     return res.status(500).json({ message: "Logout failed" });
   }
 };
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    const userResult = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    await pool.query(
+      `
+      UPDATE users
+      SET reset_password_token = $1,
+          reset_password_expires = $2
+      WHERE id = $3
+      `,
+      [resetToken, expiry, user.id]
+    );
+
+    const resetLink =
+      `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Reset Password",
+      html: `
+        <h2>KAVAS Password Reset</h2>
+        <p>Click below link to reset password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 15 minutes.</p>
+      `,
+    });
+
+    res.json({
+      message: "Password reset link sent",
+    });
+
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR:", err);
+    res.status(500).json({
+      message: "Failed to send reset link",
+    });
+  }
+};
+// forgot password
+
+exports.forgotPassword = async (req, res) => {
+  return res.json({
+    success: true,
+    message: "Reset link generated",
+    resetLink: "http://localhost:3000/reset-password/test-token",
+  });
+};
