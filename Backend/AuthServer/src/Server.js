@@ -11,6 +11,7 @@ const addressRoutes = require("./routes/addressRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
 const profileRoutes = require("./routes/profileRoutes")
 
+
 const app = express();
 
 app.set("trust proxy", 1);
@@ -48,6 +49,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use("/api/profile", profileRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

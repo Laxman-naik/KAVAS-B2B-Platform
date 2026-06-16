@@ -18,6 +18,7 @@ const {
   updateOnboardingStep,
   getMe,
   getStoreAndPickup,
+  changeVendorPassword,
 } = require("../controllers/vendorController");
 
 const authMiddleware = require("../middleware/vendorMiddleware");
@@ -40,6 +41,7 @@ router.post("/store-details",authMiddleware,upload.fields([{name: "store_image",
 router.get("/getstore", authMiddleware, getStoreAndPickup)
 router.get("/state", authMiddleware, getOnboardingState);
 router.patch("/step", authMiddleware, updateOnboardingStep);
+router.patch("/change-password", authMiddleware, changeVendorPassword);
 
 router.get("/:id", getVendorProfile);
 

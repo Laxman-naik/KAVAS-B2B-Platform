@@ -119,9 +119,23 @@ export const refreshTokenAPI = async () => {
   return res.data.accessToken;
 };
 
+
+
+
 /* ================= LOGOUT ================= */
 
 export const logoutUser = () => {
   clearAuthData();
+};
+
+/* ================= CHANGE PASSWORD ================= */
+
+export const changePasswordAPI = async (data) => {
+  const res = await authapi.patch(
+    "/api/auth/change-password",
+    data
+  );
+
+  return res.data;
 };
 

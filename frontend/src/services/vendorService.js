@@ -115,3 +115,6 @@ export const getOnboardingStateAPI = () => authapi.get("/api/vendor/state");
 export const updateOnboardingStepAPI = (step) => authapi.patch("/api/vendor/step", { step });
 
 export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me",);
+
+export const changeVendorPasswordAPI = (data) =>
+  authapi.patch("/api/vendor/change-password", data);
