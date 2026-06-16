@@ -49,9 +49,6 @@ export const fetchSingleProduct = createAsyncThunk(
   }
 );
 
-
-
-
 export const addProduct = createAsyncThunk(
   "products/add",
   async (formData, thunkAPI) => {
@@ -104,6 +101,8 @@ export const removeProduct = createAsyncThunk(
   }
 );
 
+/* ================= NEW ARRIVALS ================= */
+
 export const fetchNewArrivals = createAsyncThunk(
   "products/newArrivals",
   async (_, thunkAPI) => {
@@ -134,6 +133,40 @@ export const fetchTrendingProducts = createAsyncThunk(
   }
 );
 
+/* ================= FLASH DEALS ================= */
+
+export const fetchFlashDeals = createAsyncThunk(
+  "products/flashDeals",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getFlashDealsAPI();
+      console.log("FLASH DEALS RESPONSE:", res);
+
+      return res?.products || res?.data || res || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const addFlashDealToCart = createAsyncThunk(
+  "products/addFlashDealToCart",
+  async ({ productId, quantity = 1 }, thunkAPI) => {
+    try {
+      const res = await addFlashDealToCartAPI({
+        product_id: productId,
+        quantity,
+      });
+
+      console.log("FLASH DEAL ADD TO CART RESPONSE:", res);
+
+      return res?.data || res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 export const fetchVendorProducts = createAsyncThunk(
   "products/fetchVendorProducts",
   async (organizationId, thunkAPI) => {
@@ -153,6 +186,7 @@ const productSlice = createSlice({
   initialState: {
     trending: [],
     newArrivals: [],
+    flashDeals: [],
     products: [],
     vendorProducts: [],
     product: null,
@@ -191,18 +225,15 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* FETCH SINGLE */
       .addCase(fetchSingleProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.product =
           action.payload?.product || action.payload?.data || action.payload;
       })
-
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -212,7 +243,6 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-
       .addCase(addProduct.fulfilled, (state, action) => {
         state.loading = false;
 
@@ -220,7 +250,6 @@ const productSlice = createSlice({
           state.products.unshift(action.payload);
         }
       })
-
       .addCase(addProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -265,16 +294,42 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
+      .addCase(fetchFlashDeals.pending, (state) => {
+        state.flashDealsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFlashDeals.fulfilled, (state, action) => {
+        state.flashDealsLoading = false;
+        state.flashDeals = action.payload;
+      })
+      .addCase(fetchFlashDeals.rejected, (state, action) => {
+        state.flashDealsLoading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(addFlashDealToCart.pending, (state) => {
+        state.cartLoading = true;
+        state.cartSuccess = false;
+        state.error = null;
+      })
+      .addCase(addFlashDealToCart.fulfilled, (state) => {
+        state.cartLoading = false;
+        state.cartSuccess = true;
+      })
+      .addCase(addFlashDealToCart.rejected, (state, action) => {
+        state.cartLoading = false;
+        state.cartSuccess = false;
+        state.error = action.payload;
+      })
+
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.vendorProducts = action.payload?.products || [];
       })
-
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

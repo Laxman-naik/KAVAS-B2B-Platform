@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, HelpCircle, PhoneCall, Mail, MessageCircle } from "lucide-react"
 import { helpData } from "@/data/helpData"
+import Link from "next/link";
 
 const page = () => {
 
@@ -198,12 +199,13 @@ const page = () => {
                     </div>
                   </div>
 
-                  {/* BUTTON AT BOTTOM */}
+               <Link href="/help">
                   <div className="px-4 pb-4 ">
                     <Button className="w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">
                       Contact Support
                     </Button>
                   </div>
+                  </Link>
 
                 </div>
 

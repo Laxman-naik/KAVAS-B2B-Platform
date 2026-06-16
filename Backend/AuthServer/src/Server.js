@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
 const profileRoutes = require("./routes/profileRoutes")
+const passport = require("./config/passport");
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 
 const allowedOrigins = new Set([
