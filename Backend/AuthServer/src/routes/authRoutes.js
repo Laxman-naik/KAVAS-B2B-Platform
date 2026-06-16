@@ -11,6 +11,8 @@ const {
   logout,
   getMe,
   forgotPassword,
+  resetPassword,
+  changePassword,
 } = require("../controllers/authController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -18,17 +20,30 @@ const authMiddleware = require("../middleware/authMiddleware");
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
-  message: { message: "Too many login attempts, try later" },
+  message: {
+    message: "Too many login attempts, try later",
+  },
 });
 
 router.post("/register", register);
 router.post("/login", loginLimiter, login);
 router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 router.post("/refresh", refreshTokenHandler);
 router.post("/logout", logout);
 router.get("/me", authMiddleware, getMe);
-router.get("/google",passport.authenticate("google", {scope: ["profile", "email"],session: false,}));
+router.patch("/change-password", authMiddleware, changePassword);
 
+/* START GOOGLE LOGIN */
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
+
+/* GOOGLE CALLBACK */
 router.get(
   "/google/callback",
   passport.authenticate("google", {

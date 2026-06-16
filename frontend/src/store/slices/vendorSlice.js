@@ -17,6 +17,7 @@ import {
   refreshTokenAPI,
   logoutVendorAPI,
   getVendorProfileSelfAPI,
+  changeVendorPasswordAPI,
 } from "../../services/vendorService";
 
 /* ================= THUNKS ================= */
@@ -504,6 +505,22 @@ const vendorSlice = createSlice({
   },
 });
 
+export const changeVendorPassword = createAsyncThunk(
+  "vendor/changePassword",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await changeVendorPasswordAPI(data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to change password"
+      );
+    }
+  }
+);
+
 export const {
   resetVendorState,
   resetMobileVerification,
@@ -511,3 +528,4 @@ export const {
 } = vendorSlice.actions;
 
 export default vendorSlice.reducer;
+

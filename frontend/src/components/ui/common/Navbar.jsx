@@ -106,7 +106,9 @@ const Navbar = () => {
         setSearchLoading(true);
 
         const res = await fetch(
-          `http://localhost:5002/api/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/search?q=${encodeURIComponent(
+            debouncedQuery
+          )}&limit=5`
         );
 
         const data = await res.json();
@@ -123,7 +125,6 @@ const Navbar = () => {
 
         setShowSearchDropdown(true);
       } catch (error) {
-        console.error("Navbar search error:", error);
         setSearchResults({
           products: [],
           suppliers: [],

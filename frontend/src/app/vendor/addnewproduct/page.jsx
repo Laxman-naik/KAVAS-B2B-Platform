@@ -11,7 +11,7 @@ export default function AddNewProductPage() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const handleSubmit = async (form) => {
+  const handleSubmit = async (data) => {
     try {
       const payload = {
         name: form.name?.trim(),

@@ -1342,3 +1342,71 @@ export const getOnboardingState = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+
+export const changeVendorPassword = async (req, res) => {
+  try {
+    const vendorId = req.user?.vendor_id;
+    const { currentPassword, newPassword } = req.body || {};
+
+    if (!vendorId) {
+      return res.status(401).json({ message: "Unauthorized vendor" });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "New password must be at least 8 characters",
+      });
+    }
+
+    const result = await db.query(
+      `SELECT id, password_hash FROM vendorprofile WHERE id = $1`,
+      [vendorId]
+    );
+
+    const vendor = result.rows[0];
+
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      vendor.password_hash
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db.query(
+      `UPDATE vendorprofile
+       SET password_hash = $1,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [hashedPassword, vendorId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (err) {
+    console.error("CHANGE VENDOR PASSWORD ERROR:", err);
+
+    return res.status(500).json({
+      message: "Failed to change password",
+      error: err.message,
+    });
+  }
+};

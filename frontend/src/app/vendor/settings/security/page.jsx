@@ -76,10 +76,12 @@ const SecuritySettings = () => {
       : "text-red-600";
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     setMessage("");
   };
@@ -141,31 +143,6 @@ const SecuritySettings = () => {
     setMessage("All other sessions logged out successfully.");
   };
 
-  const PasswordInput = ({ label, name, value, placeholder }) => (
-    <div>
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
-
-      <div className="relative mt-2">
-        <input
-          type={showPassword[name] ? "text" : "password"}
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          onChange={handleChange}
-          className="h-11 w-full rounded-sm border border-[#E5E5E5] px-3 pr-10 text-sm outline-none transition focus:border-[#0B1F3A]"
-        />
-
-        <button
-          type="button"
-          onClick={() => toggleShowPassword(name)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0B1F3A]"
-        >
-          {showPassword[name] ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen rounded-sm bg-white p-3 md:p-6">
       <div className="mx-auto max-w-5xl space-y-6">
@@ -199,6 +176,9 @@ const SecuritySettings = () => {
               name="current"
               value={form.current}
               placeholder="Enter current password"
+              showPassword={showPassword}
+              handleChange={handleChange}
+              toggleShowPassword={toggleShowPassword}
             />
 
             <PasswordInput
@@ -206,6 +186,9 @@ const SecuritySettings = () => {
               name="newPass"
               value={form.newPass}
               placeholder="Enter new password"
+              showPassword={showPassword}
+              handleChange={handleChange}
+              toggleShowPassword={toggleShowPassword}
             />
 
             {form.newPass && (
@@ -223,6 +206,9 @@ const SecuritySettings = () => {
               name="confirm"
               value={form.confirm}
               placeholder="Confirm new password"
+              showPassword={showPassword}
+              handleChange={handleChange}
+              toggleShowPassword={toggleShowPassword}
             />
 
             <div>
@@ -352,6 +338,41 @@ const SecuritySettings = () => {
             {message}
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+const PasswordInput = ({
+  label,
+  name,
+  value,
+  placeholder,
+  showPassword,
+  handleChange,
+  toggleShowPassword,
+}) => {
+  return (
+    <div>
+      <label className="text-sm font-semibold text-gray-700">{label}</label>
+
+      <div className="relative mt-2">
+        <input
+          type={showPassword[name] ? "text" : "password"}
+          name={name}
+          value={value}
+          placeholder={placeholder}
+          onChange={handleChange}
+          className="h-11 w-full rounded-sm border border-[#E5E5E5] px-3 pr-10 text-sm outline-none transition focus:border-[#0B1F3A]"
+        />
+
+        <button
+          type="button"
+          onClick={() => toggleShowPassword(name)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#0B1F3A]"
+        >
+          {showPassword[name] ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
       </div>
     </div>
   );

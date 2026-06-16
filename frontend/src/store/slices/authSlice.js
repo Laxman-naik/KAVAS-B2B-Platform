@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { registerUserAPI, loginUser, logoutUser, getMe,} from "@/services/authService";
+import { registerUserAPI, loginUser, logoutUser, getMe, changePasswordAPI} from "@/services/authService";
 import { loginAdminAPI, logoutAdminAPI, getAdminMeAPI, getAllUsersAPI, getOnboardingVendorsAPI, approveVendorAPI,} from "@/services/adminServer";
 
 import { resetCart } from "./cartSlice";
@@ -83,6 +83,23 @@ if (role) {
 localStorage.removeItem("role");
 
     dispatch(resetCart());
+  }
+);
+
+/* ================= CHANGE PASSWORD ================= */
+
+export const changePasswordThunk = createAsyncThunk(
+  "auth/changePassword",
+  async (data, { rejectWithValue }) => {
+    try {
+      return await changePasswordAPI(data);
+    } catch (err) {
+      return rejectWithValue(
+        err?.response?.data?.message ||
+          err.message ||
+          "Failed to change password"
+      );
+    }
   }
 );
 
