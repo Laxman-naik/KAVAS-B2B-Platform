@@ -274,23 +274,31 @@ exports.forgotPassword = async (req, res) => {
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT),
+      secure: process.env.EMAIL_SECURE === "true",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
 
+    await transporter.verify();
+    console.log("SMTP Connected Successfully");
+
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to: user.email,
       subject: "KAVAS Password Reset",
       html: `
-        <h2>KAVAS Password Reset</h2>
-        <p>Click the below link to reset your password:</p>
-        <a href="${resetLink}">${resetLink}</a>
-        <p>This link expires in 15 minutes.</p>
-      `,
+    <h2>KAVAS Password Reset</h2>
+    <p>Click the below link to reset your password:</p>
+    <a href="${resetLink}">${resetLink}</a>
+    <p>This link expires in 15 minutes.</p>
+  `,
     });
 
     return res.json({
@@ -298,10 +306,14 @@ exports.forgotPassword = async (req, res) => {
       message: "Password reset link sent to email",
     });
   } catch (err) {
-    console.error("FORGOT PASSWORD ERROR:", err);
-    return res.status(500).json({
-      message: "Failed to send reset link",
-    });
+  console.error("FORGOT PASSWORD ERROR:", err);
+
+  return res.status(500).json({
+    message: err.message,
+    code: err.code,
+    command: err.command,
+  });
+
   }
 };
 
@@ -367,9 +379,10 @@ exports.resetPassword = async (req, res) => {
       message: "Password reset successfully",
     });
   } catch (err) {
-    console.error("RESET PASSWORD ERROR:", err);
+    console.error("FORGOT PASSWORD FULL ERROR:", err);
+
     return res.status(500).json({
-      message: "Failed to reset password",
+      message: err.message,
     });
   }
 };

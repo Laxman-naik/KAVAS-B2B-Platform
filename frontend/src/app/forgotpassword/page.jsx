@@ -25,15 +25,19 @@ export default function ForgotPasswordPage() {
         email: identifier,
       });
 
-      console.log(response.data);
+      console.log("FORGOT PASSWORD RESPONSE:", response.data);
       setSent(true);
-
-      if (response.data?.resetLink) {
-        alert(response.data.resetLink);
-      }
     } catch (err) {
-      console.error(err.response?.data || err);
-      setError(err.response?.data?.message || "Failed to generate reset link");
+      console.error(
+        "FORGOT PASSWORD FULL ERROR:",
+        err.response?.data || err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to generate reset link"
+      );
     } finally {
       setLoading(false);
     }
@@ -98,7 +102,6 @@ export default function ForgotPasswordPage() {
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
-
                     if (sent) setSent(false);
                   }}
                   placeholder="Enter mobile number or email ID"
