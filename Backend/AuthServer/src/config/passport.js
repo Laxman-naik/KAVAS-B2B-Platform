@@ -35,7 +35,7 @@ passport.use(
 
         if (!user) {
           const passwordHash = await bcrypt.hash(
-            `google_login_${googleId}_${Date.now()}`,
+            `google_login_${googleId}_${process.env.ACCESS_SECRET}`,
             10
           );
 
@@ -54,10 +54,20 @@ passport.use(
           );
 
           user = insert.rows[0];
+        } else {
+          await pool.query(
+            `
+            UPDATE users
+            SET full_name = COALESCE($1, full_name)
+            WHERE id = $2
+            `,
+            [fullName, user.id]
+          );
         }
 
         return done(null, user);
       } catch (err) {
+        console.error("GOOGLE LOGIN ERROR:", err);
         return done(err, null);
       }
     }

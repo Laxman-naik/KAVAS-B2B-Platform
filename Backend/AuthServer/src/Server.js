@@ -44,7 +44,7 @@ app.get("/", (req, res) => {
   res.status(200).send("Server is running 🚀");
 });
 
-app.get("/ping", (req, res) => {res.json({ ok: true });});
+app.get("/ping", (req, res) => { res.json({ ok: true }); });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
@@ -66,7 +66,9 @@ pool.connect()
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {console.log("Server running on", PORT);});
+app.listen(PORT, () => {
+  console.log("Server running on", PORT);
+});
 
 
 // const express = require("express");
