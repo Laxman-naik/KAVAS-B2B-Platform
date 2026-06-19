@@ -302,7 +302,10 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json({
+      success: true,
+      product: result.rows[0],
+    });
   } catch (err) {
     console.error("updateProduct error:", err);
     res.status(500).json({ message: err.message });
@@ -838,11 +841,11 @@ exports.getVendorProducts = async (req, res) => {
         -- STATUS
         -- =========================
         CASE
-          WHEN p.stock <= 0 THEN 'Out of Stock'
-          WHEN p.stock <= 10 THEN 'Low Stock'
-          WHEN p.is_active = false THEN 'Inactive'
-          ELSE 'Active'
-        END AS status,
+  WHEN p.is_active = false THEN 'Inactive'
+  WHEN p.stock <= 0 THEN 'Out of Stock'
+  WHEN p.stock <= 10 THEN 'Low Stock'
+  ELSE 'In Stock'
+END AS status,
 
         -- =========================
         -- CATEGORIES (SAFE)
@@ -853,7 +856,6 @@ exports.getVendorProducts = async (req, res) => {
         -- IMAGES (SAFE)
         -- =========================
         COALESCE(img.images, '[]') AS images,
-
         -- =========================
         -- VIDEOS (SAFE)
         -- =========================
@@ -1017,6 +1019,71 @@ exports.getVendorProducts = async (req, res) => {
   } catch (err) {
     console.error("❌ getVendorProducts error:", err);
 
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.getVendorInventory = async (req, res) => {
+  try {
+    const { organizationId } = req.params;
+
+    if (!organizationId) {
+      return res.status(400).json({
+        success: false,
+        message: "organizationId is required",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        p.id,
+        p.organization_id,
+        p.name,
+        p.sku,
+        p.price,
+        p.mrp,
+        p.stock,
+        p.moq,
+        p.unit,
+        p.is_active,
+        p.created_at,
+
+        COALESCE(
+          (
+            SELECT pi.image_url
+            FROM product_images pi
+            WHERE pi.product_id = p.id
+              AND pi.media_type = 'image'
+            ORDER BY pi.is_primary DESC, pi.sort_order ASC
+            LIMIT 1
+          ),
+          null
+        ) AS image,
+
+        CASE
+          WHEN p.stock <= 0 THEN 'Out of Stock'
+          WHEN p.stock <= 10 THEN 'Low Stock'
+          WHEN p.is_active = false THEN 'Inactive'
+          ELSE 'In Stock'
+        END AS status
+
+      FROM products p
+      WHERE p.organization_id = $1
+      ORDER BY p.created_at DESC
+      `,
+      [organizationId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: result.rows.length,
+      products: result.rows,
+    });
+  } catch (err) {
+    console.error("getVendorInventory error:", err);
     return res.status(500).json({
       success: false,
       message: err.message,

@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchVendorProducts, editProduct } from "@/store/slices/productSlice";
 import {
   Search,
   Eye,
@@ -19,95 +21,55 @@ import {
 } from "lucide-react";
 
 export default function InventoryManagementBody() {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      name: "Rajasthani Block Print Fabric 5m",
-      sku: "RBF-5M-007",
-      category: "Textiles & Fabrics",
-      image:
-        "https://images.unsplash.com/photo-1520975958225-7d8a2f2d9f52",
-      stock: 0,
-      capacity: 300,
-      reorderAt: 40,
-      sold: "290 Rolls",
-      incoming: "+150 Rolls",
-      warehouse: "Jaipur Warehouse",
-    },
-    {
-      id: 2,
-      name: "Moringa Leaf Powder 500g",
-      sku: "MLP-500-010",
-      category: "Health & Wellness",
-      image:
-        "https://images.unsplash.com/photo-1604335399105-0f0a1f6f57d8",
-      stock: 0,
-      capacity: 300,
-      reorderAt: 40,
-      sold: "340 Units",
-      incoming: "+200 Units",
-      warehouse: "Chennai Warehouse",
-    },
-    {
-      id: 3,
-      name: "Herbal Tea Assorted Pack 100 Bags",
-      sku: "HTA-100-006",
-      category: "Beverages",
-      image:
-        "https://images.unsplash.com/photo-1542444459-db47a0ea7770",
-      stock: 8,
-      capacity: 200,
-      reorderAt: 30,
-      sold: "380 Packs",
-      incoming: "+100 Packs",
-      warehouse: "Delhi Warehouse",
-    },
-  ]);
+  const dispatch = useDispatch();
+
+  const { vendorProducts, loading } = useSelector((state) => state.products);
+
+  useEffect(() => {
+    const vendor = JSON.parse(localStorage.getItem("vendor") || "{}");
+
+    const organizationId =
+      vendor?.organizationId ||
+      vendor?.organization_id ||
+      vendor?.organization?.id ||
+      vendor?.vendor_id ||
+      vendor?.onboarding_id;
+
+    if (organizationId) {
+      dispatch(fetchVendorProducts(organizationId));
+    }
+  }, [dispatch]);
+
+  const data = vendorProducts || [];
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] =
-    useState("All Status");
-  const [warehouse, setWarehouse] =
-    useState("All Warehouses");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [warehouse, setWarehouse] = useState("All Warehouses");
   const [page, setPage] = useState(1);
 
   // EDIT MODAL
   const [openEdit, setOpenEdit] = useState(false);
-  const [selectedProduct, setSelectedProduct] =
-    useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // VIEW MODAL
   const [openView, setOpenView] = useState(false);
-  const [viewProduct, setViewProduct] =
-    useState(null);
+  const [viewProduct, setViewProduct] = useState(null);
 
   const pageSize = 10;
 
   const getStatus = (d) => {
-    if (Number(d.stock || 0) <= 0)
-      return "Out of Stock";
+    if (d.status === "Active") return "In Stock";
+    if (d.status) return d.status;
 
-    if (
-      Number(d.stock || 0) <=
-      Number(d.reorderAt || 0)
-    )
-      return "Low Stock";
-
-    if (
-      Number(d.stock || 0) >=
-      Number(d.capacity || 0) * 0.8
-    )
-      return "Overstocked";
+    if (Number(d.stock || 0) <= 0) return "Out of Stock";
+    if (Number(d.stock || 0) <= 10) return "Low Stock";
 
     return "In Stock";
   };
 
   const warehouses = useMemo(
-    () => [
-      "All Warehouses",
-      ...new Set(data.map((d) => d.warehouse)),
-    ],
-    [data]
+    () => ["All Warehouses", ...new Set(data.map((d) => d.warehouse))],
+    [data],
   );
 
   const filtered = useMemo(() => {
@@ -118,59 +80,41 @@ export default function InventoryManagementBody() {
     return data.filter((d) => {
       const matchSearch =
         !q ||
-        d.name.toLowerCase().includes(q) ||
-        d.sku.toLowerCase().includes(q);
-
+        String(d.name || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(d.sku || "")
+          .toLowerCase()
+          .includes(q);
       const s = getStatus(d);
 
-      const matchStatus =
-        statusFilter === "All Status" ||
-        s === statusFilter;
+      const matchStatus = statusFilter === "All Status" || s === statusFilter;
 
       const matchWarehouse =
-        warehouse === "All Warehouses" ||
-        d.warehouse === warehouse;
+        warehouse === "All Warehouses" || d.warehouse === warehouse;
 
-      return (
-        matchSearch &&
-        matchStatus &&
-        matchWarehouse
-      );
+      return matchSearch && matchStatus && matchWarehouse;
     });
   }, [data, search, statusFilter, warehouse]);
 
   const totalFiltered = filtered.length;
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalFiltered / pageSize)
-  );
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
 
-  const safePage = Math.min(
-    Math.max(1, page),
-    totalPages
-  );
+  const safePage = Math.min(Math.max(1, page), totalPages);
 
   const paged = useMemo(() => {
     const start = (safePage - 1) * pageSize;
 
-    return filtered.slice(
-      start,
-      start + pageSize
-    );
+    return filtered.slice(start, start + pageSize);
   }, [filtered, safePage]);
 
   const rangeText = useMemo(() => {
-    if (totalFiltered === 0)
-      return "Showing 0 of 0";
+    if (totalFiltered === 0) return "Showing 0 of 0";
 
-    const start =
-      (safePage - 1) * pageSize + 1;
+    const start = (safePage - 1) * pageSize + 1;
 
-    const end = Math.min(
-      totalFiltered,
-      safePage * pageSize
-    );
+    const end = Math.min(totalFiltered, safePage * pageSize);
 
     return `Showing ${start}-${end} of ${totalFiltered}`;
   }, [safePage, totalFiltered]);
@@ -178,20 +122,16 @@ export default function InventoryManagementBody() {
   const kpis = useMemo(() => {
     const total = data.length;
 
-    const inStock = data.filter(
-      (d) => getStatus(d) === "In Stock"
-    ).length;
+    const inStock = data.filter((d) => getStatus(d) === "In Stock").length;
 
-    const lowStock = data.filter(
-      (d) => getStatus(d) === "Low Stock"
-    ).length;
+    const lowStock = data.filter((d) => getStatus(d) === "Low Stock").length;
 
     const outOfStock = data.filter(
-      (d) => getStatus(d) === "Out of Stock"
+      (d) => getStatus(d) === "Out of Stock",
     ).length;
 
     const overstocked = data.filter(
-      (d) => getStatus(d) === "Overstocked"
+      (d) => getStatus(d) === "Overstocked",
     ).length;
 
     return {
@@ -209,11 +149,7 @@ export default function InventoryManagementBody() {
         ...d,
         status: getStatus(d),
       }))
-      .filter(
-        (d) =>
-          d.status === "Low Stock" ||
-          d.status === "Out of Stock"
-      )
+      .filter((d) => d.status === "Low Stock" || d.status === "Out of Stock")
       .slice(0, 5);
   }, [data]);
 
@@ -255,25 +191,48 @@ export default function InventoryManagementBody() {
     setSelectedProduct((prev) => ({
       ...prev,
       [name]:
-        name === "stock" ||
-        name === "capacity" ||
-        name === "reorderAt"
+        name === "stock" || name === "capacity" || name === "reorderAt"
           ? Number(value)
           : value,
     }));
   };
 
   // SAVE
-  const handleSave = () => {
-    setData((prev) =>
-      prev.map((item) =>
-        item.id === selectedProduct.id
-          ? selectedProduct
-          : item
-      )
+  const handleSave = async () => {
+    if (!selectedProduct?.id) return;
+
+    const payload = {
+      name: selectedProduct.name,
+      slug:
+        selectedProduct.slug ||
+        selectedProduct.name?.toLowerCase().replace(/\s+/g, "-"),
+      organizationId: selectedProduct.organization_id,
+      isTopProduct: selectedProduct.is_top_product || false,
+      parentProductId: selectedProduct.parent_product_id || null,
+      price: Number(selectedProduct.price || 0),
+      mrp: Number(selectedProduct.mrp || 0),
+      minOrderQty: Number(selectedProduct.moq || 1),
+      stock: Number(selectedProduct.stock || 0),
+      unit: selectedProduct.unit || "pcs",
+      weight: selectedProduct.weight || null,
+      dispatchTimeDays: selectedProduct.dispatch_time_days || null,
+      description: selectedProduct.description || "",
+      isActive: selectedProduct.is_active ?? true,
+      isFeatured: selectedProduct.is_featured || false,
+    };
+
+    const result = await dispatch(
+      editProduct({
+        id: selectedProduct.id,
+        data: payload,
+      }),
     );
 
-    setOpenEdit(false);
+    if (editProduct.fulfilled.match(result)) {
+      setOpenEdit(false);
+    } else {
+      alert(result.payload?.message || "Failed to update product");
+    }
   };
 
   return (
@@ -306,48 +265,28 @@ export default function InventoryManagementBody() {
       {/* KPI */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          icon={
-            <Package
-              size={18}
-              className="text-[#0B1F3A]"
-            />
-          }
+          icon={<Package size={18} className="text-[#0B1F3A]" />}
           title="Total SKUs"
           value={kpis.total}
           bg="bg-white"
         />
 
         <KpiCard
-          icon={
-            <CheckCircle2
-              size={18}
-              className="text-green-700"
-            />
-          }
+          icon={<CheckCircle2 size={18} className="text-green-700" />}
           title="In Stock"
           value={kpis.inStock}
           bg="bg-[#ECFFF6]"
         />
 
         <KpiCard
-          icon={
-            <AlertTriangle
-              size={18}
-              className="text-yellow-700"
-            />
-          }
+          icon={<AlertTriangle size={18} className="text-yellow-700" />}
           title="Low Stock"
           value={kpis.lowStock}
           bg="bg-[#FFF7E6]"
         />
 
         <KpiCard
-          icon={
-            <XCircle
-              size={18}
-              className="text-red-700"
-            />
-          }
+          icon={<XCircle size={18} className="text-red-700" />}
           title="Out of Stock"
           value={kpis.outOfStock}
           bg="bg-[#FFECEC]"
@@ -359,21 +298,16 @@ export default function InventoryManagementBody() {
         <div className="flex items-center justify-between px-5 py-4">
           <div>
             <div className="text-sm font-extrabold text-red-700">
-              Low Stock Alerts (
-              {lowStockAlerts.length})
+              Low Stock Alerts ({lowStockAlerts.length})
             </div>
 
             <div className="mt-1 text-xs text-red-600">
-              Items below reorder point need
-              immediate attention
+              Items below reorder point need immediate attention
             </div>
           </div>
 
           <button className="h-9 w-9 rounded-xl border border-red-200 bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center">
-            <RotateCcw
-              size={16}
-              className="text-red-700"
-            />
+            <RotateCcw size={16} className="text-red-700" />
           </button>
         </div>
 
@@ -388,7 +322,7 @@ export default function InventoryManagementBody() {
               >
                 <div className="flex items-center gap-4 min-w-0">
                   <img
-                    src={d.image}
+                    src={d.image || "/placeholder.png"}
                     alt=""
                     className="h-10 w-10 rounded-xl object-cover bg-gray-100"
                   />
@@ -398,9 +332,7 @@ export default function InventoryManagementBody() {
                       {d.name}
                     </div>
 
-                    <div className="mt-1 text-xs text-gray-500">
-                      {d.sku}
-                    </div>
+                    <div className="mt-1 text-xs text-gray-500">{d.sku}</div>
                   </div>
                 </div>
               </div>
@@ -412,10 +344,7 @@ export default function InventoryManagementBody() {
       {/* SEARCH */}
       <div className="mt-5 flex flex-col lg:flex-row gap-3">
         <div className="flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 h-11 w-full lg:w-105">
-          <Search
-            size={16}
-            className="text-gray-400"
-          />
+          <Search size={16} className="text-gray-400" />
 
           <input
             placeholder="Search by name or SKU..."
@@ -434,25 +363,15 @@ export default function InventoryManagementBody() {
         <table className="w-full min-w-275 text-sm">
           <thead className="bg-[#FFF8EC]">
             <tr>
-              <th className="p-4 text-left">
-                PRODUCT
-              </th>
+              <th className="p-4 text-left">PRODUCT</th>
 
-              <th className="p-4 text-left">
-                SKU
-              </th>
+              <th className="p-4 text-left">SKU</th>
 
-              <th className="p-4 text-left">
-                STOCK LEVEL
-              </th>
+              <th className="p-4 text-left">STOCK LEVEL</th>
 
-              <th className="p-4 text-left">
-                STATUS
-              </th>
+              <th className="p-4 text-left">STATUS</th>
 
-              <th className="p-4 text-left">
-                ACTIONS
-              </th>
+              <th className="p-4 text-left">ACTIONS</th>
             </tr>
           </thead>
 
@@ -468,7 +387,7 @@ export default function InventoryManagementBody() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src={d.image}
+                        src={d.image || "/placeholder.png"}
                         alt=""
                         className="h-10 w-10 rounded-xl object-cover bg-gray-100"
                       />
@@ -491,14 +410,14 @@ export default function InventoryManagementBody() {
 
                   <td className="p-4">
                     <div className="text-sm font-extrabold text-[#0B1F3A]">
-                      {d.stock} / {d.capacity}
+                      {d.stock || 0} {d.unit || "Units"}
                     </div>
                   </td>
 
                   <td className="p-4">
                     <span
                       className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-extrabold ${statusStyle(
-                        s
+                        s,
                       )}`}
                     >
                       {s}
@@ -509,28 +428,18 @@ export default function InventoryManagementBody() {
                     <div className="flex items-center gap-2">
                       {/* EDIT */}
                       <button
-                        onClick={() =>
-                          handleEditClick(d)
-                        }
+                        onClick={() => handleEditClick(d)}
                         className="h-9 w-9 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
                       >
-                        <Pencil
-                          size={16}
-                          className="text-gray-600"
-                        />
+                        <Pencil size={16} className="text-gray-600" />
                       </button>
 
                       {/* VIEW */}
                       <button
-                        onClick={() =>
-                          handleViewClick(d)
-                        }
+                        onClick={() => handleViewClick(d)}
                         className="h-9 w-9 rounded-xl border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC] inline-flex items-center justify-center"
                       >
-                        <Eye
-                          size={16}
-                          className="text-gray-600"
-                        />
+                        <Eye size={16} className="text-gray-600" />
                       </button>
                     </div>
                   </td>
@@ -547,11 +456,7 @@ export default function InventoryManagementBody() {
 
         <div className="flex items-center justify-end gap-2">
           <button
-            onClick={() =>
-              setPage((p) =>
-                Math.max(1, p - 1)
-              )
-            }
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={safePage <= 1}
             className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center"
           >
@@ -559,11 +464,7 @@ export default function InventoryManagementBody() {
           </button>
 
           <button
-            onClick={() =>
-              setPage((p) =>
-                Math.min(totalPages, p + 1)
-              )
-            }
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={safePage >= totalPages}
             className="h-9 w-9 rounded-lg border border-[#E5E5E5] bg-white inline-flex items-center justify-center"
           >
@@ -582,9 +483,7 @@ export default function InventoryManagementBody() {
               </h2>
 
               <button
-                onClick={() =>
-                  setOpenEdit(false)
-                }
+                onClick={() => setOpenEdit(false)}
                 className="h-10 w-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
               >
                 <X size={18} />
@@ -639,9 +538,7 @@ export default function InventoryManagementBody() {
 
             <div className="flex items-center justify-end gap-3 border-t border-[#E5E5E5] px-6 py-4">
               <button
-                onClick={() =>
-                  setOpenEdit(false)
-                }
+                onClick={() => setOpenEdit(false)}
                 className="h-11 px-5 rounded-xl border border-[#E5E5E5]"
               >
                 Cancel
@@ -674,9 +571,7 @@ export default function InventoryManagementBody() {
               </div>
 
               <button
-                onClick={() =>
-                  setOpenView(false)
-                }
+                onClick={() => setOpenView(false)}
                 className="h-10 w-10 rounded-xl hover:bg-gray-100 flex items-center justify-center"
               >
                 <X size={18} />
@@ -687,7 +582,7 @@ export default function InventoryManagementBody() {
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="w-full lg:w-70">
                   <img
-                    src={viewProduct.image}
+                    src={viewProduct.image || "/placeholder.png"}
                     alt={viewProduct.name}
                     className="w-full h-65 rounded-2xl object-cover border border-[#E5E5E5]"
                   />
@@ -707,7 +602,7 @@ export default function InventoryManagementBody() {
 
                     <span
                       className={`inline-flex items-center rounded-full px-4 py-2 text-xs font-extrabold ${statusStyle(
-                        getStatus(viewProduct)
+                        getStatus(viewProduct),
                       )}`}
                     >
                       {getStatus(viewProduct)}
@@ -715,16 +610,11 @@ export default function InventoryManagementBody() {
                   </div>
 
                   <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <DetailCard
-                      title="SKU"
-                      value={viewProduct.sku}
-                    />
+                    <DetailCard title="SKU" value={viewProduct.sku} />
 
                     <DetailCard
                       title="Warehouse"
-                      value={
-                        viewProduct.warehouse
-                      }
+                      value={viewProduct.warehouse}
                     />
 
                     <DetailCard
@@ -742,17 +632,9 @@ export default function InventoryManagementBody() {
                       value={`${viewProduct.reorderAt} Units`}
                     />
 
-                    <DetailCard
-                      title="Incoming"
-                      value={
-                        viewProduct.incoming
-                      }
-                    />
+                    <DetailCard title="Incoming" value={viewProduct.incoming} />
 
-                    <DetailCard
-                      title="Sold"
-                      value={viewProduct.sold}
-                    />
+                    <DetailCard title="Sold" value={viewProduct.sold} />
                   </div>
                 </div>
               </div>
@@ -760,9 +642,7 @@ export default function InventoryManagementBody() {
 
             <div className="flex items-center justify-end gap-3 border-t border-[#E5E5E5] px-6 py-4">
               <button
-                onClick={() =>
-                  setOpenView(false)
-                }
+                onClick={() => setOpenView(false)}
                 className="h-11 px-5 rounded-xl border border-[#E5E5E5]"
               >
                 Close
@@ -770,9 +650,7 @@ export default function InventoryManagementBody() {
 
               <button
                 onClick={() => {
-                  setSelectedProduct(
-                    viewProduct
-                  );
+                  setSelectedProduct(viewProduct);
                   setOpenView(false);
                   setOpenEdit(true);
                 }}
@@ -788,40 +666,23 @@ export default function InventoryManagementBody() {
   );
 }
 
-function KpiCard({
-  icon,
-  title,
-  value,
-  bg,
-}) {
+function KpiCard({ icon, title, value, bg }) {
   return (
-    <div
-      className={`rounded-2xl border border-[#E5E5E5] ${bg} p-5`}
-    >
+    <div className={`rounded-2xl border border-[#E5E5E5] ${bg} p-5`}>
       <div className="flex items-center justify-between">
         <div className="h-10 w-10 rounded-xl bg-white/70 flex items-center justify-center">
           {icon}
         </div>
 
-        <div className="text-lg font-extrabold text-[#0B1F3A]">
-          {value}
-        </div>
+        <div className="text-lg font-extrabold text-[#0B1F3A]">{value}</div>
       </div>
 
-      <div className="mt-3 text-sm font-semibold text-gray-600">
-        {title}
-      </div>
+      <div className="mt-3 text-sm font-semibold text-gray-600">{title}</div>
     </div>
   );
 }
 
-function InputField({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-}) {
+function InputField({ label, name, value, onChange, type = "text" }) {
   return (
     <div>
       <label className="text-sm font-semibold text-[#0B1F3A] mb-2 block">
@@ -831,7 +692,7 @@ function InputField({
       <input
         type={type}
         name={name}
-        value={value}
+        value={value || ""}
         onChange={onChange}
         className="h-11 w-full rounded-xl border border-[#E5E5E5] px-4 outline-none focus:border-[#0B1F3A]"
       />

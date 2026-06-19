@@ -12,8 +12,10 @@ router.get("/category/:categorySlug/:subcategorySlug",productController.getProdu
 router.get("/category/:categorySlug",productController.getProductsByCategory);
 router.get("/trending", productController.getTrendingProducts);
 router.get("/new-arrivals", productController.getNewArrivals);
+router.get("/vendor/:organizationId/inventory",productController.getVendorInventory);
 router.get("/vendor/:organizationId", productController.getVendorProducts);
 router.get("/:id", productController.getSingleProduct);
+// router.put("/:id", productController.updateProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 module.exports = router;

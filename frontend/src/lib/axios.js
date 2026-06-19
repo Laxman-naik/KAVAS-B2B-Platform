@@ -438,6 +438,19 @@ const PUBLIC_ROUTES = [
 const attachHeaders = (config) => {
   config.headers = config.headers || {};
 
+  /* ✅ IMPORTANT: skip auth for public/custom requests */
+  if (config.skipAuth) {
+    delete config.headers.Authorization;
+
+    const sessionId = getSessionId();
+
+    if (sessionId) {
+      config.headers["x-session-id"] = sessionId;
+    }
+
+    return config;
+  }
+
   const sessionId = getSessionId();
 
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
@@ -531,6 +544,11 @@ const handleError = async (error) => {
   const originalRequest = error.config;
 
   if (!originalRequest) {
+    return Promise.reject(error);
+  }
+
+  /* ✅ IMPORTANT: do not refresh session for skipAuth requests */
+  if (originalRequest.skipAuth) {
     return Promise.reject(error);
   }
 
