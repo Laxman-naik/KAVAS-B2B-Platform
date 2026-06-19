@@ -1,161 +1,9 @@
-// const pool = require("../config/db");
-// const bcrypt = require("bcryptjs");
-// const jwt = require("jsonwebtoken");
-// const { generateAccessToken, generateRefreshToken } = require("../utils/token");
-// const redis = require("../config/redis");
-
-// const REFRESH_PREFIX = "refresh:user:";
-
-// /* ================= REGISTER ================= */
-// exports.register = async (req, res) => {
-//   try {
-//     const { full_name, email, password, phone, role } = req.body || {};
-
-//     if (!full_name || !email || !password) {
-//       return res.status(400).json({
-//         message: "full_name, email and password are required",
-//       });
-//     }
-
-//     const hashed = await bcrypt.hash(password, 10);
-
-//     const result = await pool.query(
-//       `INSERT INTO users (full_name, email, password_hash, phone, role)
-//        VALUES ($1,$2,$3,$4,$5)
-//        RETURNING id, full_name, email, role`,
-//       [full_name, email, hashed, phone, role || "buyer"]
-//     );
-
-//     return res.json({ user: result.rows[0] });
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
-
-// /* ================= LOGIN ================= */
-// exports.login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body || {};
-
-//     if (!req.body) {
-//       return res.status(400).json({
-//         message: "Request body missing. Send JSON with Content-Type: application/json",
-//       });
-//     }
-
-//     const result = await pool.query(
-//       "SELECT * FROM users WHERE email=$1",
-//       [email]
-//     );
-
-//     const user = result.rows[0];
-
-//     if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-//     const match = await bcrypt.compare(password, user.password_hash);
-//     if (!match) return res.status(401).json({ message: "Invalid credentials" });
-
-//     const accessToken = generateAccessToken(user);
-//     const refreshToken = generateRefreshToken(user);
-
-//     await redis.set(
-//       `${REFRESH_PREFIX}${user.id}`,
-//       refreshToken,
-//       "EX",
-//       7 * 24 * 60 * 60
-//     );
-
-//     return res.json({
-//       user: {
-//         id: user.id,
-//         full_name: user.full_name,
-//         email: user.email,
-//         role: user.role,
-//       },
-//       accessToken,
-//       refreshToken,
-//     });
-//   } catch (err) {
-//     return res.status(500).json({ message: err.message });
-//   }
-// };
-
-// /* ================= REFRESH ================= */
-// exports.refreshTokenHandler = async (req, res) => {
-//   try {
-//     const { refreshToken } = req.body;
-
-//     if (!refreshToken) {
-//       return res.status(401).json({ message: "No refresh token" });
-//     }
-
-//     let decoded;
-//     try {
-//       decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-//     } catch {
-//       return res.status(403).json({ message: "Invalid refresh token" });
-//     }
-
-//     const stored = await redis.get(`${REFRESH_PREFIX}${decoded.id}`);
-
-//     if (!stored || stored !== refreshToken) {
-//       return res.status(403).json({ message: "Session expired" });
-//     }
-
-//     const newAccessToken = generateAccessToken({ id: decoded.id });
-
-//     return res.json({ accessToken: newAccessToken });
-//   } catch (err) {
-//     return res.status(500).json({ message: "Refresh failed" });
-//   }
-// };
-
-// /* ================= GET ME (JWT HEADER ONLY) ================= */
-// exports.getMe = async (req, res) => {
-//   try {
-//     const authHeader = req.headers.authorization;
-
-//     if (!authHeader) {
-//       return res.status(401).json({ user: null });
-//     }
-
-//     const token = authHeader.split(" ")[1];
-
-//     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
-
-//     const result = await pool.query(
-//       "SELECT id, full_name, email, role FROM users WHERE id=$1",
-//       [decoded.id]
-//     );
-
-//     return res.json({ user: result.rows[0] });
-//   } catch {
-//     return res.status(401).json({ user: null });
-//   }
-// };
-
-// /* ================= LOGOUT ================= */
-// exports.logout = async (req, res) => {
-//   try {
-//     const { refreshToken } = req.body;
-
-//     if (refreshToken) {
-//       const decoded = jwt.decode(refreshToken);
-//       if (decoded?.id) {
-//         await redis.del(`${REFRESH_PREFIX}${decoded.id}`);
-//       }
-//     }
-
-//     return res.json({ message: "Logged out" });
-//   } catch {
-//     return res.status(500).json({ message: "Logout failed" });
-//   }
-// };
-
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 /* ================= REGISTER ================= */
 exports.register = async (req, res) => {
@@ -168,10 +16,9 @@ exports.register = async (req, res) => {
       });
     }
 
-    const existing = await pool.query(
-      "SELECT id FROM users WHERE email = $1",
-      [email]
-    );
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email,
+    ]);
 
     if (existing.rows.length > 0) {
       return res.status(400).json({ message: "Email already exists" });
@@ -203,10 +50,9 @@ exports.login = async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
-      [email]
-    );
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
+      email,
+    ]);
 
     const user = result.rows[0];
 
@@ -223,22 +69,16 @@ exports.login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    /* ================= SESSION ID ================= */
     let sessionId = req.headers["x-session-id"];
 
     if (!sessionId) {
-      sessionId = require("crypto").randomUUID();
+      sessionId = crypto.randomUUID();
     }
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    /* remove old session for same sessionId */
-    await pool.query(
-      `DELETE FROM sessions WHERE session_id = $1`,
-      [sessionId]
-    );
+    await pool.query(`DELETE FROM sessions WHERE session_id = $1`, [sessionId]);
 
-    /* insert new session */
     await pool.query(
       `
       INSERT INTO sessions (
@@ -269,19 +109,18 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      role:user.role,
+      role: user.role,
       accessToken,
       refreshToken,
       sessionId,
     });
-
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     return res.status(500).json({ message: err.message });
   }
 };
 
-/* ================= REFRESH ================= */
+/* ================= REFRESH TOKEN ================= */
 exports.refreshTokenHandler = async (req, res) => {
   try {
     const { refreshToken, sessionId } = req.body || {};
@@ -293,6 +132,7 @@ exports.refreshTokenHandler = async (req, res) => {
     }
 
     let decoded;
+
     try {
       decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
     } catch {
@@ -316,9 +156,20 @@ exports.refreshTokenHandler = async (req, res) => {
       return res.status(403).json({ message: "Session expired" });
     }
 
+    const userResult = await pool.query(
+      "SELECT id, role FROM users WHERE id = $1",
+      [decoded.id]
+    );
+
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(403).json({ message: "User not found" });
+    }
+
     const newAccessToken = generateAccessToken({
-      id: decoded.id,
-      role: "buyer",
+      id: user.id,
+      role: user.role,
     });
 
     await pool.query(
@@ -327,7 +178,6 @@ exports.refreshTokenHandler = async (req, res) => {
     );
 
     return res.json({ accessToken: newAccessToken });
-
   } catch (err) {
     console.error("REFRESH ERROR:", err);
     return res.status(500).json({ message: "Refresh failed" });
@@ -353,7 +203,6 @@ exports.getMe = async (req, res) => {
     );
 
     return res.json({ user: result.rows[0] });
-
   } catch {
     return res.status(401).json({ user: null });
   }
@@ -378,18 +227,177 @@ exports.logout = async (req, res) => {
     );
 
     return res.json({ message: "Logged out successfully" });
-
   } catch (err) {
     console.error("LOGOUT ERROR:", err);
     return res.status(500).json({ message: "Logout failed" });
   }
 };
 
+/* ================= FORGOT PASSWORD ================= */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body || {};
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const result = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1",
+      [email]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Email not registered",
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const expiry = new Date(Date.now() + 15 * 60 * 1000);
+
+    await pool.query(
+      `
+      UPDATE users
+      SET reset_password_token = $1,
+          reset_password_expires = $2
+      WHERE id = $3
+      `,
+      [resetToken, expiry, user.id]
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT),
+      secure: process.env.EMAIL_SECURE === "true",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    await transporter.verify();
+    console.log("SMTP Connected Successfully");
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: user.email,
+      subject: "KAVAS Password Reset",
+      html: `
+    <h2>KAVAS Password Reset</h2>
+    <p>Click the below link to reset your password:</p>
+    <a href="${resetLink}">${resetLink}</a>
+    <p>This link expires in 15 minutes.</p>
+  `,
+    });
+
+    return res.json({
+      success: true,
+      message: "Password reset link sent to email",
+    });
+  } catch (err) {
+  console.error("FORGOT PASSWORD ERROR:", err);
+
+  return res.status(500).json({
+    message: err.message,
+    code: err.code,
+    command: err.command,
+  });
+
+  }
+};
+
+/* ================= RESET PASSWORD ================= */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body || {};
+
+    if (!token || !password) {
+      return res.status(400).json({
+        message: "Token and new password are required",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT id FROM users
+      WHERE reset_password_token = $1
+      AND reset_password_expires > NOW()
+      `,
+      [token]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `
+      UPDATE users
+      SET password_hash = $1,
+          reset_password_token = NULL,
+          reset_password_expires = NULL
+      WHERE id = $2
+      `,
+      [hashed, user.id]
+    );
+
+    await pool.query(
+      `
+      UPDATE sessions
+      SET is_revoked = true
+      WHERE user_id = $1
+      `,
+      [user.id]
+    );
+
+    return res.json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (err) {
+    console.error("FORGOT PASSWORD FULL ERROR:", err);
+
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
 /* ================= CHANGE PASSWORD ================= */
 exports.changePassword = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const { currentPassword, newPassword } = req.body || {};
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -416,29 +424,37 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      currentPassword,
-      user.password_hash
-    );
+    const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
 
     if (!isMatch) {
-      return res.status(400).json({
+      return res.status(401).json({
         message: "Current password is incorrect",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 10);
 
     await pool.query(
-      `UPDATE users 
-       SET password_hash = $1, updated_at = NOW()
-       WHERE id = $2`,
-      [hashedPassword, userId]
+      `
+      UPDATE users
+      SET password_hash = $1
+      WHERE id = $2
+      `,
+      [hashed, user.id]
     );
 
-    return res.status(200).json({
+    await pool.query(
+      `
+      UPDATE sessions
+      SET is_revoked = true
+      WHERE user_id = $1
+      `,
+      [user.id]
+    );
+
+    return res.json({
       success: true,
-      message: "Password changed successfully",
+      message: "Password changed successfully. Please login again.",
     });
   } catch (err) {
     console.error("CHANGE PASSWORD ERROR:", err);
@@ -447,4 +463,3 @@ exports.changePassword = async (req, res) => {
     });
   }
 };
-
