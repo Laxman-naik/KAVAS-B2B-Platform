@@ -479,41 +479,195 @@ exports.getFlashDeals = async (req, res) => {
             SELECT pi.image_url
             FROM product_images pi
             WHERE pi.product_id = p.id
+              AND pi.media_type = 'image'
+            ORDER BY pi.is_primary DESC, pi.sort_order ASC
             LIMIT 1
           ),
           null
         ) AS image_url,
 
         CASE 
+          WHEN p.mrp > p.price AND p.mrp > 0
+          THEN ROUND(((p.mrp - p.price) / p.mrp) * 100)
+          ELSE 0
+        END AS discount_percentage,
+
+        CASE 
           WHEN p.mrp > p.price
-          THEN CONCAT(
-            '-',
-            ROUND(((p.mrp - p.price) / p.mrp) * 100),
-            '%'
-          )
-          ELSE '-0%'
-        END AS discount
+          THEN p.mrp - p.price
+          ELSE 0
+        END AS savings
 
       FROM products p
-
       WHERE 
         p.is_active = true
         AND p.is_flash_deal = true
-        AND (
-          p.flash_deal_end IS NULL
-          OR p.flash_deal_end > NOW()
-        )
+        AND p.stock > 0
+        AND p.flash_deal_end IS NOT NULL
+        AND p.flash_deal_end > NOW()
 
       ORDER BY p.created_at DESC
     `);
 
-    return res.json({
+    return res.status(200).json({
       success: true,
+      count: result.rows.length,
       products: result.rows,
     });
-
   } catch (err) {
     console.error("getFlashDeals error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.addProductToFlashDeal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price, mrp, flashDealEnd } = req.body;
+
+    if (!price || !mrp || !flashDealEnd) {
+      return res.status(400).json({
+        success: false,
+        message: "price, mrp and flashDealEnd are required",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE products
+      SET 
+        price = $1,
+        mrp = $2,
+        is_flash_deal = true,
+        flash_deal_end = $3,
+        updated_at = NOW()
+      WHERE id = $4
+      RETURNING *,
+        CASE 
+          WHEN mrp > price AND mrp > 0
+          THEN ROUND(((mrp - price) / mrp) * 100)
+          ELSE 0
+        END AS discount_percentage,
+        CASE 
+          WHEN mrp > price
+          THEN mrp - price
+          ELSE 0
+        END AS savings
+      `,
+      [Number(price), Number(mrp), flashDealEnd, id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product added to flash deal successfully",
+      product: result.rows[0],
+    });
+  } catch (err) {
+    console.error("addProductToFlashDeal error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.updateProductFlashDeal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price, mrp, flashDealEnd } = req.body;
+
+    const result = await pool.query(
+      `
+      UPDATE products
+      SET 
+        price = COALESCE($1, price),
+        mrp = COALESCE($2, mrp),
+        flash_deal_end = COALESCE($3, flash_deal_end),
+        is_flash_deal = true,
+        updated_at = NOW()
+      WHERE id = $4
+      RETURNING *,
+        CASE 
+          WHEN mrp > price AND mrp > 0
+          THEN ROUND(((mrp - price) / mrp) * 100)
+          ELSE 0
+        END AS discount_percentage,
+        CASE 
+          WHEN mrp > price
+          THEN mrp - price
+          ELSE 0
+        END AS savings
+      `,
+      [
+        price !== undefined ? Number(price) : null,
+        mrp !== undefined ? Number(mrp) : null,
+        flashDealEnd || null,
+        id,
+      ]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Flash deal updated successfully",
+      product: result.rows[0],
+    });
+  } catch (err) {
+    console.error("updateProductFlashDeal error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+exports.removeProductFromFlashDeal = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      UPDATE products
+      SET 
+        is_flash_deal = false,
+        flash_deal_end = null,
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+      `,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Flash deal removed successfully",
+      product: result.rows[0],
+    });
+  } catch (err) {
+    console.error("removeProductFromFlashDeal error:", err);
 
     return res.status(500).json({
       success: false,
@@ -562,19 +716,53 @@ exports.getSingleProduct = async (req, res) => {
     const product = productResult.rows[0];
 
     // fetch related data
-    const [imagesResult, specsResult, pricingResult, categoriesResult] =
-      await Promise.all([
-        client.query(`SELECT image_url FROM product_images WHERE product_id = $1`, [id]),
-        client.query(`SELECT key, value FROM product_specifications WHERE product_id = $1`, [id]),
-        client.query(`SELECT min_quantity, price, label FROM product_pricing_tiers WHERE product_id = $1 ORDER BY min_quantity ASC`, [id]),
-        client.query(
-          `SELECT c.id, c.name, c.slug, c.parent_id
-           FROM product_categories pc
-           JOIN categories c ON pc.category_id = c.id
-           WHERE pc.product_id = $1`,
-          [id]
-        ),
-      ]);
+    const [
+      imagesResult,
+      specsResult,
+      pricingResult,
+      categoriesResult,
+      reviewsResult,
+    ] = await Promise.all([
+      client.query(
+        `SELECT image_url FROM product_images WHERE product_id = $1`,
+        [id]
+      ),
+
+      client.query(
+        `SELECT key, value FROM product_specifications WHERE product_id = $1`,
+        [id]
+      ),
+
+      client.query(
+        `SELECT min_quantity, price, label 
+     FROM product_pricing_tiers 
+     WHERE product_id = $1 
+     ORDER BY min_quantity ASC`,
+        [id]
+      ),
+
+      client.query(
+        `SELECT c.id, c.name, c.slug, c.parent_id
+     FROM product_categories pc
+     JOIN categories c ON pc.category_id = c.id
+     WHERE pc.product_id = $1`,
+        [id]
+      ),
+
+      client.query(
+        `SELECT 
+       r.id,
+       r.rating,
+       r.comment,
+       r.created_at,
+       u.full_name
+     FROM reviews r
+     LEFT JOIN users u ON u.id = r.user_id
+     WHERE r.product_id = $1
+     ORDER BY r.created_at DESC`,
+        [id]
+      ),
+    ]);
 
     // ✅ FIX: STRONG THROTTLING (user OR session OR IP)
     const existingView = await client.query(
@@ -618,6 +806,7 @@ exports.getSingleProduct = async (req, res) => {
       specifications: specsResult.rows,
       pricingTiers: pricingResult.rows,
       categories: categoriesResult.rows,
+      reviews: reviewsResult.rows,
     });
 
   } catch (err) {

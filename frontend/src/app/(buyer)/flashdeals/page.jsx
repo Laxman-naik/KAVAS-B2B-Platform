@@ -28,11 +28,9 @@ const sortOptions = [
 export default function FlashDealsPage() {
   const dispatch = useDispatch();
 
-  const {
-    flashDeals,
-    flashDealsLoading,
-    error,
-  } = useSelector((state) => state.products);
+  const { flashDeals, flashDealsLoading, error } = useSelector(
+    (state) => state.products
+  );
 
   const [cartLoadingId, setCartLoadingId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,12 +50,31 @@ export default function FlashDealsPage() {
   }, [dispatch]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+    if (!flashDeals || flashDeals.length === 0) return;
+
+    const nearestDeal = flashDeals.reduce((nearest, item) => {
+      const currentEnd = new Date(item.flash_deal_end).getTime();
+      const nearestEnd = new Date(nearest.flash_deal_end).getTime();
+
+      return currentEnd < nearestEnd ? item : nearest;
+    }, flashDeals[0]);
+
+    const updateTimer = () => {
+      const endTime = new Date(nearestDeal.flash_deal_end).getTime();
+      const remaining = Math.max(
+        0,
+        Math.floor((endTime - Date.now()) / 1000)
+      );
+
+      setTimeLeft(remaining);
+    };
+
+    updateTimer();
+
+    const timer = setInterval(updateTimer, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [flashDeals]);
 
   const deals = Array.isArray(flashDeals) ? flashDeals : [];
 
@@ -102,20 +119,36 @@ export default function FlashDealsPage() {
     item.image ||
     item.thumbnail ||
     item.product_image ||
+    item.images?.find((img) => img.is_primary)?.image_url ||
     item.images?.[0]?.image_url ||
     "/placeholder-product.png";
 
-  const getDiscount = (item) => {
-    if (item.discount) return item.discount;
+  const getDiscountValue = (item) => {
+    if (item.discount_percentage) {
+      return Number(item.discount_percentage);
+    }
 
     const price = getPrice(item);
     const oldPrice = getOldPrice(item);
 
-    if (!oldPrice || oldPrice <= price) return "-0%";
+    if (!oldPrice || oldPrice <= price) return 0;
 
-    const discount = Math.round(((oldPrice - price) / oldPrice) * 100);
+    return Math.round(((oldPrice - price) / oldPrice) * 100);
+  };
 
-    return `-${discount}%`;
+  const getDiscount = (item) => {
+    return `${getDiscountValue(item)}% OFF`;
+  };
+
+  const getSavings = (item) => {
+    if (item.savings) return Number(item.savings);
+
+    const price = getPrice(item);
+    const oldPrice = getOldPrice(item);
+
+    if (!oldPrice || oldPrice <= price) return 0;
+
+    return oldPrice - price;
   };
 
   const categories = useMemo(() => {
@@ -143,11 +176,7 @@ export default function FlashDealsPage() {
         break;
 
       case "discountHigh":
-        result.sort(
-          (a, b) =>
-            parseInt(getDiscount(b).replace("-", "").replace("%", "")) -
-            parseInt(getDiscount(a).replace("-", "").replace("%", ""))
-        );
+        result.sort((a, b) => getDiscountValue(b) - getDiscountValue(a));
         break;
 
       case "newest":
@@ -240,7 +269,7 @@ export default function FlashDealsPage() {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC]">
-      <div className="mx-auto max-w-[1500px] px-4 py-6">
+      <div className="mx-auto max-w-375 px-4 py-6">
         <div className="mb-6 overflow-hidden rounded-sm bg-[#0B1F3A] text-white shadow-md">
           <div className="grid items-center gap-6 px-5 py-6 md:px-8 md:py-8 lg:grid-cols-3">
             <div>
@@ -360,7 +389,7 @@ export default function FlashDealsPage() {
 
               <div className="flex items-center gap-3">
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="min-w-[180px] border-[#E5E5E5] bg-white text-sm text-gray-700">
+                  <SelectTrigger className="min-w-45 border-[#E5E5E5] bg-white text-sm text-gray-700">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
 
@@ -385,7 +414,7 @@ export default function FlashDealsPage() {
                       : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
                   }`}
                 >
-                  <List className="h-[18px] w-[18px]" />
+                  <List className="h-4.5 w-4.5" />
                 </Button>
               </div>
             </div>
@@ -440,7 +469,15 @@ export default function FlashDealsPage() {
                                 ₹{getOldPrice(item).toLocaleString()}
                               </span>
                             )}
+
+                            <span className="rounded-md bg-[#f04e23] px-2 py-1 text-xs font-bold text-white">
+                              {getDiscount(item)}
+                            </span>
                           </div>
+
+                          <p className="mt-1 text-sm font-semibold text-green-600">
+                            Save ₹{getSavings(item).toLocaleString()}
+                          </p>
 
                           <p className="mt-1 text-sm text-gray-500">
                             Min. Order: {getMinOrder(item)} Units
@@ -494,7 +531,7 @@ export default function FlashDealsPage() {
                             {getCategory(item)}
                           </p>
 
-                          <h3 className="min-h-[40px] text-sm font-medium leading-5 text-[#0B1F3A]">
+                          <h3 className="min-h-10 text-sm font-medium leading-5 text-[#0B1F3A]">
                             {getTitle(item)}
                           </h3>
 
@@ -509,6 +546,10 @@ export default function FlashDealsPage() {
                               </span>
                             )}
                           </div>
+
+                          <p className="mt-1 text-xs font-semibold text-green-600">
+                            Save ₹{getSavings(item).toLocaleString()}
+                          </p>
 
                           <p className="mt-1 text-xs text-gray-500 sm:text-sm">
                             Min. Order: {getMinOrder(item)} Units

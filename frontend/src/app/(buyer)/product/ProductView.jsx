@@ -653,7 +653,7 @@ export default function ProductView() {
         <div className="mt-6 space-y-5">
           <ProductDetailsSection product={product} />
           <SpecificationsSection specifications={product?.specifications} />
-          <CustomerReviewsSection product={product} />
+          <CustomerReviewsSection product={p} />
           <ShippingDeliverySection product={product} />
 
           {/* Similar Products */}

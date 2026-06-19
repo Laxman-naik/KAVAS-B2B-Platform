@@ -87,7 +87,7 @@ const FlashDeals = () => {
   return (
     <section className="bg-white py-2">
       <div className="w-full px-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#07162B] via-[#0B1F3A] to-[#102C54] px-4 py-4 shadow-xl md:px-7 md:py-5">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-[#07162B] via-[#0B1F3A] to-[#102C54] px-4 py-4 shadow-xl md:px-7 md:py-5">
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="mb-1.5 flex items-center gap-2">
@@ -151,9 +151,9 @@ const FlashDeals = () => {
               <Link
                 href="/flashdeals"
                 key={index}
-                className="flex h-[285px] min-w-[220px] max-w-[220px] flex-col overflow-hidden rounded-xl border border-[#E5E5E5] bg-[#FFF8EC] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-[235px] sm:max-w-[235px]"
+                className="flex h-71.25 min-w-55 max-w-55 flex-col overflow-hidden rounded-xl border border-[#E5E5E5] bg-[#FFF8EC] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-58.75 sm:max-w-58.75"
               >
-                <div className="relative h-[135px] overflow-hidden bg-white">
+                <div className="relative h-33.75 overflow-hidden bg-white">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -166,7 +166,7 @@ const FlashDeals = () => {
                 </div>
 
                 <div className="flex flex-1 flex-col p-3.5">
-                  <h3 className="line-clamp-2 min-h-[38px] text-sm font-extrabold text-[#1A1A1A]">
+                  <h3 className="line-clamp-2 min-h-9.5 text-sm font-extrabold text-[#1A1A1A]">
                     {item.name}
                   </h3>
 

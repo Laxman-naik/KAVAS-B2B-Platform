@@ -59,7 +59,7 @@ const WhyChoose = () => {
                   hover:-translate-y-1
                   transition-all
                   duration-300
-                  min-h-[135px]
+                  min-h-33.75
                 "
               >
                 {/* Icon */}

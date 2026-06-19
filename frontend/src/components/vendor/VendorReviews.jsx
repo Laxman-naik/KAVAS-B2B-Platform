@@ -1,219 +1,146 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Star } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 
 const VendorReviews = () => {
-  const containerRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [openIndex, setOpenIndex] = useState(0);
 
-  const reviews = useMemo(
-    () => [
-      {
-        name: "Priya Sharma",
-        role: "Textile Seller, Surat",
-        quote:
-          "Kavas transformed my wholesale business. I went from managing orders on WhatsApp to a fully automated system. My revenue doubled in 6 months!",
-        rating: 5,
-      },
-      {
-        name: "Rajesh Kumar",
-        role: "Handicraft Exporter, Jaipur",
-        quote:
-          "The GST invoicing feature alone saved me 10 hours a week. The analytics dashboard helps me understand which products are trending. Highly recommended!",
-        rating: 5,
-      },
-      {
-        name: "Meena Patel",
-        role: "Organic Foods Distributor, Ahmedabad",
-        quote:
-          "Fast payouts and excellent support. My account manager helped me set up everything in a day. The platform is very easy to use even for non-tech people.",
-        rating: 5,
-      },
-      {
-        name: "Ankit Verma",
-        role: "Electronics Wholesaler, Delhi",
-        quote:
-          "Better buyer quality and fewer cancellations. The order flow is clean and professional.",
-        rating: 4,
-      },
-    ],
-    []
-  );
+  const faqs = [
+    {
+      question: "Who can become a seller on Kavas?",
+      answer:
+        "Any registered business with a valid GSTIN can join Kavas. We welcome manufacturers, wholesalers, distributors, and importers across all product categories.",
+    },
+    {
+      question: "How much does it cost to sell?",
+      answer:
+        "Listing products on Kavas is completely free. We charge a small commission only when you successfully make a sale. No hidden charges whatsoever.",
+    },
+    {
+      question: "How do I receive payments?",
+      answer:
+        "Payments are settled directly to your registered bank account every 7 days. All transactions are secured through our escrow system — buyers pay when they order, you get paid after delivery.",
+    },
+    {
+      question: "Can I set my own MOQ and prices?",
+      answer:
+        "Absolutely! You have full control over your Minimum Order Quantity (MOQ), wholesale pricing, and product specifications. We simply provide the platform for you to connect with buyers.",
+    },
+    {
+      question: "How long does verification take?",
+      answer:
+        "Standard verification takes 24-48 hours. We verify your GSTIN, bank details, and business registration documents. Premium verification with faster onboarding is available on request.",
+    },
+  ];
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+  
 
-    const prefersReduced =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    if (prefersReduced) return;
-
-    if (isPaused) return;
-
-    const interval = window.setInterval(() => {
-      setActiveIndex((i) => (i + 1) % reviews.length);
-    }, 5000);
-
-    return () => window.clearInterval(interval);
-  }, [isPaused, reviews.length]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const cards = el.querySelectorAll("[data-review-card='true']");
-    const card = cards?.[activeIndex];
-    if (!(card instanceof HTMLElement)) return;
-
-    el.scrollTo({ left: card.offsetLeft, behavior: "smooth" });
-  }, [activeIndex]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const onScroll = () => {
-      const cards = el.querySelectorAll("[data-review-card='true']");
-      const left = el.scrollLeft;
-      let nearest = 0;
-      let best = Infinity;
-      cards.forEach((node, idx) => {
-        if (!(node instanceof HTMLElement)) return;
-        const d = Math.abs(node.offsetLeft - left);
-        if (d < best) {
-          best = d;
-          nearest = idx;
-        }
-      });
-      setActiveIndex(nearest);
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
+  const toggleFaq = (index) => {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  };
 
   return (
-    <section id="reviews" className="bg-[#FFF8EC] py-14">
-      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
+    <section id="faqs" className="bg-[#FFF8EC] pt-14">
+      <div className="mx-auto max-w-245 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <div className="text-xs font-semibold tracking-wide text-[#D4AF37] uppercase">
-            Vendor Reviews
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#0B1F3A]">
-            What Sellers Say
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0B1F3A]">
+            Frequently Asked{" "}
+            <span className="text-[#D4AF37]">Questions</span>
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-gray-600">
-            Real stories from real sellers across India
-          </p>
-          <div className="mt-4 mx-auto h-0.75 w-10 rounded-full bg-[#D4AF37]" />
         </div>
 
-        <div className="mt-10">
-          <div
-            ref={containerRef}
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            onTouchStart={() => setIsPaused(true)}
-            onTouchEnd={() => setIsPaused(false)}
-            className="flex gap-5 overflow-x-auto no-scrollbar scroll-smooth pb-2"
-          >
-            {reviews.map((r) => {
-              const initials = r.name
-                .split(" ")
-                .filter(Boolean)
-                .slice(0, 2)
-                .map((x) => x[0]?.toUpperCase())
-                .join("");
+        <div className="mt-8 space-y-3">
+          {faqs.map((item, index) => {
+            const isOpen = openIndex === index;
 
-              return (
-                <div
-                  key={r.name}
-                  data-review-card="true"
-                  className="shrink-0 w-[90%] sm:w-[70%] lg:w-[32%] rounded-sm border border-[#E5E5E5] bg-white p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]"
-                >
-                  <div className="inline-flex items-center gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={
-                          i < r.rating
-                            ? "text-[#D4AF37] fill-[#D4AF37]"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
-                  </div>
-
-                  <div className="mt-4 text-sm text-gray-700 leading-relaxed">“{r.quote}”</div>
-
-                  <div className="mt-6 flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-[#0B1F3A] text-white flex items-center justify-center text-xs font-bold">
-                      {initials}
-                    </div>
-                    <div className="min-h-9">
-                      <div className="text-sm font-semibold text-[#1A1A1A] whitespace-nowrap overflow-hidden text-ellipsis">
-                        {r.name}
-                      </div>
-                      <div className="text-xs font-medium text-gray-500 leading-4">
-                        {r.role}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 flex items-center justify-center gap-2">
-            {reviews.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={`Go to review ${i + 1}`}
-                onClick={() => setActiveIndex(i)}
-                className={`h-2 w-2 rounded-full transition-colors ${
-                  i === activeIndex ? "bg-[#D4AF37]" : "bg-gray-300"
+            return (
+              <div
+                key={item.question}
+                className={`rounded-sm border bg-white shadow-sm transition-all duration-300 ${
+                  isOpen
+                    ? "border-[#D4AF37]/40 shadow-md"
+                    : "border-[#E5E5E5] hover:border-[#D4AF37]/30"
                 }`}
-              />
-            ))}
-          </div>
-        </div>
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleFaq(index)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                  aria-expanded={isOpen}
+                >
+                  <h3 className="text-sm sm:text-base font-bold text-[#0B1F3A]">
+                    {item.question}
+                  </h3>
 
-        <div className="mt-12 rounded-sm border border-[#E5E5E5] bg-white p-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-sm bg-[#0B1F3A] flex items-center justify-center">
-                <BadgeCheck size={18} className="text-[#D4AF37]" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[#0B1F3A]">
-                  Join thousands of successful sellers on Kavas
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFF8EC]">
+                    {isOpen ? (
+                      <Minus size={16} className="text-[#D4AF37]" />
+                    ) : (
+                      <Plus size={16} className="text-[#D4AF37]" />
+                    )}
+                  </span>
+                </button>
+
+                <div
+                  className={`grid transition-all duration-300 ease-in-out ${
+                    isOpen
+                      ? "grid-rows-[1fr] opacity-100"
+                      : "grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <p className="px-5 pb-5 text-sm leading-6 text-gray-600">
+                      {item.answer}
+                    </p>
+                  </div>
                 </div>
-                <div className="mt-1 text-sm text-gray-600">
-                  Start your journey today and take your business to the next level.
-                </div>
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-14 w-full bg-[#0B1F3A]">
+        <div className="mx-auto max-w-400 px-6 py-16 sm:px-10 lg:px-16">
+          <div className="text-center">
+            <div className="inline-flex items-center rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#D4AF37]">
+                Join Kavas Today
+              </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              <Link
-                href="/vendor/vendorlogin"
-                className="inline-flex items-center justify-center rounded-sm bg-[#0B1F3A] px-6 py-3 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Login Now
-              </Link>
+            <h2 className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
+              Ready to Grow Your
+              <span className="block text-[#D4AF37]">
+                Wholesale Business?
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-7 text-white/80">
+              Join thousands of verified sellers already growing on Kavas. Zero
+              listing fees, unlimited product listings, secure payments, and
+              access to buyers across India.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/vendor/vendorregister"
-                className="inline-flex items-center justify-center rounded-sm border border-[#0B1F3A]/25 bg-white px-6 py-3 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                className="inline-flex items-center justify-center rounded-sm bg-[#D4AF37] px-7 py-3 text-base font-bold text-[#0B1F3A] transition hover:opacity-90"
               >
-                Create Account
+                Start Selling Now
+              </Link>
+
+              <Link
+                href="/vendor/vendorlogin"
+                className="inline-flex items-center justify-center rounded-sm border border-white/20 bg-white/5 px-7 py-3 text-base font-semibold text-white transition hover:bg-white/10"
+              >
+                Login to Seller Hub
               </Link>
             </div>
+
+            
           </div>
         </div>
       </div>
