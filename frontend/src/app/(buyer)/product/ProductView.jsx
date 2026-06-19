@@ -377,7 +377,7 @@ export default function ProductView() {
                 </button>
               </div>
 
-              <div className="flex h-[320px] items-center justify-center p-4 lg:h-[460px]" style={{ background: C.cream }}>
+              <div className="flex h-80 items-center justify-center p-4 lg:h-115" style={{ background: C.cream }}>
                 {selectedMedia?.type === "video"
                   ? <video src={selectedMedia.src} controls className="h-full w-full object-contain" />
                   : <img src={selectedMedia?.src ?? "/placeholder.png"} alt={norm.title} className="h-full w-full object-contain" />}
@@ -653,7 +653,7 @@ export default function ProductView() {
         <div className="mt-6 space-y-5">
           <ProductDetailsSection product={product} />
           <SpecificationsSection specifications={product?.specifications} />
-          <CustomerReviewsSection product={product} />
+          <CustomerReviewsSection product={p} />
           <ShippingDeliverySection product={product} />
 
           {/* Similar Products */}

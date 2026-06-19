@@ -9,6 +9,18 @@ const VendorNavbar = () => {
   const [open, setOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
+  const navItems = [
+    { href: "#features", label: "Features" },
+    { href: "#benefits", label: "Benefits" },
+    { href: "#pricing", label: "Pricing" },
+  ];
+
+  const resourceItems = [
+    { href: "/faqs", label: "FAQs", type: "link" },
+    { href: "/contactus", label: "Contact Support", type: "link" },
+    { href: "#pricing", label: "Pricing Guide", type: "anchor" },
+  ];
+
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 1024) {
@@ -37,22 +49,18 @@ const VendorNavbar = () => {
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("pointerdown", onPointerDown);
+
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("pointerdown", onPointerDown);
     };
   }, [resourcesOpen]);
 
-  const navItems = [
-    { href: "#features", label: "Features" },
-    { href: "#benefits", label: "Benefits" },
-    { href: "#pricing", label: "Pricing" },
-  ];
-
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E5E5E5] bg-[#0B1F3A]">
-      <div className="mx-auto max-w-350 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0B1F3A] shadow-sm">
+      <div className="mx-auto w-full max-w-360 px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/LOGOKAVAS.png"
@@ -64,58 +72,64 @@ const VendorNavbar = () => {
             />
           </Link>
 
-          <nav className="hidden lg:flex items-center justify-center gap-8 flex-1">
-            {navItems.map((x) => (
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex flex-1 items-center justify-center gap-9">
+            {navItems.map((item) => (
               <a
-                key={x.href}
-                href={x.href}
-                className="text-sm font-semibold text-white hover:text-white/80"
+                key={item.href}
+                href={item.href}
+                className="relative text-sm font-semibold text-white/90 transition-colors hover:text-[#D4AF37]"
               >
-                {x.label}
+                {item.label}
               </a>
             ))}
 
+            {/* Resources Dropdown */}
             <div className="relative" data-vendor-resources-root="true">
               <button
                 type="button"
-                onClick={() => setResourcesOpen((s) => !s)}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-white/80"
+                onClick={() => setResourcesOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-white/90 transition-colors hover:text-[#D4AF37]"
                 aria-expanded={resourcesOpen}
                 aria-haspopup="menu"
               >
                 Resources
-                <ChevronDown size={16} />
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${
+                    resourcesOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
               {resourcesOpen && (
                 <div
-                  className="absolute left-0 mt-2 w-56 rounded-sm border border-[#E5E5E5] bg-white shadow-md p-2"
+                  className="absolute left-1/2 top-full mt-3 w-60 -translate-x-1/2 rounded-xl border border-[#E5E5E5] bg-white p-2 shadow-xl"
                   role="menu"
                 >
-                  <Link
-                    href="/faqs"
-                    className="block rounded-sm px-3 py-2 text-sm font-medium text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    role="menuitem"
-                    onClick={() => setResourcesOpen(false)}
-                  >
-                    FAQs
-                  </Link>
-                  <Link
-                    href="/contactus"
-                    className="block rounded-sm px-3 py-2 text-sm font-medium text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    role="menuitem"
-                    onClick={() => setResourcesOpen(false)}
-                  >
-                    Contact Support
-                  </Link>
-                  <a
-                    href="#pricing"
-                    className="block rounded-sm px-3 py-2 text-sm font-medium text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    role="menuitem"
-                    onClick={() => setResourcesOpen(false)}
-                  >
-                    Pricing Guide
-                  </a>
+                  {resourceItems.map((item) =>
+                    item.type === "link" ? (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setResourcesOpen(false)}
+                        className="block rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0B1F3A] transition-colors hover:bg-[#FFF8EC] hover:text-[#D4AF37]"
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a
+                        key={item.label}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setResourcesOpen(false)}
+                        className="block rounded-lg px-4 py-2.5 text-sm font-semibold text-[#0B1F3A] transition-colors hover:bg-[#FFF8EC] hover:text-[#D4AF37]"
+                      >
+                        {item.label}
+                      </a>
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -123,78 +137,99 @@ const VendorNavbar = () => {
             <Link
               href="/help"
               onClick={() => setResourcesOpen(false)}
-              className="text-sm font-semibold text-white hover:text-white/80"
+              className="relative text-sm font-semibold text-white/90 transition-colors hover:text-[#D4AF37]"
             >
               Help
             </Link>
           </nav>
 
+          {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/vendor/vendorlogin"
-              className="rounded-sm border border-white/25 px-4 py-2 text-sm font-semibold text-[#0B1F3A] bg-white hover:opacity-90"
+              className="rounded-md border border-white/25 bg-transparent px-4 py-2 text-sm font-semibold text-white transition-all hover:border-[#D4AF37] hover:text-[#D4AF37]"
             >
               Login
             </Link>
+
             <Link
               href="/vendor/vendorregister"
-              className="rounded-sm bg-white px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:opacity-90"
+              className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-[#0B1F3A] transition-all hover:bg-[#FFF8EC] hover:text-[#0B1F3A]"
             >
               Create Account
             </Link>
           </div>
 
+          {/* Mobile Menu Button */}
           <button
             type="button"
-            onClick={() => setOpen((s) => !s)}
-            className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-sm border border-[#E5E5E5] text-[#0B1F3A]"
+            onClick={() => setOpen((prev) => !prev)}
+            className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/20 text-white transition-colors hover:border-[#D4AF37] hover:text-[#D4AF37]"
             aria-label={open ? "Close menu" : "Open menu"}
           >
-            {open ? <X size={18} /> : <Menu size={18} />}
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
+        {/* Mobile Menu */}
         {open && (
-          <div className="lg:hidden pb-4">
-            <div className="grid gap-2 pt-2">
-              {navItems.map((x) => (
+          <div className="lg:hidden border-t border-white/10 pb-5 pt-3">
+            <div className="grid gap-1">
+              {navItems.map((item) => (
                 <a
-                  key={x.href}
-                  href={x.href}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-sm px-3 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-[#D4AF37]"
                 >
-                  {x.label}
+                  {item.label}
                 </a>
               ))}
 
-              <a
-                href="#pricing"
-                onClick={() => setOpen(false)}
-                className="rounded-sm px-3 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
-              >
-                Resources
-              </a>
+              {resourceItems.map((item) =>
+                item.type === "link" ? (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-[#D4AF37]"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-[#D4AF37]"
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
 
               <Link
                 href="/help"
                 onClick={() => setOpen(false)}
-                className="rounded-sm px-3 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-[#D4AF37]"
               >
                 Help
               </Link>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <Link
                 href="/vendor/vendorlogin"
-                className="rounded-sm border border-[#0B1F3A]/25 px-4 py-2 text-center text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                onClick={() => setOpen(false)}
+                className="rounded-md border border-white/25 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:border-[#D4AF37] hover:text-[#D4AF37]"
               >
                 Login
               </Link>
+
               <Link
                 href="/vendor/vendorregister"
-                className="rounded-sm bg-[#0B1F3A] px-4 py-2 text-center text-sm font-semibold text-white hover:opacity-90"
+                onClick={() => setOpen(false)}
+                className="rounded-md bg-white px-4 py-2.5 text-center text-sm font-semibold text-[#0B1F3A] transition-colors hover:bg-[#FFF8EC]"
               >
                 Create
               </Link>

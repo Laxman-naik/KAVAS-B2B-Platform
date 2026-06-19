@@ -364,8 +364,9 @@ const page = () => {
                     </div>
                   </div>
                 </div>
-
+<Link href="/help">
                 <Button className="mt-5 w-full bg-[#D4AF37] text-[#0B1F3A] hover:opacity-90 font-bold rounded-sm">Contact Support</Button>
+                </Link>
                 <p className="mt-2 text-xs text-gray-500">Support available during business hours.</p>
               </div>
             </Card>

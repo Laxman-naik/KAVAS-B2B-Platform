@@ -450,7 +450,7 @@ function Info({ label, value }) {
   return (
     <div>
       <p className="text-gray-500 text-xs mb-1">{label}</p>
-      <p className="text-gray-200 font-medium break-words">{value}</p>
+      <p className="text-gray-200 font-medium wrap-break-words">{value}</p>
     </div>
   );
 }

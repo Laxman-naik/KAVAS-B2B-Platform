@@ -98,6 +98,7 @@ export const createProduct = async (data) => {
   const res = await productapi.post("/api/products", data);
   return res.data;
 };
+
 // ================= GET FLASH DEALS =================
 export const getFlashDealsAPI = async () => {
   const res = await productapi.get("/api/products/flash-deals", {
@@ -106,8 +107,37 @@ export const getFlashDealsAPI = async () => {
   return res.data;
 };
 
+// ================= MAKE PRODUCT FLASH DEAL =================
+export const makeProductFlashDealAPI = async (productId, data) => {
+  const res = await productapi.put(
+    `/api/products/${productId}/flash-deal`,
+    data
+  );
+  return res.data;
+};
+
+// ================= UPDATE PRODUCT FLASH DEAL =================
+export const updateProductFlashDealAPI = async (productId, data) => {
+  const res = await productapi.patch(
+    `/api/products/${productId}/flash-deal`,
+    data
+  );
+  return res.data;
+};
+
+// ================= REMOVE PRODUCT FLASH DEAL =================
+export const removeProductFlashDealAPI = async (productId) => {
+  const res = await productapi.delete(
+    `/api/products/${productId}/flash-deal`
+  );
+  return res.data;
+};
+
 // ================= ADD FLASH DEAL TO CART =================
-export const addFlashDealToCartAPI = async ({ productId, quantity = 1 }) => {
+export const addFlashDealToCartAPI = async ({
+  productId,
+  quantity = 1,
+}) => {
   const res = await productapi.post("/api/cart", {
     product_id: productId,
     quantity,

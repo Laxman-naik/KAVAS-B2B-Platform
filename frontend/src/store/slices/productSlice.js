@@ -10,6 +10,9 @@ import {
   getVendorProductsAPI,
   getFlashDealsAPI,
   addFlashDealToCartAPI,
+  makeProductFlashDealAPI,
+  updateProductFlashDealAPI,
+  removeProductFlashDealAPI,
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */
@@ -19,8 +22,6 @@ export const fetchProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getProducts();
-      console.log("ALL PRODUCTS RESPONSE:", res);
-
       return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -35,9 +36,6 @@ export const fetchSingleProduct = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await getSingleProduct(id);
-
-      console.log("SINGLE PRODUCT RESPONSE:", res);
-
       return res?.product || res?.data || res;
     } catch (err) {
       return thunkAPI.rejectWithValue(
@@ -49,28 +47,15 @@ export const fetchSingleProduct = createAsyncThunk(
   }
 );
 
-
-
+/* ================= ADD PRODUCT ================= */
 
 export const addProduct = createAsyncThunk(
   "products/add",
   async (formData, thunkAPI) => {
     try {
-      console.log("SENDING PRODUCT DATA:");
-
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       const res = await createProduct(formData);
-
-      console.log("CREATE PRODUCT RESPONSE:", res);
-
       return res.product || res.data || res;
     } catch (err) {
-      console.log("CREATE PRODUCT ERROR STATUS:", err.response?.status);
-      console.log("CREATE PRODUCT ERROR DATA:", err.response?.data);
-
       return thunkAPI.rejectWithValue(
         err.response?.data || {
           message: err.message || "Failed to create product",
@@ -80,17 +65,21 @@ export const addProduct = createAsyncThunk(
   }
 );
 
+/* ================= UPDATE PRODUCT ================= */
+
 export const editProduct = createAsyncThunk(
   "products/update",
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-      return res.data;
+      return res?.product || res?.data || res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
+
+/* ================= DELETE PRODUCT ================= */
 
 export const removeProduct = createAsyncThunk(
   "products/delete",
@@ -104,13 +93,13 @@ export const removeProduct = createAsyncThunk(
   }
 );
 
+/* ================= NEW ARRIVALS ================= */
+
 export const fetchNewArrivals = createAsyncThunk(
   "products/newArrivals",
   async (_, thunkAPI) => {
     try {
       const res = await getNewArrivalsAPI();
-      console.log("NEW ARRIVALS RESPONSE:", res);
-
       return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -125,8 +114,6 @@ export const fetchTrendingProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await getTrendingProductsAPI();
-      console.log("TRENDING PRODUCTS RESPONSE:", res);
-
       return res?.products || res?.data || res || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -134,13 +121,81 @@ export const fetchTrendingProducts = createAsyncThunk(
   }
 );
 
+/* ================= FLASH DEALS ================= */
+
+export const fetchFlashDeals = createAsyncThunk(
+  "products/flashDeals",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getFlashDealsAPI();
+      return res?.products || res?.data || res || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const makeProductFlashDeal = createAsyncThunk(
+  "products/makeProductFlashDeal",
+  async ({ productId, data }, thunkAPI) => {
+    try {
+      const res = await makeProductFlashDealAPI(productId, data);
+      return res?.product || res?.data || res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const updateProductFlashDeal = createAsyncThunk(
+  "products/updateProductFlashDeal",
+  async ({ productId, data }, thunkAPI) => {
+    try {
+      const res = await updateProductFlashDealAPI(productId, data);
+      return res?.product || res?.data || res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const removeProductFlashDeal = createAsyncThunk(
+  "products/removeProductFlashDeal",
+  async (productId, thunkAPI) => {
+    try {
+      const res = await removeProductFlashDealAPI(productId);
+      return res?.product || res?.data || res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+/* ================= ADD FLASH DEAL TO CART ================= */
+
+export const addFlashDealToCart = createAsyncThunk(
+  "products/addFlashDealToCart",
+  async ({ productId, quantity = 1 }, thunkAPI) => {
+    try {
+      const res = await addFlashDealToCartAPI({
+        productId,
+        quantity,
+      });
+
+      return res?.data || res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+/* ================= VENDOR PRODUCTS ================= */
+
 export const fetchVendorProducts = createAsyncThunk(
   "products/fetchVendorProducts",
   async (organizationId, thunkAPI) => {
     try {
       const res = await getVendorProductsAPI(organizationId);
-      console.log("VENDOR PRODUCTS RESPONSE:", res);
-
       return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -150,19 +205,23 @@ export const fetchVendorProducts = createAsyncThunk(
 
 const productSlice = createSlice({
   name: "products",
+
   initialState: {
     trending: [],
     newArrivals: [],
+    flashDeals: [],
     products: [],
     vendorProducts: [],
     product: null,
 
     loading: false,
     flashDealsLoading: false,
+    flashDealActionLoading: false,
 
     cartLoading: false,
     cartSuccess: false,
 
+    success: false,
     error: null,
   },
 
@@ -174,10 +233,17 @@ const productSlice = createSlice({
     clearCartSuccess: (state) => {
       state.cartSuccess = false;
     },
+
+    clearProductSuccess: (state) => {
+      state.success = false;
+    },
   },
 
   extraReducers: (builder) => {
     builder
+
+      /* ================= PRODUCTS ================= */
+
       .addCase(fetchProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -191,18 +257,15 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* FETCH SINGLE */
       .addCase(fetchSingleProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchSingleProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.product =
           action.payload?.product || action.payload?.data || action.payload;
       })
-
       .addCase(fetchSingleProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -211,33 +274,54 @@ const productSlice = createSlice({
       .addCase(addProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.success = false;
       })
-
       .addCase(addProduct.fulfilled, (state, action) => {
         state.loading = false;
+        state.success = true;
 
         if (action.payload) {
           state.products.unshift(action.payload);
         }
       })
-
       .addCase(addProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
+      .addCase(editProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
       .addCase(editProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+
         const updatedProduct =
           action.payload?.product || action.payload?.data || action.payload;
 
         state.products = state.products.map((p) =>
           p.id === updatedProduct?.id ? updatedProduct : p
         );
+
+        state.vendorProducts = state.vendorProducts.map((p) =>
+          p.id === updatedProduct?.id ? updatedProduct : p
+        );
+      })
+      .addCase(editProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       .addCase(removeProduct.fulfilled, (state, action) => {
         state.products = state.products.filter((p) => p.id !== action.payload);
+        state.vendorProducts = state.vendorProducts.filter(
+          (p) => p.id !== action.payload
+        );
       })
+
+      /* ================= NEW ARRIVALS ================= */
 
       .addCase(fetchNewArrivals.pending, (state) => {
         state.loading = true;
@@ -252,6 +336,8 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
+      /* ================= TRENDING ================= */
+
       .addCase(fetchTrendingProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -265,16 +351,140 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
 
+      /* ================= FETCH FLASH DEALS ================= */
+
+      .addCase(fetchFlashDeals.pending, (state) => {
+        state.flashDealsLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFlashDeals.fulfilled, (state, action) => {
+        state.flashDealsLoading = false;
+        state.flashDeals = action.payload;
+      })
+      .addCase(fetchFlashDeals.rejected, (state, action) => {
+        state.flashDealsLoading = false;
+        state.error = action.payload;
+      })
+
+      /* ================= MAKE FLASH DEAL ================= */
+
+      .addCase(makeProductFlashDeal.pending, (state) => {
+        state.flashDealActionLoading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(makeProductFlashDeal.fulfilled, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.success = true;
+
+        const product = action.payload;
+
+        state.flashDeals = state.flashDeals.filter(
+          (item) => item.id !== product.id
+        );
+
+        state.flashDeals.unshift(product);
+
+        state.products = state.products.map((item) =>
+          item.id === product.id ? product : item
+        );
+
+        state.vendorProducts = state.vendorProducts.map((item) =>
+          item.id === product.id ? product : item
+        );
+      })
+      .addCase(makeProductFlashDeal.rejected, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.error = action.payload;
+      })
+
+      /* ================= UPDATE FLASH DEAL ================= */
+
+      .addCase(updateProductFlashDeal.pending, (state) => {
+        state.flashDealActionLoading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(updateProductFlashDeal.fulfilled, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.success = true;
+
+        const product = action.payload;
+
+        state.flashDeals = state.flashDeals.map((item) =>
+          item.id === product.id ? product : item
+        );
+
+        state.products = state.products.map((item) =>
+          item.id === product.id ? product : item
+        );
+
+        state.vendorProducts = state.vendorProducts.map((item) =>
+          item.id === product.id ? product : item
+        );
+      })
+      .addCase(updateProductFlashDeal.rejected, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.error = action.payload;
+      })
+
+      /* ================= REMOVE FLASH DEAL ================= */
+
+      .addCase(removeProductFlashDeal.pending, (state) => {
+        state.flashDealActionLoading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(removeProductFlashDeal.fulfilled, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.success = true;
+
+        const product = action.payload;
+
+        state.flashDeals = state.flashDeals.filter(
+          (item) => item.id !== product.id
+        );
+
+        state.products = state.products.map((item) =>
+          item.id === product.id ? product : item
+        );
+
+        state.vendorProducts = state.vendorProducts.map((item) =>
+          item.id === product.id ? product : item
+        );
+      })
+      .addCase(removeProductFlashDeal.rejected, (state, action) => {
+        state.flashDealActionLoading = false;
+        state.error = action.payload;
+      })
+
+      /* ================= ADD FLASH DEAL TO CART ================= */
+
+      .addCase(addFlashDealToCart.pending, (state) => {
+        state.cartLoading = true;
+        state.cartSuccess = false;
+        state.error = null;
+      })
+      .addCase(addFlashDealToCart.fulfilled, (state) => {
+        state.cartLoading = false;
+        state.cartSuccess = true;
+      })
+      .addCase(addFlashDealToCart.rejected, (state, action) => {
+        state.cartLoading = false;
+        state.cartSuccess = false;
+        state.error = action.payload;
+      })
+
+      /* ================= VENDOR PRODUCTS ================= */
+
       .addCase(fetchVendorProducts.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(fetchVendorProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.vendorProducts = action.payload?.products || [];
       })
-
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -282,6 +492,10 @@ const productSlice = createSlice({
   },
 });
 
-export const { clearProductError, clearCartSuccess } = productSlice.actions;
+export const {
+  clearProductError,
+  clearCartSuccess,
+  clearProductSuccess,
+} = productSlice.actions;
 
 export default productSlice.reducer;

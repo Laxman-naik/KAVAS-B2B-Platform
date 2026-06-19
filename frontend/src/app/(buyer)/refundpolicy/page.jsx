@@ -21,10 +21,7 @@ import {
   Info,
 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import {
   Accordion,
@@ -124,70 +121,110 @@ const RefundPolicyPage = () => {
   ];
 
   const policyPoints = [
-    ["Product Condition", "Returned items must be unused, undamaged and in original packaging with all accessories, manuals and labels."],
-    ["Return Window", "Return requests are accepted within 7 to 15 days of delivery. The exact window depends on the product category."],
-    ["Damaged or Wrong Items", "Please report within 48 hours of delivery with clear photos and order details. We will arrange a replacement or refund."],
-    ["Partial Returns", "For bulk orders, partial returns are accepted as per our policy and supplier approval."],
-    ["Non-Refundable Items", "Customized or made-to-order products, perishable goods, software, digital codes and clearance sale items are non-refundable."],
-    ["Shipping Charges", "Original shipping charges are non-refundable unless the return is due to our error."],
-    ["GST Invoice & Taxes", "Refunds are processed after validating returned items and adjusting the GST invoice as per applicable laws."],
-    ["Approval", "All refund requests are subject to review and approval by the seller or supplier."],
+    [
+      "Product Condition",
+      "Returned items must be unused, undamaged and in original packaging with all accessories, manuals and labels.",
+    ],
+    [
+      "Return Window",
+      "Return requests are accepted within 7 to 15 days of delivery. The exact window depends on the product category.",
+    ],
+    [
+      "Damaged or Wrong Items",
+      "Please report within 48 hours of delivery with clear photos and order details. We will arrange a replacement or refund.",
+    ],
+    [
+      "Partial Returns",
+      "For bulk orders, partial returns are accepted as per our policy and supplier approval.",
+    ],
+    [
+      "Non-Refundable Items",
+      "Customized or made-to-order products, perishable goods, software, digital codes and clearance sale items are non-refundable.",
+    ],
+    [
+      "Shipping Charges",
+      "Original shipping charges are non-refundable unless the return is due to our error.",
+    ],
+    [
+      "GST Invoice & Taxes",
+      "Refunds are processed after validating returned items and adjusting the GST invoice as per applicable laws.",
+    ],
+    [
+      "Approval",
+      "All refund requests are subject to review and approval by the seller or supplier.",
+    ],
   ];
 
   const refundMethods = [
-    ["Original Payment Method", "Refunds are credited back to the original payment method such as UPI, card or net banking."],
-    ["Bank Transfer", "For approved requests, refund will be transferred to your registered bank account."],
-    ["Store Credit", "Available on request. Store credit can be used for future purchases."],
-    ["Refund Timeline", "Once return is received and approved, refunds are processed within 5 - 10 business days."],
+    [
+      "Original Payment Method",
+      "Refunds are credited back to the original payment method such as UPI, card or net banking.",
+    ],
+    [
+      "Bank Transfer",
+      "For approved requests, refund will be transferred to your registered bank account.",
+    ],
+    [
+      "Store Credit",
+      "Available on request. Store credit can be used for future purchases.",
+    ],
+    [
+      "Refund Timeline",
+      "Once return is received and approved, refunds are processed within 5 - 10 business days.",
+    ],
   ];
 
   return (
     <main className="min-h-screen bg-white text-[#0B1F3A]">
-      <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <h1 className=" text-4xl font-extrabold tracking-tight text-[#0B1F3A] sm:text-5xl">
-              REFUND POLICY
-            </h1>
+      <section className="relative overflow-hidden bg-[#0B1F3A]">
+        <div className="absolute inset-0">
+          <div className="absolute left-0 top-0 h-72 w-72 rounded-full bg-[#D4AF37]/10 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[#D4AF37]/10 blur-3xl" />
+        </div>
 
-            <p className="mt-5 max-w-3xl text-sm leading-7 text-[#0B1F3A]/80 sm:text-base">
-              We are committed to delivering quality products and a fair buying
-              experience for our B2B customers. Please read our refund policy
-              carefully before placing an order.
-            </p>
-          </div>
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              
 
-          <div className="hidden justify-end lg:flex">
-            <div className="relative h-64 w-full max-w-sm rounded-sm bg-[#FFF8EC] p-6">
-              <div className="absolute right-8 top-6 h-44 w-32 rounded-sm border-4 border-[#0B1F3A] bg-white shadow-sm">
-                <div className="mx-auto -mt-4 h-7 w-10 rounded-t-full bg-[#0B1F3A]" />
-                <p className="mt-5 text-center text-xs font-extrabold">REFUND POLICY</p>
-                <div className="mt-5 space-y-3 px-5">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-[#D4AF37]" />
-                      <span className="h-2 flex-1 rounded bg-[#E5E5E5]" />
-                    </div>
-                  ))}
+              <h1 className="text-4xl flex font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Refund
+                <span className="block text-[#D4AF37]"> Policy</span>
+              </h1>
+
+              <p className="mt-4 text-lg font-semibold text-[#D4AF37]">
+                Clear Returns. Safe Refunds. Better B2B Experience.
+              </p>
+
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
+                We are committed to delivering quality products and a fair
+                buying experience for our B2B customers. Please read our refund
+                policy carefully before placing an order.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <div className="rounded-sm border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
+                  <p className="text-2xl font-bold text-[#D4AF37]">7-15</p>
+                  <p className="text-xs text-white/70">Days Return Window</p>
+                </div>
+
+                <div className="rounded-sm border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
+                  <p className="text-2xl font-bold text-[#D4AF37]">48H</p>
+                  <p className="text-xs text-white/70">Damage Report Time</p>
                 </div>
               </div>
+            </div>
 
-              <div className="absolute bottom-9 left-8 h-20 w-24 rounded-sm bg-[#0B1F3A] shadow-md">
-                <div className="h-4 bg-[#D4AF37]" />
-                <div className="mx-auto h-full w-4 bg-[#D4AF37]" />
-              </div>
-
-              <div className="absolute bottom-8 left-28 flex h-16 w-16 items-center justify-center rounded-full bg-[#D4AF37] text-3xl font-bold text-white shadow">
-                ₹
-              </div>
-
-              <div className="absolute bottom-8 right-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#D4AF37] text-white shadow">
-                <ShieldCheck className="h-11 w-11" />
+            <div className="hidden justify-end lg:flex">
+              <div className="relative h-72 w-full max-w-md rounded-sm bg-[#FFF8EC] p-6">
+    
               </div>
             </div>
           </div>
         </div>
+      </section>
 
+      <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <SectionTitle number="1" title="Refund Policy at a Glance" />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -209,8 +246,13 @@ const RefundPolicyPage = () => {
                 {index + 1}
               </div>
 
-              <h3 className="mt-4 text-sm font-extrabold">{step.title}</h3>
-              <p className="mt-2 text-xs leading-6 text-[#0B1F3A]/75">{step.text}</p>
+              <h3 className="mt-4 text-sm font-extrabold text-[#0B1F3A]">
+                {step.title}
+              </h3>
+
+              <p className="mt-2 text-xs leading-6 text-[#0B1F3A]/75">
+                {step.text}
+              </p>
             </div>
           ))}
         </div>
@@ -218,7 +260,7 @@ const RefundPolicyPage = () => {
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <Card className="rounded-sm border-[#E5E5E5] shadow-none">
             <CardContent className="p-5">
-              <h2 className="font-serif text-xl font-bold text-[#0B1F3A]">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A]">
                 3. Detailed Refund Policy
               </h2>
 
@@ -238,7 +280,7 @@ const RefundPolicyPage = () => {
           <div className="space-y-6">
             <Card className="rounded-sm border-[#E5E5E5] shadow-none">
               <CardContent className="p-5">
-                <h2 className="font-serif text-xl font-bold text-[#0B1F3A]">
+                <h2 className="text-xl font-extrabold text-[#0B1F3A]">
                   4. Refund Methods & Timeline
                 </h2>
 
@@ -246,15 +288,22 @@ const RefundPolicyPage = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-[#0B1F3A] text-white">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold">Refund Method</th>
-                        <th className="px-4 py-3 text-left font-semibold">Details</th>
+                        <th className="px-4 py-3 text-left font-semibold">
+                          Refund Method
+                        </th>
+                        <th className="px-4 py-3 text-left font-semibold">
+                          Details
+                        </th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {refundMethods.map(([method, details]) => (
                         <tr key={method} className="border-t border-[#E5E5E5]">
                           <td className="px-4 py-3 font-medium">{method}</td>
-                          <td className="px-4 py-3 text-[#0B1F3A]/75">{details}</td>
+                          <td className="px-4 py-3 text-[#0B1F3A]/75">
+                            {details}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -264,8 +313,9 @@ const RefundPolicyPage = () => {
                 <div className="mt-4 flex gap-3 rounded-sm border border-[#E5E5E5] bg-[#FFF8EC] p-4 text-sm">
                   <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#0B1F3A]" />
                   <p className="text-[#0B1F3A]/80">
-                    <strong>Note:</strong> The time taken for the refund to reflect
-                    in your account depends on your bank or payment provider.
+                    <strong>Note:</strong> The time taken for the refund to
+                    reflect in your account depends on your bank or payment
+                    provider.
                   </p>
                 </div>
               </CardContent>
@@ -273,11 +323,11 @@ const RefundPolicyPage = () => {
 
             <Card className="rounded-sm border-[#E5E5E5] shadow-none">
               <CardContent className="p-5">
-                <h2 className="font-serif text-xl font-bold text-[#0B1F3A]">
+                <h2 className="text-xl font-extrabold text-[#0B1F3A]">
                   6. Frequently Asked Questions
                 </h2>
 
-                <Accordion type="single" collapsible className="mt-4">
+                <Accordion type="single" collapsible className="mt-4 space-y-2">
                   {[
                     "How long does it take to get my refund?",
                     "Can I return bulk orders?",
@@ -290,10 +340,11 @@ const RefundPolicyPage = () => {
                       value={`faq-${index}`}
                       className="rounded-sm border border-[#E5E5E5] px-3"
                     >
-                      <AccordionTrigger className="text-left text-sm font-semibold hover:no-underline">
+                      <AccordionTrigger className="text-left text-sm font-semibold text-[#0B1F3A] hover:no-underline">
                         {question}
                       </AccordionTrigger>
-                      <AccordionContent className="text-sm text-[#0B1F3A]/75">
+
+                      <AccordionContent className="text-sm leading-6 text-[#0B1F3A]/75">
                         Refunds are handled according to product condition,
                         supplier approval, return window, and payment method.
                       </AccordionContent>
@@ -314,8 +365,14 @@ const RefundPolicyPage = () => {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF8EC]">
                   <rule.icon className="h-7 w-7 text-[#0B1F3A]" />
                 </div>
-                <h3 className="mt-3 text-sm font-bold">{rule.title}</h3>
-                <p className="mt-2 text-xs leading-5 text-[#0B1F3A]/70">{rule.text}</p>
+
+                <h3 className="mt-3 text-sm font-bold text-[#0B1F3A]">
+                  {rule.title}
+                </h3>
+
+                <p className="mt-2 text-xs leading-5 text-[#0B1F3A]/70">
+                  {rule.text}
+                </p>
               </div>
             ))}
           </CardContent>
@@ -325,6 +382,7 @@ const RefundPolicyPage = () => {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white">
             <ShieldCheck className="h-8 w-8 text-[#D4AF37]" />
           </div>
+
           <p className="text-sm leading-6 text-[#0B1F3A]/85">
             Our goal is to ensure a transparent and hassle-free refund process.
             For any further assistance, please contact our support team.
@@ -336,8 +394,9 @@ const RefundPolicyPage = () => {
 };
 
 const SectionTitle = ({ number, title }) => (
-  <h2 className="mt-10 mb-5 font-serif text-xl font-bold capitalize text-[#0B1F3A]">
-    {number}. {title}
+  <h2 className="mb-5 mt-10 text-xl font-extrabold capitalize tracking-tight text-[#0B1F3A]">
+    <span className="mr-2 text-[#D4AF37]">{number}.</span>
+    {title}
   </h2>
 );
 
@@ -347,7 +406,9 @@ const InfoCard = ({ icon: Icon, title, text }) => (
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF8EC]">
         <Icon className="h-8 w-8 text-[#0B1F3A]" />
       </div>
+
       <h3 className="mt-4 text-sm font-extrabold text-[#0B1F3A]">{title}</h3>
+
       <p className="mt-3 text-sm leading-6 text-[#0B1F3A]/75">{text}</p>
     </CardContent>
   </Card>

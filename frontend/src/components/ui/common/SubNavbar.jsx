@@ -3,7 +3,23 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Menu, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  ChevronDown,
+  Smartphone,
+  Home,
+  Shirt,
+  Sparkles,
+  ToyBrick,
+  Baby,
+  Dumbbell,
+  Gift,
+  Wrench,
+  Package,
+  Box,
+  HeartPulse,
+  Grid3X3,
+} from "lucide-react";
 
 const slugify = (text = "") =>
   text
@@ -23,6 +39,7 @@ const SubNavbar = () => {
     () => [
       {
         name: "Electronics",
+        icon: Smartphone,
         subcategories: [
           "Mobile Phones & Accessories",
           "Computers & Laptops",
@@ -35,6 +52,7 @@ const SubNavbar = () => {
       },
       {
         name: "Home Appliances",
+        icon: Home,
         subcategories: [
           "Kitchen Appliances",
           "Cleaning Appliances",
@@ -45,6 +63,7 @@ const SubNavbar = () => {
       },
       {
         name: "Fashion Wear",
+        icon: Shirt,
         subcategories: [
           "Men’s Clothing",
           "Women’s Clothing",
@@ -56,6 +75,7 @@ const SubNavbar = () => {
       },
       {
         name: "Beauty & Personal Care",
+        icon: Sparkles,
         subcategories: [
           "Skincare",
           "Haircare",
@@ -67,6 +87,7 @@ const SubNavbar = () => {
       },
       {
         name: "Kid Toys",
+        icon: ToyBrick,
         subcategories: [
           "Educational Toys",
           "Action Figures & Dolls",
@@ -77,6 +98,7 @@ const SubNavbar = () => {
       },
       {
         name: "Baby Products",
+        icon: Baby,
         subcategories: [
           "Baby Clothing",
           "Feeding Supplies",
@@ -87,6 +109,7 @@ const SubNavbar = () => {
       },
       {
         name: "Sports & Entertainment",
+        icon: Dumbbell,
         subcategories: [
           "Fitness Equipment",
           "Outdoor Sports Gear",
@@ -97,6 +120,7 @@ const SubNavbar = () => {
       },
       {
         name: "Gifts & Crafts",
+        icon: Gift,
         subcategories: [
           "Handmade Gifts",
           "Art Supplies",
@@ -107,6 +131,7 @@ const SubNavbar = () => {
       },
       {
         name: "Repair & Operations Tools",
+        icon: Wrench,
         subcategories: [
           "Hand Tools",
           "Power Tools",
@@ -117,6 +142,7 @@ const SubNavbar = () => {
       },
       {
         name: "Raw Materials",
+        icon: Package,
         subcategories: [
           "Metals & Alloys",
           "Plastics & Polymers",
@@ -127,6 +153,7 @@ const SubNavbar = () => {
       },
       {
         name: "Packaging",
+        icon: Box,
         subcategories: [
           "Boxes & Cartons",
           "Plastic Packaging",
@@ -137,6 +164,7 @@ const SubNavbar = () => {
       },
       {
         name: "Medical and Health",
+        icon: HeartPulse,
         subcategories: [
           "Medical Equipment",
           "Health Monitoring Devices",
@@ -147,6 +175,7 @@ const SubNavbar = () => {
       },
       {
         name: "Other Products",
+        icon: Grid3X3,
         subcategories: [
           "Miscellaneous Items",
           "Custom Products",
@@ -157,20 +186,15 @@ const SubNavbar = () => {
     []
   );
 
-  // close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        categoryRef.current &&
-        !categoryRef.current.contains(event.target)
-      ) {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
         setCategoryOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -180,7 +204,7 @@ const SubNavbar = () => {
 
   return (
     <div className="hidden lg:block border-t border-t-white/10 border-b border-b-[#D4AF37] bg-[#0B1F3A]/95 backdrop-blur">
-      <div className="w-full  px-6 lg:px-10">
+      <div className="w-full px-6 lg:px-10">
         <div className="flex items-center gap-6 h-14">
           <div className="relative" ref={categoryRef}>
             <button
@@ -216,6 +240,7 @@ const SubNavbar = () => {
                   >
                     {categories.map((cat) => {
                       const isActive = activeCategory?.name === cat.name;
+                      const Icon = cat.icon;
 
                       return (
                         <button
@@ -232,7 +257,16 @@ const SubNavbar = () => {
                               : "text-[#1A1A1A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
                           }`}
                         >
-                          {cat.name}
+                          <div className="flex items-center gap-3">
+                            <Icon
+                              className={`h-4 w-4 shrink-0 ${
+                                isActive
+                                  ? "text-[#0B1F3A]"
+                                  : "text-[#D4AF37]"
+                              }`}
+                            />
+                            <span>{cat.name}</span>
+                          </div>
                         </button>
                       );
                     })}
@@ -240,7 +274,10 @@ const SubNavbar = () => {
 
                   {activeCategory && (
                     <div className="relative p-5 pb-16 max-h-105 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                      <div className="text-base font-semibold text-[#0B1F3A]">
+                      <div className="flex items-center gap-3 text-base font-semibold text-[#0B1F3A]">
+                        {activeCategory.icon && (
+                          <activeCategory.icon className="h-5 w-5 text-[#D4AF37]" />
+                        )}
                         {activeCategory.name}
                       </div>
 
@@ -259,7 +296,9 @@ const SubNavbar = () => {
                               .map((sub) => (
                                 <Link
                                   key={sub}
-                                  href={`/products/${slugify(activeCategory.name)}/${slugify(sub)}`}
+                                  href={`/products/${slugify(
+                                    activeCategory.name
+                                  )}/${slugify(sub)}`}
                                   onClick={() => setCategoryOpen(false)}
                                   className="text-sm text-[#1A1A1A] hover:text-[#D4AF37]"
                                 >
@@ -317,6 +356,7 @@ const SubNavbar = () => {
               </Link>
             ))}
           </nav>
+
           <div className="w-72" />
         </div>
       </div>

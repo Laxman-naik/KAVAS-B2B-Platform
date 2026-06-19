@@ -64,7 +64,7 @@ export default function ProfileSidebar({ user }) {
           </div>
 
           <div className="p-3 flex-1 overflow-y-auto">
-            <nav className="space-y-1">
+            <nav className="space-y-3">
               {navItems.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
@@ -96,7 +96,7 @@ export default function ProfileSidebar({ user }) {
             </nav>
           </div>
 
-          <div className="p-3 border-t border-white/10">
+          <div className="p-3  border-white/10">
             <div className="mt-2 rounded-sm bg-white/5 p-4">
               <div className="flex items-start gap-3">
                 <div className="h-9 w-9 rounded-sm bg-[#D4AF37] text-[#0B1F3A] flex items-center justify-center shrink-0">

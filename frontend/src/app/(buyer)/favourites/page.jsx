@@ -4,7 +4,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { ChevronRight, Heart, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  ChevronRight,
+  Heart,
+  ShoppingCart,
+  Trash2,
+  CheckCircle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,6 +32,10 @@ const Page = () => {
 
   const [mounted, setMounted] = useState(false);
   const [page, setPage] = useState(1);
+  const [toast, setToast] = useState("");
+  const [addingId, setAddingId] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
+  const [clearing, setClearing] = useState(false);
 
   const pageSize = 6;
 
@@ -39,6 +49,14 @@ const Page = () => {
 
   const isLoggedIn = Boolean(authUser);
 
+  const showToast = (message) => {
+    setToast(message);
+
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  };
+
   const productMap = useMemo(() => {
     return products.reduce((map, product) => {
       map[product.id] = product;
@@ -47,9 +65,7 @@ const Page = () => {
   }, [products]);
 
   const cartProductIds = useMemo(() => {
-    return new Set(
-      cartItems.map((item) => item.product_id || item.productId)
-    );
+    return new Set(cartItems.map((item) => item.product_id || item.productId));
   }, [cartItems]);
 
   const fullName =
@@ -135,38 +151,68 @@ const Page = () => {
     }
   }, [page, totalPages]);
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (!isLoggedIn) {
+      showToast("Please login first");
       router.push("/login");
       return;
     }
 
-    dispatch(clearFavourites());
+    if (normalized.length === 0) {
+      showToast("Wishlist is already empty");
+      return;
+    }
+
+    try {
+      setClearing(true);
+      await dispatch(clearFavourites()).unwrap();
+      showToast("Wishlist cleared");
+    } catch (err) {
+      console.error("CLEAR FAVOURITES FAILED:", err);
+      showToast("Failed to clear wishlist");
+    } finally {
+      setClearing(false);
+    }
   };
 
   const handleLogout = async () => {
     await dispatch(logoutUserThunk());
+    showToast("Logged out successfully");
     router.push("/login");
   };
 
-  const handleRemove = (productId) => {
+  const handleRemove = async (productId) => {
     if (!isLoggedIn) {
+      showToast("Please login first");
       router.push("/login");
       return;
     }
 
-    dispatch(removeFromFavourites(productId));
+    try {
+      setRemovingId(productId);
+      await dispatch(removeFromFavourites(productId)).unwrap();
+      showToast("Removed from wishlist");
+    } catch (err) {
+      console.error("REMOVE FROM FAVOURITES FAILED:", err);
+      showToast("Failed to remove product");
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   const handleAddToCart = async (productId) => {
     if (!isLoggedIn) {
+      showToast("Please login first");
       router.push("/login");
       return;
     }
 
     const product = productMap[productId];
 
-    if (!product) return;
+    if (!product) {
+      showToast("Product not found");
+      return;
+    }
 
     const primaryImage =
       product.image_url ||
@@ -175,6 +221,8 @@ const Page = () => {
       "/placeholder.png";
 
     try {
+      setAddingId(productId);
+
       await dispatch(
         addToCart({
           productId: product.id,
@@ -183,9 +231,14 @@ const Page = () => {
         })
       ).unwrap();
 
-      alert("Added to cart");
+      await dispatch(fetchCart());
+
+      showToast("Added to cart");
     } catch (err) {
       console.error("ADD TO CART FAILED:", err);
+      showToast("Failed to add cart");
+    } finally {
+      setAddingId(null);
     }
   };
 
@@ -193,7 +246,14 @@ const Page = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen ">
+      <div className="min-h-screen bg-white">
+        {toast && (
+          <div className="fixed top-30 right-5 z-50 flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-[#0B1F3A] shadow-lg border border-[#E5E5E5]">
+            <CheckCircle className="h-5 w-5 text-[#D4AF37]" />
+            <span className="text-sm font-semibold">{toast}</span>
+          </div>
+        )}
+
         <div className="mx-auto bg-white border rounded-sm border-white/10">
           <div className="text-center py-16 bg-white rounded-sm">
             <div className="text-5xl mb-3">❤️</div>
@@ -215,9 +275,16 @@ const Page = () => {
     );
   }
 
- return (
-  <div className="min-h-screen bg-white">
-    <div className="mx-auto bg-white border rounded-sm border-white/10">
+  return (
+    <div className="relative min-h-screen bg-white">
+      {toast && (
+        <div className="fixed top-30 right-5 z-50 flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-[#0B1F3A] shadow-lg border border-[#E5E5E5]">
+          <CheckCircle className="h-5 w-5 text-[#D4AF37]" />
+          <span className="text-sm font-semibold">{toast}</span>
+        </div>
+      )}
+
+      <div className="mx-auto bg-white border rounded-sm border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
           <div className="lg:sticky lg:top-24 self-start">
             <ProfileSidebar user={user} onLogout={handleLogout} />
@@ -311,7 +378,8 @@ const Page = () => {
                       <tbody>
                         {paged.map((row) => {
                           const isInCart = cartProductIds.has(row.productId);
-                          const isOutOfStock = row.stockLabel === "Out of Stock";
+                          const isOutOfStock =
+                            row.stockLabel === "Out of Stock";
 
                           return (
                             <tr
@@ -379,13 +447,21 @@ const Page = () => {
                                         ? "Already in cart"
                                         : "Move to cart"
                                     }
-                                    disabled={isInCart || isOutOfStock}
+                                    disabled={
+                                      isInCart ||
+                                      isOutOfStock ||
+                                      addingId === row.productId
+                                    }
                                     onClick={() =>
                                       handleAddToCart(row.productId)
                                     }
                                   >
                                     <ShoppingCart size={16} className="mr-1" />
-                                    {isInCart ? "In Cart" : "Add"}
+                                    {addingId === row.productId
+                                      ? "Adding..."
+                                      : isInCart
+                                      ? "In Cart"
+                                      : "Add"}
                                   </Button>
 
                                   <Button
@@ -393,6 +469,7 @@ const Page = () => {
                                     variant="outline"
                                     className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0 hover:bg-red-50"
                                     title="Remove"
+                                    disabled={removingId === row.productId}
                                     onClick={() => handleRemove(row.productId)}
                                   >
                                     <Trash2
@@ -457,8 +534,9 @@ const Page = () => {
                 variant="outline"
                 className="rounded-sm border-[#E5E5E5]"
                 onClick={handleClearAll}
+                disabled={clearing}
               >
-                Clear all
+                {clearing ? "Clearing..." : "Clear all"}
               </Button>
 
               <Button

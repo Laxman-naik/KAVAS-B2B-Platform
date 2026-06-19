@@ -29,36 +29,40 @@ const AllProducts = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  const visibleProducts = Array.isArray(products) ? products.slice(0, 12) : [];
+  const visibleProducts = Array.isArray(products) ? products.slice(0, 18) : [];
 
   return (
     <div className="bg-white">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-         
-  <div>
-            <div className="flex items-center gap-2">
-              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+       <div className="relative">
+  {/* Center Heading */}
+  <div className="flex flex-col items-center text-center">
+    <div className="flex items-center gap-2">
+      <span className="h-px w-5 bg-[#D4AF37]/60"></span>
 
-              <div className="text-[11px] font-extrabold tracking-widest text-[#0B1F3A]/60 uppercase">
-                Selling All Products
-              </div>
-              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
-            </div>
+      <div className="text-[11px] font-extrabold tracking-widest text-[#0B1F3A]/60 uppercase">
+        Selling All Products
+      </div>
 
-            <h2 className="mt-1 text-lg sm:text-3xl font-extrabold text-[#0B1F3A]">
-              All Products
-            </h2>
-          </div>
-          <Link
-            href="/allproducts"
-            className="text-[#0B1F3A] text-sm font-medium hover:text-[#D4AF37]"
-          >
-            View all Products →
-          </Link>
-        </div>
+      <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+    </div>
+
+    <h2 className="mt-1 text-lg sm:text-3xl font-extrabold text-[#0B1F3A]">
+      All Products
+    </h2>
+  </div>
+
+  {/* View All */}
+  <Link
+    href="/allproducts"
+    className="absolute right-0 top-10 text-[#0B1F3A] text-sm font-semibold hover:text-[#D4AF37] transition-colors"
+  >
+    View all Products →
+  </Link>
+</div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-         {visibleProducts.slice(0, 12).map((item) => {
+          {visibleProducts.map((item) => {
             const itemId = item?._id ?? item?.id ?? item?.productId;
 
             return (
@@ -88,7 +92,7 @@ const AllProducts = () => {
                     Min. {item.moq} units
                   </div>
 
-                  <div className="flex items-center text-[11px] gap-1  text-gray-600 mt-auto">
+                  <div className="flex items-center text-[11px] gap-1 text-gray-600 mt-auto">
                     <span className="w-2 h-2 bg-[#D4AF37] rounded-full" />
                     <span className="truncate">Supplier</span>
                   </div>
@@ -97,6 +101,7 @@ const AllProducts = () => {
             );
           })}
         </div>
+
         {visibleProducts.length === 0 && (
           <p className="text-center py-10 text-gray-500">
             No products available

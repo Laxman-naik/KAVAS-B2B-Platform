@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 export default function SearchPage() {
@@ -16,6 +16,20 @@ export default function SearchPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const uniqueProducts = useMemo(() => {
+    return results.products.filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.id === product.id)
+    );
+  }, [results.products]);
+
+  const uniqueCategories = useMemo(() => {
+    return results.categories.filter(
+      (category, index, self) =>
+        index === self.findIndex((c) => c.id === category.id)
+    );
+  }, [results.categories]);
 
   useEffect(() => {
     if (!q.trim()) {
@@ -32,21 +46,12 @@ export default function SearchPage() {
         setLoading(true);
         setError("");
 
-        const API_URL ="https://kavas-b2b-platform-4.onrender.com";
+        const API_URL = "https://kavas-b2b-platform-4.onrender.com";
 
-        const url = `${API_URL}/api/search?q=${encodeURIComponent(
-          q
-        )}&limit=20`;
-
-        console.log("Search URL:", url);
+        const url = `${API_URL}/api/search?q=${encodeURIComponent(q)}&limit=20`;
 
         const res = await fetch(url);
-
-        const text = await res.text();
-
-        console.log("Raw response:", text);
-
-        const data = JSON.parse(text);
+        const data = await res.json();
 
         if (!res.ok) {
           throw new Error(data.message || "Search failed");
@@ -82,11 +87,11 @@ export default function SearchPage() {
           <section className="mb-10">
             <h2 className="text-xl font-semibold mb-4">Products</h2>
 
-            {results.products.length > 0 ? (
+            {uniqueProducts.length > 0 ? (
               <div className="grid gap-4">
-                {results.products.map((product) => (
+                {uniqueProducts.map((product, index) => (
                   <Link
-                    key={product.id}
+                    key={`${product.id}-${index}`}
                     href={`/products/${product.id}`}
                     className="border rounded-lg p-4 hover:shadow-md transition"
                   >
@@ -112,11 +117,11 @@ export default function SearchPage() {
           <section className="mb-10">
             <h2 className="text-xl font-semibold mb-4">Categories</h2>
 
-            {results.categories.length > 0 ? (
+            {uniqueCategories.length > 0 ? (
               <div className="grid gap-4">
-                {results.categories.map((category) => (
+                {uniqueCategories.map((category, index) => (
                   <Link
-                    key={category.id}
+                    key={`${category.id}-${index}`}
                     href={`/search?q=${encodeURIComponent(category.name)}`}
                     className="border rounded-lg p-4 hover:shadow-md transition"
                   >

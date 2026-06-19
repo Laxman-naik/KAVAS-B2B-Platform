@@ -69,7 +69,7 @@ const Hero = () => {
 
   return (
     <div className="overflow-x-hidden bg-white">
-    <div className="w-full px-4 sm:px-6 lg:px-8 mt-3 ">
+    <div className="w-full px-1 sm:px-3 lg:px-5 mt-3 ">
         <div className="relative rounded-sm overflow-hidden bg-[#0B1F3A]">
 
           <div
@@ -88,8 +88,8 @@ const Hero = () => {
                   alt="KAVAS Wholesale Hub"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-linear-to-r from-[#0B1F3A]/95 via-[#0B1F3A]/80 to-[#0B1F3A]/20" />
-                <div className="relative z-10 mx-auto max-w-w25 px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
+                <div className="absolute inset-0 " />
+                <div className="relative z-10 mx-auto max-w-w25 px-5 py-14 sm:px-8 sm:py-18 lg:px-10 lg:py-20">
                   <div className="max-w-2xl">
                     <div className="text-2xl font-bold text-white/90">
                       {slide.top}
