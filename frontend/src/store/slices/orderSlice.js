@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById,} from "@/services/orderService";
+import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById, getVendorOrdersAPI } from "@/services/orderService";
 
 const normalizeError = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
@@ -130,6 +130,17 @@ export const fetchOrderById = createAsyncThunk(
     }
   }
 );
+export const fetchVendorOrders = createAsyncThunk(
+  "order/fetchVendorOrders",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getVendorOrdersAPI();
+      return res.orders;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
 
 const initialState = {
   orders: [],
@@ -220,9 +231,26 @@ const orderSlice = createSlice({
         if (state.currentOrder?.id === updatedOrder.id) {
           state.currentOrder = updatedOrder;
         }
-      });
+
+      })
+      .addCase(fetchVendorOrders.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendorOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload || [];
+      })
+      .addCase(fetchVendorOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+
   },
+
 });
+
 
 export const { clearOrderState } = orderSlice.actions;
 export default orderSlice.reducer;

@@ -63,10 +63,7 @@ export default function ProductManagementBody() {
       const productName = String(p?.name || "").toLowerCase();
       const productSku = String(p?.sku || "").toLowerCase();
 
-      const productCategory =
-        p?.category ||
-        p?.categories?.[0]?.name ||
-        "";
+      const productCategory = p?.category || p?.categories?.[0]?.name || "";
 
       const productStatus = p?.status || "";
 
@@ -76,8 +73,7 @@ export default function ProductManagementBody() {
       const matchCategory =
         category === "All" || productProductCategoryCompare(productCategory) === category;
 
-      const matchStatus =
-        status === "All Status" || productStatus === status;
+      const matchStatus = status === "All Status" || productStatus === status;
 
       return matchSearch && matchCategory && matchStatus;
     });
@@ -117,7 +113,7 @@ export default function ProductManagementBody() {
 
   const statuses = useMemo(
     () => ["All Status", "active", "pending", "rejected", "inactive"],
-    []
+    [],
   );
 
   const enrichedProducts = useMemo(() => {
@@ -337,7 +333,7 @@ export default function ProductManagementBody() {
               <div className="col-span-2">
                 <span
                   className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusPill(
-                    p.status
+                    p.status,
                   )}`}
                 >
                   {p.status}
@@ -371,7 +367,7 @@ export default function ProductManagementBody() {
 
                 <span
                   className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-bold ${statusPill(
-                    product.status
+                    product.status,
                   )}`}
                 >
                   {product.status}

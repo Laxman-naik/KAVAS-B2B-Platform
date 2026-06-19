@@ -350,8 +350,12 @@
 
 import axios from "axios";
 
-const AUTH_BASE_URL = "https://kavas-b2b-platform-3.onrender.com";
-const PRODUCT_BASE_URL = "https://kavas-b2b-platform-4.onrender.com";
+const AUTH_BASE_URL =
+  process.env.NEXT_PUBLIC_AUTH_API_URL || "http://localhost:5001";
+
+const PRODUCT_BASE_URL =
+  process.env.NEXT_PUBLIC_PRODUCT_API_URL ||
+  "https://kavas-b2b-platform-4.onrender.com";
 
 /* ================= SESSION INIT ================= */
 
@@ -399,44 +403,56 @@ const setAccessToken = (token) => {
 
 export const authapi = axios.create({
   baseURL: AUTH_BASE_URL,
+  withCredentials: true,
 });
 
 export const productapi = axios.create({
   baseURL: PRODUCT_BASE_URL,
+  withCredentials: true,
 });
 
-/* ================= REQUEST INTERCEPTOR ================= */
-
-// const attachHeaders = (config) => {
-//   config.headers = config.headers || {};
-
-//   const token = getAccessToken();
-//   const sessionId = getSessionId();
-
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-
-//   if (sessionId) {
-//     config.headers["x-session-id"] = sessionId;
-//   }
-
-//   return config;
-// };
+/* ================= PUBLIC ROUTES ================= */
 
 const PUBLIC_ROUTES = [
+  "/api/auth/register",
+  "/api/auth/login",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+
+  "/api/admin/login",
+  "/api/admin/register",
+
   "/api/vendor/send-otp",
   "/api/vendor/verify-otp",
   "/api/vendor/register",
   "/api/vendor/login",
+
+  "/api/products",
+  "/api/products/all",
+  "/api/products/trending",
+  "/api/products/new-arrivals",
 ];
+
+/* ================= REQUEST INTERCEPTOR ================= */
 
 const attachHeaders = (config) => {
   config.headers = config.headers || {};
 
+  /* ✅ IMPORTANT: skip auth for public/custom requests */
+  if (config.skipAuth) {
+    delete config.headers.Authorization;
+
+    const sessionId = getSessionId();
+
+    if (sessionId) {
+      config.headers["x-session-id"] = sessionId;
+    }
+
+    return config;
+  }
+
   const sessionId = getSessionId();
 
-  // skip auth token for public routes
   const isPublicRoute = PUBLIC_ROUTES.some((route) =>
     config.url?.includes(route)
   );
@@ -455,6 +471,7 @@ const attachHeaders = (config) => {
 
   return config;
 };
+
 authapi.interceptors.request.use(attachHeaders);
 productapi.interceptors.request.use(attachHeaders);
 
@@ -475,10 +492,14 @@ const refreshAccessToken = async () => {
     buyer: "/api/auth/refresh",
   };
 
-const refreshUrl = refreshEndpointMap[role];
+  const refreshUrl = refreshEndpointMap[role];
+
+  if (!refreshUrl) {
+    throw new Error("Invalid role for refresh");
+  }
 
   const response = await axios.post(
-  `${AUTH_BASE_URL}${refreshUrl}`,
+    `${AUTH_BASE_URL}${refreshUrl}`,
     {
       refreshToken,
       sessionId,
@@ -486,7 +507,9 @@ const refreshUrl = refreshEndpointMap[role];
     {
       headers: {
         "Content-Type": "application/json",
+        "x-session-id": sessionId,
       },
+      withCredentials: true,
     }
   );
 
@@ -511,6 +534,7 @@ const processQueue = (error, token = null) => {
     if (error) p.reject(error);
     else p.resolve(token);
   });
+
   failedQueue = [];
 };
 
@@ -519,7 +543,14 @@ const processQueue = (error, token = null) => {
 const handleError = async (error) => {
   const originalRequest = error.config;
 
-  if (!originalRequest) return Promise.reject(error);
+  if (!originalRequest) {
+    return Promise.reject(error);
+  }
+
+  /* ✅ IMPORTANT: do not refresh session for skipAuth requests */
+  if (originalRequest.skipAuth) {
+    return Promise.reject(error);
+  }
 
   if (originalRequest.url?.includes("/refresh")) {
     return Promise.reject(error);
@@ -532,8 +563,9 @@ const handleError = async (error) => {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${token}`;
-        return authapi(originalRequest);
+        return axios(originalRequest);
       });
     }
 
@@ -544,9 +576,10 @@ const handleError = async (error) => {
 
       processQueue(null, newToken);
 
+      originalRequest.headers = originalRequest.headers || {};
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-      return authapi(originalRequest);
+      return axios(originalRequest);
     } catch (err) {
       processQueue(err, null);
 
@@ -559,7 +592,9 @@ const handleError = async (error) => {
 
       localStorage.removeItem("role");
 
-      window.dispatchEvent(new Event("auth:expired"));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("auth:expired"));
+      }
 
       return Promise.reject(err);
     } finally {
@@ -570,21 +605,18 @@ const handleError = async (error) => {
   return Promise.reject(error);
 };
 
-authapi.interceptors.response.use(
-  (res) => res,
-  handleError
-);
-
-productapi.interceptors.response.use(
-  (res) => res,
-  handleError
-);
+authapi.interceptors.response.use((res) => res, handleError);
+productapi.interceptors.response.use((res) => res, handleError);
 
 /* ================= AUTH HELPERS ================= */
 
 export const saveAuthData = ({ role, accessToken, refreshToken }) => {
   if (!role || !accessToken || !refreshToken) {
-    console.error("INVALID AUTH DATA:", { role, accessToken, refreshToken });
+    console.error("INVALID AUTH DATA:", {
+      role,
+      accessToken,
+      refreshToken,
+    });
     return;
   }
 
@@ -592,7 +624,6 @@ export const saveAuthData = ({ role, accessToken, refreshToken }) => {
   localStorage.setItem(`${role}_accessToken`, accessToken);
   localStorage.setItem(`${role}_refreshToken`, refreshToken);
 
-  // 🔥 DEBUG
   console.log("SAVED ROLE:", localStorage.getItem("role"));
   console.log("SAVED ACCESS:", localStorage.getItem(`${role}_accessToken`));
   console.log("SAVED REFRESH:", localStorage.getItem(`${role}_refreshToken`));

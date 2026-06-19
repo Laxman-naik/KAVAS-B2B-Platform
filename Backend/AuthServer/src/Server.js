@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
 const profileRoutes = require("./routes/profileRoutes")
+const passport = require("./config/passport");
 
 
 const app = express();
@@ -18,6 +19,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 
 
 const allowedOrigins = new Set([
@@ -42,7 +44,7 @@ app.get("/", (req, res) => {
   res.status(200).send("Server is running 🚀");
 });
 
-app.get("/ping", (req, res) => {res.json({ ok: true });});
+app.get("/ping", (req, res) => { res.json({ ok: true }); });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
@@ -64,7 +66,9 @@ pool.connect()
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {console.log("Server running on", PORT);});
+app.listen(PORT, () => {
+  console.log("Server running on", PORT);
+});
 
 
 // const express = require("express");

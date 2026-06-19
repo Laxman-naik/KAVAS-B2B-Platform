@@ -1,19 +1,46 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeft, Info, LockKeyhole, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Info, LockKeyhole, Mail } from "lucide-react";
+import { authapi } from "@/lib/axios";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
+
     if (!identifier.trim()) return;
-    setSent(true);
+
+    try {
+      setLoading(true);
+      setError("");
+      setSent(false);
+
+      const response = await authapi.post("/api/auth/forgot-password", {
+        email: identifier,
+      });
+
+      console.log("FORGOT PASSWORD RESPONSE:", response.data);
+      setSent(true);
+    } catch (err) {
+      console.error(
+        "FORGOT PASSWORD FULL ERROR:",
+        err.response?.data || err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to generate reset link"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,8 +85,8 @@ export default function ForgotPasswordPage() {
               </h1>
 
               <p className="mt-2 max-w-md text-sm leading-6 text-gray-600">
-                No worries! Enter your registered mobile number or email
-                address and we will send you a link to reset your password.
+                No worries! Enter your registered mobile number or email address
+                and we will send you a link to reset your password.
               </p>
             </div>
 
@@ -75,7 +102,6 @@ export default function ForgotPasswordPage() {
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
-
                     if (sent) setSent(false);
                   }}
                   placeholder="Enter mobile number or email ID"
@@ -85,16 +111,22 @@ export default function ForgotPasswordPage() {
 
               {sent ? (
                 <p className="mt-2 text-xs font-semibold text-green-600">
-                  Reset link sent (demo). Please check your inbox/SMS.
+                  Reset link sent. Please check your email inbox.
+                </p>
+              ) : null}
+
+              {error ? (
+                <p className="mt-2 text-xs font-semibold text-red-600">
+                  {error}
                 </p>
               ) : null}
 
               <button
                 type="submit"
-                disabled={!identifier.trim()}
+                disabled={!identifier.trim() || loading}
                 className="mt-5 w-full rounded-sm bg-[#0B1F3A] py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
               >
-                Send Reset Link
+                {loading ? "Sending..." : "Send Reset Link"}
               </button>
             </form>
 
