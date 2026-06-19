@@ -622,7 +622,7 @@ export default function PaymentsPayoutsBody() {
                 <X />
               </button>
             </div>
-
+ 
             <div className="space-y-4 text-sm">
               <Info label="Payout Amount" value={formatMoney(form.amount)} />
               <Info label="Payout Method" value="BANK TRANSFER" />
