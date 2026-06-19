@@ -412,3 +412,87 @@ exports.getOrderById = async (req, res) => {
     });
   }
 };
+exports.getVendorOrders = async (req, res) => {
+  try {
+    const vendorId = req.user.vendor_id;
+
+    if (!vendorId) {
+      return res.status(401).json({ message: "Vendor ID missing in token" });
+    }
+
+    const vendorRes = await pool.query(
+      `
+      SELECT organization_id
+      FROM vendors
+      WHERE id = $1
+      LIMIT 1
+      `,
+      [vendorId]
+    );
+
+    if (!vendorRes.rows.length) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    const organizationId = vendorRes.rows[0].organization_id;
+
+    const result = await pool.query(
+      `
+      SELECT
+        o.id,
+        o.user_id,
+        o.supplier_org_id,
+        o.total_amount,
+        o.status,
+        o.delivery_status,
+        o.shipping_address_id,
+        o.idempotency_key,
+        o.paid_at,
+        o.created_at,
+
+        u.full_name AS buyer_name,
+        u.email AS buyer_email,
+        u.phone AS buyer_phone,
+
+        COUNT(oi.id) AS item_count,
+
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'item_id', oi.id,
+              'product_id', oi.product_id,
+              'product_name', p.name,
+              'quantity', oi.quantity,
+              'price', oi.price,
+              'organization_name', oi.organization_name
+            )
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) AS items
+
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.user_id
+      LEFT JOIN order_items oi ON oi.order_id = o.id
+      LEFT JOIN products p ON p.id = oi.product_id
+
+      WHERE o.supplier_org_id = $1
+
+      GROUP BY o.id, u.full_name, u.email, u.phone
+      ORDER BY o.created_at DESC
+      `,
+      [organizationId]
+    );
+
+    return res.json({
+      organization_id: organizationId,
+      orders: result.rows,
+    });
+  } catch (err) {
+    console.error("GET VENDOR ORDERS ERROR:", err);
+    return res.status(500).json({
+      message: err.message,
+      detail: err.detail,
+      code: err.code,
+    });
+  }
+};
