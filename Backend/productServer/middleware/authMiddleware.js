@@ -18,10 +18,12 @@ module.exports = (req, res, next) => {
 
     req.user = {
       ...decoded,
-      id: decoded.id || decoded.vendor_id,
+      id: decoded.id || decoded.vendor_profile_id || decoded.vendor_id,
+      vendor_profile_id: decoded.vendor_profile_id,
       vendor_id: decoded.vendor_id,
+      onboarding_id: decoded.onboarding_id,
       organization_id: decoded.organization_id,
-      role: decoded.role || "vendor",
+      role: decoded.role,
     };
 
     next();

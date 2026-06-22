@@ -52,13 +52,7 @@ export const updateProduct = async (id, data) => {
 
 // ================= GET VENDOR PRODUCTS =================
 export const getVendorProductsAPI = async (organizationId) => {
-  const res = await productapi.get(
-    `/api/products/vendor/${organizationId}`,
-    {
-      skipAuth: true,
-    }
-  );
-
+  const res = await productapi.get(`/api/products/vendor/${organizationId}`);
   return res.data;
 };
 

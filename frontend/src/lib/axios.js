@@ -355,7 +355,7 @@ const AUTH_BASE_URL =
 
 const PRODUCT_BASE_URL =
   process.env.NEXT_PUBLIC_PRODUCT_API_URL ||
-  "https://kavas-b2b-platform-4.onrender.com";
+  "http://localhost:5002";
 
 /* ================= SESSION INIT ================= */
 

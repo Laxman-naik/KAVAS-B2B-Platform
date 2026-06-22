@@ -17,7 +17,10 @@ import {
 } from "lucide-react";
 
 // import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
-import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+import {
+  fetchVendorOrders,
+  updateOrderStatus,
+} from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
@@ -31,8 +34,8 @@ export default function OrdersManagementBody() {
   const pageSize = 8;
 
   useEffect(() => {
-  dispatch(fetchVendorOrders());
-}, [dispatch]);
+    dispatch(fetchVendorOrders());
+  }, [dispatch]);
 
   const statusLabel = (status) => {
     if (!status) return "Pending";
@@ -67,7 +70,9 @@ export default function OrdersManagementBody() {
       const matchSearch =
         !q ||
         String(o.id).toLowerCase().includes(q) ||
-        String(o.buyer_name || "").toLowerCase().includes(q);
+        String(o.buyer_name || "")
+          .toLowerCase()
+          .includes(q);
 
       const matchStatus = statusFilter === "All" || o.status === statusFilter;
 
@@ -145,7 +150,7 @@ export default function OrdersManagementBody() {
         count: stats.cancelled,
       },
     ],
-    [stats]
+    [stats],
   );
 
   const statCards = [
@@ -303,7 +308,9 @@ export default function OrdersManagementBody() {
                     {t.label}
                     <span
                       className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${
-                        active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"
+                        active
+                          ? "bg-white/15 text-white"
+                          : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {t.count}
@@ -347,19 +354,19 @@ export default function OrdersManagementBody() {
                   o.status === "pending"
                     ? "Mark Processing"
                     : o.status === "processing"
-                    ? "Mark Shipped"
-                    : o.status === "shipped"
-                    ? "Mark Delivered"
-                    : null;
+                      ? "Mark Shipped"
+                      : o.status === "shipped"
+                        ? "Mark Delivered"
+                        : null;
 
                 const actionNext =
                   o.status === "pending"
                     ? "processing"
                     : o.status === "processing"
-                    ? "shipped"
-                    : o.status === "shipped"
-                    ? "delivered"
-                    : null;
+                      ? "shipped"
+                      : o.status === "shipped"
+                        ? "delivered"
+                        : null;
 
                 return (
                   <tr
@@ -372,11 +379,19 @@ export default function OrdersManagementBody() {
 
                     <td className="p-4">
                       <p className="font-extrabold text-[#0B1F3A]">
-                        {o.buyer_name || "Unknown Buyer"}
+                        {o.item_count || 0} Items
                       </p>
-                      <p className="mt-1 text-xs font-medium text-gray-500">
-                        Buyer ID: {o.user_id || "-"}
-                      </p>
+
+                      <div className="mt-1 space-y-1">
+                        {(o.items || []).slice(0, 2).map((item) => (
+                          <p
+                            key={item.item_id}
+                            className="text-xs font-medium text-gray-500"
+                          >
+                            {item.product_name || "Product"} × {item.quantity}
+                          </p>
+                        ))}
+                      </div>
                     </td>
 
                     <td className="p-4">
@@ -407,7 +422,7 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
-                          paymentValue
+                          paymentValue,
                         )}`}
                       >
                         {statusLabel(paymentValue)}
@@ -417,7 +432,7 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                          o.status
+                          o.status,
                         )}`}
                       >
                         {statusLabel(o.status)}
@@ -458,7 +473,7 @@ export default function OrdersManagementBody() {
                                 updateOrderStatus({
                                   orderId: o.id,
                                   status: actionNext,
-                                })
+                                }),
                               )
                             }
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
@@ -509,7 +524,7 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                      o.status
+                      o.status,
                     )}`}
                   >
                     {statusLabel(o.status)}
@@ -526,7 +541,7 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
-                      paymentValue
+                      paymentValue,
                     )}`}
                   >
                     {statusLabel(paymentValue)}
