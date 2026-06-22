@@ -412,3 +412,40 @@ exports.getOrderById = async (req, res) => {
     });
   }
 };
+
+exports.getVendorOrders = async (req, res) => {
+  try {
+    const vendorOrgId =
+      req.user?.organization_id ||
+      req.user?.organizationId ||
+      req.headers["vendor-org-id"];
+
+    if (!vendorOrgId) {
+      return res.status(400).json({
+        message: "Vendor organization id missing",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        o.*,
+        u.full_name AS buyer_name
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.user_id
+      WHERE o.supplier_org_id = $1
+      ORDER BY o.created_at DESC
+      `,
+      [vendorOrgId]
+    );
+
+    return res.json({
+      orders: result.rows,
+    });
+  } catch (err) {
+    console.error("GET VENDOR ORDERS ERROR:", err);
+    return res.status(500).json({
+      message: err.message,
+    });
+  }
+};

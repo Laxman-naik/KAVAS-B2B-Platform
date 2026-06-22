@@ -21,6 +21,8 @@ import {
 export default function RFQPage() {
   const dispatch = useDispatch();
 
+  const buyerOrgId = "YOUR_REAL_BUYER_ORG_UUID";
+
   const [form, setForm] = useState({
     productName: "",
     quantity: "",
@@ -37,94 +39,6 @@ export default function RFQPage() {
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-
-    setForm({
-      ...form,
-      [name]: files ? files[0] : value,
-    });
-
-    setErrors({
-      ...errors,
-      [name]: "",
-    });
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!form.productName) newErrors.productName = "Product name is required";
-    if (!form.quantity) newErrors.quantity = "Quantity is required";
-    if (!form.unit) newErrors.unit = "Unit is required";
-    if (!form.companyName) newErrors.companyName = "Company name is required";
-    if (!form.buyerName) newErrors.buyerName = "Buyer name is required";
-    if (!form.email) newErrors.email = "Email is required";
-    if (!form.phone) newErrors.phone = "Phone number is required";
-    if (!form.deliveryLocation)
-      newErrors.deliveryLocation = "Delivery location is required";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const resetForm = () => {
-    setForm({
-      productName: "",
-      quantity: "",
-      unit: "",
-      targetPrice: "",
-      companyName: "",
-      buyerName: "",
-      email: "",
-      phone: "",
-      deliveryLocation: "",
-      requirements: "",
-      file: null,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    try {
-      setSubmitted(true);
-
-      const payload = {
-        buyer_org_id: "PASTE_YOUR_ORGANIZATION_UUID_HERE",
-        product_id: null,
-        title: form.productName,
-        description: `
-Company Name: ${form.companyName}
-Buyer Name: ${form.buyerName}
-Email: ${form.email}
-Phone: ${form.phone}
-Delivery Location: ${form.deliveryLocation}
-Unit: ${form.unit}
-Requirements: ${form.requirements}
-        `,
-        quantity: Number(form.quantity),
-        budget: form.targetPrice ? Number(form.targetPrice) : null,
-      };
-
-      const result = await dispatch(createRFQ(payload));
-
-      if (createRFQ.fulfilled.match(result)) {
-        alert("RFQ submitted successfully!");
-        resetForm();
-      } else {
-        alert(result.payload || "Failed to submit RFQ");
-      }
-    } catch (error) {
-      console.error("RFQ submit error:", error);
-      alert("Something went wrong");
-    } finally {
-      setSubmitted(false);
-    }
-  };
 
   const benefits = [
     {
@@ -148,6 +62,123 @@ Requirements: ${form.requirements}
       desc: "Your business information is kept safe and confidential.",
     },
   ];
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: files ? files[0] : value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.productName.trim()) {
+      newErrors.productName = "Product name is required";
+    }
+
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      newErrors.quantity = "Valid quantity is required";
+    }
+
+    if (!form.unit) {
+      newErrors.unit = "Unit is required";
+    }
+
+    if (!form.companyName.trim()) {
+      newErrors.companyName = "Company name is required";
+    }
+
+    if (!form.buyerName.trim()) {
+      newErrors.buyerName = "Buyer name is required";
+    }
+
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+    }
+
+    if (!form.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    }
+
+    if (!form.deliveryLocation.trim()) {
+      newErrors.deliveryLocation = "Delivery location is required";
+    }
+
+    if (form.targetPrice && Number(form.targetPrice) < 0) {
+      newErrors.targetPrice = "Target price cannot be negative";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const resetForm = () => {
+    setForm({
+      productName: "",
+      quantity: "",
+      unit: "",
+      targetPrice: "",
+      companyName: "",
+      buyerName: "",
+      email: "",
+      phone: "",
+      deliveryLocation: "",
+      requirements: "",
+      file: null,
+    });
+
+    setErrors({});
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      setSubmitted(true);
+
+      const payload = {
+        buyer_org_id: buyerOrgId,
+        product_id: null,
+        title: form.productName.trim(),
+        description: `
+Company Name: ${form.companyName}
+Buyer Name: ${form.buyerName}
+Email: ${form.email}
+Phone: ${form.phone}
+Delivery Location: ${form.deliveryLocation}
+Unit: ${form.unit}
+Requirements: ${form.requirements || "N/A"}
+Attachment: ${form.file ? form.file.name : "No attachment"}
+        `.trim(),
+        quantity: Number(form.quantity),
+        budget: form.targetPrice ? Number(form.targetPrice) : null,
+      };
+
+      const result = await dispatch(createRFQ(payload));
+
+      if (createRFQ.fulfilled.match(result)) {
+        alert("RFQ submitted successfully!");
+        resetForm();
+      } else {
+        alert(result.payload || "Failed to submit RFQ");
+      }
+    } catch (error) {
+      console.error("RFQ submit error:", error);
+      alert("Something went wrong");
+    } finally {
+      setSubmitted(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-3 sm:p-5 lg:p-6 text-[#1A1A1A]">
@@ -187,6 +218,7 @@ Requirements: ${form.requirements}
             <div className="rounded-full bg-[#0B1F3A] p-3 text-white">
               <Box size={26} />
             </div>
+
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
                 Product Requirement
@@ -223,20 +255,24 @@ Requirements: ${form.requirements}
               <label className="mb-2 block text-sm font-semibold">
                 Unit <span className="text-red-500">*</span>
               </label>
+
               <select
                 name="unit"
                 value={form.unit}
                 onChange={handleChange}
-                className="w-full rounded-sm border border-[#E5E5E5] px-3 py-2 outline-none transition-all duration-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30"
+                className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${
+                  errors.unit ? "border-red-400" : "border-[#E5E5E5]"
+                }`}
               >
                 <option value="">Select unit</option>
-                <option>Pieces</option>
-                <option>Kg</option>
-                <option>Box</option>
-                <option>Carton</option>
-                <option>Ton</option>
-                <option>Meter</option>
+                <option value="Pieces">Pieces</option>
+                <option value="Kg">Kg</option>
+                <option value="Box">Box</option>
+                <option value="Carton">Carton</option>
+                <option value="Ton">Ton</option>
+                <option value="Meter">Meter</option>
               </select>
+
               {errors.unit && (
                 <p className="mt-1 text-xs text-red-500">{errors.unit}</p>
               )}
@@ -245,8 +281,10 @@ Requirements: ${form.requirements}
             <InputBox
               label="Target Price (₹)"
               name="targetPrice"
+              type="number"
               value={form.targetPrice}
               onChange={handleChange}
+              error={errors.targetPrice}
               placeholder="Expected price"
             />
           </div>
@@ -257,6 +295,7 @@ Requirements: ${form.requirements}
             <div className="rounded-full bg-[#0B1F3A] p-3 text-white">
               <Building2 size={26} />
             </div>
+
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
                 Buyer Details
@@ -325,6 +364,7 @@ Requirements: ${form.requirements}
             <label className="mb-2 block text-sm font-semibold">
               Additional Requirements
             </label>
+
             <textarea
               name="requirements"
               value={form.requirements}
@@ -334,6 +374,7 @@ Requirements: ${form.requirements}
               placeholder="Write product specifications, quality standards, delivery timeline or any other details..."
               className="w-full resize-none rounded-sm border border-[#E5E5E5] px-3 py-2 outline-none transition-all duration-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30"
             />
+
             <p className="mt-1 text-right text-xs text-gray-500">
               {form.requirements.length} / 500
             </p>
@@ -342,6 +383,7 @@ Requirements: ${form.requirements}
           <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <label className="flex cursor-pointer items-center gap-4 rounded-sm border border-dashed border-gray-400 p-5 transition-all duration-300 hover:scale-[1.02] hover:border-[#D4AF37] hover:bg-[#FFF8EC]">
               <UploadCloud size={42} className="text-[#0B1F3A]" />
+
               <div>
                 <p className="font-semibold">
                   Upload Attachment{" "}
@@ -349,14 +391,18 @@ Requirements: ${form.requirements}
                     (Optional)
                   </span>
                 </p>
+
                 <p className="text-sm text-gray-500">PDF, JPG, PNG up to 5MB</p>
+
                 <p className="text-sm font-semibold text-[#D4AF37]">
                   {form.file ? form.file.name : "Choose File"}
                 </p>
               </div>
+
               <input
                 type="file"
                 name="file"
+                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={handleChange}
                 className="hidden"
               />
@@ -366,7 +412,7 @@ Requirements: ${form.requirements}
               <button
                 type="submit"
                 disabled={submitted}
-                className="flex w-full items-center justify-center cursor-pointer gap-3 rounded-sm bg-[#0B1F3A] px-10 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#D4AF37] hover:text-[#0B1F3A] disabled:opacity-70 lg:w-auto"
+                className="flex w-full items-center justify-center cursor-pointer gap-3 rounded-sm bg-[#0B1F3A] px-10 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#D4AF37] hover:text-[#0B1F3A] disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto"
               >
                 <Send size={18} />
                 {submitted ? "Submitting..." : "Submit RFQ"}
@@ -397,6 +443,7 @@ Requirements: ${form.requirements}
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#D4AF37]/20 text-[#0B1F3A] transition-all duration-300 group-hover:scale-110 group-hover:bg-[#D4AF37]">
                       <Icon size={18} />
                     </div>
+
                     <div>
                       <h4 className="font-bold text-[#1A1A1A]">
                         {item.title}
@@ -413,6 +460,7 @@ Requirements: ${form.requirements}
 
           <div className="rounded-sm bg-[#0B1F3A] p-6 text-white shadow-lg transition-all duration-300">
             <h3 className="text-2xl font-bold text-[#D4AF37]">Need Help?</h3>
+
             <p className="mt-2 text-sm text-white/90">
               Our team is here to assist you.
             </p>
@@ -425,7 +473,10 @@ Requirements: ${form.requirements}
               <ContactItem icon={MapPin} text="Hyderabad, Telangana, India" />
             </div>
 
-            <button className="mt-7 w-full rounded-sm border border-[#D4AF37] bg-[#D4AF37] px-5 py-3 font-bold text-[#0B1F3A] transition-all duration-300 hover:scale-105 hover:bg-transparent hover:text-[#D4AF37]">
+            <button
+              type="button"
+              className="mt-7 w-full rounded-sm border border-[#D4AF37] bg-[#D4AF37] px-5 py-3 font-bold text-[#0B1F3A] transition-all duration-300 hover:scale-105 hover:bg-transparent hover:text-[#D4AF37]"
+            >
               Contact Support
             </button>
           </div>

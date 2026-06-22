@@ -16,7 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
@@ -30,10 +30,10 @@ export default function OrdersManagementBody() {
   const pageSize = 8;
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchVendorOrders());
 
     const interval = setInterval(() => {
-      dispatch(fetchOrders());
+      dispatch(fetchVendorOrders());
     }, 5000);
 
     return () => clearInterval(interval);

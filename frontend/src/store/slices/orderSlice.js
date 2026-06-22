@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById,} from "@/services/orderService";
+import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getVendorOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById, } from "@/services/orderService";
 
 const normalizeError = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
@@ -88,6 +88,18 @@ export const fetchRecentOrders = createAsyncThunk(
       const orders = res.orders || [];
 
       return orders.slice(0, 4);
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
+export const fetchVendorOrders = createAsyncThunk(
+  "order/fetchVendorOrders",
+  async (_, thunkAPI) => {
+    try {
+      const res = await getVendorOrdersAPI();
+      return res.orders;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
     }
@@ -206,6 +218,18 @@ const orderSlice = createSlice({
         state.currentOrderbyid = action.payload;
       })
 
+      .addCase(fetchVendorOrders.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchVendorOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.orders = action.payload || [];
+      })
+      .addCase(fetchVendorOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const updatedOrder = action.payload?.order;
 
@@ -220,7 +244,9 @@ const orderSlice = createSlice({
         if (state.currentOrder?.id === updatedOrder.id) {
           state.currentOrder = updatedOrder;
         }
-      });
+      }
+      );
+
   },
 });
 
