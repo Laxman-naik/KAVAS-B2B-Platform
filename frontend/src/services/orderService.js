@@ -29,10 +29,6 @@ export const getOrderById = async (orderId) => {
   const res = await productapi.get(`/api/orders/by-id/${orderId}`);
   return res.data;
 };
-<<<<<<< HEAD
-=======
-
->>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
 export const getVendorOrdersAPI = async () => {
   const res = await productapi.get("/api/orders/vendor");
   return res.data;
