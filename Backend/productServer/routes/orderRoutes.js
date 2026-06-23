@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-<<<<<<< HEAD
-const { createOrderFromCart, getUserOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, getOrderById, getVendorOrders } = require("../controllers/orderController");
-=======
 const { createOrderFromCart, getUserOrders, getVendorOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, getOrderById,  } = require("../controllers/orderController");
->>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
 
