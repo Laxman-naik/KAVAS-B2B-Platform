@@ -14,6 +14,7 @@ import vendorPayoutReducer from "./slices/vendorPayoutSlice";
 import adminPayoutReducer from "./slices/adminPayoutSlice";
 import rfqReducer from "@/store/slices/rfqSlice";
 import vendorRFQReducer from "@/store/slices/vendorRFQSlice";
+import vendorDashboardReducer from "./slices/vendorDashboardSlice";
 
 
 export const store = configureStore({
@@ -32,5 +33,6 @@ export const store = configureStore({
     adminPayout: adminPayoutReducer,
     rfq: rfqReducer,
     vendorRFQ: vendorRFQReducer,
+    vendorDashboard: vendorDashboardReducer,
   },
 });

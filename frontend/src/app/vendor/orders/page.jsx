@@ -398,7 +398,18 @@ export default function OrdersManagementBody() {
 
                     <td className="p-4">
                       <p className="font-extrabold text-[#0B1F3A]">
-                        {o.item_count || 0} Items
+                        {o.buyer_name || "Unknown Buyer"}
+                      </p>
+                      <p className="text-xs font-medium text-gray-500">
+                        {o.city || o.state
+                          ? `${o.city || ""}, ${o.state || ""}`
+                          : o.buyer_email || "-"}
+                      </p>
+                    </td>
+
+                    <td className="p-4">
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        {Number(o.item_count) || o.items?.length || 0} Products
                       </p>
 
                       <div className="mt-1 space-y-1">
@@ -410,22 +421,6 @@ export default function OrdersManagementBody() {
                             {item.product_name || "Product"} × {item.quantity}
                           </p>
                         ))}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] text-sm rounded-sm">
-                          📦
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-[#0B1F3A]">
-                            Order Items
-                          </p>
-                          <p className="text-xs font-medium text-gray-500">
-                            View details
-                          </p>
-                        </div>
                       </div>
                     </td>
 
@@ -478,6 +473,7 @@ export default function OrdersManagementBody() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
+                          onClick={() => setSelectedOrder(o)}
                           className="inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
                           aria-label="View"
                         >

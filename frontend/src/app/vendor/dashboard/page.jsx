@@ -1,28 +1,42 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import {BarChart3,Bell,ClipboardList,Package,Receipt,ShoppingBag,Wallet,} from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  ClipboardList,
+  Package,
+  Receipt,
+  ShoppingBag,
+  Wallet,
+} from "lucide-react";
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { fetchVendorDashboard } from "@/store/slices/vendorDashboardSlice";
 
 const DashboardBody = () => {
   const vendor = useSelector((state) => state.vendor?.vendor);
   const business = useSelector((state) => state.vendor?.business);
-  const allOrders = useSelector((state) => state.orders?.orders || []);
-  const products = useSelector((state) => state.products?.products || []);
-  const payments = useSelector((state) => state.payments?.payments || []);
   const [ordersFilter, setOrdersFilter] = useState("All");
-  const vendorId = vendor?._id || vendor?.id;
-  // console.log(business)
+  const payments = useSelector((state) => state.payments?.payments || []);
 
-  const orders = useMemo(() => {
-    if (!vendorId) return allOrders;
-    return allOrders.filter(
-      (order) =>
-        order?.vendorId === vendorId ||
-        order?.vendor?._id === vendorId ||
-        order?.vendor?.id === vendorId,
-    );
-  }, [allOrders, vendorId]);
+  // console.log(business)
+  console.log("VENDOR DATA:", vendor);
+  console.log("BUSINESS DATA:", business);
+
+  const dispatch = useDispatch();
+
+  const {
+    orders = [],
+    products = [],
+    stats = {},
+    loading,
+  } = useSelector((state) => state.vendorDashboard);
+
+  useEffect(() => {
+    dispatch(fetchVendorDashboard());
+  }, [dispatch]);
 
   const totalRevenue = useMemo(() => {
     return orders
@@ -213,7 +227,9 @@ const DashboardBody = () => {
   };
 
   const getOrderAmount = (order) => {
-    return Number(order.amount || order.totalAmount || order.total || 0);
+    return Number(
+      order.total_amount || order.amount || order.totalAmount || order.total,
+    );
   };
 
   const getOrderUnits = (order) => {
@@ -234,7 +250,12 @@ const DashboardBody = () => {
         <div>
           <div className="text-xl sm:text-2xl font-extrabold">
             Welcome back,{" "}
-            {vendor?.business?.business_name || vendor?.name || "Vendor"}
+            {business?.business_name ||
+              business?.company_name ||
+              vendor?.business_name ||
+              vendor?.company_name ||
+              vendor?.email ||
+              "Vendor"}
           </div>
 
           <div className="mt-1 text-sm text-white/75">
@@ -450,7 +471,7 @@ const DashboardBody = () => {
                             o.status,
                           )}`}
                         >
-                          {o.status || "Pending"}
+                          {o.status?.toLowerCase() === "pending"}
                         </span>
                       </div>
 
