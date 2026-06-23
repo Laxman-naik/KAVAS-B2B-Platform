@@ -255,6 +255,31 @@ exports.getOrderDetails = async (req, res) => {
   }
 };
 
+export const getOrderTracking = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId)
+      .select("tracking status");
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      tracking: order.tracking || [],
+      status: order.status,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 exports.updateOrderStatus = async (req, res) => {
   const client = await pool.connect();
 
