@@ -274,20 +274,7 @@ const orderSlice = createSlice({
         }
 
       })
-      .addCase(fetchVendorOrders.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchVendorOrders.fulfilled, (state, action) => {
-        state.loading = false;
-        state.orders = action.payload || [];
-      })
-      .addCase(fetchVendorOrders.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-
+      
   },
 
 });

@@ -50,7 +50,7 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/vendor/rfqs", {
+      const res = await fetch("/api/rfqs", {
         headers: {
           "vendor-id": vendorId,
         },
