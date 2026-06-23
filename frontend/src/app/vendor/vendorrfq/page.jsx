@@ -16,6 +16,7 @@ import {
   IndianRupee,
   X,
 } from "lucide-react";
+import { productapi } from "@/lib/axios";
 
 const statusStyles = {
   invited: "bg-blue-100 text-blue-700",
@@ -50,18 +51,13 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/vendor/rfqs", {
-        headers: {
-          "vendor-id": vendorId,
-        },
-      });
-
-      const data = await res.json();
+      const { data } = await productapi.get("/api/rfqs");
 
       const list = data.rfqs || [];
 
       setRfqs(list);
       setSelected(list[0] || null);
+
     } catch (err) {
       console.error("Load RFQs error:", err);
       setRfqs([]);
@@ -291,9 +287,8 @@ const VendorRFQ = () => {
                   <tr
                     key={item.id}
                     onClick={() => setSelected(item)}
-                    className={`border-t cursor-pointer hover:bg-slate-50 ${
-                      selected?.id === item.id ? "bg-blue-50" : ""
-                    }`}
+                    className={`border-t cursor-pointer hover:bg-slate-50 ${selected?.id === item.id ? "bg-blue-50" : ""
+                      }`}
                   >
                     <td className="p-4 font-semibold text-slate-800">
                       {item.title || "Untitled RFQ"}
@@ -307,10 +302,9 @@ const VendorRFQ = () => {
 
                     <td>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          statusStyles[item.status] ||
+                        className={`px-3 py-1 rounded-full text-sm ${statusStyles[item.status] ||
                           "bg-slate-100 text-slate-700"
-                        }`}
+                          }`}
                       >
                         {item.status}
                       </span>

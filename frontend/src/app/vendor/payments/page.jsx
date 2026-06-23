@@ -263,6 +263,8 @@ import {
   clearVendorPayoutState,
 } from "@/store/slices/vendorPayoutSlice"
 
+import WithdrawFundsPopup from "../withdrawfundspopup/page";
+
 export default function PaymentsPayoutsBody() {
   const dispatch = useDispatch();
 
@@ -277,69 +279,28 @@ export default function PaymentsPayoutsBody() {
     remarks: "",
   });
 
-  const payoutRequests = [
-    {
-      id: "PAYOUT-2024-025",
-      amount: "₹50,000",
-      date: "20 May 2024, 10:30 AM",
-      status: "Approved & Paid",
-    },
-    {
-      id: "PAYOUT-2024-024",
-      amount: "₹45,000",
-      date: "18 May 2024, 02:15 PM",
-      status: "Approved & Paid",
-    },
-    {
-      id: "PAYOUT-2024-023",
-      amount: "₹30,000",
-      date: "15 May 2024, 11:45 AM",
-      status: "Approved",
-    },
-    {
-      id: "PAYOUT-2024-022",
-      amount: "₹25,000",
-      date: "12 May 2024, 09:20 AM",
-      status: "Pending",
-    },
-    {
-      id: "PAYOUT-2024-021",
-      amount: "₹40,000",
-      date: "10 May 2024, 04:10 PM",
-      status: "Rejected",
-    },
-  ];
+  useEffect(() => {
+    dispatch(getMyVendorPayouts());
+    dispatch(getVendorPayoutSummary());
 
-  const recentPayouts = [
-    {
-      id: "PAY-2024-018",
-      amount: "₹50,000",
-      date: "20 May 2024, 02:30 PM",
-      ref: "REF123456789",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-017",
-      amount: "₹45,000",
-      date: "18 May 2024, 04:15 PM",
-      ref: "REF123456788",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-016",
-      amount: "₹30,000",
-      date: "15 May 2024, 01:20 PM",
-      ref: "REF123456787",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-015",
-      amount: "₹40,000",
-      date: "10 May 2024, 05:30 PM",
-      ref: "REF123456786",
-      status: "Paid",
-    },
-  ];
+    return () => {
+      dispatch(clearVendorPayoutState());
+    };
+  }, [dispatch]);
+
+  const formatMoney = (amount) => {
+    return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "-";
+
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(date));
+  };
 
   const statusStyle = (status) => {
     if (status === "PAID") return "bg-green-100 text-green-700";
@@ -358,48 +319,72 @@ export default function PaymentsPayoutsBody() {
     setShowPopup(true);
   };
 
-  const confirmRequest = () => {
-    dispatch(
+  const confirmRequest = async () => {
+    const result = await dispatch(
       requestVendorPayout({
         payout_amount: Number(form.amount),
         remarks: form.remarks,
       })
     );
+
+    if (requestVendorPayout.fulfilled.match(result)) {
+      setShowPopup(false);
+
+      setForm({
+        amount: "",
+        remarks: "",
+      });
+
+      dispatch(getMyVendorPayouts());
+      dispatch(getVendorPayoutSummary());
+    }
   };
 
-  const cards = useMemo(
-    () => [
-      {
-        title: "Pending Requests",
-        value: formatMoney(summary?.pending_amount),
-        sub: "Under Admin Review",
-        icon: <Clock />,
-        color: "yellow",
-      },
-      {
-        title: "Approved Payouts",
-        value: formatMoney(summary?.approved_amount),
-        sub: "Ready To Be Paid",
-        icon: <CheckCircle />,
-        color: "blue",
-      },
-      {
-        title: "Paid Payouts",
-        value: formatMoney(summary?.paid_amount),
-        sub: "Settled To Bank",
-        icon: <Wallet />,
-        color: "green",
-      },
-      {
-        title: "Total Requested",
-        value: formatMoney(summary?.total_requested),
-        sub: "All Time Requests",
-        icon: <Coins />,
-        color: "purple",
-      },
-    ],
-    [summary]
-  );
+  const refreshData = () => {
+    dispatch(getMyVendorPayouts());
+    dispatch(getVendorPayoutSummary());
+  };
+
+  const cards = [
+    {
+      title: "Pending Requests",
+      value: formatMoney(summary?.pending_amount),
+      sub: "Under Admin Review",
+      icon: <Clock />,
+      color: "yellow",
+    },
+    {
+      title: "Approved Payouts",
+      value: formatMoney(summary?.approved_amount),
+      sub: "Ready To Be Paid",
+      icon: <CheckCircle />,
+      color: "blue",
+    },
+    {
+      title: "Paid Payouts",
+      value: formatMoney(summary?.paid_amount),
+      sub: "Settled To Bank",
+      icon: <Wallet />,
+      color: "green",
+    },
+    {
+      title: "Total Requested",
+      value: formatMoney(summary?.total_requested),
+      sub: "All Time Requests",
+      icon: <Coins />,
+      color: "purple",
+    },
+  ];
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+
+  const handleWithdrawConfirm = (data) => {
+    dispatch(
+      requestVendorPayout({
+        payout_amount: data.payout_amount,
+        remarks: data.remarks,
+      })
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8 text-[#1A1A1A]">
@@ -509,42 +494,64 @@ export default function PaymentsPayoutsBody() {
           </div>
         </section>
 
-        <section className="bg-white border border-[#E5E5E5] rounded-sm p-5 shadow-sm">
-          <h3 className="text-lg font-bold text-[#0B1F3A] mb-8">
-            Payment Flow
-          </h3>
+        <section className="bg-[#1E293B] rounded-sm p-8 shadow-xl text-white overflow-hidden relative">
 
-          <div className="relative">
-            <div className="hidden sm:block absolute top-6 left-[12%] right-[12%] h-0.5 bg-green-200" />
+          {/* Top Row */}
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="uppercase tracking-wider text-gray-400 font-semibold text-sm">
+                Available Balance
+              </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 text-center relative z-10">
-              {[
-                ["1", "Request", "Vendor sends request"],
-                ["2", "Review", "Admin reviews"],
-                ["3", "Approved", "Admin approves"],
-                ["4", "Paid", "Bank settled"],
-              ].map((item, index) => (
-                <div key={index} className="bg-white">
-                  <div
-                    className={`mx-auto h-12 w-12 rounded-sm flex items-center justify-center font-bold border ${
-                      index === 0 || index === 3
-                        ? "bg-green-100 text-green-700 border-green-400"
-                        : "bg-blue-100 text-blue-700 border-blue-300"
-                    }`}
-                  >
-                    {item[0]}
-                  </div>
+              <h2 className="text-5xl font-extrabold mt-6">
+                ₹{Number(summary?.approved_amount || 0).toLocaleString("en-IN")}
+              </h2>
 
-                  <h4 className="font-bold mt-3 text-[#0B1F3A]">{item[1]}</h4>
-                  <p className="text-xs text-gray-500 mt-1">{item[2]}</p>
-                </div>
-              ))}
+              <p className="text-gray-400 mt-3 text-lg">
+                Ready for payout
+              </p>
+            </div>
+
+            <div className="h-14 w-14 rounded-sm bg-white/10 flex items-center justify-center">
+              <Wallet className="h-7 w-7 text-white" />
             </div>
           </div>
 
-          <div className="mt-10 bg-green-50 border border-green-200 text-green-700 rounded-sm px-5 py-4 text-sm">
-            Flow: PENDING → APPROVED → PAID. If rejected, admin note will be
-            shown in payout history.
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4 mt-8">
+            <div className="bg-white/5 rounded-sm p-4">
+              <p className="text-gray-400 text-sm">Pending</p>
+              <p className="text-xl font-bold mt-1">
+                ₹{Number(summary?.pending_amount || 0).toLocaleString("en-IN")}
+              </p>
+            </div>
+
+            <div className="bg-white/5 rounded-sm p-4">
+              <p className="text-gray-400 text-sm">Paid</p>
+              <p className="text-xl font-bold mt-1">
+                ₹{Number(summary?.paid_amount || 0).toLocaleString("en-IN")}
+              </p>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row  gap-4 mt-8">
+
+            <button
+              onClick={() => setWithdrawOpen(true)}
+              className="flex-1 bg-white text-[#1E293B] font-bold py-4 rounded-sm"
+            >
+              Withdraw
+            </button>
+
+            <button
+              onClick={refreshData}
+              className="flex-1 border border-white/20 text-white py-4 rounded-sm font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition"
+            >
+              <RefreshCcw size={18} />
+              Refresh
+            </button>
+
           </div>
         </section>
       </div>
@@ -654,6 +661,13 @@ export default function PaymentsPayoutsBody() {
           </div>
         </div>
       )}
+      
+      <WithdrawFundsPopup
+        open={withdrawOpen}
+        setOpen={setWithdrawOpen}
+        availableBalance={Number(summary?.approved_amount || 0)}
+        onConfirm={handleWithdrawConfirm}
+      />
 
       <style>{`
         @keyframes scaleIn {
@@ -668,7 +682,9 @@ export default function PaymentsPayoutsBody() {
         }
       `}</style>
     </div>
+
   );
+
 }
 
 function Card({ title, value, sub, icon, color }) {
