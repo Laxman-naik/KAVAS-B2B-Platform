@@ -10,9 +10,7 @@ import {
   getVendorProductsAPI,
   getFlashDealsAPI,
   addFlashDealToCartAPI,
-  makeProductFlashDealAPI,
-  updateProductFlashDealAPI,
-  removeProductFlashDealAPI,
+  getVendorInventoryAPI,
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */
@@ -23,6 +21,20 @@ export const fetchProducts = createAsyncThunk(
     try {
       const res = await getProducts();
       return res?.products || res?.data || res || [];
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+// FETCH VENDOR INVENTORY 
+
+export const fetchVendorInventory = createAsyncThunk(
+  "products/fetchVendorInventory",
+  async (organizationId, thunkAPI) => {
+    try {
+      const res = await getVendorInventoryAPI(organizationId);
+      console.log("VENDOR INVENTORY RESPONSE:", res);
+      return res?.products || [];
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -72,7 +84,7 @@ export const editProduct = createAsyncThunk(
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-      return res?.product || res?.data || res;
+      return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -212,6 +224,8 @@ const productSlice = createSlice({
     flashDeals: [],
     products: [],
     vendorProducts: [],
+    inventory: [],
+    inventoryLoading: false,
     product: null,
 
     loading: false,
@@ -221,7 +235,6 @@ const productSlice = createSlice({
     cartLoading: false,
     cartSuccess: false,
 
-    success: false,
     error: null,
   },
 
@@ -301,8 +314,12 @@ const productSlice = createSlice({
         const updatedProduct =
           action.payload?.product || action.payload?.data || action.payload;
 
+        state.vendorProducts = state.vendorProducts.map((p) =>
+          p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
+        );
+
         state.products = state.products.map((p) =>
-          p.id === updatedProduct?.id ? updatedProduct : p
+          p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
         );
 
         state.vendorProducts = state.vendorProducts.map((p) =>
@@ -488,8 +505,22 @@ const productSlice = createSlice({
       .addCase(fetchVendorProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(fetchVendorInventory.pending, (state) => {
+        state.inventoryLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchVendorInventory.fulfilled, (state, action) => {
+        state.inventoryLoading = false;
+        state.inventory = action.payload;
+      })
+      .addCase(fetchVendorInventory.rejected, (state, action) => {
+        state.inventoryLoading = false;
+        state.error = action.payload;
       });
+
   },
+
 });
 
 export const {

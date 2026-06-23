@@ -255,43 +255,111 @@ exports.getOrderDetails = async (req, res) => {
   }
 };
 
+exports.getOrderTracking = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const orderRes = await pool.query(
+      `SELECT status, delivery_status
+       FROM orders
+       WHERE id = $1`,
+      [orderId]
+    );
+
+    if (!orderRes.rows.length) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      tracking: [],
+      status: orderRes.rows[0].status,
+      delivery_status: orderRes.rows[0].delivery_status,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 exports.updateOrderStatus = async (req, res) => {
   const client = await pool.connect();
 
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, awb, courier, estimated_delivery } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        message: "Status is required",
+      });
+    }
 
     await client.query("BEGIN");
 
     const orderRes = await client.query(
-      `UPDATE orders 
-       SET status = $1 
-       WHERE id = $2
-       RETURNING *`,
-      [String(status).toLowerCase(), id]
+      `
+      UPDATE orders
+      SET
+        status = $1,
+        delivery_status = $1,
+        awb = COALESCE($2, awb),
+        courier = COALESCE($3, courier),
+        shipping_date = CASE 
+          WHEN $1 = 'shipped' THEN NOW()
+          ELSE shipping_date
+        END,
+        estimated_delivery = COALESCE($4, estimated_delivery),
+        shipped_at = CASE
+          WHEN $1 = 'shipped' THEN NOW()
+          ELSE shipped_at
+        END,
+        delivered_at = CASE
+          WHEN $1 = 'delivered' THEN NOW()
+          ELSE delivered_at
+        END
+      WHERE id = $5
+      RETURNING *
+      `,
+      [
+        String(status).toLowerCase(),
+        awb || null,
+        courier || null,
+        estimated_delivery || null,
+        id,
+      ]
     );
 
     if (!orderRes.rows.length) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(404).json({
+        message: "Order not found",
+      });
     }
 
     await client.query(
-      `INSERT INTO order_status_history (order_id, status)
-       VALUES ($1, $2)`,
+      `
+      INSERT INTO order_status_history (order_id, status)
+      VALUES ($1, $2)
+      `,
       [id, String(status).toLowerCase()]
     );
 
     await client.query("COMMIT");
 
-    res.json({
+    return res.json({
+      success: true,
       message: "Order status updated",
       order: orderRes.rows[0],
     });
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ message: err.message });
+
+    return res.status(500).json({
+      message: err.message,
+    });
   } finally {
     client.release();
   }
@@ -375,39 +443,76 @@ exports.clearCartAfterOrder = async (userId, client) => {
 exports.getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const userId = req.user?.id;
 
     const orderRes = await pool.query(
       `
       SELECT 
-        id,
-        user_id,
-        supplier_org_id,
-        total_amount,
-        status,
-        delivery_status,
-        shipping_address_id,
-        idempotency_key,
-        paid_at,
-        created_at
-      FROM orders
-      WHERE id = $1
+        o.*,
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code,
+        a.phone,
+        u.full_name AS buyer_name,
+        u.email AS buyer_email
+      FROM orders o
+      LEFT JOIN addresses a ON a.id = o.shipping_address_id
+      LEFT JOIN users u ON u.id = o.user_id
+      WHERE o.id = $1
+        AND o.user_id = $2
       `,
-      [orderId]
+      [orderId, userId]
     );
 
     if (!orderRes.rows.length) {
       return res.status(404).json({
+        success: false,
         message: "Order not found",
       });
     }
 
+    const itemsRes = await pool.query(
+      `
+      SELECT 
+        oi.id,
+        oi.order_id,
+        oi.product_id,
+        oi.quantity,
+        oi.price,
+        oi.organization_name,
+        p.name AS product_name,
+        p.sku,
+        p.unit
+      FROM order_items oi
+      LEFT JOIN products p ON p.id = oi.product_id
+      WHERE oi.order_id = $1
+      `,
+      [orderId]
+    );
+
+    const historyRes = await pool.query(
+      `
+      SELECT id, status, changed_at
+      FROM order_status_history
+      WHERE order_id = $1
+      ORDER BY changed_at ASC
+      `,
+      [orderId]
+    );
+
     return res.json({
+      success: true,
       order: orderRes.rows[0],
+      items: itemsRes.rows,
+      history: historyRes.rows,
     });
   } catch (err) {
-    console.error(err);
-
+    console.error("GET ORDER BY ID ERROR:", err);
     return res.status(500).json({
+      success: false,
       message: err.message,
     });
   }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getVendorOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById, } from "@/services/orderService";
+import { createOrderFromCartAPI, createOrderAPI, getUserOrdersAPI, getVendorOrdersAPI, getOrderDetailsAPI, updateOrderStatusAPI, getOrderById, getOrderTrackingAPI } from "@/services/orderService";
 
 const normalizeError = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
@@ -118,11 +118,29 @@ export const fetchOrderDetails = createAsyncThunk(
   }
 );
 
+export const fetchOrderTracking = createAsyncThunk(
+  "order/fetchTracking",
+  async (orderId, thunkAPI) => {
+    try {
+      const res = await getOrderTrackingAPI(orderId);
+      return res;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(normalizeError(err));
+    }
+  }
+);
+
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
-  async ({ orderId, status }, thunkAPI) => {
+  async ({ orderId, status, awb, courier, estimated_delivery }, thunkAPI) => {
     try {
-      const res = await updateOrderStatusAPI(orderId, status);
+      const res = await updateOrderStatusAPI(orderId, {
+        status,
+        awb,
+        courier,
+        estimated_delivery,
+      });
+
       return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));
@@ -154,6 +172,7 @@ const initialState = {
   },
   currentOrder: null,
   currentOrderbyid: null,
+  tracking: null,
   loading: false,
   error: null,
   success: false,
@@ -214,6 +233,21 @@ const orderSlice = createSlice({
         state.currentOrder = action.payload?.order || null;
       })
 
+      .addCase(fetchOrderTracking.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+
+      .addCase(fetchOrderTracking.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tracking = action.payload;
+      })
+
+      .addCase(fetchOrderTracking.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       .addCase(fetchOrderById.fulfilled, (state, action) => {
         state.currentOrderbyid = action.payload;
       })
@@ -229,7 +263,7 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         const updatedOrder = action.payload?.order;
 
@@ -244,11 +278,13 @@ const orderSlice = createSlice({
         if (state.currentOrder?.id === updatedOrder.id) {
           state.currentOrder = updatedOrder;
         }
-      }
-      );
+
+      })
 
   },
+
 });
+
 
 export const { clearOrderState } = orderSlice.actions;
 export default orderSlice.reducer;

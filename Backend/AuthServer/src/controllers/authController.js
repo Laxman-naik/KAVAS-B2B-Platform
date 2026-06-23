@@ -66,7 +66,28 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const accessToken = generateAccessToken(user);
+    // const accessToken = generateAccessToken(user);
+    let organization_id = null;
+
+    if (user.role === "vendor") {
+      const orgRes = await pool.query(
+        `
+  SELECT organization_id
+  FROM vendors
+  WHERE user_id = $1
+  LIMIT 1
+  `,
+        [user.id]
+      );
+
+      organization_id = orgRes.rows[0]?.organization_id || null;
+    }
+
+    const accessToken = generateAccessToken({
+      ...user,
+      organization_id,
+    });
+
     const refreshToken = generateRefreshToken(user);
 
     let sessionId = req.headers["x-session-id"];
@@ -306,13 +327,13 @@ exports.forgotPassword = async (req, res) => {
       message: "Password reset link sent to email",
     });
   } catch (err) {
-  console.error("FORGOT PASSWORD ERROR:", err);
+    console.error("FORGOT PASSWORD ERROR:", err);
 
-  return res.status(500).json({
-    message: err.message,
-    code: err.code,
-    command: err.command,
-  });
+    return res.status(500).json({
+      message: err.message,
+      code: err.code,
+      command: err.command,
+    });
 
   }
 };

@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 
+// import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
@@ -31,12 +32,6 @@ export default function OrdersManagementBody() {
 
   useEffect(() => {
     dispatch(fetchVendorOrders());
-
-    const interval = setInterval(() => {
-      dispatch(fetchVendorOrders());
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, [dispatch]);
 
   const statusLabel = (status) => {
@@ -298,18 +293,16 @@ export default function OrdersManagementBody() {
                       setStatusFilter(t.key);
                       setPage(1);
                     }}
-                    className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${
-                      active
+                    className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${active
                         ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                         : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    }`}
+                      }`}
                   >
                     {Icon ? <Icon size={16} /> : <span className="w-4" />}
                     {t.label}
                     <span
-                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${
-                        active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {t.count}
                     </span>
@@ -352,19 +345,19 @@ export default function OrdersManagementBody() {
                   o.status === "pending"
                     ? "Mark Processing"
                     : o.status === "processing"
-                    ? "Mark Shipped"
-                    : o.status === "shipped"
-                    ? "Mark Delivered"
-                    : null;
+                      ? "Mark Shipped"
+                      : o.status === "shipped"
+                        ? "Mark Delivered"
+                        : null;
 
                 const actionNext =
                   o.status === "pending"
                     ? "processing"
                     : o.status === "processing"
-                    ? "shipped"
-                    : o.status === "shipped"
-                    ? "delivered"
-                    : null;
+                      ? "shipped"
+                      : o.status === "shipped"
+                        ? "delivered"
+                        : null;
 
                 return (
                   <tr
@@ -438,9 +431,9 @@ export default function OrdersManagementBody() {
                       <p className="text-xs font-medium text-gray-500">
                         {o.created_at
                           ? new Date(o.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : ""}
                       </p>
                     </td>
@@ -458,14 +451,34 @@ export default function OrdersManagementBody() {
                         {actionLabel && actionNext ? (
                           <button
                             type="button"
-                            onClick={() =>
-                              dispatch(
-                                updateOrderStatus({
-                                  orderId: o.id,
-                                  status: actionNext,
-                                })
-                              )
-                            }
+                            onClick={() => {
+                              if (actionNext === "shipped") {
+                                const awb = prompt("Enter AWB Number");
+                                if (!awb) return;
+
+                                const courier = prompt("Enter Courier Name");
+                                if (!courier) return;
+
+                                const estimated_delivery = prompt("Enter Estimated Delivery Date YYYY-MM-DD");
+
+                                dispatch(
+                                  updateOrderStatus({
+                                    orderId: o.id,
+                                    status: actionNext,
+                                    awb,
+                                    courier,
+                                    estimated_delivery,
+                                  })
+                                );
+                              } else {
+                                dispatch(
+                                  updateOrderStatus({
+                                    orderId: o.id,
+                                    status: actionNext,
+                                  })
+                                );
+                              }
+                            }}
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
                           >
                             {actionLabel}
@@ -555,11 +568,10 @@ export default function OrdersManagementBody() {
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
-              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
-                safePage <= 1
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage <= 1
                   ? "cursor-not-allowed opacity-40"
                   : "hover:bg-[#FFF8EC]"
-              }`}
+                }`}
             >
               <ChevronLeft size={16} />
             </button>
@@ -575,11 +587,10 @@ export default function OrdersManagementBody() {
                     key={p}
                     type="button"
                     onClick={() => setPage(p)}
-                    className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${
-                      active
+                    className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${active
                         ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
                         : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>
@@ -590,11 +601,10 @@ export default function OrdersManagementBody() {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
-              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
-                safePage >= totalPages
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage >= totalPages
                   ? "cursor-not-allowed opacity-40"
                   : "hover:bg-[#FFF8EC]"
-              }`}
+                }`}
             >
               <ChevronRight size={16} />
             </button>
