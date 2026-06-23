@@ -1,5 +1,5 @@
-
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const pool = require("./config/db");
@@ -13,15 +13,16 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const favouritesRoutes = require("./routes/favouritesRoutes");
 const rfqRoutes = require("./routes/rfqRoutes");
+const vendorRFQRoutes = require("./routes/vendorRFQRoutes");
 
 const vendorPayoutRoutes = require("./routes/vendorPayoutRoutes");
 const adminPayoutRoutes = require("./routes/adminPayoutRoutes");
-
-
-
+const organizationRoutes = require("./routes/organizationRoutes");
 
 const app = express();
+
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(
   cors({
@@ -30,6 +31,10 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.send("Product Server Running");
+});
+
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -37,12 +42,14 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/favourites", favouritesRoutes);
+
 app.use("/api/rfqs", rfqRoutes);
+app.use("/api/organizations", organizationRoutes);
+app.use("/api/vendor", vendorRFQRoutes);
+
 app.use("/api/vendor-payouts", vendorPayoutRoutes);
 app.use("/api/admin/payouts", adminPayoutRoutes);
-app.get("/", (req, res) => {
-  res.send("Product Server Running");
-});
+
 
 pool
   .query("SELECT NOW()")

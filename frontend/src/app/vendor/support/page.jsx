@@ -2,9 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
-  Plus,
-  Download,
-  Printer,
+ 
   LifeBuoy,
   CreditCard,
   Truck,
@@ -14,12 +12,9 @@ import {
   Mail,
   Clock,
 } from "lucide-react";
-
-
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 
 import {
   Select,
@@ -38,14 +33,8 @@ import {
 import { X, Info } from "lucide-react";
 
 const VendorSupportPage = () => {
-  const [openTicket, setOpenTicket] = useState(false);
-
   const [faqTab, setFaqTab] = useState("All");
-
-
-
   const faqSectionRef = useRef(null);
-
   const faqTabs = useMemo(
     () => [
       "All",
@@ -112,9 +101,6 @@ const VendorSupportPage = () => {
     ],
     [],
   );
-
-  
-
   const quickCards = useMemo(
     () => [
       {
@@ -148,21 +134,10 @@ const VendorSupportPage = () => {
     ],
     [],
   );
-  
-
-  
-
- 
-
- 
-
   const visibleFaqs = useMemo(() => {
     if (faqTab === "All") return faqs;
     return faqs.filter((faq) => faq.category === faqTab);
   }, [faqs, faqTab]);
-
-
-
   const handleQuickCardClick = (targetTab) => {
     setFaqTab(targetTab);
 
@@ -173,196 +148,6 @@ const VendorSupportPage = () => {
       });
     }, 100);
   };
-
-  const handleExportCSV = () => {
-    const headers = [
-      "Ticket ID",
-      "Subject",
-      "Category",
-      "Priority",
-      "Status",
-      "Replies",
-      "Last Update",
-      "Updated By",
-    ];
-
-    const rows = filteredTickets.map((ticket) => [
-      ticket.id,
-      ticket.subject,
-      ticket.category,
-      ticket.priority,
-      ticket.status,
-      ticket.replies,
-      ticket.lastUpdate,
-      ticket.updatedBy,
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `support-tickets-${ticketStatus
-      .toLowerCase()
-      .replaceAll(" ", "-")}.csv`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-  };
-
-  const handlePrintAll = () => {
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) return;
-
-    const tableRows = filteredTickets
-      .map(
-        (ticket) => `
-          <tr>
-            <td>${ticket.id}</td>
-            <td>${ticket.subject}</td>
-            <td>${ticket.category}</td>
-            <td>${ticket.priority}</td>
-            <td>${ticket.status}</td>
-            <td>${ticket.replies}</td>
-            <td>${ticket.lastUpdate}</td>
-            <td>${ticket.updatedBy}</td>
-          </tr>
-        `
-      )
-      .join("");
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Support Tickets</title>
-          <style>
-            * {
-              box-sizing: border-box;
-              font-family: Arial, sans-serif;
-            }
-
-            body {
-              padding: 30px;
-              background: #ffffff;
-              color: #0B1F3A;
-            }
-
-            .header {
-              margin-bottom: 24px;
-              border-bottom: 2px solid #0B1F3A;
-              padding-bottom: 16px;
-            }
-
-            .title {
-              font-size: 28px;
-              font-weight: 800;
-              margin-bottom: 6px;
-            }
-
-            .subtitle {
-              color: #6b7280;
-              font-size: 14px;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-
-            thead {
-              background: #FFF8EC;
-            }
-
-            th {
-              padding: 14px;
-              text-align: left;
-              font-size: 12px;
-              border: 1px solid #E5E5E5;
-              text-transform: uppercase;
-            }
-
-            td {
-              padding: 14px;
-              border: 1px solid #E5E5E5;
-              font-size: 13px;
-            }
-
-            tr:nth-child(even) {
-              background: #fafafa;
-            }
-
-            .footer {
-              margin-top: 24px;
-              font-size: 12px;
-              color: #6b7280;
-            }
-
-            @media print {
-              body {
-                padding: 0;
-              }
-            }
-          </style>
-        </head>
-
-        <body>
-          <div class="header">
-            <div class="title">Support Tickets Report</div>
-            <div class="subtitle">Filtered Status: ${ticketStatus}</div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Ticket ID</th>
-                <th>Subject</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Replies</th>
-                <th>Last Update</th>
-                <th>Updated By</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            Generated from KAVAS Vendor Support Dashboard
-          </div>
-
-          <script>
-            window.onload = function () {
-              window.print();
-              window.onafterprint = function () {
-                window.close();
-              };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-  };
-
   const priorityDot = (priority) => {
     if (priority === "Urgent") return "bg-red-500";
     if (priority === "High") return "bg-orange-500";
@@ -403,27 +188,6 @@ const VendorSupportPage = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              onClick={handleExportCSV}
-              variant="outline"
-              className="h-10 rounded-sm border-[#E5E5E5] bg-white px-4"
-            >
-              <Download size={16} />
-              Export CSV
-            </Button>
-
-            <Button
-              type="button"
-              onClick={handlePrintAll}
-              variant="outline"
-              className="h-10 rounded-sm border-[#E5E5E5] bg-white px-4"
-            >
-              <Printer size={16} />
-              Print All
-            </Button>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -461,9 +225,6 @@ const VendorSupportPage = () => {
             );
           })}
         </div>
-
-       
-
         <section ref={faqSectionRef} className="scroll-mt-6">
           <div className="flex items-center gap-2">
             <LifeBuoy size={16} className="text-gray-600" />
@@ -474,22 +235,19 @@ const VendorSupportPage = () => {
               {visibleFaqs.length} articles
             </span>
           </div>
-
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {faqTabs.map((tab) => {
               const active = faqTab === tab;
-
               return (
                 <Button
                   key={tab}
                   type="button"
                   onClick={() => setFaqTab(tab)}
                   variant={active ? "default" : "outline"}
-                  className={`h-9 whitespace-nowrap rounded-sm px-4 text-xs font-extrabold ${
-                    active
+                  className={`h-9 whitespace-nowrap rounded-sm px-4 text-xs font-extrabold ${active
                       ? "bg-[#0B1F3A] text-white hover:bg-[#0B1F3A]"
                       : "border-[#E5E5E5] bg-white text-[#0B1F3A]"
-                  }`}
+                    }`}
                 >
                   {tab}
                 </Button>
@@ -529,9 +287,6 @@ const VendorSupportPage = () => {
             </CardContent>
           </Card>
         </section>
-
-        
-
         <section>
           <div className="flex items-center gap-2">
             <LifeBuoy size={16} className="text-gray-600" />
@@ -581,7 +336,7 @@ const VendorSupportPage = () => {
           </div>
         </section>
       </div>
-      
+
     </div>
   );
 };

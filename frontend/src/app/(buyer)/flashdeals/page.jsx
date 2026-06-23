@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchFlashDeals } from "@/store/slices/productSlice";
 
 import { Button } from "@/components/ui/button";
+import { fetchCart } from "@/store/slices/cartSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -104,10 +105,10 @@ export default function FlashDealsPage() {
   const getOldPrice = (item) =>
     Number(
       item.mrp ||
-        item.oldPrice ||
-        item.old_price ||
-        item.original_price ||
-        0
+      item.oldPrice ||
+      item.old_price ||
+      item.original_price ||
+      0
     );
 
   const getMinOrder = (item) =>
@@ -238,19 +239,29 @@ export default function FlashDealsPage() {
     setCurrentPage(1);
   };
 
-  const handleAddToCart = async (productId) => {
+  const getProductId = (item) => {
+    return item.product_id || item.productId || item.product?.id || item.id;
+  };
+
+  const handleAddToCart = async (item) => {
+    const productId = getProductId(item);
+
+    if (!productId) {
+      alert("Product id not found");
+      return;
+    }
+
     try {
       setCartLoadingId(productId);
 
       await productapi.post("/api/cart", {
-        product_id: productId,
+        productId: productId,
         quantity: 1,
       });
+      dispatch(fetchCart());
 
-      alert("Product added to cart");
     } catch (err) {
       console.error("Add to cart error:", err);
-
       alert(err.response?.data?.message || "Failed to add product to cart");
     } finally {
       setCartLoadingId(null);
@@ -329,11 +340,10 @@ export default function FlashDealsPage() {
               type="button"
               onClick={() => setSelectedCategory(item)}
               variant="outline"
-              className={`rounded-lg px-4 py-2 text-sm transition ${
-                selectedCategory === item
-                  ? "border-[#D4AF37] bg-[#D4AF37] font-semibold text-[#0B1F3A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
-                  : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#D4AF37] hover:bg-white"
-              }`}
+              className={`rounded-lg px-4 py-2 text-sm transition ${selectedCategory === item
+                ? "border-[#D4AF37] bg-[#D4AF37] font-semibold text-[#0B1F3A] hover:bg-[#D4AF37] hover:text-[#0B1F3A]"
+                : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#D4AF37] hover:bg-white"
+                }`}
             >
               {item}
             </Button>
@@ -408,11 +418,10 @@ export default function FlashDealsPage() {
                   onClick={() =>
                     setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
                   }
-                  className={`h-10 w-10 rounded-lg border p-0 ${
-                    viewMode === "list"
-                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
-                      : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
-                  }`}
+                  className={`h-10 w-10 rounded-lg border p-0 ${viewMode === "list"
+                    ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                    : "border-[#E5E5E5] bg-white text-gray-700 hover:bg-white"
+                    }`}
                 >
                   <List className="h-4.5 w-4.5" />
                 </Button>
@@ -484,14 +493,12 @@ export default function FlashDealsPage() {
                           </p>
 
                           <Button
-                            onClick={() => handleAddToCart(item.id)}
-                            disabled={cartLoadingId === item.id}
+                            onClick={() => handleAddToCart(item)}
+                            disabled={cartLoadingId === getProductId(item)}
                             className="mt-3 bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0B1F3A] hover:bg-[#D4AF37]"
                           >
                             <ShoppingCart className="mr-2 h-4 w-4" />
-                            {cartLoadingId === item.id
-                              ? "Adding..."
-                              : "Add to Cart"}
+                            {cartLoadingId === getProductId(item) ? "Adding..." : "Add to Cart"}
                           </Button>
                         </div>
                       </CardContent>
@@ -556,14 +563,12 @@ export default function FlashDealsPage() {
                           </p>
 
                           <Button
-                            onClick={() => handleAddToCart(item.id)}
-                            disabled={cartLoadingId === item.id}
+                            onClick={() => handleAddToCart(item)}
+                            disabled={cartLoadingId === getProductId(item)}
                             className="mt-4 w-full bg-[#D4AF37] py-2.5 text-sm font-semibold text-[#0B1F3A] hover:bg-[#D4AF37]"
                           >
                             <ShoppingCart className="mr-2 h-4 w-4" />
-                            {cartLoadingId === item.id
-                              ? "Adding..."
-                              : "Add to Cart"}
+                            {cartLoadingId === getProductId(item) ? "Adding..." : "Add to Cart"}
                           </Button>
                         </div>
                       </CardContent>
@@ -598,11 +603,10 @@ export default function FlashDealsPage() {
                       type="button"
                       variant="outline"
                       onClick={() => handlePageChange(page)}
-                      className={`h-10 w-10 rounded-lg border p-0 text-sm ${
-                        currentPage === page
-                          ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
-                          : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
-                      }`}
+                      className={`h-10 w-10 rounded-lg border p-0 text-sm ${currentPage === page
+                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white hover:bg-[#0B1F3A] hover:text-white"
+                        : "border-[#E5E5E5] bg-white text-gray-700 hover:border-[#0B1F3A]"
+                        }`}
                     >
                       {page}
                     </Button>

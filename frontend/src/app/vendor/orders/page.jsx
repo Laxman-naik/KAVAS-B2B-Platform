@@ -16,7 +16,10 @@ import {
   XCircle,
 } from "lucide-react";
 
+<<<<<<< HEAD
 // import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+=======
+>>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
 import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
@@ -31,8 +34,19 @@ export default function OrdersManagementBody() {
   const pageSize = 8;
 
   useEffect(() => {
+<<<<<<< HEAD
   dispatch(fetchVendorOrders());
 }, [dispatch]);
+=======
+    dispatch(fetchVendorOrders());
+
+    const interval = setInterval(() => {
+      dispatch(fetchVendorOrders());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+>>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
 
   const statusLabel = (status) => {
     if (!status) return "Pending";

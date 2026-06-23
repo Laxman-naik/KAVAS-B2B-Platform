@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { productapi } from "@/lib/axios";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -46,16 +47,9 @@ export default function SearchPage() {
         setLoading(true);
         setError("");
 
-        const API_URL = "https://kavas-b2b-platform-4.onrender.com";
-
-        const url = `${API_URL}/api/search?q=${encodeURIComponent(q)}&limit=20`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Search failed");
-        }
+        const { data } = await productapi.get(
+          `/api/search?q=${encodeURIComponent(q)}&limit=20`
+        );
 
         setResults({
           products: data.products || [],
@@ -64,7 +58,11 @@ export default function SearchPage() {
         });
       } catch (err) {
         console.error("Search error:", err);
-        setError(err.message || "Something went wrong while loading results.");
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Something went wrong while loading results."
+        );
       } finally {
         setLoading(false);
       }
@@ -80,6 +78,7 @@ export default function SearchPage() {
       </h1>
 
       {loading && <p>Loading results...</p>}
+
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && (
@@ -92,7 +91,7 @@ export default function SearchPage() {
                 {uniqueProducts.map((product, index) => (
                   <Link
                     key={`${product.id}-${index}`}
-                    href={`/products/${product.id}`}
+                    href={`/product/${product.product_id || product.id}`}
                     className="border rounded-lg p-4 hover:shadow-md transition"
                   >
                     <h3 className="font-medium text-lg">{product.name}</h3>

@@ -412,6 +412,7 @@ exports.getOrderById = async (req, res) => {
     });
   }
 };
+<<<<<<< HEAD
 exports.getVendorOrders = async (req, res) => {
   try {
     const vendorId = req.user.vendor_id;
@@ -485,14 +486,47 @@ exports.getVendorOrders = async (req, res) => {
 
     return res.json({
       organization_id: organizationId,
+=======
+
+exports.getVendorOrders = async (req, res) => {
+  try {
+    const vendorOrgId =
+      req.user?.organization_id ||
+      req.user?.organizationId ||
+      req.headers["vendor-org-id"];
+
+    if (!vendorOrgId) {
+      return res.status(400).json({
+        message: "Vendor organization id missing",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT 
+        o.*,
+        u.full_name AS buyer_name
+      FROM orders o
+      LEFT JOIN users u ON u.id = o.user_id
+      WHERE o.supplier_org_id = $1
+      ORDER BY o.created_at DESC
+      `,
+      [vendorOrgId]
+    );
+
+    return res.json({
+>>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
       orders: result.rows,
     });
   } catch (err) {
     console.error("GET VENDOR ORDERS ERROR:", err);
     return res.status(500).json({
       message: err.message,
+<<<<<<< HEAD
       detail: err.detail,
       code: err.code,
+=======
+>>>>>>> 0bebc03d9cebbf0f37c1c48414617a75ebcc7687
     });
   }
 };
