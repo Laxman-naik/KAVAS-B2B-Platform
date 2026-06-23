@@ -3,70 +3,52 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-
-const deals = [
-  {
-    name: "Smart Fitness Band",
-    price: "₹1200",
-    oldPrice: "₹2500",
-    category: "Electronics",
-    image:
-      "https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=600",
-  },
-  {
-    name: "Running Shoes",
-    price: "₹1500",
-    oldPrice: "₹3500",
-    category: "Sports & Entertainment",
-    image:
-      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600",
-  },
-  {
-    name: "Bluetooth Speaker",
-    price: "₹800",
-    oldPrice: "₹2000",
-    category: "Electronics",
-    image:
-      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=600",
-  },
-  {
-    name: "LED Desk Lamp",
-    price: "₹600",
-    oldPrice: "₹1500",
-    category: "Office Supplies",
-    image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=600",
-  },
-  {
-    name: "Backpack",
-    price: "₹900",
-    oldPrice: "₹2200",
-    category: "Fashion Wear",
-    image:
-      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600",
-  },
-  {
-    name: "Yoga Mat",
-    price: "₹400",
-    oldPrice: "₹1000",
-    category: "Sports & Entertainment",
-    image:
-      "https://images.unsplash.com/photo-1593810450967-f9c42742e326?q=80&w=600",
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import { fetchFlashDeals } from "@/store/slices/productSlice";
 
 const FlashDeals = () => {
-  const initialSeconds = 2 * 24 * 60 * 60 + 14 * 60 * 60 + 36 * 60 + 48;
-  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+  const dispatch = useDispatch();
   const sliderRef = useRef(null);
 
+  const { flashDeals, flashDealsLoading } = useSelector(
+    (state) => state.products
+  );
+
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
   useEffect(() => {
-    const id = setInterval(() => {
-      setSecondsLeft((s) => (s <= 1 ? initialSeconds : s - 1));
-    }, 1000);
+    dispatch(fetchFlashDeals());
+  }, [dispatch]);
+
+  const deals = Array.isArray(flashDeals) ? flashDeals : [];
+
+  useEffect(() => {
+    if (!deals.length) return;
+
+    const nearestDeal = deals.reduce((nearest, item) => {
+      const currentEnd = new Date(item.flash_deal_end).getTime();
+      const nearestEnd = new Date(nearest.flash_deal_end).getTime();
+
+      return currentEnd < nearestEnd ? item : nearest;
+    }, deals[0]);
+
+    const updateTimer = () => {
+      const endTime = new Date(nearestDeal.flash_deal_end).getTime();
+
+      const remaining = Math.max(
+        0,
+        Math.floor((endTime - Date.now()) / 1000)
+      );
+
+      setSecondsLeft(remaining);
+    };
+
+    updateTimer();
+
+    const id = setInterval(updateTimer, 1000);
 
     return () => clearInterval(id);
-  }, [initialSeconds]);
+  }, [deals]);
 
   const days = Math.floor(secondsLeft / (24 * 60 * 60));
   const hours = Math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60));
@@ -74,6 +56,48 @@ const FlashDeals = () => {
   const seconds = secondsLeft % 60;
 
   const pad2 = (n) => String(n).padStart(2, "0");
+
+  const getTitle = (item) => item.name || item.title || "Product";
+
+  const getCategory = (item) =>
+    item.category_name ||
+    item.category ||
+    item.categories?.[0]?.name ||
+    "Uncategorized";
+
+  const getPrice = (item) => Number(item.price || item.sale_price || 0);
+
+  const getOldPrice = (item) =>
+    Number(
+      item.mrp ||
+        item.oldPrice ||
+        item.old_price ||
+        item.original_price ||
+        0
+    );
+
+  const getImage = (item) =>
+    item.image_url ||
+    item.img ||
+    item.image ||
+    item.thumbnail ||
+    item.product_image ||
+    item.images?.find((img) => img.is_primary)?.image_url ||
+    item.images?.[0]?.image_url ||
+    "/placeholder-product.png";
+
+  const getDiscountValue = (item) => {
+    if (item.discount_percentage) {
+      return Number(item.discount_percentage);
+    }
+
+    const price = getPrice(item);
+    const oldPrice = getOldPrice(item);
+
+    if (!oldPrice || oldPrice <= price) return 0;
+
+    return Math.round(((oldPrice - price) / oldPrice) * 100);
+  };
 
   const scroll = (direction) => {
     if (!sliderRef.current) return;
@@ -92,6 +116,7 @@ const FlashDeals = () => {
             <div>
               <div className="mb-1.5 flex items-center gap-2">
                 <Zap className="h-4 w-4 fill-[#D4AF37] text-[#D4AF37]" />
+
                 <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D4AF37]">
                   Limited Time
                 </span>
@@ -147,51 +172,63 @@ const FlashDeals = () => {
             ref={sliderRef}
             className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth pb-1"
           >
-            {deals.map((item, index) => (
-              <Link
-                href="/flashdeals"
-                key={index}
-                className="flex h-71.25 min-w-55 max-w-55 flex-col overflow-hidden rounded-xl border border-[#E5E5E5] bg-[#FFF8EC] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-58.75 sm:max-w-58.75"
-              >
-                <div className="relative h-33.75 overflow-hidden bg-white">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                  />
+            {flashDealsLoading ? (
+              <div className="w-full py-10 text-center text-sm font-semibold text-white">
+                Loading flash deals...
+              </div>
+            ) : deals.length > 0 ? (
+              deals.map((item) => (
+                <Link
+                  href={`/product/${item.id}`}
+                  key={item.id}
+                  className="flex h-71.25 min-w-55 max-w-55 flex-col overflow-hidden rounded-xl border border-[#E5E5E5] bg-[#FFF8EC] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-58.75 sm:max-w-58.75"
+                >
+                  <div className="relative h-33.75 overflow-hidden bg-white">
+                    <img
+                      src={getImage(item)}
+                      alt={getTitle(item)}
+                      className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                    />
 
-                  <span className="absolute left-3 top-3 rounded-md bg-[#D4AF37] px-2.5 py-1 text-[11px] font-extrabold text-[#0B1F3A]">
-                    70% OFF
-                  </span>
-                </div>
-
-                <div className="flex flex-1 flex-col p-3.5">
-                  <h3 className="line-clamp-2 min-h-9.5 text-sm font-extrabold text-[#1A1A1A]">
-                    {item.name}
-                  </h3>
-
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <span className="text-base font-extrabold text-[#0B1F3A]">
-                      {item.price}
-                    </span>
-
-                    <span className="text-xs text-gray-400 line-through">
-                      {item.oldPrice}
+                    <span className="absolute left-3 top-3 rounded-md bg-[#D4AF37] px-2.5 py-1 text-[11px] font-extrabold text-[#0B1F3A]">
+                      {getDiscountValue(item)}% OFF
                     </span>
                   </div>
 
-                  <p className="mt-1 line-clamp-1 text-xs font-medium text-gray-500">
-                    {item.category}
-                  </p>
+                  <div className="flex flex-1 flex-col p-3.5">
+                    <h3 className="line-clamp-2 min-h-9.5 text-sm font-extrabold text-[#1A1A1A]">
+                      {getTitle(item)}
+                    </h3>
 
-                  <div className="mt-auto pt-2">
-                    <button className="w-full rounded-lg bg-[#D4AF37] py-2 text-xs font-bold text-[#0B1F3A] transition hover:bg-[#c79d24]">
-                      View Deal
-                    </button>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="text-base font-extrabold text-[#0B1F3A]">
+                        ₹{getPrice(item).toLocaleString()}
+                      </span>
+
+                      {getOldPrice(item) > getPrice(item) && (
+                        <span className="text-xs text-gray-400 line-through">
+                          ₹{getOldPrice(item).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-1 line-clamp-1 text-xs font-medium text-gray-500">
+                      {getCategory(item)}
+                    </p>
+
+                    <div className="mt-auto pt-2">
+                      <button className="w-full rounded-lg bg-[#D4AF37] py-2 text-xs font-bold text-[#0B1F3A] transition hover:bg-[#c79d24]">
+                        View Deal
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <div className="w-full py-10 text-center text-sm font-semibold text-white">
+                No flash deals found.
+              </div>
+            )}
           </div>
 
           <div className="mt-3 flex justify-center">
