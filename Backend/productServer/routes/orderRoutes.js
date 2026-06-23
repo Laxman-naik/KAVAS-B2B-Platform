@@ -10,6 +10,7 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 router.post("/from-cart", authMiddleware, createOrderFromCart);
 router.post("/", authMiddleware, createOrder);
 
+router.get("/vendor", authMiddleware, getVendorOrders);
 router.get("/", authMiddleware, getUserOrders);
 router.get("/vendor", authMiddleware, getVendorOrders);
 router.get("/by-id/:orderId", authMiddleware, getOrderById);
