@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { createOrderFromCart, getUserOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, getOrderById, getVendorOrders } = require("../controllers/orderController");
+const { createOrderFromCart, getUserOrders, getVendorOrders, getOrderDetails, updateOrderStatus, createOrder, clearCartAfterOrder, getOrderById,  } = require("../controllers/orderController");
 const authMiddleware = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/roleMiddleware");
 
@@ -16,4 +16,4 @@ router.get("/by-id/:orderId", authMiddleware, getOrderById);
 router.get("/:id", authMiddleware, getOrderDetails);
 
 router.put("/:id/status", authMiddleware, updateOrderStatus);
-module.exports = router;
+module.exports = router; 

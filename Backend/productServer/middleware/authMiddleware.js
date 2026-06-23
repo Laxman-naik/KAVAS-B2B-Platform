@@ -4,6 +4,8 @@ module.exports = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
+    console.log("PRODUCT AUTH - authHeader:", authHeader);
+
     if (!authHeader) {
       return res.status(401).json({ message: "No token" });
     }
@@ -16,6 +18,8 @@ module.exports = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
+    console.log("PRODUCT AUTH - decoded:", decoded);
+
     req.user = {
       ...decoded,
       id: decoded.id || decoded.vendor_profile_id || decoded.vendor_id,
@@ -26,8 +30,12 @@ module.exports = (req, res, next) => {
       role: decoded.role,
     };
 
+    console.log("PRODUCT AUTH - final req.user:", req.user);
+
     next();
   } catch (err) {
+    console.error("PRODUCT AUTH ERROR:", err.message);
+
     return res.status(401).json({
       message: "Unauthorized",
       error: err.message,

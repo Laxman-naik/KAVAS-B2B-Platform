@@ -515,7 +515,7 @@ export default function PaymentsPayoutsBody() {
           </h3>
 
           <div className="relative">
-            <div className="hidden sm:block absolute top-6 left-[12%] right-[12%] h-[2px] bg-green-200" />
+            <div className="hidden sm:block absolute top-6 left-[12%] right-[12%] h-0.5 bg-green-200" />
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 text-center relative z-10">
               {[

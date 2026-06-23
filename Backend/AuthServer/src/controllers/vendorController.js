@@ -526,7 +526,7 @@ export const loginVendor = async (req, res) => {
         req.ip || null,
       ]
     );
-
+    console.log("Vendor Login:", vendor);
     return res.json({
       message: "Login successful",
       accessToken,

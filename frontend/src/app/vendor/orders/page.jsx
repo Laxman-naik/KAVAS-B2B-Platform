@@ -16,7 +16,6 @@ import {
   XCircle,
 } from "lucide-react";
 
-// import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 import {
   fetchVendorOrders,
   updateOrderStatus,
@@ -30,6 +29,7 @@ export default function OrdersManagementBody() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const pageSize = 8;
 
@@ -37,18 +37,31 @@ export default function OrdersManagementBody() {
     dispatch(fetchVendorOrders());
   }, [dispatch]);
 
+  const getStatus = (order) =>
+    String(
+      order?.status ||
+        order?.delivery_status ||
+        order?.order_status ||
+        "pending",
+    )
+      .toLowerCase()
+      .trim();
+
   const statusLabel = (status) => {
     if (!status) return "Pending";
-    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
+    const value = String(status).toLowerCase().trim();
+    return value.charAt(0).toUpperCase() + value.slice(1);
   };
 
   const stats = useMemo(() => {
     const total = orders.length;
-    const pending = orders.filter((o) => o.status === "pending").length;
-    const processing = orders.filter((o) => o.status === "processing").length;
-    const shipped = orders.filter((o) => o.status === "shipped").length;
-    const delivered = orders.filter((o) => o.status === "delivered").length;
-    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+    const pending = orders.filter((o) => getStatus(o) === "pending").length;
+    const processing = orders.filter(
+      (o) => getStatus(o) === "processing",
+    ).length;
+    const shipped = orders.filter((o) => getStatus(o) === "shipped").length;
+    const delivered = orders.filter((o) => getStatus(o) === "delivered").length;
+    const cancelled = orders.filter((o) => getStatus(o) === "cancelled").length;
 
     return {
       total,
@@ -65,6 +78,7 @@ export default function OrdersManagementBody() {
     const q = search.trim().toLowerCase();
 
     return orders.filter((o) => {
+      const orderStatus = getStatus(o);
       const paymentValue = o.payment_status || o.payment || "pending";
 
       const matchSearch =
@@ -74,7 +88,9 @@ export default function OrdersManagementBody() {
           .toLowerCase()
           .includes(q);
 
-      const matchStatus = statusFilter === "All" || o.status === statusFilter;
+      const matchStatus =
+        statusFilter === "All" ||
+        orderStatus === String(statusFilter).toLowerCase();
 
       const matchPayment =
         paymentFilter === "All Payments" ||
@@ -101,7 +117,9 @@ export default function OrdersManagementBody() {
   }, [safePage, totalFiltered]);
 
   const statusStyle = (status) => {
-    switch (status) {
+    const value = String(status || "").toLowerCase();
+
+    switch (value) {
       case "pending":
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "processing":
@@ -348,23 +366,24 @@ export default function OrdersManagementBody() {
 
             <tbody>
               {pagedOrders.map((o) => {
+                const currentStatus = getStatus(o);
                 const paymentValue = o.payment_status || o.payment || "pending";
 
                 const actionLabel =
-                  o.status === "pending"
+                  currentStatus === "pending"
                     ? "Mark Processing"
-                    : o.status === "processing"
+                    : currentStatus === "processing"
                       ? "Mark Shipped"
-                      : o.status === "shipped"
+                      : currentStatus === "shipped"
                         ? "Mark Delivered"
                         : null;
 
                 const actionNext =
-                  o.status === "pending"
+                  currentStatus === "pending"
                     ? "processing"
-                    : o.status === "processing"
+                    : currentStatus === "processing"
                       ? "shipped"
-                      : o.status === "shipped"
+                      : currentStatus === "shipped"
                         ? "delivered"
                         : null;
 
@@ -432,10 +451,10 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                          o.status,
+                          currentStatus,
                         )}`}
                       >
-                        {statusLabel(o.status)}
+                        {statusLabel(currentStatus)}
                       </span>
                     </td>
 
@@ -474,7 +493,7 @@ export default function OrdersManagementBody() {
                                   orderId: o.id,
                                   status: actionNext,
                                 }),
-                              )
+                              ).then(() => dispatch(fetchVendorOrders()))
                             }
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
                           >
@@ -507,6 +526,7 @@ export default function OrdersManagementBody() {
 
         <div className="mt-5 space-y-3 md:hidden">
           {pagedOrders.map((o) => {
+            const currentStatus = getStatus(o);
             const paymentValue = o.payment_status || o.payment || "pending";
 
             return (
@@ -524,10 +544,10 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                      o.status,
+                      currentStatus,
                     )}`}
                   >
-                    {statusLabel(o.status)}
+                    {statusLabel(currentStatus)}
                   </span>
                 </div>
 
@@ -548,9 +568,12 @@ export default function OrdersManagementBody() {
                   </span>
                 </div>
 
-                <button className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] text-sm font-extrabold text-[#0B1F3A] rounded-sm">
-                  <Eye size={15} />
-                  View Details
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(o)}
+                  className="inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
+                >
+                  <Eye size={16} className="text-gray-600" />
                 </button>
               </div>
             );
@@ -611,6 +634,102 @@ export default function OrdersManagementBody() {
           </div>
         </div>
       </div>
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-sm bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-5">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A]">
+                Order Details
+              </h2>
+
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="text-xl font-bold text-gray-500 hover:text-red-500"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid gap-5 p-5 md:grid-cols-2">
+              <div className="border p-4">
+                <h3 className="font-extrabold text-[#0B1F3A]">Buyer Details</h3>
+                <p className="mt-2">{selectedOrder.buyer_name || "-"}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.buyer_email || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.buyer_phone || "-"}
+                </p>
+              </div>
+
+              <div className="border p-4">
+                <h3 className="font-extrabold text-[#0B1F3A]">
+                  Shipping Address
+                </h3>
+                <p className="mt-2">{selectedOrder.shipping_name || "-"}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.shipping_phone || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.address_line1 || ""}{" "}
+                  {selectedOrder.address_line2 || ""}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.city || ""}, {selectedOrder.state || ""} -{" "}
+                  {selectedOrder.pincode || ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 pb-5">
+              <h3 className="mb-3 font-extrabold text-[#0B1F3A]">Items</h3>
+
+              <div className="overflow-x-auto border">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#0B1F3A] text-white">
+                    <tr>
+                      <th className="p-3 text-left">Product</th>
+                      <th className="p-3 text-left">Qty</th>
+                      <th className="p-3 text-left">Price</th>
+                      <th className="p-3 text-left">Total</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {(selectedOrder.items || []).map((item) => (
+                      <tr key={item.item_id} className="border-t">
+                        <td className="p-3 font-bold text-[#0B1F3A]">
+                          {item.product_name || "Product"}
+                        </td>
+                        <td className="p-3">{item.quantity}</td>
+                        <td className="p-3">
+                          ₹{Number(item.price || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-3">
+                          ₹
+                          {Number(
+                            (item.price || 0) * (item.quantity || 0),
+                          ).toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 text-right">
+                <p className="text-sm text-gray-500">Order Total</p>
+                <p className="text-2xl font-extrabold text-[#0B1F3A]">
+                  ₹
+                  {Number(selectedOrder.total_amount || 0).toLocaleString(
+                    "en-IN",
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

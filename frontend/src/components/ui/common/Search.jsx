@@ -46,9 +46,7 @@ export default function SearchPage() {
         setLoading(true);
         setError("");
 
-        const API_URL = "https://kavas-b2b-platform-4.onrender.com";
-
-        const url = `${API_URL}/api/search?q=${encodeURIComponent(q)}&limit=20`;
+        const url = `/api/search?q=${encodeURIComponent(searchText)}&limit=20`;
 
         const res = await fetch(url);
         const data = await res.json();

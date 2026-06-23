@@ -1,269 +1,282 @@
-"use client"
-import { useState } from "react";
+"use client";
 
-const rfqData = [
-  {
-    id: "#892",
-    buyer: "Acme Corp",
-    product: "PCB Module",
-    qty: "5,000",
-    quotes: 3,
-    deadline: "Apr 10",
-    status: "Quoted",
-  },
-  {
-    id: "#891",
-    buyer: "TechSource",
-    product: "Steel Sheet",
-    qty: "2 tons",
-    quotes: 1,
-    deadline: "Apr 8",
-    status: "Pending",
-  },
-  {
-    id: "#890",
-    buyer: "BuildMart",
-    product: "Hydraulic Press",
-    qty: "4",
-    quotes: 0,
-    deadline: "Apr 5",
-    status: "No Bids",
-  },
-  {
-    id: "#889",
-    buyer: "ClearPath",
-    product: "Fabric Roll",
-    qty: "1,000 m",
-    quotes: 5,
-    deadline: "Apr 3",
-    status: "Accepted",
-  },
-];
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createRFQ,
+  fetchRFQs,
+  deleteRFQ,
+} from "@/store/slices/rfqSlice";
+import { Search, Plus, Trash2 } from "lucide-react";
 
 const statusStyles = {
-  Quoted: "bg-blue-500/20 text-blue-400",
-  Pending: "bg-yellow-500/20 text-yellow-400",
-  "No Bids": "bg-gray-500/20 text-gray-400",
-  Accepted: "bg-green-500/20 text-green-400",
+  open: "bg-blue-500/20 text-blue-400",
+  quoted: "bg-yellow-500/20 text-yellow-400",
+  closed: "bg-green-500/20 text-green-400",
+  cancelled: "bg-red-500/20 text-red-400",
 };
 
 export default function RFQTable() {
-  const [search, setSearch] = useState("");
+  const dispatch = useDispatch();
 
-  // 🔥 NEW STATES
+  const { rfqs, loading, error } = useSelector((state) => state.rfq);
+
+  const buyerOrgId = "YOUR_REAL_BUYER_ORG_UUID";
+
+  const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [rfqs, setRfqs] = useState(rfqData);
 
   const [form, setForm] = useState({
-    buyer: "",
-    product: "",
-    qty: "",
-    deadline: "",
-    price: "",
-    location: "",
-    notes: "",
+    title: "",
+    description: "",
+    quantity: "",
+    budget: "",
+    product_id: "",
   });
 
-  // 🔥 FILTER
-  const filtered = rfqs.filter((r) =>
-    r.id.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    dispatch(fetchRFQs());
+  }, [dispatch]);
 
-  // 🔥 SUBMIT FUNCTION
-  const handleSubmit = () => {
-    if (!form.buyer || !form.product || !form.qty) return;
-
-    const newRFQ = {
-      id: "#" + Math.floor(Math.random() * 1000),
-      buyer: form.buyer,
-      product: form.product,
-      qty: form.qty,
-      quotes: 0,
-      deadline: form.deadline || "—",
-      status: "Pending",
-    };
-
-    setRfqs([newRFQ, ...rfqs]);
-    setShowModal(false);
-
+  const resetForm = () => {
     setForm({
-      buyer: "",
-      product: "",
-      qty: "",
-      deadline: "",
-      price: "",
-      location: "",
-      notes: "",
+      title: "",
+      description: "",
+      quantity: "",
+      budget: "",
+      product_id: "",
     });
   };
 
+  const handleSubmit = async () => {
+    if (!form.title.trim()) {
+      alert("Title is required");
+      return;
+    }
+
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      alert("Valid quantity is required");
+      return;
+    }
+
+    const payload = {
+      buyer_org_id: buyerOrgId,
+      product_id: form.product_id || null,
+      title: form.title,
+      description: form.description || null,
+      quantity: Number(form.quantity),
+      budget: form.budget ? Number(form.budget) : null,
+    };
+
+    const result = await dispatch(createRFQ(payload));
+
+    if (createRFQ.fulfilled.match(result)) {
+      alert("RFQ created successfully");
+      resetForm();
+      setShowModal(false);
+      dispatch(fetchRFQs());
+    } else {
+      alert(result.payload || "Failed to create RFQ");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = confirm("Are you sure you want to delete this RFQ?");
+    if (!confirmDelete) return;
+
+    await dispatch(deleteRFQ(id));
+  };
+
+  const filtered = rfqs.filter((r) =>
+    `${r.title} ${r.product_name || ""} ${r.status || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
   return (
     <div className="p-4 md:p-8 bg-[#0b1220] min-h-screen text-white">
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-semibold">RFQ / Quotes</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">RFQ / Quotes</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Manage buyer RFQs and quotation requests
+          </p>
+        </div>
 
         <div className="flex gap-3">
-          <input
-            type="text"
-            placeholder="Search RFQs..."
-            className="px-4 py-2 rounded-lg bg-[#111827] border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="relative">
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
-          {/* 🔥 BUTTON UPDATED */}
+            <input
+              placeholder="Search RFQs..."
+              className="pl-10 pr-4 py-2 rounded bg-[#111827] border border-gray-800 outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 transition duration-200 cursor-pointer"
+            className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded flex items-center gap-2"
           >
-            + New RFQ
+            <Plus size={18} />
+            New RFQ
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-gray-800">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#111827] text-gray-400">
+      {error && (
+        <div className="mb-4 rounded bg-red-500/10 border border-red-500/30 p-3 text-red-400">
+          {error}
+        </div>
+      )}
+
+      <div className="overflow-x-auto border border-gray-800 rounded-xl">
+        <table className="w-full text-sm">
+          <thead className="bg-[#111827]">
             <tr>
-              {[
-                "RFQ #",
-                "Buyer",
-                "Product",
-                "QTY",
-                "Quotes",
-                "Deadline",
-                "Status",
-              ].map((h) => (
-                <th key={h} className="px-6 py-4 text-left font-medium">
-                  {h}
-                </th>
-              ))}
+              <th className="p-4 text-left">RFQ</th>
+              <th className="text-left">Product</th>
+              <th className="text-left">Quantity</th>
+              <th className="text-left">Budget</th>
+              <th className="text-left">Status</th>
+              <th className="text-left">Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {filtered.map((r, i) => (
-              <tr
-                key={i}
-                className="border-t border-gray-800 hover:bg-[#111827] transition duration-200 cursor-pointer"
-              >
-                <td className="px-6 py-4 text-blue-400 font-medium">
-                  {r.id}
-                </td>
-                <td className="px-6 py-4">{r.buyer}</td>
-                <td className="px-6 py-4 text-gray-300">{r.product}</td>
-                <td className="px-6 py-4">{r.qty}</td>
-                <td
-                  className={`px-6 py-4 font-medium ${
-                    r.quotes === 0
-                      ? "text-red-400"
-                      : r.quotes >= 3
-                      ? "text-green-400"
-                      : "text-yellow-400"
-                  }`}
-                >
-                  {r.quotes}
-                </td>
-                <td className="px-6 py-4">{r.deadline}</td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${statusStyles[r.status]}`}
-                  >
-                    {r.status}
-                  </span>
+            {loading ? (
+              <tr>
+                <td className="p-4 text-gray-400" colSpan="6">
+                  Loading RFQs...
                 </td>
               </tr>
-            ))}
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td className="p-4 text-gray-400" colSpan="6">
+                  No RFQs found
+                </td>
+              </tr>
+            ) : (
+              filtered.map((r) => (
+                <tr key={r.id} className="border-t border-gray-800">
+                  <td className="p-4">
+                    <p className="text-blue-400 font-semibold">{r.title}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {r.description || "No description"}
+                    </p>
+                  </td>
+
+                  <td>{r.product_name || r.product_id || "N/A"}</td>
+
+                  <td>{r.quantity}</td>
+
+                  <td>₹{r.budget || 0}</td>
+
+                  <td>
+                    <span
+                      className={`px-3 py-1 rounded-full ${
+                        statusStyles[r.status] ||
+                        "bg-gray-500/20 text-gray-300"
+                      }`}
+                    >
+                      {r.status || "open"}
+                    </span>
+                  </td>
+
+                  <td>
+                    <button
+                      onClick={() => handleDelete(r.id)}
+                      className="text-red-400 hover:text-red-500"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* 🔥 MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-2">
-          <div className="w-full max-w-2xl bg-[#0F1E33] rounded-2xl p-6 text-white shadow-xl">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0F1E33] p-6 rounded-xl w-full max-w-xl border border-gray-800">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-semibold">Create RFQ</h2>
 
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-lg font-semibold">Create new RFQ</h2>
-                <p className="text-xs text-gray-400">
-                  Request for quotation from vendors
-                </p>
-              </div>
-              <button onClick={() => setShowModal(false)}>✕</button>
-            </div>
-
-            {/* FORM */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-              <input
-                placeholder="Buyer"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.buyer}
-                onChange={(e) => setForm({ ...form, buyer: e.target.value })}
-              />
-
-              <input
-                placeholder="Product / item"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.product}
-                onChange={(e) => setForm({ ...form, product: e.target.value })}
-              />
-
-              <input
-                placeholder="Quantity"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.qty}
-                onChange={(e) => setForm({ ...form, qty: e.target.value })}
-              />
-
-              <input
-                type="date"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.deadline}
-                onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-              />
-
-              <input
-                placeholder="Target price"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-              />
-
-              <input
-                placeholder="Delivery location"
-                className="p-2 rounded bg-[#13263C]"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-              />
-            </div>
-
-            <textarea
-              placeholder="Specifications / notes"
-              className="w-full mt-3 p-2 rounded bg-[#13263C]"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-600 rounded"
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <input
+              placeholder="Title"
+              className="w-full p-3 mb-3 bg-[#13263C] rounded outline-none border border-gray-700"
+              value={form.title}
+              onChange={(e) =>
+                setForm({ ...form, title: e.target.value })
+              }
+            />
+
+            <textarea
+              placeholder="Description"
+              className="w-full p-3 mb-3 bg-[#13263C] rounded outline-none border border-gray-700"
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Quantity"
+              type="number"
+              className="w-full p-3 mb-3 bg-[#13263C] rounded outline-none border border-gray-700"
+              value={form.quantity}
+              onChange={(e) =>
+                setForm({ ...form, quantity: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Budget"
+              type="number"
+              className="w-full p-3 mb-3 bg-[#13263C] rounded outline-none border border-gray-700"
+              value={form.budget}
+              onChange={(e) =>
+                setForm({ ...form, budget: e.target.value })
+              }
+            />
+
+            <input
+              placeholder="Product ID optional"
+              className="w-full p-3 mb-3 bg-[#13263C] rounded outline-none border border-gray-700"
+              value={form.product_id}
+              onChange={(e) =>
+                setForm({ ...form, product_id: e.target.value })
+              }
+            />
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-orange-500 rounded hover:bg-orange-600"
+                disabled={loading}
+                className="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded disabled:opacity-60"
               >
-                Submit RFQ
+                {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
           </div>

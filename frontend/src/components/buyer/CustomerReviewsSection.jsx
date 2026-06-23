@@ -1,6 +1,6 @@
 "use client";
-
 import { useMemo, useState } from "react";
+import { addProductReviewAPI } from "@/services/productService";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { MessageSquareText, Star, XIcon } from "lucide-react";
 
@@ -40,6 +40,7 @@ export default function CustomerReviewsSection({ product }) {
 
   const averageRating = Number(product?.avg_rating || 0);
   const totalReviews = Number(product?.total_reviews || 0);
+  const reviews = Array.isArray(product?.reviews) ? product.reviews : [];
 
   const recommendPercent = useMemo(() => {
     if (!totalReviews || !averageRating) return 0;
@@ -69,6 +70,21 @@ export default function CustomerReviewsSection({ product }) {
   };
 
   const isSubmitDisabled = !reviewRating || !reviewComment.trim();
+
+  const handleSubmitReview = async () => {
+    try {
+      await addProductReviewAPI(product.id, {
+        rating: reviewRating,
+        comment: reviewComment,
+      });
+
+      setIsWriteReviewOpen(false);
+      window.location.reload();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to submit review");
+    }
+  };
+
 
   return (
     <>
@@ -171,15 +187,27 @@ export default function CustomerReviewsSection({ product }) {
               className="rounded-sm border p-5"
               style={{ borderColor: COLORS.border, background: COLORS.white }}
             >
-              {totalReviews > 0 ? (
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: COLORS.text }}>
-                    Reviews summary available
-                  </p>
-                  <p className="mt-2 text-sm" style={{ color: COLORS.text, opacity: 0.7 }}>
-                    Average rating and review count are coming from the database. Individual review
-                    comments need a reviews table/API to display here.
-                  </p>
+              {reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b pb-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-semibold" style={{ color: COLORS.text }}>
+                          {review.full_name || "Verified Buyer"}
+                        </p>
+
+                        <StarRow rating={review.rating} size={14} />
+                      </div>
+
+                      <p className="mt-2 text-sm" style={{ color: COLORS.text, opacity: 0.75 }}>
+                        {review.comment}
+                      </p>
+
+                      <p className="mt-1 text-xs" style={{ color: COLORS.text, opacity: 0.5 }}>
+                        {new Date(review.created_at).toLocaleDateString("en-IN")}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div>
@@ -252,7 +280,7 @@ export default function CustomerReviewsSection({ product }) {
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setIsWriteReviewOpen(false)}
+                onClick={handleSubmitReview}
                 className="w-1/2 rounded-sm border px-4 py-2 text-sm font-semibold"
                 style={{ borderColor: COLORS.border, color: COLORS.text }}
               >
@@ -262,7 +290,7 @@ export default function CustomerReviewsSection({ product }) {
               <button
                 type="button"
                 disabled={isSubmitDisabled}
-                onClick={() => setIsWriteReviewOpen(false)}
+                onClick={handleSubmitReview}
                 className="w-1/2 rounded-sm px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: COLORS.primary }}
               >
@@ -272,7 +300,7 @@ export default function CustomerReviewsSection({ product }) {
 
             <button
               type="button"
-              onClick={() => setIsWriteReviewOpen(false)}
+              onClick={handleSubmitReview}
               className="absolute right-3 top-3 rounded-sm p-1"
               style={{ color: COLORS.text, opacity: 0.7 }}
               aria-label="Close"

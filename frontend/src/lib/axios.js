@@ -427,10 +427,10 @@ const PUBLIC_ROUTES = [
   "/api/vendor/register",
   "/api/vendor/login",
 
-  "/api/products",
   "/api/products/all",
   "/api/products/trending",
   "/api/products/new-arrivals",
+  "/api/products/flash-deals",
 ];
 
 /* ================= REQUEST INTERCEPTOR ================= */
@@ -547,7 +547,6 @@ const handleError = async (error) => {
     return Promise.reject(error);
   }
 
-  /* ✅ IMPORTANT: do not refresh session for skipAuth requests */
   if (originalRequest.skipAuth) {
     return Promise.reject(error);
   }
@@ -556,7 +555,10 @@ const handleError = async (error) => {
     return Promise.reject(error);
   }
 
-  if (error.response?.status === 401 && !originalRequest._retry) {
+  if (
+    error.response?.status === 401 &&
+    !originalRequest._retry
+  ) {
     originalRequest._retry = true;
 
     if (isRefreshing) {
@@ -582,20 +584,6 @@ const handleError = async (error) => {
       return axios(originalRequest);
     } catch (err) {
       processQueue(err, null);
-
-      const role = getRole();
-
-      if (role) {
-        localStorage.removeItem(`${role}_accessToken`);
-        localStorage.removeItem(`${role}_refreshToken`);
-      }
-
-      localStorage.removeItem("role");
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("auth:expired"));
-      }
-
       return Promise.reject(err);
     } finally {
       isRefreshing = false;
@@ -604,6 +592,7 @@ const handleError = async (error) => {
 
   return Promise.reject(error);
 };
+
 
 authapi.interceptors.response.use((res) => res, handleError);
 productapi.interceptors.response.use((res) => res, handleError);

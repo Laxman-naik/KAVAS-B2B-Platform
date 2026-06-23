@@ -412,13 +412,16 @@ exports.getOrderById = async (req, res) => {
     });
   }
 };
+
 exports.getVendorOrders = async (req, res) => {
   try {
-    const organizationId = req.user.organization_id;
+    const organizationId = req.user?.organization_id;
+
+    console.log("LOGGED VENDOR ORG:", organizationId);
 
     if (!organizationId) {
       return res.status(401).json({
-        message: "Organization ID missing. Login again.",
+        message: "Organization ID missing in token",
       });
     }
 
@@ -432,8 +435,12 @@ exports.getVendorOrders = async (req, res) => {
       [organizationId]
     );
 
-    return res.json({ orders: result.rows });
+    return res.json({
+      success: true,
+      orders: result.rows,
+    });
   } catch (err) {
+    console.error("GET VENDOR ORDERS ERROR:", err);
     return res.status(500).json({ message: err.message });
   }
 };
