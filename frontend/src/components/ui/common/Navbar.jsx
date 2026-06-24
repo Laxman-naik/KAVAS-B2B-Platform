@@ -27,6 +27,7 @@ import {
 import Login from "../auth/Login";
 import Register from "../auth/Register";
 import Link from "next/link";
+import { productapi } from "@/lib/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
 import { fetchFavourites } from "@/store/slices/favouritesSlice";
@@ -105,17 +106,11 @@ const Navbar = () => {
       try {
         setSearchLoading(true);
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/search?q=${encodeURIComponent(
-            debouncedQuery
-          )}&limit=5`
+        const { data } = await productapi.get(
+          `/api/search?q=${encodeURIComponent(debouncedQuery)}&limit=5`
         );
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Search failed");
-        }
+        console.log("SEARCH RESPONSE:", data);
 
         setSearchResults({
           products: data.products || [],
@@ -125,11 +120,14 @@ const Navbar = () => {
 
         setShowSearchDropdown(true);
       } catch (error) {
+        console.error("SEARCH ERROR:", error);
+
         setSearchResults({
           products: [],
           suppliers: [],
           categories: [],
         });
+
         setShowSearchDropdown(false);
       } finally {
         setSearchLoading(false);
@@ -189,6 +187,7 @@ const Navbar = () => {
 
     setShowSearchDropdown(false);
     setMobileMenu(false);
+
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
@@ -296,7 +295,9 @@ const Navbar = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyDown={handleSearchKeyDown}
                         onFocus={() => {
-                          if (debouncedQuery) setShowSearchDropdown(true);
+                          if (searchQuery.trim()) {
+                            setShowSearchDropdown(true);
+                          }
                         }}
                         placeholder="Search products, categories, brands..."
                         className=" flex-1  h-full bg-white  px-3 text-sm text-black placeholder:text-gray-400 outline-none"
@@ -327,12 +328,14 @@ const Navbar = () => {
                             <div>
                               <h3 className="text-sm font-semibold mb-2">Products</h3>
                               <div className="space-y-2">
-                                {searchResults.products.map((item) => (
+                                {searchResults.products.map((item, index) => (
                                   <button
-                                    key={item.id}
+                                    key={`product-${item.product_id || item.id}-${index}`}
                                     onClick={() => {
+                                      const productId = item.product_id || item.id;
+
                                       setShowSearchDropdown(false);
-                                      router.push(`/products/${item.id}`);
+                                      router.push(`/product/${productId}`);
                                     }}
                                     className="block w-full text-left px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                                   >
@@ -355,9 +358,9 @@ const Navbar = () => {
                             <div>
                               <h3 className="text-sm font-semibold mb-2">Suppliers</h3>
                               <div className="space-y-2">
-                                {searchResults.suppliers.map((item) => (
+                                {searchResults.suppliers.map((item, index) => (
                                   <button
-                                    key={item.id}
+                                    key={`supplier-${item.id}-${index}`}
                                     onClick={() => {
                                       setShowSearchDropdown(false);
                                       router.push(`/suppliers/${item.id}`);
@@ -378,9 +381,9 @@ const Navbar = () => {
                             <div>
                               <h3 className="text-sm font-semibold mb-2">Categories</h3>
                               <div className="space-y-2">
-                                {searchResults.categories.map((item) => (
+                                {searchResults.categories.map((item, index) => (
                                   <button
-                                    key={item.id}
+                                    key={`category-${item.id}-${index}`}
                                     onClick={() => {
                                       setSearchQuery(item.name);
                                       setShowSearchDropdown(false);

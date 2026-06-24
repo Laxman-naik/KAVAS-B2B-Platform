@@ -243,6 +243,7 @@ exports.updateProduct = async (req, res) => {
 
     const {
       name,
+      sku,
       slug,
       organizationId,
       isTopProduct,
@@ -262,36 +263,39 @@ exports.updateProduct = async (req, res) => {
     const result = await pool.query(
       `UPDATE products
        SET name = $1,
-           slug = $2,
-           organization_id = $3,
-           is_top_product = $4,
-           parent_product_id = $5,
-           price = $6,
-           mrp = $7,
-           moq = $8,
-           stock = $9,
-           unit = $10,
-           weight = $11,
-           dispatch_time_days = $12,
-           description = $13,
-           is_active = $14,
-           is_featured = $15
-       WHERE id = $16
+           sku = $2,
+           slug = $3,
+           organization_id = $4,
+           is_top_product = $5,
+           parent_product_id = $6,
+           price = $7,
+           mrp = $8,
+           moq = $9,
+           stock = $10,
+           unit = $11,
+           weight = $12,
+           dispatch_time_days = $13,
+           description = $14,
+           is_active = $15,
+           is_featured = $16,
+           updated_at = NOW()
+       WHERE id = $17
        RETURNING *`,
       [
         name,
+        sku,
         slug,
         organizationId,
         isTopProduct ?? false,
         parentProductId || null,
-        price,
-        mrp,
-        minOrderQty,
-        stock,
-        unit,
-        weight,
-        dispatchTimeDays,
-        description,
+        Number(price || 0),
+        Number(mrp || 0),
+        Number(minOrderQty || 1),
+        Number(stock || 0),
+        unit || "pcs",
+        weight || null,
+        dispatchTimeDays || null,
+        description || "",
         isActive ?? true,
         isFeatured ?? false,
         id,
@@ -311,6 +315,7 @@ exports.updateProduct = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 exports.deleteProduct = async (req, res) => {
   try {
