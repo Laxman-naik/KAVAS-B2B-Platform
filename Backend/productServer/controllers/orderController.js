@@ -427,10 +427,65 @@ exports.getVendorOrders = async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT *
-      FROM orders
-      WHERE supplier_org_id = $1
-      ORDER BY created_at DESC
+      SELECT
+        o.*,
+
+        u.full_name AS buyer_name,
+        u.email AS buyer_email,
+        u.phone AS buyer_phone,
+
+        u.full_name AS shipping_name,
+        a.phone AS shipping_phone,
+
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code AS pincode,
+
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'item_id', oi.id,
+              'product_id', oi.product_id,
+              'product_name', p.name,
+              'quantity', oi.quantity,
+              'price', oi.price,
+              'organization_name', oi.organization_name
+            )
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) AS items,
+
+        COUNT(oi.id) AS item_count
+
+      FROM orders o
+      LEFT JOIN users u 
+        ON u.id = o.user_id
+      LEFT JOIN addresses a 
+        ON a.id = o.shipping_address_id
+      LEFT JOIN order_items oi 
+        ON oi.order_id = o.id
+      LEFT JOIN products p 
+        ON p.id = oi.product_id
+
+      WHERE o.supplier_org_id = $1
+
+      GROUP BY 
+        o.id,
+        u.full_name,
+        u.email,
+        u.phone,
+        a.phone,
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code
+
+      ORDER BY o.created_at DESC
       `,
       [organizationId]
     );

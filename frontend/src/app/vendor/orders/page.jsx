@@ -37,31 +37,53 @@ export default function OrdersManagementBody() {
     dispatch(fetchVendorOrders());
   }, [dispatch]);
 
+  const cleanValue = (value, fallback = "pending") => {
+    if (value === null || value === undefined || value === "") return fallback;
+
+    if (typeof value === "object") {
+      return String(
+        value.status ||
+          value.delivery_status ||
+          value.payment_status ||
+          value.name ||
+          value.label ||
+          fallback
+      )
+        .toLowerCase()
+        .trim();
+    }
+
+    return String(value).toLowerCase().trim();
+  };
+
   const getStatus = (order) =>
-    String(
-      order?.status ||
-        order?.delivery_status ||
-        order?.order_status ||
-        "pending",
-    )
-      .toLowerCase()
-      .trim();
+    cleanValue(
+      order?.status || order?.delivery_status || order?.order_status,
+      "pending"
+    );
+
+  const getPaymentStatus = (order) =>
+    cleanValue(order?.payment_status || order?.payment, "pending");
 
   const statusLabel = (status) => {
-    if (!status) return "Pending";
-    const value = String(status).toLowerCase().trim();
-    return value.charAt(0).toUpperCase() + value.slice(1);
+    const value = cleanValue(status, "pending");
+    return value
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   const stats = useMemo(() => {
     const total = orders.length;
     const pending = orders.filter((o) => getStatus(o) === "pending").length;
     const processing = orders.filter(
-      (o) => getStatus(o) === "processing",
+      (o) => getStatus(o) === "processing"
     ).length;
     const shipped = orders.filter((o) => getStatus(o) === "shipped").length;
     const delivered = orders.filter((o) => getStatus(o) === "delivered").length;
-    const cancelled = orders.filter((o) => getStatus(o) === "cancelled").length;
+    const cancelled = orders.filter(
+      (o) => getStatus(o) === "cancelled" || getStatus(o) === "canceled"
+    ).length;
 
     return {
       total,
@@ -79,14 +101,12 @@ export default function OrdersManagementBody() {
 
     return orders.filter((o) => {
       const orderStatus = getStatus(o);
-      const paymentValue = o.payment_status || o.payment || "pending";
+      const paymentValue = getPaymentStatus(o);
 
       const matchSearch =
         !q ||
         String(o.id).toLowerCase().includes(q) ||
-        String(o.buyer_name || "")
-          .toLowerCase()
-          .includes(q);
+        String(o.buyer_name || "").toLowerCase().includes(q);
 
       const matchStatus =
         statusFilter === "All" ||
@@ -94,7 +114,7 @@ export default function OrdersManagementBody() {
 
       const matchPayment =
         paymentFilter === "All Payments" ||
-        String(paymentValue).toLowerCase() === paymentFilter.toLowerCase();
+        paymentValue === paymentFilter.toLowerCase();
 
       return matchSearch && matchStatus && matchPayment;
     });
@@ -117,7 +137,7 @@ export default function OrdersManagementBody() {
   }, [safePage, totalFiltered]);
 
   const statusStyle = (status) => {
-    const value = String(status || "").toLowerCase();
+    const value = cleanValue(status, "pending");
 
     switch (value) {
       case "pending":
@@ -129,17 +149,23 @@ export default function OrdersManagementBody() {
       case "delivered":
         return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
+      case "canceled":
         return "bg-red-50 text-red-700 border-red-200";
+      case "cod":
+        return "bg-gray-50 text-gray-700 border-gray-200";
+      case "confirmed":
+        return "bg-blue-50 text-blue-700 border-blue-200";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const paymentStyle = (payment) => {
-    const value = String(payment || "pending").toLowerCase();
+    const value = cleanValue(payment, "pending");
 
     if (value === "paid") return "bg-green-50 text-green-700 border-green-200";
     if (value === "refunded") return "bg-gray-50 text-gray-700 border-gray-200";
+    if (value === "cod") return "bg-blue-50 text-blue-700 border-blue-200";
 
     return "bg-yellow-50 text-yellow-700 border-yellow-200";
   };
@@ -168,7 +194,7 @@ export default function OrdersManagementBody() {
         count: stats.cancelled,
       },
     ],
-    [stats],
+    [stats]
   );
 
   const statCards = [
@@ -294,11 +320,13 @@ export default function OrdersManagementBody() {
               }}
               className="h-11 w-full border border-[#E5E5E5] bg-[#FAFAFA] px-3 text-sm font-semibold text-[#0B1F3A] outline-none rounded-sm lg:w-48"
             >
-              {["All Payments", "paid", "pending", "refunded"].map((x) => (
-                <option key={x} value={x}>
-                  {x === "All Payments" ? x : statusLabel(x)}
-                </option>
-              ))}
+              {["All Payments", "paid", "pending", "refunded", "cod"].map(
+                (x) => (
+                  <option key={x} value={x}>
+                    {x === "All Payments" ? x : statusLabel(x)}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -367,7 +395,7 @@ export default function OrdersManagementBody() {
             <tbody>
               {pagedOrders.map((o) => {
                 const currentStatus = getStatus(o);
-                const paymentValue = o.payment_status || o.payment || "pending";
+                const paymentValue = getPaymentStatus(o);
 
                 const actionLabel =
                   currentStatus === "pending"
@@ -436,7 +464,7 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
-                          paymentValue,
+                          paymentValue
                         )}`}
                       >
                         {statusLabel(paymentValue)}
@@ -446,7 +474,7 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                          currentStatus,
+                          currentStatus
                         )}`}
                       >
                         {statusLabel(currentStatus)}
@@ -488,7 +516,7 @@ export default function OrdersManagementBody() {
                                 updateOrderStatus({
                                   orderId: o.id,
                                   status: actionNext,
-                                }),
+                                })
                               ).then(() => dispatch(fetchVendorOrders()))
                             }
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
@@ -523,7 +551,7 @@ export default function OrdersManagementBody() {
         <div className="mt-5 space-y-3 md:hidden">
           {pagedOrders.map((o) => {
             const currentStatus = getStatus(o);
-            const paymentValue = o.payment_status || o.payment || "pending";
+            const paymentValue = getPaymentStatus(o);
 
             return (
               <div
@@ -540,7 +568,7 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                      currentStatus,
+                      currentStatus
                     )}`}
                   >
                     {statusLabel(currentStatus)}
@@ -557,7 +585,7 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${paymentStyle(
-                      paymentValue,
+                      paymentValue
                     )}`}
                   >
                     {statusLabel(paymentValue)}
@@ -630,6 +658,7 @@ export default function OrdersManagementBody() {
           </div>
         </div>
       </div>
+
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-sm bg-white shadow-xl">
@@ -672,7 +701,7 @@ export default function OrdersManagementBody() {
                 </p>
                 <p className="text-sm text-gray-500">
                   {selectedOrder.city || ""}, {selectedOrder.state || ""} -{" "}
-                  {selectedOrder.pincode || ""}
+                  {selectedOrder.pincode || selectedOrder.postal_code || ""}
                 </p>
               </div>
             </div>
@@ -704,7 +733,7 @@ export default function OrdersManagementBody() {
                         <td className="p-3">
                           ₹
                           {Number(
-                            (item.price || 0) * (item.quantity || 0),
+                            (item.price || 0) * (item.quantity || 0)
                           ).toLocaleString("en-IN")}
                         </td>
                       </tr>
@@ -718,7 +747,7 @@ export default function OrdersManagementBody() {
                 <p className="text-2xl font-extrabold text-[#0B1F3A]">
                   ₹
                   {Number(selectedOrder.total_amount || 0).toLocaleString(
-                    "en-IN",
+                    "en-IN"
                   )}
                 </p>
               </div>
