@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { productapi } from "@/lib/axios";
 import {
   Search,
   Package,
@@ -50,18 +51,13 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/vendor/rfqs", {
+      const {data} = await productapi.get("/api/rfqs",{
         headers: {
           "vendor-id": vendorId,
         },
       });
-
-      const data = await res.json();
-
-      const list = data.rfqs || [];
-
-      setRfqs(list);
-      setSelected(list[0] || null);
+      setRfqs(data.rfqs || []);
+      setSelected(data.rfqs?.[0] || null);
     } catch (err) {
       console.error("Load RFQs error:", err);
       setRfqs([]);
