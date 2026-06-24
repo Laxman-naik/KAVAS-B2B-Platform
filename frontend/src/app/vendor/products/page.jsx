@@ -18,6 +18,9 @@ import { fetchVendorProducts } from "../../../store/slices/productSlice";
 
 export default function ProductManagementBody() {
   const dispatch = useDispatch();
+  const { vendorProducts = [], loading } = useSelector(
+    (state) => state.products,
+  );
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -28,12 +31,22 @@ export default function ProductManagementBody() {
 
   const pageSize = 8;
 
-  const { vendorProducts, loading } = useSelector((state) => state.products);
   const vendorData = useSelector((state) => state.vendor?.vendor);
 
-  const organizationId = vendorData?.organization_id;
+  const [organizationId, setOrganizationId] = useState(null);
 
   useEffect(() => {
+    const orgId =
+      vendorData?.organization_id ||
+      localStorage.getItem("vendor_organization_id");
+
+    setOrganizationId(orgId || null);
+  }, [vendorData]);
+
+  useEffect(() => {
+    console.log("Vendor Data:", vendorData);
+    console.log("Organization ID:", organizationId);
+
     if (organizationId) {
       dispatch(fetchVendorProducts(organizationId));
     }
@@ -57,7 +70,9 @@ export default function ProductManagementBody() {
   const products = Array.isArray(vendorProducts) ? vendorProducts : [];
 
   const filteredProducts = useMemo(() => {
-    const q = String(search || "").trim().toLowerCase();
+    const q = String(search || "")
+      .trim()
+      .toLowerCase();
 
     return products.filter((p) => {
       const productName = String(p?.name || "").toLowerCase();
@@ -71,7 +86,8 @@ export default function ProductManagementBody() {
         !q || productName.includes(q) || productSku.includes(q);
 
       const matchCategory =
-        category === "All" || productProductCategoryCompare(productCategory) === category;
+        category === "All" ||
+        productProductCategoryCompare(productCategory) === category;
 
       const matchStatus = status === "All Status" || productStatus === status;
 
@@ -153,9 +169,12 @@ export default function ProductManagementBody() {
   const getPrimaryImage = (product) => {
     return getImageUrl(
       product?.images?.find((img) => img.is_primary)?.image_url ||
-        product?.images?.[0]?.image_url
+        product?.images?.[0]?.image_url,
     );
   };
+
+  console.log("Vendor Data:", vendorData);
+  console.log("Organization ID:", organizationId);
 
   return (
     <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">

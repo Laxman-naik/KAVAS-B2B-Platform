@@ -520,28 +520,24 @@ exports.getOrderById = async (req, res) => {
 
 exports.getVendorOrders = async (req, res) => {
   try {
-    const vendorOrgId =
-      req.user?.organization_id ||
-      req.user?.organizationId ||
-      req.headers["vendor-org-id"];
+    const organizationId = req.user?.organization_id;
 
-    if (!vendorOrgId) {
-      return res.status(400).json({
-        message: "Vendor organization id missing",
+    console.log("LOGGED VENDOR ORG:", organizationId);
+
+    if (!organizationId) {
+      return res.status(401).json({
+        message: "Organization ID missing in token",
       });
     }
 
     const result = await pool.query(
       `
-      SELECT 
-        o.*,
-        u.full_name AS buyer_name
-      FROM orders o
-      LEFT JOIN users u ON u.id = o.user_id
-      WHERE o.supplier_org_id = $1
-      ORDER BY o.created_at DESC
+      SELECT *
+      FROM orders
+      WHERE supplier_org_id = $1
+      ORDER BY created_at DESC
       `,
-      [vendorOrgId]
+      [organizationId]
     );
 
     return res.json({

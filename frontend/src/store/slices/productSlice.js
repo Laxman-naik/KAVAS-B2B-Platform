@@ -10,7 +10,10 @@ import {
   getVendorProductsAPI,
   getFlashDealsAPI,
   addFlashDealToCartAPI,
-  getVendorInventoryAPI,
+  makeProductFlashDealAPI,
+  updateProductFlashDealAPI,
+  removeProductFlashDealAPI,
+  getVendorInventoryAPI
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */
@@ -84,7 +87,7 @@ export const editProduct = createAsyncThunk(
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-      return res;
+      return res?.product || res?.data || res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }

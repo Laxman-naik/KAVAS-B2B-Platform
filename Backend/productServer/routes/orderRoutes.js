@@ -12,7 +12,6 @@ router.post("/", authMiddleware, createOrder);
 
 router.get("/vendor", authMiddleware, getVendorOrders);
 router.get("/", authMiddleware, getUserOrders);
-router.get("/vendor", authMiddleware, getVendorOrders);
 router.get("/by-id/:orderId", authMiddleware, getOrderById);
 router.get("/:id", authMiddleware, getOrderDetails);
 router.get("/:orderId/tracking", authMiddleware, getOrderTracking);

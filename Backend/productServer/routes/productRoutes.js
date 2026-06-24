@@ -6,7 +6,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const reviewController = require("../controllers/reviewController");
 
-router.post("/",  upload.fields([{ name: "images", maxCount: 5 },{ name: "videos", maxCount: 2 },]), productController.createProduct);
+router.post("/",authMiddleware,upload.fields([{ name: "images", maxCount: 5 },{ name: "videos", maxCount: 2 },]),productController.createProduct);
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug",productController.getProductsByCategoryAndSubcategory);

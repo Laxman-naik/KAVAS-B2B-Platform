@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { productapi } from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -22,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import { productapi } from "@/services/api";
+
 
 const Page = () => {
   const router = useRouter();

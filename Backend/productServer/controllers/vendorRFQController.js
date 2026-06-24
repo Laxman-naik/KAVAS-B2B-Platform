@@ -226,6 +226,14 @@ exports.updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const vendorOrgId = req.headers["vendor-id"];
+
+    if (!vendorOrgId) {
+      return res.status(400).json({
+        success: false,
+        message: "vendor-id header is required",
+      });
+    }
 
     const allowedStatus = ["submitted", "accepted", "rejected", "withdrawn"];
 
@@ -240,16 +248,16 @@ exports.updateQuoteStatus = async (req, res) => {
       `
       UPDATE rfq_quotes
       SET status = $1
-      WHERE id = $2
+      WHERE id = $2 AND vendor_org_id = $3
       RETURNING *
       `,
-      [status, id]
+      [status, id, vendorOrgId]
     );
 
     if (!result.rows.length) {
       return res.status(404).json({
         success: false,
-        message: "Quote not found",
+        message: "Quote not found for this vendor",
       });
     }
 

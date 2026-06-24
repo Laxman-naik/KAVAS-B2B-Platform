@@ -14,9 +14,9 @@ import {
   Truck,
   CheckCircle2,
   XCircle,
+  PackageCheck,
 } from "lucide-react";
 
-// import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
@@ -27,6 +27,7 @@ export default function OrdersManagementBody() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const pageSize = 8;
 
@@ -34,27 +35,57 @@ export default function OrdersManagementBody() {
     dispatch(fetchVendorOrders());
   }, [dispatch]);
 
+  const getStatus = (order) => {
+    const raw = String(
+      order?.status ||
+      order?.order_status ||
+      order?.delivery_status ||
+      "pending"
+    )
+      .toLowerCase()
+      .trim();
+
+    if (raw === "confirmed" || raw === "accepted") return "processing";
+    if (raw === "out for delivery" || raw === "out-for-delivery") {
+      return "out_for_delivery";
+    }
+
+    return raw;
+  };
+
   const statusLabel = (status) => {
     if (!status) return "Pending";
-    return String(status).charAt(0).toUpperCase() + String(status).slice(1);
+
+    const value = String(status).toLowerCase().trim();
+
+    if (value === "out_for_delivery") return "Out For Delivery";
+
+    return value.charAt(0).toUpperCase() + value.slice(1);
   };
 
   const stats = useMemo(() => {
     const total = orders.length;
-    const pending = orders.filter((o) => o.status === "pending").length;
-    const processing = orders.filter((o) => o.status === "processing").length;
-    const shipped = orders.filter((o) => o.status === "shipped").length;
-    const delivered = orders.filter((o) => o.status === "delivered").length;
-    const cancelled = orders.filter((o) => o.status === "cancelled").length;
+
+    const pending = orders.filter((o) => getStatus(o) === "pending").length;
+    const processing = orders.filter(
+      (o) => getStatus(o) === "processing"
+    ).length;
+    const shipped = orders.filter((o) => getStatus(o) === "shipped").length;
+    const outForDelivery = orders.filter(
+      (o) => getStatus(o) === "out_for_delivery"
+    ).length;
+    const delivered = orders.filter((o) => getStatus(o) === "delivered").length;
+    const cancelled = orders.filter((o) => getStatus(o) === "cancelled").length;
 
     return {
       total,
       pending,
       processing,
       shipped,
+      outForDelivery,
       delivered,
       cancelled,
-      needAttention: pending + processing,
+      needAttention: pending + processing + shipped + outForDelivery,
     };
   }, [orders]);
 
@@ -62,6 +93,7 @@ export default function OrdersManagementBody() {
     const q = search.trim().toLowerCase();
 
     return orders.filter((o) => {
+      const orderStatus = getStatus(o);
       const paymentValue = o.payment_status || o.payment || "pending";
 
       const matchSearch =
@@ -69,7 +101,9 @@ export default function OrdersManagementBody() {
         String(o.id).toLowerCase().includes(q) ||
         String(o.buyer_name || "").toLowerCase().includes(q);
 
-      const matchStatus = statusFilter === "All" || o.status === statusFilter;
+      const matchStatus =
+        statusFilter === "All" ||
+        orderStatus === String(statusFilter).toLowerCase();
 
       const matchPayment =
         paymentFilter === "All Payments" ||
@@ -96,13 +130,17 @@ export default function OrdersManagementBody() {
   }, [safePage, totalFiltered]);
 
   const statusStyle = (status) => {
-    switch (status) {
+    const value = String(status || "").toLowerCase();
+
+    switch (value) {
       case "pending":
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "processing":
         return "bg-blue-50 text-blue-700 border-blue-200";
       case "shipped":
         return "bg-purple-50 text-purple-700 border-purple-200";
+      case "out_for_delivery":
+        return "bg-orange-50 text-orange-700 border-orange-200";
       case "delivered":
         return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
@@ -116,7 +154,8 @@ export default function OrdersManagementBody() {
     const value = String(payment || "pending").toLowerCase();
 
     if (value === "paid") return "bg-green-50 text-green-700 border-green-200";
-    if (value === "refunded") return "bg-gray-50 text-gray-700 border-gray-200";
+    if (value === "refunded")
+      return "bg-gray-50 text-gray-700 border-gray-200";
 
     return "bg-yellow-50 text-yellow-700 border-yellow-200";
   };
@@ -132,6 +171,12 @@ export default function OrdersManagementBody() {
         count: stats.processing,
       },
       { key: "shipped", label: "Shipped", icon: Truck, count: stats.shipped },
+      {
+        key: "out_for_delivery",
+        label: "Out For Delivery",
+        icon: PackageCheck,
+        count: stats.outForDelivery,
+      },
       {
         key: "delivered",
         label: "Delivered",
@@ -168,10 +213,10 @@ export default function OrdersManagementBody() {
       className: "bg-purple-50 text-purple-700",
     },
     {
-      title: "Delivered",
-      value: stats.delivered,
-      icon: CheckCircle2,
-      className: "bg-green-50 text-green-700",
+      title: "Out For Delivery",
+      value: stats.outForDelivery,
+      icon: PackageCheck,
+      className: "bg-orange-50 text-orange-700",
     },
   ];
 
@@ -301,7 +346,9 @@ export default function OrdersManagementBody() {
                     {Icon ? <Icon size={16} /> : <span className="w-4" />}
                     {t.label}
                     <span
-                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"
+                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${active
+                          ? "bg-white/15 text-white"
+                          : "bg-gray-100 text-gray-600"
                         }`}
                     >
                       {t.count}
@@ -339,25 +386,29 @@ export default function OrdersManagementBody() {
 
             <tbody>
               {pagedOrders.map((o) => {
+                const currentStatus = getStatus(o);
                 const paymentValue = o.payment_status || o.payment || "pending";
 
-                const actionLabel =
-                  o.status === "pending"
-                    ? "Mark Processing"
-                    : o.status === "processing"
-                      ? "Mark Shipped"
-                      : o.status === "shipped"
-                        ? "Mark Delivered"
-                        : null;
+                const actionMap = {
+                  pending: {
+                    label: "Mark Processing",
+                    next: "processing",
+                  },
+                  processing: {
+                    label: "Mark Shipped",
+                    next: "shipped",
+                  },
+                  shipped: {
+                    label: "Out For Delivery",
+                    next: "out_for_delivery",
+                  },
+                  out_for_delivery: {
+                    label: "Mark Delivered",
+                    next: "delivered",
+                  },
+                };
 
-                const actionNext =
-                  o.status === "pending"
-                    ? "processing"
-                    : o.status === "processing"
-                      ? "shipped"
-                      : o.status === "shipped"
-                        ? "delivered"
-                        : null;
+                const action = actionMap[currentStatus];
 
                 return (
                   <tr
@@ -372,24 +423,25 @@ export default function OrdersManagementBody() {
                       <p className="font-extrabold text-[#0B1F3A]">
                         {o.buyer_name || "Unknown Buyer"}
                       </p>
-                      <p className="mt-1 text-xs font-medium text-gray-500">
-                        Buyer ID: {o.user_id || "-"}
+                      <p className="text-xs font-medium text-gray-500">
+                        {o.buyer_email || "-"}
                       </p>
                     </td>
 
                     <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] text-sm rounded-sm">
-                          📦
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-[#0B1F3A]">
-                            Order Items
+                      <p className="font-extrabold text-[#0B1F3A]">
+                        {o.item_count || 0} Items
+                      </p>
+
+                      <div className="mt-1 space-y-1">
+                        {(o.items || []).slice(0, 2).map((item) => (
+                          <p
+                            key={item.item_id}
+                            className="text-xs font-medium text-gray-500"
+                          >
+                            {item.product_name || "Product"} × {item.quantity}
                           </p>
-                          <p className="text-xs font-medium text-gray-500">
-                            View details
-                          </p>
-                        </div>
+                        ))}
                       </div>
                     </td>
 
@@ -415,10 +467,10 @@ export default function OrdersManagementBody() {
                     <td className="p-4">
                       <span
                         className={`inline-flex items-center border px-3 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                          o.status
+                          currentStatus
                         )}`}
                       >
-                        {statusLabel(o.status)}
+                        {statusLabel(currentStatus)}
                       </span>
                     </td>
 
@@ -442,46 +494,46 @@ export default function OrdersManagementBody() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
+                          onClick={() => setSelectedOrder(o)}
                           className="inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
                           aria-label="View"
                         >
                           <Eye size={16} className="text-gray-600" />
                         </button>
 
-                        {actionLabel && actionNext ? (
+                        {action ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              if (actionNext === "shipped") {
-                                const awb = prompt("Enter AWB Number");
-                                if (!awb) return;
+                            onClick={async () => {
+                              try {
+                                const payload =
+                                  action.next === "shipped"
+                                    ? {
+                                      orderId: o.id,
+                                      status: action.next,
+                                      awb: prompt("Enter AWB Number"),
+                                      courier: prompt("Enter Courier Name"),
+                                      estimated_delivery: prompt("Enter Estimated Delivery Date YYYY-MM-DD"),
+                                    }
+                                    : {
+                                      orderId: o.id,
+                                      status: action.next,
+                                    };
 
-                                const courier = prompt("Enter Courier Name");
-                                if (!courier) return;
+                                await dispatch(updateOrderStatus(payload)).unwrap();
 
-                                const estimated_delivery = prompt("Enter Estimated Delivery Date YYYY-MM-DD");
-
-                                dispatch(
-                                  updateOrderStatus({
-                                    orderId: o.id,
-                                    status: actionNext,
-                                    awb,
-                                    courier,
-                                    estimated_delivery,
-                                  })
-                                );
-                              } else {
-                                dispatch(
-                                  updateOrderStatus({
-                                    orderId: o.id,
-                                    status: actionNext,
-                                  })
+                                dispatch(fetchVendorOrders());
+                              } catch (err) {
+                                alert(
+                                  typeof err === "string"
+                                    ? err
+                                    : err?.message || err?.error || "Status update failed"
                                 );
                               }
                             }}
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
                           >
-                            {actionLabel}
+                            {action.label}
                           </button>
                         ) : (
                           <div className="h-10" />
@@ -510,6 +562,7 @@ export default function OrdersManagementBody() {
 
         <div className="mt-5 space-y-3 md:hidden">
           {pagedOrders.map((o) => {
+            const currentStatus = getStatus(o);
             const paymentValue = o.payment_status || o.payment || "pending";
 
             return (
@@ -527,10 +580,10 @@ export default function OrdersManagementBody() {
 
                   <span
                     className={`border px-2 py-1 text-xs font-extrabold rounded-sm ${statusStyle(
-                      o.status
+                      currentStatus
                     )}`}
                   >
-                    {statusLabel(o.status)}
+                    {statusLabel(currentStatus)}
                   </span>
                 </div>
 
@@ -551,9 +604,12 @@ export default function OrdersManagementBody() {
                   </span>
                 </div>
 
-                <button className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] text-sm font-extrabold text-[#0B1F3A] rounded-sm">
-                  <Eye size={15} />
-                  View Details
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(o)}
+                  className="mt-3 inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
+                >
+                  <Eye size={16} className="text-gray-600" />
                 </button>
               </div>
             );
@@ -611,6 +667,103 @@ export default function OrdersManagementBody() {
           </div>
         </div>
       </div>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-sm bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-5">
+              <h2 className="text-xl font-extrabold text-[#0B1F3A]">
+                Order Details
+              </h2>
+
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="text-xl font-bold text-gray-500 hover:text-red-500"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid gap-5 p-5 md:grid-cols-2">
+              <div className="border p-4">
+                <h3 className="font-extrabold text-[#0B1F3A]">Buyer Details</h3>
+                <p className="mt-2">{selectedOrder.buyer_name || "-"}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.buyer_email || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.buyer_phone || "-"}
+                </p>
+              </div>
+
+              <div className="border p-4">
+                <h3 className="font-extrabold text-[#0B1F3A]">
+                  Shipping Address
+                </h3>
+                <p className="mt-2">{selectedOrder.shipping_name || "-"}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.shipping_phone || "-"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.address_line1 || ""}{" "}
+                  {selectedOrder.address_line2 || ""}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedOrder.city || ""}, {selectedOrder.state || ""} -{" "}
+                  {selectedOrder.pincode || ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="px-5 pb-5">
+              <h3 className="mb-3 font-extrabold text-[#0B1F3A]">Items</h3>
+
+              <div className="overflow-x-auto border">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#0B1F3A] text-white">
+                    <tr>
+                      <th className="p-3 text-left">Product</th>
+                      <th className="p-3 text-left">Qty</th>
+                      <th className="p-3 text-left">Price</th>
+                      <th className="p-3 text-left">Total</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {(selectedOrder.items || []).map((item) => (
+                      <tr key={item.item_id} className="border-t">
+                        <td className="p-3 font-bold text-[#0B1F3A]">
+                          {item.product_name || "Product"}
+                        </td>
+                        <td className="p-3">{item.quantity}</td>
+                        <td className="p-3">
+                          ₹{Number(item.price || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="p-3">
+                          ₹
+                          {Number(
+                            (item.price || 0) * (item.quantity || 0)
+                          ).toLocaleString("en-IN")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 text-right">
+                <p className="text-sm text-gray-500">Order Total</p>
+                <p className="text-2xl font-extrabold text-[#0B1F3A]">
+                  ₹
+                  {Number(selectedOrder.total_amount || 0).toLocaleString(
+                    "en-IN"
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import {
-  X,
   Wallet,
   Building2,
   Smartphone,
-  IndianRupee,
   CheckCircle2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 import {
@@ -22,12 +22,22 @@ const QUICK_AMOUNTS = [5000, 10000, 25000, 50000, 125000];
 const WithdrawFundsPopup = ({
   open,
   setOpen,
-  availableBalance = 124750,
+  availableBalance = 0,
+  payoutAccounts = [],
+  vendorId,
+  token,
   onConfirm,
+  onSuccess,
 }) => {
-  const [amount, setAmount] = useState(5000);
-  const [selectedMethod, setSelectedMethod] = useState("bank");
+  const [amount, setAmount] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState("");
   const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const selectedAccount = useMemo(() => {
+    return payoutAccounts.find((item) => item.id === selectedMethod);
+  }, [payoutAccounts, selectedMethod]);
 
   const platformFee = useMemo(() => {
     return Math.round(Number(amount || 0) * 0.02);
@@ -38,233 +48,307 @@ const WithdrawFundsPopup = ({
   }, [amount, platformFee]);
 
   const isInvalid =
-    !amount || Number(amount) < 5000 || Number(amount) > availableBalance;
+    !amount ||
+    Number(amount) < 5000 ||
+    Number(amount) > Number(availableBalance) ||
+    !selectedAccount ||
+    loading;
 
-  const handleConfirm = () => {
-    if (isInvalid) return;
-
-    onConfirm?.({
-      payout_amount: Number(amount),
-      platform_fee: platformFee,
-      receive_amount: receiveAmount,
-      payout_method: selectedMethod,
-      remarks: note,
-    });
-
-    setOpen(false);
-    setAmount(5000);
-    setNote("");
+  const getIcon = (type) => {
+    if (type === "bank") return <Building2 size={18} />;
+    if (type === "upi") return <Smartphone size={18} />;
+    return <Wallet size={18} />;
   };
 
-  const methods = [
-    {
-      id: "bank",
-      title: "HDFC Bank - Current Account",
-      sub: "A/C: 5012 3456 7890 · IFSC: HDFC0001234",
-      icon: <Building2 size={22} />,
-      tag: "DEFAULT",
-    },
-    {
-      id: "upi",
-      title: "UPI - Google Pay",
-      sub: "rahul.sharma@okaxis",
-      icon: <Smartphone size={22} />,
-    },
-    {
-      id: "wallet",
-      title: "Paytm Wallet",
-      sub: "Linked: 98765 43210",
-      icon: <Wallet size={22} />,
-    },
-  ];
+  const resetForm = () => {
+    setAmount("");
+    setSelectedMethod("");
+    setNote("");
+    setError("");
+  };
+
+  const handleConfirm = async () => {
+    if (isInvalid) return;
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const payload = {
+        vendor_id: vendorId,
+        payout_amount: Number(amount),
+        platform_fee: platformFee,
+        receive_amount: receiveAmount,
+        payout_method: selectedAccount?.type,
+        payout_account_id: selectedAccount?.id,
+        remarks: note,
+        status: "PENDING",
+      };
+
+      if (onConfirm) {
+        await onConfirm(payload);
+      } else {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/withdraw-requests`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok || data?.success === false) {
+          throw new Error(data?.message || "Withdrawal request failed");
+        }
+
+        onSuccess?.(data);
+      }
+
+      setOpen(false);
+      resetForm();
+    } catch (err) {
+      setError(err?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden rounded-3xl bg-white">
-        <DialogHeader className="px-8 py-4 border-b">
-          <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-3xl font-bold text-[#1E293B]">
-                Withdraw Funds
-              </DialogTitle>
-              <p className="text-[#94A3B8] text-xl mt-2">
-                Available: Rs. {availableBalance.toLocaleString("en-IN")}
-              </p>
-            </div>
+      <DialogContent className="w-[80vw]! max-w-[80vw]! h-[90vh] p-0 overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <DialogHeader className="px-6 py-4 border-b bg-[#F8FAFC]">
+          <DialogTitle className="text-xl font-bold text-[#0F172A]">
+            Withdraw Funds
+          </DialogTitle>
 
-            <button onClick={() => setOpen(false)}>
-              <X className="text-[#94A3B8]" size={26} />
-            </button>
-          </div>
+          <p className="text-[#64748B] text-sm mt-1">
+            Available Balance:{" "}
+            <span className="font-bold text-[#0F172A]">
+              Rs. {Number(availableBalance || 0).toLocaleString("en-IN")}
+            </span>
+          </p>
         </DialogHeader>
 
-        <div className="px-8 py-7 max-h-[80vh] overflow-y-auto scrollbar-hide">
-          <div>
-            <label className="text-xl font-semibold text-[#334155]">
-              Amount (Rs.)
-            </label>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 px-6 py-5 h-[calc(90vh-77px)] overflow-y-auto">
+          <div className="lg:col-span-8 space-y-5">
+            <div>
+              <label className="text-sm font-semibold text-[#334155]">
+                Withdrawal Amount
+              </label>
 
-            <div className="mt-4 flex items-center border border-[#DCE3EE] rounded-2xl px-5 py-4">
-              <span className="text-3xl font-bold text-[#94A3B8] mr-5">
-                Rs.
-              </span>
+              <div className="mt-3 flex items-center border border-[#DCE3EE] rounded-xl px-4 py-3 bg-white focus-within:border-[#1E293B]">
+                <span className="text-lg font-bold text-[#94A3B8] mr-3">
+                  Rs.
+                </span>
+
+                <input
+                  type="number"
+                  value={amount}
+                  min={5000}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full text-2xl font-bold text-[#0F172A] outline-none bg-transparent placeholder:text-[#CBD5E1]"
+                />
+              </div>
+
+              {amount && Number(amount) < 5000 && (
+                <p className="text-red-500 text-xs mt-2">
+                  Minimum withdrawal amount is Rs. 5,000
+                </p>
+              )}
+
+              {Number(amount) > Number(availableBalance) && (
+                <p className="text-red-500 text-xs mt-2">
+                  Amount cannot exceed available balance
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-2 mt-3">
+                {QUICK_AMOUNTS.map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => setAmount(item)}
+                    disabled={item > Number(availableBalance)}
+                    className={`px-4 py-2 rounded-lg border font-bold text-sm disabled:opacity-40 transition ${
+                      Number(amount) === item
+                        ? "bg-[#1E293B] text-white border-[#1E293B]"
+                        : "bg-[#F8FAFC] text-[#64748B] border-[#DCE3EE] hover:border-[#1E293B]"
+                    }`}
+                  >
+                    {item >= 1000 ? `${item / 1000}K` : item}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-[#334155] mb-3">
+                Withdraw To
+              </h3>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                {payoutAccounts.length === 0 ? (
+                  <div className="col-span-full border border-dashed border-[#CBD5E1] rounded-xl p-5 text-center bg-[#F8FAFC]">
+                    <p className="text-sm font-semibold text-[#334155]">
+                      No payout account found
+                    </p>
+                    <p className="text-xs text-[#94A3B8] mt-1">
+                      Please add your bank, UPI, or Razorpay payout account first.
+                    </p>
+                  </div>
+                ) : (
+                  payoutAccounts.map((method) => (
+                    <button
+                      type="button"
+                      key={method.id}
+                      onClick={() => setSelectedMethod(method.id)}
+                      className={`w-full flex items-start justify-between rounded-xl border p-4 transition ${
+                        selectedMethod === method.id
+                          ? "border-[#1E293B] bg-[#F8FAFC] shadow-sm"
+                          : "border-[#DCE3EE] bg-white hover:border-[#94A3B8]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3 text-left">
+                        <div className="h-10 w-10 shrink-0 rounded-lg flex items-center justify-center bg-slate-100 text-slate-700">
+                          {getIcon(method.type)}
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-sm font-bold text-[#334155] leading-5">
+                              {method.title || method.account_name || "Payout Account"}
+                            </h4>
+
+                            {method.is_default && (
+                              <span className="bg-[#1E293B] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                                DEFAULT
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-[#94A3B8] text-xs mt-1 leading-5">
+                            {method.sub ||
+                              method.upi_id ||
+                              method.account_number ||
+                              method.razorpay_contact_id ||
+                              "Account details"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center ml-2 ${
+                          selectedMethod === method.id
+                            ? "border-[#1E293B]"
+                            : "border-[#CBD5E1]"
+                        }`}
+                      >
+                        {selectedMethod === method.id && (
+                          <div className="h-2 w-2 bg-[#1E293B] rounded-full" />
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-[#334155]">
+                Note Optional
+              </label>
 
               <input
-                type="number"
-                value={amount}
-                min={5000}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full text-4xl font-bold text-[#1E293B] outline-none"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g., Monthly withdrawal..."
+                className="mt-3 w-full border border-[#DCE3EE] rounded-xl px-4 py-3 text-sm outline-none placeholder:text-[#CBD5E1] focus:border-[#1E293B]"
               />
             </div>
 
-            {Number(amount) < 5000 && (
-              <p className="text-red-500 text-sm mt-2">
-                Minimum withdrawal amount is Rs. 5,000
-              </p>
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm font-semibold">
+                <AlertCircle size={16} />
+                {error}
+              </div>
             )}
+          </div>
 
-            {Number(amount) > availableBalance && (
-              <p className="text-red-500 text-sm mt-2">
-                Amount cannot exceed available balance
-              </p>
-            )}
+          <div className="lg:col-span-4">
+            <div className="bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] p-5">
+              <h3 className="text-lg font-bold text-[#0F172A] mb-5">
+                Withdrawal Summary
+              </h3>
 
-            <div className="flex flex-wrap gap-3 mt-4">
-              {QUICK_AMOUNTS.map((item) => (
+              <div className="space-y-4">
+                <div className="flex justify-between gap-4 text-sm text-[#64748B]">
+                  <span>Withdraw Amount</span>
+                  <span className="font-bold text-[#334155]">
+                    Rs. {Number(amount || 0).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <div className="flex justify-between gap-4 text-sm text-[#64748B]">
+                  <span>Platform Fee 2%</span>
+                  <span className="font-bold text-red-500">
+                    -Rs. {platformFee.toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <div className="border-t pt-4 flex justify-between gap-4 items-center">
+                  <span className="text-sm font-bold text-[#334155]">
+                    You Receive
+                  </span>
+                  <span className="text-xl font-bold text-green-600">
+                    Rs. {receiveAmount.toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl bg-white border border-[#E2E8F0] p-4">
+                <p className="text-xs text-[#64748B] leading-5">
+                  Withdrawal request will be sent to admin. After admin approval,
+                  payout can be processed through RazorpayX or manual transfer.
+                </p>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3">
                 <button
-                  key={item}
-                  onClick={() => setAmount(item)}
-                  disabled={item > availableBalance}
-                  className={`px-5 py-3 rounded-xl border font-bold text-lg disabled:opacity-40 ${
-                    Number(amount) === item
-                      ? "bg-[#1E293B] text-white border-[#1E293B]"
-                      : "bg-[#F8FAFC] text-[#64748B] border-[#DCE3EE]"
-                  }`}
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={isInvalid}
+                  className="w-full px-5 py-3 bg-[#1E293B] disabled:opacity-50 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#0F172A]"
                 >
-                  {item >= 1000 ? `${item / 1000}K` : item}
+                  {loading ? (
+                    <>
+                      <Loader2 size={17} className="animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={17} />
+                      Confirm Withdrawal
+                    </>
+                  )}
                 </button>
-              ))}
-            </div>
-          </div>
 
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-[#334155] mb-4">
-              Withdraw To
-            </h3>
-
-            <div className="space-y-4">
-              {methods.map((method) => (
                 <button
-                  key={method.id}
-                  onClick={() => setSelectedMethod(method.id)}
-                  className={`w-full flex items-center justify-between rounded-2xl border p-5 transition ${
-                    selectedMethod === method.id
-                      ? "border-[#1E293B] bg-[#F8FAFC]"
-                      : "border-[#DCE3EE] bg-white"
-                  }`}
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  disabled={loading}
+                  className="w-full px-5 py-3 font-bold text-sm text-[#64748B] rounded-xl hover:bg-white disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-5 text-left">
-                    <div
-                      className={`h-14 w-14 rounded-xl flex items-center justify-center ${
-                        method.id === "bank"
-                          ? "bg-slate-100 text-slate-600"
-                          : method.id === "upi"
-                          ? "bg-green-50 text-green-600"
-                          : "bg-sky-50 text-sky-600"
-                      }`}
-                    >
-                      {method.icon}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-xl font-bold text-[#334155]">
-                          {method.title}
-                        </h4>
-
-                        {method.tag && (
-                          <span className="bg-[#1E293B] text-white text-xs font-bold px-2 py-1 rounded-md">
-                            {method.tag}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-[#94A3B8] text-lg mt-1">
-                        {method.sub}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`h-8 w-8 rounded-full border-4 flex items-center justify-center ${
-                      selectedMethod === method.id
-                        ? "border-[#1E293B]"
-                        : "border-[#CBD5E1]"
-                    }`}
-                  >
-                    {selectedMethod === method.id && (
-                      <div className="h-3 w-3 bg-[#1E293B] rounded-full" />
-                    )}
-                  </div>
+                  Cancel
                 </button>
-              ))}
+              </div>
             </div>
           </div>
-
-          <div className="mt-8 bg-[#F8FAFC] rounded-2xl p-6">
-            <div className="flex justify-between text-lg text-[#64748B]">
-              <span>Withdraw Amount</span>
-              <span className="font-bold text-[#334155]">
-                Rs. {Number(amount || 0).toLocaleString("en-IN")}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-lg text-[#64748B] mt-4">
-              <span>Platform Fee (2%)</span>
-              <span>-Rs. {platformFee.toLocaleString("en-IN")}</span>
-            </div>
-
-            <div className="border-t mt-5 pt-5 flex justify-between">
-              <span className="text-xl font-bold text-[#334155]">
-                You Receive
-              </span>
-              <span className="text-3xl font-extrabold text-green-600">
-                Rs. {receiveAmount.toLocaleString("en-IN")}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <label className="text-xl font-semibold text-[#334155]">
-              Note (Optional)
-            </label>
-
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g., Monthly withdrawal..."
-              className="mt-4 w-full border border-[#DCE3EE] rounded-2xl px-5 py-4 text-lg outline-none placeholder:text-[#CBD5E1]"
-            />
-          </div>
-        </div>
-
-        <div className="px-8 py-6 border-t flex justify-end gap-4">
-          <button
-            onClick={() => setOpen(false)}
-            className="px-8 py-4 font-bold text-[#64748B]"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={handleConfirm}
-            disabled={isInvalid}
-            className="px-8 py-4 bg-[#1E293B] disabled:opacity-50 text-white rounded-2xl font-bold flex items-center gap-2"
-          >
-            <CheckCircle2 size={20} />
-            Confirm Withdrawal
-          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -316,6 +316,7 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log("organizationId:", organizationId);
     const result = await pool.query(
       `UPDATE products SET is_active = false WHERE id = $1 RETURNING *`,
       [id]

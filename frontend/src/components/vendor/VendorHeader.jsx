@@ -36,14 +36,18 @@ const VendorHeader = ({ collapsed }) => {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await dispatch(logoutVendor()).unwrap();
+  try {
+    localStorage.removeItem("role");
+    localStorage.removeItem("vendor_accessToken");
+    localStorage.removeItem("vendor_refreshToken");
+    localStorage.removeItem("vendor");
+    localStorage.removeItem("sessionId");
 
-      router.push("/vendor/vendorlogin");
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
+    router.push("/vendor/vendorlogin");
+  } catch (err) {
+    console.error("Logout failed:", err);
+  }
+};
 
   return (
     <header

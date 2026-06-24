@@ -1,33 +1,41 @@
 import { authapi } from "../lib/axios";
 
+export const sendVendorOtpAPI = (data) =>
+  authapi.post("/api/vendor/send-otp", data);
 
-export const sendVendorOtpAPI = (data) => authapi.post("/api/vendor/send-otp", data);
+export const verifyVendorOtpAPI = (data) =>
+  authapi.post("/api/vendor/verify-otp", data);
 
-export const verifyVendorOtpAPI = (data) => authapi.post("/api/vendor/verify-otp", data);
+const decodeJwt = (token) => {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+};
 
 // export const registerVendorAPI = (data) => authapi.post("/api/vendor/register", data);
 export const registerVendorAPI = async (data) => {
-  const res = await authapi.post(
-    "/api/vendor/register",
-    data
-  );
+  const res = await authapi.post("/api/vendor/register", data);
 
   const response = res.data;
 
-  if (
-    typeof window !== "undefined" &&
-    response?.accessToken
-  ) {
+  if (typeof window !== "undefined" && response?.accessToken) {
+    const decoded = decodeJwt(response.accessToken);
+
     localStorage.setItem("role", "vendor");
+    localStorage.setItem("vendor_accessToken", response.accessToken);
+
+    if (response.refreshToken) {
+      localStorage.setItem("vendor_refreshToken", response.refreshToken);
+    }
 
     localStorage.setItem(
-      "vendor_accessToken",
-      response.accessToken
-    );
-
-    localStorage.setItem(
-      "vendor_refreshToken",
-      response.refreshToken
+      "vendor_organization_id",
+      response.organization_id ||
+        response.vendor?.organization_id ||
+        decoded?.organization_id ||
+        ""
     );
   }
 
@@ -36,42 +44,45 @@ export const registerVendorAPI = async (data) => {
 
 export const loginVendorAPI = async (data) => {
   try {
-    const res = await authapi.post(
-      "/api/vendor/login",
-      data,
-      {
-        skipAuth: true,
-        withCredentials: true,
-      }
-    );
+    const res = await authapi.post("/api/vendor/login", data, {
+      skipAuth: true,
+      withCredentials: true,
+    });
 
     const response = res.data;
 
-    if (
-      typeof window !== "undefined" &&
-      response?.accessToken
-    ) {
-      // ✅ USE ROLE-BASED STORAGE
+    if (typeof window !== "undefined" && response?.accessToken) {
+      const decoded = decodeJwt(response.accessToken);
+
       localStorage.setItem("role", "vendor");
       localStorage.setItem("vendor_accessToken", response.accessToken);
 
       if (response.refreshToken) {
-        localStorage.setItem("vendor_refreshToken", response.refreshToken );
+        localStorage.setItem("vendor_refreshToken", response.refreshToken);
       }
 
+      localStorage.setItem(
+        "vendor_organization_id",
+        response.organization_id ||
+          response.vendor?.organization_id ||
+          decoded?.organization_id ||
+          ""
+      );
+
       localStorage.setItem("next_action", response.next_action || "dashboard");
-      localStorage.setItem( "onboarding_step", response.onboarding_step || 1 );
+      localStorage.setItem("onboarding_step", response.onboarding_step || 1);
     }
 
-      console.log("LOGIN RESPONSE:", res.data);
-      const role = localStorage.getItem("role");
-  console.log("LOCAL ROLE:", localStorage.getItem("role"));
-  console.log("ACCESS TOKEN:",localStorage.getItem(`${role}_accessToken`));
-  console.log("REFRESH TOKEN:", localStorage.getItem(`${role}_refreshToken`));
+    console.log("LOGIN RESPONSE:", res.data);
 
+    const role = localStorage.getItem("role");
+
+    console.log("LOCAL ROLE:", localStorage.getItem("role"));
+    console.log("ACCESS TOKEN:", localStorage.getItem(`${role}_accessToken`));
+    console.log("REFRESH TOKEN:", localStorage.getItem(`${role}_refreshToken`));
+    console.log("ORG ID:", localStorage.getItem("vendor_organization_id"));
 
     return response;
-
   } catch (err) {
     const errorData = err.response?.data;
 
@@ -87,34 +98,48 @@ export const loginVendorAPI = async (data) => {
   }
 };
 
-
 export const refreshTokenAPI = async () => {
   const refreshToken = localStorage.getItem("vendor_refreshToken");
-  const res = await authapi.post("/api/vendor/refresh", { refreshToken });
+
+  const res = await authapi.post("/api/vendor/refresh", {
+    refreshToken,
+  });
+
   return res.data;
 };
 
-export const logoutVendorAPI = (refreshToken) => authapi.post("/api/vendor/logout", { refreshToken });
+export const logoutVendorAPI = (refreshToken) =>
+  authapi.post("/api/vendor/logout", { refreshToken });
 
-export const getVendorProfileAPI = (id) => authapi.get(`/api/vendor/${id}`, { skipAuth: true });
+export const getVendorProfileAPI = (id) =>
+  authapi.get(`/api/vendor/${id}`, { skipAuth: true });
 
-export const upsertBusinessAPI = (data) => authapi.post("/api/vendor/business", data);
+export const upsertBusinessAPI = (data) =>
+  authapi.post("/api/vendor/business", data);
 
-export const getBusinessAPI = () => authapi.get("/api/vendor/getbusiness");
+export const getBusinessAPI = () =>
+  authapi.get("/api/vendor/getbusiness");
 
-export const upsertBankAPI = (data) => authapi.post("/api/vendor/bank", data);
+export const upsertBankAPI = (data) =>
+  authapi.post("/api/vendor/bank", data);
 
-export const getBankAPI = () => authapi.get("/api/vendor/getbank");
+export const getBankAPI = () =>
+  authapi.get("/api/vendor/getbank");
 
-export const upsertStoreDetailsAPI = (data) => authapi.post("/api/vendor/store-details", data);
+export const upsertStoreDetailsAPI = (data) =>
+  authapi.post("/api/vendor/store-details", data);
 
-export const getStoreDetailsAPI = () => authapi.get("/api/vendor/getstore",)
+export const getStoreDetailsAPI = () =>
+  authapi.get("/api/vendor/getstore");
 
-export const getOnboardingStateAPI = () => authapi.get("/api/vendor/state");
+export const getOnboardingStateAPI = () =>
+  authapi.get("/api/vendor/state");
 
-export const updateOnboardingStepAPI = (step) => authapi.patch("/api/vendor/step", { step });
+export const updateOnboardingStepAPI = (step) =>
+  authapi.patch("/api/vendor/step", { step });
 
-export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me",);
+export const getVendorProfileSelfAPI = () =>
+  authapi.get("/api/vendor/me");
 
 export const changeVendorPasswordAPI = (data) =>
   authapi.patch("/api/vendor/change-password", data);
