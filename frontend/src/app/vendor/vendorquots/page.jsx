@@ -20,14 +20,58 @@ const statusStyles = {
   withdrawn: "bg-gray-100 text-gray-700",
 };
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:5002";
+
+const isUUID = (value) => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value || ""
+  );
+};
+
+const getVendorOrgId = () => {
+  if (typeof window === "undefined") return null;
+
+  const directOrgId =
+    localStorage.getItem("vendor_organization_id") ||
+    localStorage.getItem("organization_id") ||
+    localStorage.getItem("organizationId");
+
+  if (isUUID(directOrgId)) {
+    return directOrgId;
+  }
+
+  const token =
+    localStorage.getItem("vendor_accessToken") ||
+    localStorage.getItem("accessToken");
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      const tokenOrgId =
+        payload.organization_id ||
+        payload.organizationId ||
+        payload.org_id;
+
+      if (isUUID(tokenOrgId)) {
+        localStorage.setItem("vendor_organization_id", tokenOrgId);
+        return tokenOrgId;
+      }
+    } catch (error) {
+      console.error("Token decode error:", error);
+    }
+  }
+
+  return null;
+};
+
 const MyQuotes = () => {
   const [quotes, setQuotes] = useState([]);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [loading, setLoading] = useState(true);
-
-  const vendorId = "YOUR_VENDOR_ORG_ID";
 
   useEffect(() => {
     loadQuotes();
@@ -37,13 +81,29 @@ const MyQuotes = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/vendor/quotes", {
+      const vendorOrgId = getVendorOrgId();
+
+      if (!vendorOrgId) {
+        throw new Error(
+          "Vendor organization id missing. Please login again as vendor."
+        );
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/vendor/quotes`, {
+        method: "GET",
         headers: {
-          "vendor-id": vendorId,
+          "Content-Type": "application/json",
+          "vendor-id": vendorOrgId,
         },
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+
+      if (!res.ok) {
+        throw new Error(`API Error ${res.status}: ${responseText}`);
+      }
+
+      const data = JSON.parse(responseText);
 
       const list = data.quotes || [];
 
@@ -66,7 +126,7 @@ const MyQuotes = () => {
     if (!confirmWithdraw) return;
 
     try {
-      await fetch(`/api/vendor/quotes/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/vendor/quotes/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -75,6 +135,12 @@ const MyQuotes = () => {
           status: "withdrawn",
         }),
       });
+
+      const responseText = await res.text();
+
+      if (!res.ok) {
+        throw new Error(responseText);
+      }
 
       await loadQuotes();
     } catch (error) {

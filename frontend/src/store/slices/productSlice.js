@@ -84,7 +84,7 @@ export const editProduct = createAsyncThunk(
   async ({ id, data }, thunkAPI) => {
     try {
       const res = await updateProduct(id, data);
-      return res;
+      return res?.product || res?.data || res;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -315,6 +315,9 @@ const productSlice = createSlice({
           action.payload?.product || action.payload?.data || action.payload;
 
         state.vendorProducts = state.vendorProducts.map((p) =>
+          p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
+        );
+        state.inventory = state.inventory.map((p) =>
           p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
         );
 

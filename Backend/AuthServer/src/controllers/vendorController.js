@@ -131,18 +131,18 @@ export const sendOtp = async (req, res) => {
       });
 
     } catch (error) {
-  console.error("SEND OTP ERROR RESPONSE:", error.response?.data);
-  console.error("SEND OTP ERROR STATUS:", error.response?.status);
-  console.error("SEND OTP ERROR MESSAGE:", error.message);
+      console.error("SEND OTP ERROR RESPONSE:", error.response?.data);
+      console.error("SEND OTP ERROR STATUS:", error.response?.status);
+      console.error("SEND OTP ERROR MESSAGE:", error.message);
 
-  return res.status(500).json({
-    success: false,
-    message: error.message,
-    error: process.env.NODE_ENV === "development"
-      ? error.stack
-      : undefined,
-  });
-}
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+        error: process.env.NODE_ENV === "development"
+          ? error.stack
+          : undefined,
+      });
+    }
 
   } catch (err) {
     console.error("SEND OTP ERROR:", err);
@@ -311,27 +311,27 @@ export const registerVendor = async (req, res) => {
 
     /* ================= TOKENS ================= */
 
-const accessToken = jwt.sign(
-  {
-    vendor_id: vendorId,
-    onboarding_id: onboarding.rows[0].id,
-  },
-  process.env.ACCESS_SECRET,
-  { expiresIn: "60m" }
-);
+    const accessToken = jwt.sign(
+      {
+        vendor_id: vendorId,
+        onboarding_id: onboarding.rows[0].id,
+      },
+      process.env.ACCESS_SECRET,
+      { expiresIn: "60m" }
+    );
 
-const refreshToken = jwt.sign(
-  {
-    vendor_id: vendorId,
-  },
-  process.env.REFRESH_SECRET,
-  { expiresIn: "7d" }
-);
+    const refreshToken = jwt.sign(
+      {
+        vendor_id: vendorId,
+      },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
 
-/* ================= SESSION ================= */
+    /* ================= SESSION ================= */
 
-await db.query(
-  `
+    await db.query(
+      `
     INSERT INTO vendor_sessions
     (
       vendor_id,
@@ -342,38 +342,38 @@ await db.query(
     )
     VALUES ($1,$2,$3,$4,NOW() + INTERVAL '7 days')
   `,
-  [
-    vendorId,
-    refreshToken,
-    req.headers["user-agent"] || null,
-    req.ip || null,
-  ]
-);
+      [
+        vendorId,
+        refreshToken,
+        req.headers["user-agent"] || null,
+        req.ip || null,
+      ]
+    );
 
     // ================= CLEANUP OTP =================
 
     otpStore.delete(`phone:${phone}`);
 
     return res.status(201).json({
-  message: "Registered successfully",
+      message: "Registered successfully",
 
-  role: "vendor",
+      role: "vendor",
 
-  accessToken,
-  refreshToken,
+      accessToken,
+      refreshToken,
 
-  onboarding_id: onboarding.rows[0].id,
+      onboarding_id: onboarding.rows[0].id,
 
-  onboarding_step: 1,
+      onboarding_step: 1,
 
-  next_action: "business",
+      next_action: "business",
 
-  vendor: {
-    id: vendorId,
-    email,
-    phone,
-  },
-});
+      vendor: {
+        id: vendorId,
+        email,
+        phone,
+      },
+    });
 
   } catch (err) {
     await client.query("ROLLBACK");
@@ -403,19 +403,35 @@ export const loginVendor = async (req, res) => {
 
     if (email) {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
-        FROM vendorprofile vp
-        LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
-        WHERE LOWER(vp.email) = LOWER($1)
-      `;
+    SELECT
+      vp.*,
+      v.id AS vendor_table_id,
+      v.organization_id,
+      vo.id AS onboarding_id,
+      vo.status,
+      vo.current_step,
+      vo.rejection_reason
+    FROM vendorprofile vp
+    LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+    LEFT JOIN vendors v ON v.user_id = vp.id
+    WHERE LOWER(vp.email) = LOWER($1)
+  `;
       values = [email];
     } else {
       query = `
-        SELECT vp.*, vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step, vo.rejection_reason
-        FROM vendorprofile vp
-        LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
-        WHERE vp.phone = $1
-      `;
+    SELECT
+      vp.*,
+      v.id AS vendor_table_id,
+      v.organization_id,
+      vo.id AS onboarding_id,
+      vo.status,
+      vo.current_step,
+      vo.rejection_reason
+    FROM vendorprofile vp
+    LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+    LEFT JOIN vendors v ON v.user_id = vp.id
+    WHERE vp.phone = $1
+  `;
       values = [phone];
     }
 
@@ -441,10 +457,10 @@ export const loginVendor = async (req, res) => {
 
     // optional: verify email/phone
     if (!vendor.phone_verified) {
-  return res.status(403).json({
-    message: "Phone verification required",
-  });
-}
+      return res.status(403).json({
+        message: "Phone verification required",
+      });
+    }
 
     // ✅ update last login
     await db.query(
@@ -477,8 +493,11 @@ export const loginVendor = async (req, res) => {
     // 🔥 ACCESS TOKEN (short life)
     const accessToken = jwt.sign(
       {
-        vendor_id: vendor.id,
+        vendor_profile_id: vendor.id,
+        vendor_id: vendor.vendor_table_id,
         onboarding_id: vendor.onboarding_id,
+        organization_id: vendor.organization_id,
+        role: "vendor",
       },
       process.env.ACCESS_SECRET,
       { expiresIn: "1d" }
@@ -487,7 +506,9 @@ export const loginVendor = async (req, res) => {
     // 🔥 REFRESH TOKEN (secure JWT instead of random string)
     const refreshToken = jwt.sign(
       {
-        vendor_id: vendor.id,
+        vendor_id: vendor.vendor_table_id,
+        organization_id: vendor.organization_id,
+        role: "vendor",
       },
       process.env.REFRESH_SECRET,
       { expiresIn: "7d" }
@@ -505,7 +526,7 @@ export const loginVendor = async (req, res) => {
         req.ip || null,
       ]
     );
-
+    console.log("Vendor Login:", vendor);
     return res.json({
       message: "Login successful",
       accessToken,
@@ -513,7 +534,7 @@ export const loginVendor = async (req, res) => {
       next_action,
       onboarding_step,
       status: vendor.status,
-      role:"vendor",
+      role: "vendor",
       organization_id: vendor.organization_id,
       rejection_reason: vendor.rejection_reason || null,
       vendor: {
@@ -521,7 +542,7 @@ export const loginVendor = async (req, res) => {
         email: vendor.email,
         phone: vendor.phone,
         organization_id: vendor.organization_id,
-      },
+      }
     });
 
   } catch (err) {
@@ -593,20 +614,44 @@ export const refreshAccessToken = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
-    const vendorId = req.user.vendor_id;
+    const vendorProfileId = req.user.vendor_profile_id;
+
+    if (!vendorProfileId) {
+      return res.status(401).json({
+        message: "Vendor profile id missing",
+      });
+    }
 
     const result = await db.query(
-      `SELECT vp.id, vp.email, vp.phone, vp.email_verified, vp.phone_verified, vp.is_active,
-              vo.id as onboarding_id, vo.organization_id, vo.status, vo.current_step
-       FROM vendorprofile vp
-       LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
-       WHERE vp.id = $1`,
-      [vendorId]
+      `
+      SELECT 
+        vp.id,
+        vp.email,
+        vp.phone,
+        vp.email_verified,
+        vp.phone_verified,
+        vp.is_active,
+        vo.id AS onboarding_id,
+        vo.status,
+        vo.current_step,
+        v.id AS vendor_id,
+        v.organization_id
+      FROM vendorprofile vp
+      LEFT JOIN vendor_onboarding vo ON vo.vendor_id = vp.id
+      LEFT JOIN vendors v ON v.user_id = vp.id
+      WHERE vp.id = $1
+      `,
+      [vendorProfileId]
     );
 
     const vendor = result.rows[0];
 
-    // Get business and bank details
+    if (!vendor) {
+      return res.status(404).json({
+        message: "Vendor not found",
+      });
+    }
+
     const businessResult = await db.query(
       `SELECT * FROM vendor_business_details WHERE onboarding_id = $1`,
       [vendor.onboarding_id]
@@ -618,7 +663,7 @@ export const getMe = async (req, res) => {
     );
 
     return res.json({
-      vendor: vendor,
+      vendor,
       onboarding: {
         id: vendor.onboarding_id,
         current_step: vendor.current_step,
@@ -629,7 +674,7 @@ export const getMe = async (req, res) => {
     });
   } catch (err) {
     console.error("GET ME ERROR:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: err.message });
   }
 };
 

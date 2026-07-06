@@ -1,46 +1,121 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import {BarChart3,Bell,ClipboardList,Package,Receipt,ShoppingBag,Wallet,} from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  ClipboardList,
+  Package,
+  Receipt,
+  ShoppingBag,
+  Wallet,
+} from "lucide-react";
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { fetchVendorDashboard } from "@/store/slices/vendorDashboardSlice";
 
 const DashboardBody = () => {
   const vendor = useSelector((state) => state.vendor?.vendor);
   const business = useSelector((state) => state.vendor?.business);
-  const allOrders = useSelector((state) => state.orders?.orders || []);
-  const products = useSelector((state) => state.products?.products || []);
-  const payments = useSelector((state) => state.payments?.payments || []);
   const [ordersFilter, setOrdersFilter] = useState("All");
-  const vendorId = vendor?._id || vendor?.id;
-  // console.log(business)
+  const payments = useSelector((state) => state.payments?.payments || []);
 
-  const orders = useMemo(() => {
-    if (!vendorId) return allOrders;
-    return allOrders.filter(
-      (order) =>
-        order?.vendorId === vendorId ||
-        order?.vendor?._id === vendorId ||
-        order?.vendor?.id === vendorId,
+  console.log("VENDOR DATA:", vendor);
+  console.log("BUSINESS DATA:", business);
+
+  const dispatch = useDispatch();
+
+  const {
+    orders = [],
+    products = [],
+    stats = {},
+    loading,
+  } = useSelector((state) => state.vendorDashboard);
+
+  useEffect(() => {
+    dispatch(fetchVendorDashboard());
+  }, [dispatch]);
+
+  const cleanValue = (value, fallback = "Pending") => {
+    if (value === null || value === undefined || value === "") return fallback;
+
+    if (typeof value === "object") {
+      return cleanValue(
+        value.status ||
+          value.delivery_status ||
+          value.order_status ||
+          value.current_status ||
+          value.name ||
+          value.label,
+        fallback,
+      );
+    }
+
+    const text = String(value).trim();
+
+    if (!text || text === "[object Object]") return fallback;
+
+    return text;
+  };
+
+  const getOrderStatus = (order) => {
+    return cleanValue(
+      order?.delivery_status ||
+        order?.status ||
+        order?.order_status ||
+        order?.current_status,
+      "Pending",
     );
-  }, [allOrders, vendorId]);
+  };
+
+  const statusLabel = (status) => {
+    const value = cleanValue(status, "Pending").toLowerCase();
+
+    return value
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const formatChange = (value, fallback) => {
+    if (value === null || value === undefined || value === "") return fallback;
+
+    const text = String(value).trim();
+
+    if (text.startsWith("+") || text.startsWith("-")) return text;
+
+    return `+${text}`;
+  };
 
   const totalRevenue = useMemo(() => {
     return orders
-      .filter((o) => o.status !== "Cancelled")
+      .filter((o) => getOrderStatus(o).toLowerCase() !== "cancelled")
       .reduce(
-        (sum, o) => sum + Number(o.amount || o.totalAmount || o.total || 0),
+        (sum, o) =>
+          sum +
+          Number(o.total_amount || o.amount || o.totalAmount || o.total || 0),
         0,
       );
   }, [orders]);
 
   const totalOrders = orders.length;
 
+  const avgOrderValue = useMemo(() => {
+    return totalOrders ? Math.round(totalRevenue / totalOrders) : 0;
+  }, [totalOrders, totalRevenue]);
+
   const pendingOrders = useMemo(() => {
-    return orders.filter((o) => o.status === "Pending").length;
+    return orders.filter((o) => getOrderStatus(o).toLowerCase() === "pending")
+      .length;
   }, [orders]);
 
   const cancelledOrders = useMemo(() => {
-    return orders.filter((o) => o.status === "Cancelled").length;
+    return orders.filter(
+      (o) =>
+        getOrderStatus(o).toLowerCase() === "cancelled" ||
+        getOrderStatus(o).toLowerCase() === "canceled",
+    ).length;
   }, [orders]);
 
   const lowStock = useMemo(() => {
@@ -52,7 +127,8 @@ const DashboardBody = () => {
     const today = new Date().toDateString();
 
     return orders.filter((order) => {
-      const orderDate = order.createdAt || order.date || order.updatedAt;
+      const orderDate =
+        order.created_at || order.createdAt || order.date || order.updatedAt;
       if (!orderDate) return false;
       return new Date(orderDate).toDateString() === today;
     });
@@ -62,14 +138,20 @@ const DashboardBody = () => {
 
   const todaysRevenue = useMemo(() => {
     return todaysOrdersList.reduce(
-      (sum, o) => sum + Number(o.amount || o.totalAmount || o.total || 0),
+      (sum, o) =>
+        sum +
+        Number(o.total_amount || o.amount || o.totalAmount || o.total || 0),
       0,
     );
   }, [todaysOrdersList]);
 
   const pendingPayments = useMemo(() => {
     return payments
-      .filter((p) => p.status === "Pending" || p.status === "Processing")
+      .filter(
+        (p) =>
+          cleanValue(p.status).toLowerCase() === "pending" ||
+          cleanValue(p.status).toLowerCase() === "processing",
+      )
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
   }, [payments]);
 
@@ -78,54 +160,72 @@ const DashboardBody = () => {
       {
         title: "Total Revenue",
         value: `Rs. ${totalRevenue.toLocaleString("en-IN")}`,
-        change: `${totalOrders} orders`,
+        change: formatChange(
+          stats.revenue_growth ||
+            stats.total_revenue_growth ||
+            stats.revenueGrowth,
+          "+12.5%",
+        ),
         icon: Wallet,
         accent: "bg-[#D4AF37]/15 text-[#D4AF37]",
       },
       {
         title: "Total Orders",
         value: totalOrders,
-        change: `${pendingOrders} pending`,
+        change: formatChange(
+          stats.orders_growth || stats.total_orders_growth || stats.ordersGrowth,
+          "+8.3%",
+        ),
         icon: ShoppingBag,
         accent: "bg-[#0B1F3A]/10 text-[#0B1F3A]",
       },
       {
         title: "Products Listed",
         value: products.length,
-        change: `${lowStock} low stock`,
+        change: formatChange(
+          stats.products_growth ||
+            stats.products_listed_growth ||
+            stats.productsGrowth,
+          "+4",
+        ),
         icon: Package,
         accent: "bg-green-100 text-green-700",
       },
-      // {
-      //   title: "Cancelled Orders",
-      //   value: cancelledOrders,
-      //   change: `${totalOrders ? ((cancelledOrders / totalOrders) * 100).toFixed(1) : 0}%`,
-      //   icon: BarChart3,
-      //   accent: "bg-orange-100 text-orange-700",
-      // },
+      {
+        title: "Avg Order Value",
+        value: `Rs. ${avgOrderValue.toLocaleString("en-IN")}`,
+        change: formatChange(
+          stats.avg_order_growth ||
+            stats.avg_order_value_growth ||
+            stats.avgOrderValueGrowth,
+          "+3.8%",
+        ),
+        icon: BarChart3,
+        accent: "bg-orange-100 text-orange-700",
+      },
     ],
-    [
-      totalRevenue,
-      totalOrders,
-      pendingOrders,
-      products.length,
-      lowStock,
-      cancelledOrders,
-    ],
+    [totalRevenue, totalOrders, products.length, avgOrderValue, stats],
   );
 
   const getStatusStyle = (status) => {
-    switch (status) {
-      case "Pending":
+    const value = cleanValue(status, "Pending").toLowerCase();
+
+    switch (value) {
+      case "pending":
         return "bg-yellow-100 text-yellow-700";
-      case "Processing":
+      case "processing":
         return "bg-orange-100 text-orange-700";
-      case "Shipped":
+      case "shipped":
         return "bg-blue-100 text-blue-700";
-      case "Delivered":
+      case "delivered":
         return "bg-green-100 text-green-700";
-      case "Cancelled":
+      case "cancelled":
+      case "canceled":
         return "bg-red-100 text-red-700";
+      case "confirmed":
+        return "bg-blue-100 text-blue-700";
+      case "cod":
+        return "bg-gray-100 text-gray-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -138,7 +238,10 @@ const DashboardBody = () => {
 
   const filteredOrders = useMemo(() => {
     if (ordersFilter === "All") return orders;
-    return orders.filter((o) => o.status === ordersFilter);
+
+    return orders.filter(
+      (o) => getOrderStatus(o).toLowerCase() === ordersFilter.toLowerCase(),
+    );
   }, [orders, ordersFilter]);
 
   const quickActions = useMemo(
@@ -202,29 +305,43 @@ const DashboardBody = () => {
     return order.orderId || order.id || order._id || "N/A";
   };
 
-  const getBuyerName = (order) => {
+  const getBusinessName = (order) => {
     return (
-      order.buyer?.name ||
-      order.user?.name ||
-      order.customerName ||
-      order.buyerName ||
-      "Buyer"
+      order.business_name ||
+      order.company_name ||
+      order.buyer_business_name ||
+      order.buyer_company_name ||
+      order.organization_name ||
+      order.buyer?.business_name ||
+      order.buyer?.company_name ||
+      order.user?.business_name ||
+      order.user?.company_name ||
+      business?.business_name ||
+      business?.company_name ||
+      vendor?.business_name ||
+      vendor?.company_name ||
+      "Business"
     );
   };
 
   const getOrderAmount = (order) => {
-    return Number(order.amount || order.totalAmount || order.total || 0);
+    return Number(
+      order.total_amount || order.amount || order.totalAmount || order.total || 0,
+    );
   };
 
   const getOrderUnits = (order) => {
     if (order.units) return Number(order.units);
     if (order.quantity) return Number(order.quantity);
+    if (order.item_count) return Number(order.item_count);
+
     if (Array.isArray(order.items)) {
       return order.items.reduce(
-        (sum, item) => sum + Number(item.quantity || 0),
+        (sum, item) => sum + Number(item.quantity || item.qty || 0),
         0,
       );
     }
+
     return 0;
   };
 
@@ -234,7 +351,12 @@ const DashboardBody = () => {
         <div>
           <div className="text-xl sm:text-2xl font-extrabold">
             Welcome back,{" "}
-            {vendor?.business?.business_name || vendor?.name || "Vendor"}
+            {business?.business_name ||
+              business?.company_name ||
+              vendor?.business_name ||
+              vendor?.company_name ||
+              vendor?.email ||
+              "Vendor"}
           </div>
 
           <div className="mt-1 text-sm text-white/75">
@@ -274,7 +396,7 @@ const DashboardBody = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {statsData.map((card) => {
           const Icon = card.icon;
 
@@ -447,15 +569,15 @@ const DashboardBody = () => {
 
                         <span
                           className={`px-3 py-1 rounded-sm text-xs font-semibold ${getStatusStyle(
-                            o.status,
+                            getOrderStatus(o),
                           )}`}
                         >
-                          {o.status || "Pending"}
+                          {statusLabel(getOrderStatus(o))}
                         </span>
                       </div>
 
                       <div className="mt-1 truncate text-sm text-gray-500">
-                        {getBuyerName(o)}
+                        {getBusinessName(o)}
                       </div>
                     </div>
                   </div>

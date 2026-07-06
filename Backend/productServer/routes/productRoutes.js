@@ -6,7 +6,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const reviewController = require("../controllers/reviewController");
 
-router.post("/",  upload.fields([{ name: "images", maxCount: 5 },{ name: "videos", maxCount: 2 },]), productController.createProduct);
+
+router.post("/",authMiddleware,upload.fields([{ name: "images", maxCount: 5 },{ name: "videos", maxCount: 2 },]),productController.createProduct);
 router.get("/", productController.getProducts);
 router.get("/all", productController.getProducts);
 router.get("/category/:categorySlug/:subcategorySlug",productController.getProductsByCategoryAndSubcategory);
@@ -27,4 +28,5 @@ router.get("/:id", productController.getSingleProduct);
 // router.put("/:id", productController.updateProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
+
 module.exports = router;

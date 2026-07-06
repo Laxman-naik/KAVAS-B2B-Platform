@@ -43,22 +43,15 @@ export const getSingleProduct = async (id) => {
 
 
 // ================= UPDATE PRODUCT =================
+// ================= UPDATE PRODUCT =================
 export const updateProduct = async (id, data) => {
-  const res = await productapi.put(`/api/products/${id}`, data, {
-    skipAuth: true,
-  });
+  const res = await productapi.put(`/api/products/${id}`, data);
   return res.data;
 };
 
 // ================= GET VENDOR PRODUCTS =================
 export const getVendorProductsAPI = async (organizationId) => {
-  const res = await productapi.get(
-    `/api/products/vendor/${organizationId}`,
-    {
-      skipAuth: true,
-    }
-  );
-
+  const res = await productapi.get(`/api/products/vendor/${organizationId}`);
   return res.data;
 };
 

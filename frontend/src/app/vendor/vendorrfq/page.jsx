@@ -1,6 +1,7 @@
 "use client";
 import { productapi } from "@/lib/axios"
 import { useEffect, useState } from "react";
+import { productapi } from "@/lib/axios";
 import {
   Search,
   Package,
