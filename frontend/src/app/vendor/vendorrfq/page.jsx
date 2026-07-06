@@ -1,5 +1,5 @@
 "use client";
-
+import { productapi } from "@/lib/axios"
 import { useEffect, useState } from "react";
 import {
   Search,
@@ -50,22 +50,16 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/rfqs", {
-        headers: {
-          "vendor-id": vendorId,
-        },
+      const { data } = await productapi.get("/api/vendor/rfqs", {
+        headers: { "vendor-id": vendorId }
       });
 
-      const data = await res.json();
+      setRfqs(data.rfqs || []);
+      setSelected(data.rfqs?.[0] || null);
 
-      const list = data.rfqs || [];
-
-      setRfqs(list);
-      setSelected(list[0] || null);
     } catch (err) {
-      console.error("Load RFQs error:", err);
+      console.error(err);
       setRfqs([]);
-      setSelected(null);
     } finally {
       setLoading(false);
     }
@@ -114,15 +108,7 @@ const VendorRFQ = () => {
         notes: quoteForm.notes || null,
       };
 
-      const res = await fetch("/api/vendor/quotes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(quote),
-      });
-
-      const data = await res.json();
+      const { data } = await productapi.post("/api/vendor/quotes", quote);
 
       if (!data.success) {
         alert(data.message || "Failed to submit quote");
@@ -133,6 +119,7 @@ const VendorRFQ = () => {
 
       setShowQuoteModal(false);
       await loadRFQs();
+
     } catch (err) {
       console.error("Submit quote error:", err);
       alert("Something went wrong");
@@ -148,17 +135,10 @@ const VendorRFQ = () => {
     if (!confirmDecline) return;
 
     try {
-      const res = await fetch(`/api/vendor/rfqs/${selected.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "declined",
-        }),
-      });
-
-      const data = await res.json();
+      const { data } = await productapi.patch(
+        `/api/vendor/rfqs/${selected.id}`,
+        { status: "declined" }
+      );
 
       if (!data.success) {
         alert(data.message || "Failed to decline RFQ");
@@ -166,6 +146,7 @@ const VendorRFQ = () => {
       }
 
       await loadRFQs();
+
     } catch (err) {
       console.error("Decline RFQ error:", err);
       alert("Failed to decline RFQ");
@@ -291,9 +272,8 @@ const VendorRFQ = () => {
                   <tr
                     key={item.id}
                     onClick={() => setSelected(item)}
-                    className={`border-t cursor-pointer hover:bg-slate-50 ${
-                      selected?.id === item.id ? "bg-blue-50" : ""
-                    }`}
+                    className={`border-t cursor-pointer hover:bg-slate-50 ${selected?.id === item.id ? "bg-blue-50" : ""
+                      }`}
                   >
                     <td className="p-4 font-semibold text-slate-800">
                       {item.title || "Untitled RFQ"}
@@ -307,10 +287,9 @@ const VendorRFQ = () => {
 
                     <td>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          statusStyles[item.status] ||
+                        className={`px-3 py-1 rounded-full text-sm ${statusStyles[item.status] ||
                           "bg-slate-100 text-slate-700"
-                        }`}
+                          }`}
                       >
                         {item.status}
                       </span>

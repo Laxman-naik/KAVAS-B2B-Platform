@@ -116,5 +116,8 @@ export const updateOnboardingStepAPI = (step) => authapi.patch("/api/vendor/step
 
 export const getVendorProfileSelfAPI = () =>authapi.get("/api/vendor/me",);
 
-export const changeVendorPasswordAPI = (data) =>
-  authapi.patch("/api/vendor/change-password", data);
+export const changeVendorPasswordAPI = (data) =>authapi.patch("/api/vendor/change-password", data);
+
+export const getPublicVendorsAPI = () =>authapi.get("/api/vendor/public");
+
+export const getVendorDetailsAPI = (id) =>authapi.get(`/api/vendor/public/${id}`);

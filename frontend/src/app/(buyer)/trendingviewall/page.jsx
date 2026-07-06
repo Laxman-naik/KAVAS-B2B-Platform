@@ -51,10 +51,10 @@ const TrendingViewAllV1 = () => {
       .map((item) =>
         String(
           item?.productId ??
-            item?.product_id ??
-            item?.id ??
-            item?._id ??
-            item
+          item?.product_id ??
+          item?.id ??
+          item?._id ??
+          item
         )
       )
       .filter(Boolean);
@@ -71,8 +71,8 @@ const TrendingViewAllV1 = () => {
         const rawCategories = Array.isArray(res?.data?.data)
           ? res.data.data
           : Array.isArray(res?.data)
-          ? res.data
-          : [];
+            ? res.data
+            : [];
 
         const parentCategories = rawCategories.filter((cat) => !cat.parent_id);
         setMainCategories(parentCategories);
@@ -243,10 +243,10 @@ const TrendingViewAllV1 = () => {
 
   return (
     <div
-      className="bg-[#FFF8EC] min-h-screen text-[#1A1A1A]"
-      style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
+      className="bg-white min-h-screen text-[#1A1A1A]"
+      style={{ backgroundColor: COLORS.white, color: COLORS.text }}
     >
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-350 mx-auto px-4 py-6">
         <div className="mb-5">
           <p className="text-xs text-gray-600" style={{ color: COLORS.muted }}>
             <Link href="/" className="hover:underline">
@@ -281,7 +281,7 @@ const TrendingViewAllV1 = () => {
         className="bg-white py-5 rounded-sm"
         style={{ backgroundColor: COLORS.white }}
       >
-        <div className="max-w-7xl mx-auto px-4 pb-4">
+        <div className="max-w-350 mx-auto px-4 pb-4">
           <div className="flex gap-3 overflow-x-auto no-scrollbar">
             {categories.map((cat) => (
               <button
@@ -291,15 +291,15 @@ const TrendingViewAllV1 = () => {
                 style={
                   activeCategory === cat.slug
                     ? {
-                        backgroundColor: COLORS.accent,
-                        color: COLORS.primary,
-                        borderColor: COLORS.accent,
-                      }
+                      backgroundColor: COLORS.accent,
+                      color: COLORS.primary,
+                      borderColor: COLORS.accent,
+                    }
                     : {
-                        backgroundColor: COLORS.white,
-                        color: COLORS.text,
-                        borderColor: COLORS.border,
-                      }
+                      backgroundColor: COLORS.white,
+                      color: COLORS.text,
+                      borderColor: COLORS.border,
+                    }
                 }
               >
                 {cat.name}
@@ -308,7 +308,7 @@ const TrendingViewAllV1 = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
+        <div className="max-w-350 mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
           <div className="md:hidden mb-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -324,107 +324,235 @@ const TrendingViewAllV1 = () => {
           </div>
 
           <div
-            className={`${
-              showFilters ? "block" : "hidden"
-            } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.border,
-            }}
+            className={`${showFilters ? "block" : "hidden"
+              } md:block bg-white rounded-2xl border border-gray-200 p-5 h-fit sticky top-24 shadow-sm`}
           >
-            <div>
-              <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
-                style={{ color: COLORS.primary }}
-              >
-                MIN. ORDER QTY
-              </h3>
 
-              <div className="space-y-1 text-xs">
-                {[
-                  "Under 50 units",
-                  "50–200 units",
-                  "200–500 units",
-                  "500+ units",
-                ].map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.minQty.includes(item)}
-                      onChange={() => handleFilterChange("minQty", item)}
-                    />
-                    <span>{item}</span>
-                  </label>
-                ))}
-              </div>
+            <div className="flex justify-between items-center mb-5">
+
+              <h2 className="text-lg font-bold text-[#0B1F3A]">
+                Filters
+              </h2>
+
 
               <button
-                className="w-full mt-3 bg-[#0B1F3A] text-white py-2 rounded-md text-sm cursor-pointer"
-                style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
-              >
-                APPLY FILTERS
-              </button>
-
-              <p
-                className="text-xs text-gray-500 mt-2 cursor-pointer"
-                style={{ color: COLORS.muted }}
                 onClick={clearAllFilters}
+                className="text-xs text-red-500 hover:underline"
               >
                 Clear All
-              </p>
+              </button>
+
             </div>
 
-            <div className="mt-6">
-              <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
-                style={{ color: COLORS.primary }}
-              >
-                RATING
+
+
+            {/* Categories */}
+
+
+
+
+
+
+            {/* MOQ */}
+
+            <div className="border-b border-gray-200 pb-5 mb-5">
+
+
+              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
+                Min. Order Qty
               </h3>
 
-              {["4.5", "4.0"].map((item) => (
+
+
+              {[
+                "Under 50 units",
+                "50–200 units",
+                "200–500 units",
+                "500+ units"
+
+              ].map(item => (
+
+
                 <label
                   key={item}
-                  className="flex items-center gap-2 text-xs mb-1 cursor-pointer"
+                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
                 >
+
+
                   <input
+
                     type="checkbox"
-                    checked={filters.rating.includes(item)}
-                    onChange={() => handleFilterChange("rating", item)}
+
+                    checked={
+                      filters.minQty.includes(item)
+                    }
+
+                    onChange={() =>
+                      handleFilterChange(
+                        "minQty",
+                        item
+                      )
+                    }
+
+                    className="accent-[#D4AF37]"
+
                   />
-                  <span style={{ color: COLORS.accent }}>
-                    {"★".repeat(Math.floor(parseFloat(item)))}
-                  </span>
-                  <span style={{ color: COLORS.muted }}>{item} & above</span>
+
+
+                  {item}
+
+
                 </label>
+
+
               ))}
+
+
             </div>
 
-            <div className="mt-6">
-              <h3
-                className="font-medium text-sm mb-2 text-[#0B1F3A]"
-                style={{ color: COLORS.primary }}
-              >
-                SUPPLIER TYPE
+
+
+
+
+
+
+            {/* Price */}
+
+
+            <div className="border-b border-gray-200 pb-5 mb-5">
+
+
+              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
+                Price Range
               </h3>
 
-              {["Verified only", "Manufacturer", "Distributor"].map((item) => (
+
+
+              {[
+                "Under ₹500",
+                "₹500 - ₹1000",
+                "₹1000 - ₹5000",
+                "₹5000+"
+
+              ].map(item => (
+
+
                 <label
                   key={item}
-                  className="flex items-center gap-2 text-xs mb-1 cursor-pointer"
+                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
                 >
+
+
                   <input
-                    type="checkbox"
-                    checked={filters.supplier.includes(item)}
-                    onChange={() => handleFilterChange("supplier", item)}
+                    type="radio"
+                    name="price"
+                    className="accent-[#D4AF37]"
                   />
-                  <span>{item}</span>
+
+
+                  {item}
+
+
                 </label>
+
+
               ))}
+
+
+
             </div>
+
+
+
+
+
+
+
+            {/* Rating */}
+
+
+            <div>
+
+
+              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
+                Rating
+              </h3>
+
+
+
+              <label className="flex gap-2 items-center text-sm mb-2">
+
+                <input
+                  type="checkbox"
+                  checked={filters.rating.includes("4.5")}
+                  onChange={() =>
+                    handleFilterChange(
+                      "rating",
+                      "4.5"
+                    )
+                  }
+                  className="accent-[#D4AF37]"
+                />
+
+
+                <span className="text-yellow-500">
+                  ★★★★★
+                </span>
+
+                <span>
+                  & above
+                </span>
+
+              </label>
+
+
+
+              <label className="flex gap-2 items-center text-sm">
+
+
+                <input
+                  type="checkbox"
+                  checked={filters.rating.includes("4")}
+                  onChange={() =>
+                    handleFilterChange(
+                      "rating",
+                      "4"
+                    )
+                  }
+                  className="accent-[#D4AF37]"
+                />
+
+
+                <span className="text-yellow-500">
+                  ★★★★
+                </span>
+
+                <span>
+                  & above
+                </span>
+
+              </label>
+
+
+
+            </div>
+
+
+
+
+
+            <button
+
+              className="w-full mt-6 bg-[#0B1F3A] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90"
+
+            >
+
+              APPLY FILTERS
+
+            </button>
+
+
+
           </div>
 
           <main>
@@ -584,11 +712,10 @@ const TrendingViewAllV1 = () => {
 
                             <div className="mt-3">
                               <Button
-                                className={`flex items-center gap-2 rounded-md cursor-pointer ${
-                                  viewMode === "grid"
+                                className={`flex items-center gap-2 rounded-md cursor-pointer ${viewMode === "grid"
                                     ? "w-full text-sm py-2 justify-center"
                                     : "text-xs px-3 py-1.5"
-                                }`}
+                                  }`}
                                 style={{
                                   backgroundColor: COLORS.accent,
                                   color: COLORS.primary,
@@ -650,15 +777,15 @@ const TrendingViewAllV1 = () => {
                       style={
                         safePage === pageNum
                           ? {
-                              backgroundColor: COLORS.primary,
-                              color: COLORS.cream,
-                              borderColor: COLORS.primary,
-                            }
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.cream,
+                            borderColor: COLORS.primary,
+                          }
                           : {
-                              backgroundColor: COLORS.white,
-                              color: COLORS.primary,
-                              borderColor: COLORS.border,
-                            }
+                            backgroundColor: COLORS.white,
+                            color: COLORS.primary,
+                            borderColor: COLORS.border,
+                          }
                       }
                     >
                       {pageNum}
@@ -681,15 +808,15 @@ const TrendingViewAllV1 = () => {
                       style={
                         safePage === totalPages
                           ? {
-                              backgroundColor: COLORS.primary,
-                              color: COLORS.cream,
-                              borderColor: COLORS.primary,
-                            }
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.cream,
+                            borderColor: COLORS.primary,
+                          }
                           : {
-                              backgroundColor: COLORS.white,
-                              color: COLORS.primary,
-                              borderColor: COLORS.border,
-                            }
+                            backgroundColor: COLORS.white,
+                            color: COLORS.primary,
+                            borderColor: COLORS.border,
+                          }
                       }
                     >
                       {totalPages}

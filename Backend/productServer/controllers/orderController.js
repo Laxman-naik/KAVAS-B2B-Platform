@@ -1,4 +1,4 @@
-const pool = require("../config/db");
+const db = require("../config/db");
 
 exports.createOrderFromCart = async (req, res) => {
   const client = await pool.connect();
@@ -255,26 +255,52 @@ exports.getOrderDetails = async (req, res) => {
   }
 };
 
-export const getOrderTracking = async (req, res) => {
+exports.getOrderTracking = async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    const order = await Order.findById(orderId)
-      .select("tracking status");
+    const orderRes = await pool.query(
+      `
+      SELECT 
+        id,
+        status,
+        delivery_status,
+        created_at
+      FROM orders
+      WHERE id = $1
+      `,
+      [orderId]
+    );
 
-    if (!order) {
+    if (!orderRes.rows.length) {
       return res.status(404).json({
         message: "Order not found",
       });
     }
 
-    res.status(200).json({
-      tracking: order.tracking || [],
-      status: order.status,
+    const historyRes = await pool.query(
+      `
+      SELECT 
+        status,
+        changed_at
+      FROM order_status_history
+      WHERE order_id = $1
+      ORDER BY changed_at ASC
+      `,
+      [orderId]
+    );
+
+    return res.status(200).json({
+      orderId,
+      status: orderRes.rows[0].status,
+      deliveryStatus: orderRes.rows[0].delivery_status,
+      tracking: historyRes.rows,
     });
 
   } catch (error) {
-    res.status(500).json({
+    console.error("TRACKING ERROR:", error);
+
+    return res.status(500).json({
       message: error.message,
     });
   }

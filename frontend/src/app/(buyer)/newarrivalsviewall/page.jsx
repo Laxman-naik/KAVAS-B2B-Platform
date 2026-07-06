@@ -70,8 +70,8 @@ const Page = () => {
         const rawCategories = Array.isArray(res?.data?.data)
           ? res.data.data
           : Array.isArray(res?.data)
-          ? res.data
-          : [];
+            ? res.data
+            : [];
 
         const parentCategories = rawCategories.filter((cat) => !cat.parent_id);
         setMainCategories(parentCategories);
@@ -239,8 +239,8 @@ const Page = () => {
 
   return (
     <div
-      className="bg-[#FFF8EC] min-h-screen text-[#1A1A1A]"
-      style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
+      className="bg-white min-h-screen text-[#1A1A1A]"
+      style={{ backgroundColor: COLORS.white, color: COLORS.text }}
     >
       {toast && (
         <div className="fixed top-30 right-5 z-50 flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-[#0B1F3A] shadow-lg">
@@ -249,7 +249,7 @@ const Page = () => {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-350 mx-auto px-4 py-6">
         <div className="mb-5">
           <p className="text-xs text-gray-600" style={{ color: COLORS.muted }}>
             <Link href="/" className="hover:underline">
@@ -284,7 +284,7 @@ const Page = () => {
         className="bg-white py-5 rounded-sm"
         style={{ backgroundColor: COLORS.white }}
       >
-        <div className="max-w-7xl mx-auto px-4 pb-4">
+        <div className="max-w-350 mx-auto px-4 pb-4">
           <div className="flex gap-3 overflow-x-auto no-scrollbar">
             {categories.map((cat) => (
               <button
@@ -294,15 +294,15 @@ const Page = () => {
                 style={
                   activeCategory === cat.slug
                     ? {
-                        backgroundColor: COLORS.accent,
-                        color: COLORS.primary,
-                        borderColor: COLORS.accent,
-                      }
+                      backgroundColor: COLORS.accent,
+                      color: COLORS.primary,
+                      borderColor: COLORS.accent,
+                    }
                     : {
-                        backgroundColor: COLORS.white,
-                        color: COLORS.text,
-                        borderColor: COLORS.border,
-                      }
+                      backgroundColor: COLORS.white,
+                      color: COLORS.text,
+                      borderColor: COLORS.border,
+                    }
                 }
               >
                 {cat.name}
@@ -311,7 +311,7 @@ const Page = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
+        <div className="max-w-350 mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
           <div className="md:hidden mb-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -327,107 +327,253 @@ const Page = () => {
           </div>
 
           <div
-            className={`${
-              showFilters ? "block" : "hidden"
-            } md:block bg-white rounded-xl border p-4 h-fit sticky top-24`}
+            className={`${showFilters ? "block" : "hidden"
+              } md:block bg-white rounded-2xl border p-5 h-fit sticky top-24 shadow-sm`}
             style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.border,
+              borderColor: COLORS.border
             }}
           >
-            <div>
-              <h3
-                className="font-medium text-sm mb-2"
-                style={{ color: COLORS.primary }}
-              >
-                MIN. ORDER QTY
-              </h3>
 
-              <div className="space-y-1 text-xs">
-                {[
-                  "Under 50 units",
-                  "50–200 units",
-                  "200–500 units",
-                  "500+ units",
-                ].map((item) => (
-                  <label
-                    key={item}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filters.minQty.includes(item)}
-                      onChange={() => handleFilterChange("minQty", item)}
-                    />
-                    <span>{item}</span>
-                  </label>
-                ))}
-              </div>
+
+            <div className="flex justify-between items-center mb-5">
+
+              <h2
+                className="text-lg font-bold"
+                style={{
+                  color: COLORS.primary
+                }}
+              >
+                Filters
+              </h2>
+
 
               <button
-                className="w-full mt-3 py-2 rounded-md text-sm cursor-pointer"
-                style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
-              >
-                APPLY FILTERS
-              </button>
-
-              <p
-                className="text-xs mt-2 cursor-pointer"
-                style={{ color: COLORS.muted }}
                 onClick={clearAllFilters}
+                className="text-xs text-red-500 cursor-pointer"
               >
                 Clear All
-              </p>
+              </button>
+
+
             </div>
 
-            <div className="mt-6">
+
+
+            {/* Category */}
+
+         
+
+
+
+
+
+            {/* MOQ */}
+
+            <div className="border-b pb-4 mb-4">
+
+
               <h3
-                className="font-medium text-sm mb-2"
-                style={{ color: COLORS.primary }}
+                className="font-semibold text-sm mb-3"
+                style={{
+                  color: COLORS.primary
+                }}
               >
-                RATING
+                Min. Order Qty
               </h3>
 
-              {["4.5", "4.0"].map((item) => (
+
+
+              {[
+                "Under 50 units",
+                "50–200 units",
+                "200–500 units",
+                "500+ units"
+
+              ].map(item => (
+
+
                 <label
                   key={item}
-                  className="flex items-center gap-2 text-xs mb-1 cursor-pointer"
+                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
                 >
+
+
                   <input
+
                     type="checkbox"
-                    checked={filters.rating.includes(item)}
-                    onChange={() => handleFilterChange("rating", item)}
+
+                    checked={
+                      filters.minQty.includes(item)
+                    }
+
+                    onChange={() =>
+                      handleFilterChange(
+                        "minQty",
+                        item
+                      )
+                    }
+
                   />
-                  <span style={{ color: COLORS.accent }}>
-                    {"★".repeat(Math.floor(parseFloat(item)))}
+
+
+                  {item}
+
+
+                </label>
+
+
+              ))}
+
+
+            </div>
+
+
+
+
+
+
+            {/* Price */}
+
+            <div className="border-b pb-4 mb-4">
+
+
+              <h3
+                className="font-semibold text-sm mb-3"
+                style={{
+                  color: COLORS.primary
+                }}
+              >
+                Price Range
+              </h3>
+
+
+
+              {[
+                "Under ₹500",
+                "₹500 - ₹1000",
+                "₹1000 - ₹5000",
+                "₹5000+"
+
+              ].map(item => (
+
+
+                <label
+                  key={item}
+                  className="flex gap-2 text-sm mb-2"
+                >
+
+                  <input type="radio" />
+
+                  {item}
+
+                </label>
+
+
+              ))}
+
+
+
+            </div>
+
+
+
+
+
+
+            {/* Rating */}
+
+
+            <div>
+
+
+              <h3
+                className="font-semibold text-sm mb-3"
+                style={{
+                  color: COLORS.primary
+                }}
+              >
+                Rating
+              </h3>
+
+
+
+              {[
+                {
+                  label: "★★★★★ & above",
+                  value: "4.5"
+                },
+                {
+                  label: "★★★★ & above",
+                  value: "4"
+                }
+
+              ].map(item => (
+
+
+                <label
+                  key={item.value}
+                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
+                >
+
+
+                  <input
+
+                    type="checkbox"
+
+                    checked={
+                      filters.rating.includes(
+                        item.value
+                      )
+                    }
+
+                    onChange={() =>
+                      handleFilterChange(
+                        "rating",
+                        item.value
+                      )
+                    }
+
+                  />
+
+
+                  <span
+                    style={{
+                      color: COLORS.accent
+                    }}
+                  >
+                    {item.label}
                   </span>
-                  <span style={{ color: COLORS.muted }}>{item} & above</span>
+
+
                 </label>
+
+
               ))}
+
+
             </div>
 
-            <div className="mt-6">
-              <h3
-                className="font-medium text-sm mb-2"
-                style={{ color: COLORS.primary }}
-              >
-                SUPPLIER TYPE
-              </h3>
 
-              {["Verified only", "Manufacturer", "Distributor"].map((item) => (
-                <label
-                  key={item}
-                  className="flex items-center gap-2 text-xs mb-1 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.supplier.includes(item)}
-                    onChange={() => handleFilterChange("supplier", item)}
-                  />
-                  <span>{item}</span>
-                </label>
-              ))}
-            </div>
+
+
+
+            <button
+
+              className="w-full mt-6 rounded-xl py-3 font-medium text-sm"
+
+              style={{
+                backgroundColor: COLORS.primary,
+                color: COLORS.white
+              }}
+
+            >
+
+              APPLY FILTERS
+
+            </button>
+
+
+
           </div>
 
           <main>
@@ -587,11 +733,10 @@ const Page = () => {
 
                             <div className="mt-3">
                               <Button
-                                className={`flex items-center gap-2 rounded-md cursor-pointer ${
-                                  viewMode === "grid"
+                                className={`flex items-center gap-2 rounded-md cursor-pointer ${viewMode === "grid"
                                     ? "w-full text-sm py-2 justify-center"
                                     : "text-xs px-3 py-1.5"
-                                }`}
+                                  }`}
                                 style={{
                                   backgroundColor: COLORS.accent,
                                   color: COLORS.primary,
@@ -654,15 +799,15 @@ const Page = () => {
                         style={
                           safePage === pageNum
                             ? {
-                                backgroundColor: COLORS.primary,
-                                color: COLORS.cream,
-                                borderColor: COLORS.primary,
-                              }
+                              backgroundColor: COLORS.primary,
+                              color: COLORS.cream,
+                              borderColor: COLORS.primary,
+                            }
                             : {
-                                backgroundColor: COLORS.white,
-                                color: COLORS.primary,
-                                borderColor: COLORS.border,
-                              }
+                              backgroundColor: COLORS.white,
+                              color: COLORS.primary,
+                              borderColor: COLORS.border,
+                            }
                         }
                       >
                         {pageNum}
@@ -683,15 +828,15 @@ const Page = () => {
                       style={
                         safePage === totalPages
                           ? {
-                              backgroundColor: COLORS.primary,
-                              color: COLORS.cream,
-                              borderColor: COLORS.primary,
-                            }
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.cream,
+                            borderColor: COLORS.primary,
+                          }
                           : {
-                              backgroundColor: COLORS.white,
-                              color: COLORS.primary,
-                              borderColor: COLORS.border,
-                            }
+                            backgroundColor: COLORS.white,
+                            color: COLORS.primary,
+                            borderColor: COLORS.border,
+                          }
                       }
                     >
                       {totalPages}

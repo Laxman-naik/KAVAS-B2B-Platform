@@ -102,7 +102,7 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFF8EC]">
+    <div className="min-h-screen ">
       <div className="bg-[#0B1F3A] overflow-hidden">
   <div className="w-full px-4 sm:px-6 lg:px-8">
     
