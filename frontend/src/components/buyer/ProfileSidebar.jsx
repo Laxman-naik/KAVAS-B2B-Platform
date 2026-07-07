@@ -21,6 +21,7 @@ const navItems = [
   { href: "/profile", label: "My Profile", icon: User },
   { href: "/buyerorders", label: "My Orders", icon: Package },
   { href: "/ordertracking", label: "Track Order", icon: Truck },
+  { href: "/buyerquotes", label: "My RFQ'S", icon: Truck},
   { href: "/favourites", label: "Wishlist", icon: Heart },
   { href: "/myaddresses", label: "Addresses", icon: MapPin },
   { href: "/changepassword", label: "Change Password", icon: KeyRound },

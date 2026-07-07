@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { productapi } from "@/lib/axios";
 import {
   Search,
   Package,
@@ -16,12 +17,53 @@ import {
   IndianRupee,
   X,
 } from "lucide-react";
-import { productapi } from "@/lib/axios";
 
 const statusStyles = {
   invited: "bg-blue-100 text-blue-700",
   quoted: "bg-green-100 text-green-700",
   declined: "bg-red-100 text-red-700",
+};
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:5002";
+
+const isUUID = (value) => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value || ""
+  );
+};
+
+const getVendorOrgId = () => {
+  if (typeof window === "undefined") return null;
+
+  const directOrgId =
+    localStorage.getItem("vendor_organization_id") ||
+    localStorage.getItem("organization_id") ||
+    localStorage.getItem("organizationId");
+
+  if (isUUID(directOrgId)) {
+    return directOrgId;
+  }
+
+  const token =
+    localStorage.getItem("vendor_accessToken") ||
+    localStorage.getItem("accessToken");
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      return (
+        payload.organization_id ||
+        payload.organizationId ||
+        payload.org_id
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  return null;
 };
 
 const VendorRFQ = () => {
@@ -33,7 +75,6 @@ const VendorRFQ = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const vendorId = "YOUR_VENDOR_ORG_ID";
 
   const [quoteForm, setQuoteForm] = useState({
     unit_price: "",
@@ -51,21 +92,30 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const { data } = await productapi.get("/api/rfqs");
+      const vendorOrgId = getVendorOrgId();
 
-      const list = data.rfqs || [];
+      console.log("Vendor:", vendorOrgId);
 
-      setRfqs(list);
-      setSelected(list[0] || null);
+      const { data } = await productapi.get("/api/rfqs", {
+        headers: {
+          "vendor-id": vendorOrgId,
+        },
+      });
 
+      setRfqs(data.rfqs || []);
+      setSelected(data.rfqs?.[0] || null);
     } catch (err) {
-      console.error("Load RFQs error:", err);
+      console.error(err);
       setRfqs([]);
       setSelected(null);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadRFQs();
+  }, []);
 
   const openQuoteModal = () => {
     if (!selected) return;
@@ -99,7 +149,7 @@ const VendorRFQ = () => {
 
       const quote = {
         rfq_id: selected.rfq_id,
-        vendor_org_id: vendorId,
+        vendor_org_id: getVendorOrgId(),
         unit_price: Number(quoteForm.unit_price),
         total_price: Number(quoteForm.total_price),
         quantity: selected.quantity,

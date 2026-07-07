@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 
 export default function InventoryManagementBody() {
+  const getCategoryName = (product) => {
+    return product?.categories?.[0]?.name || "Uncategorized";
+  };
   const dispatch = useDispatch();
 
   const { vendorProducts, loading } = useSelector((state) => state.products);
@@ -179,10 +182,14 @@ export default function InventoryManagementBody() {
   };
 
   // VIEW OPEN
-  const handleViewClick = (product) => {
-    setViewProduct(product);
-    setOpenView(true);
-  };
+ const handleViewClick = (product) => {
+  console.log("VIEW PRODUCT DATA:", product);
+  console.log("CATEGORY DATA:", product?.categories);
+  // alert(JSON.stringify(product?.categories || product?.category || "NO CATEGORY"));
+
+  setViewProduct(product);
+  setOpenView(true);
+};
 
   // INPUT CHANGE
   const handleInputChange = (e) => {
@@ -201,8 +208,16 @@ export default function InventoryManagementBody() {
   const handleSave = async () => {
     if (!selectedProduct?.id) return;
 
+    const token = localStorage.getItem("vendor_accessToken");
+
+    if (!token) {
+      alert("No vendor token found. Please login again.");
+      return;
+    }
+
     const payload = {
       name: selectedProduct.name,
+      sku: selectedProduct.sku,
       slug:
         selectedProduct.slug ||
         selectedProduct.name?.toLowerCase().replace(/\s+/g, "-"),
@@ -398,7 +413,7 @@ export default function InventoryManagementBody() {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                          {d.category}
+                          {getCategoryName(d)}
                         </div>
                       </div>
                     </div>
@@ -491,12 +506,12 @@ export default function InventoryManagementBody() {
             </div>
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-              <InputField
+              {/* <InputField
                 label="Product Name"
                 name="name"
                 value={selectedProduct.name}
                 onChange={handleInputChange}
-              />
+              /> */}
 
               <InputField
                 label="SKU"
@@ -596,7 +611,7 @@ export default function InventoryManagementBody() {
                       </h3>
 
                       <p className="mt-1 text-gray-500">
-                        {viewProduct.category}
+                        {getCategoryName(viewProduct)}
                       </p>
                     </div>
 
@@ -610,31 +625,30 @@ export default function InventoryManagementBody() {
                   </div>
 
                   <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <DetailCard title="SKU" value={viewProduct.sku} />
-
                     <DetailCard
-                      title="Warehouse"
-                      value={viewProduct.warehouse}
+                      title="Category"
+                      value={getCategoryName(viewProduct)}
                     />
 
                     <DetailCard
-                      title="Current Stock"
-                      value={`${viewProduct.stock} Units`}
+                      title="Price"
+                      value={`₹${viewProduct.price || 0}`}
                     />
 
                     <DetailCard
-                      title="Capacity"
-                      value={`${viewProduct.capacity} Units`}
+                      title="MRP"
+                      value={`₹${viewProduct.mrp || 0}`}
                     />
 
                     <DetailCard
-                      title="Reorder At"
-                      value={`${viewProduct.reorderAt} Units`}
+                      title="MOQ"
+                      value={`${viewProduct.moq || 1} Units`}
                     />
 
-                    <DetailCard title="Incoming" value={viewProduct.incoming} />
-
-                    <DetailCard title="Sold" value={viewProduct.sold} />
+                    <DetailCard
+                      title="Unit"
+                      value={viewProduct.unit || "pcs"}
+                    />
                   </div>
                 </div>
               </div>

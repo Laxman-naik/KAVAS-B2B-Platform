@@ -28,19 +28,28 @@ import {
   RotateCcw,
   Download,
   ChevronRight,
+  ChevronLeft,
   Calendar,
+  Loader2,
+  AlertCircle,
+  Inbox,
 } from "lucide-react";
+
+const ORDERS_PER_PAGE = 8;
 
 const Page = () => {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const dispatch = useDispatch();
   const router = useRouter();
 
   const authUser = useSelector((state) => state.auth.user);
+  console.log("AUTH USER:", authUser);
+  console.log("BUYER ORG:", authUser?.organization_id);
   const { profile } = useSelector((state) => state.profile);
   const { orders = [], loading, error } = useSelector((state) => state.order);
   const loggedUserId =
@@ -88,11 +97,13 @@ const Page = () => {
     const s = String(status || "").toLowerCase();
 
     if (s === "delivered")
-      return "bg-green-100 text-green-700 hover:bg-green-100";
-    if (s === "shipped") return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-    if (s === "cancelled") return "bg-red-100 text-red-700 hover:bg-red-100";
+      return "bg-green-50 text-green-700 border border-green-200 hover:bg-green-50";
+    if (s === "shipped")
+      return "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-50";
+    if (s === "cancelled")
+      return "bg-red-50 text-red-700 border border-red-200 hover:bg-red-50";
 
-    return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100";
+    return "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-50";
   };
 
   const myOrders = orders.filter((order) => {
@@ -132,6 +143,25 @@ const Page = () => {
     return statusMatch && searchMatch;
   });
 
+  // Reset to page 1 whenever filters change so you don't land on an empty page
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchQuery, dateRange]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredOrders.length / ORDERS_PER_PAGE)
+  );
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedOrders = filteredOrders.slice(
+    (safePage - 1) * ORDERS_PER_PAGE,
+    safePage * ORDERS_PER_PAGE
+  );
+
+  const goToPrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+  const goToNextPage = () =>
+    setCurrentPage((p) => Math.min(totalPages, p + 1));
+
   const statusCounts = {
     all: myOrders.length,
     pending: myOrders.filter((o) =>
@@ -152,7 +182,7 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-[#F7F8FA]">
       <div className="mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
           <div className="lg:sticky lg:top-24 self-start">
@@ -160,21 +190,27 @@ const Page = () => {
           </div>
 
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            {/* Header */}
             <div>
-              <h1 className="text-2xl font-bold text-[#0B1F3A]">My Orders</h1>
+              <h1 className="text-2xl font-bold text-[#0B1F3A] tracking-tight">
+                My Orders
+              </h1>
 
-              <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                <span>Home</span>
-                <ChevronRight size={14} />
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="hover:text-[#0B1F3A] transition-colors cursor-pointer">
+                  Home
+                </span>
+                <ChevronRight size={13} className="text-gray-300" />
                 <span className="text-[#0B1F3A] font-medium">My Orders</span>
               </div>
             </div>
 
-            <Card className="rounded-sm border border-[#E5E5E5] shadow-none">
+            {/* Filters */}
+            <Card className="rounded-sm border border-[#E8E9ED] shadow-sm">
               <CardContent className="p-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
                   <div className="lg:col-span-5">
-                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2">
+                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2 tracking-wide">
                       Search Orders
                     </p>
 
@@ -188,20 +224,20 @@ const Page = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search by order id, buyer or status..."
-                        className="pl-9 rounded-sm border-[#E5E5E5] h-10"
+                        className="pl-9 rounded-sm border-[#E5E5E5] h-10 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-colors"
                       />
                     </div>
                   </div>
 
                   <div className="lg:col-span-3">
-                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2">
+                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2 tracking-wide">
                       Order Status
                     </p>
 
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full h-10 rounded-sm border border-[#E5E5E5] bg-white px-3 text-sm outline-none"
+                      className="w-full h-10 rounded-sm border border-[#E5E5E5] bg-white px-3 text-sm text-[#0B1F3A] outline-none cursor-pointer focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-colors"
                     >
                       <option>All Status</option>
                       <option>pending</option>
@@ -213,13 +249,13 @@ const Page = () => {
                   </div>
 
                   <div className="lg:col-span-3">
-                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2">
+                    <p className="text-xs font-semibold text-[#0B1F3A] mb-2 tracking-wide">
                       Date Range
                     </p>
 
                     <div className="relative">
                       <Calendar
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                         size={16}
                       />
 
@@ -227,7 +263,7 @@ const Page = () => {
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
                         placeholder="Select date range"
-                        className="pr-9 rounded-sm border-[#E5E5E5] h-10"
+                        className="pr-9 rounded-sm border-[#E5E5E5] h-10 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-colors"
                       />
                     </div>
                   </div>
@@ -235,6 +271,7 @@ const Page = () => {
               </CardContent>
             </Card>
 
+            {/* Status Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
                 [
@@ -247,7 +284,7 @@ const Page = () => {
                   "Pending",
                   statusCounts.pending,
                   Hourglass,
-                  "bg-yellow-50 text-yellow-600",
+                  "bg-amber-50 text-amber-600",
                 ],
                 [
                   "Processing",
@@ -276,18 +313,18 @@ const Page = () => {
               ].map(([label, count, Icon, color]) => (
                 <Card
                   key={label}
-                  className="rounded-sm border border-[#E5E5E5] shadow-none"
+                  className="rounded-sm border border-[#E8E9ED] shadow-sm hover:shadow-md transition-shadow duration-200"
                 >
                   <CardContent className="p-4 flex items-center gap-3">
                     <div
-                      className={`h-11 w-11 rounded-sm flex items-center justify-center ${color}`}
+                      className={`h-11 w-11 shrink-0 rounded-sm flex items-center justify-center ${color}`}
                     >
-                      <Icon size={20} />
+                      <Icon size={19} />
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-500">{label}</p>
-                      <p className="font-bold text-[#0B1F3A] text-lg">
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-500 truncate">{label}</p>
+                      <p className="font-bold text-[#0B1F3A] text-lg leading-tight">
                         {count}
                       </p>
                     </div>
@@ -296,28 +333,29 @@ const Page = () => {
               ))}
             </div>
 
-            <Card className="rounded-sm border border-[#E5E5E5] shadow-none overflow-hidden">
+            {/* Orders Table */}
+            <Card className="rounded-sm border border-[#E8E9ED] shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-[#F8FAFC] text-xs text-gray-500 border-b">
-                        <th className="text-left font-medium px-5 py-4">
+                      <tr className="bg-[#F8FAFC] text-[11px] uppercase tracking-wide text-gray-500 border-b border-[#E8E9ED]">
+                        <th className="text-left font-semibold px-5 py-3.5">
                           Order Details
                         </th>
-                        <th className="text-left font-medium px-5 py-4">
+                        <th className="text-left font-semibold px-5 py-3.5">
                           Date
                         </th>
-                        <th className="text-left font-medium px-5 py-4">
+                        <th className="text-left font-semibold px-5 py-3.5">
                           Amount
                         </th>
-                        <th className="text-left font-medium px-5 py-4">
+                        <th className="text-left font-semibold px-5 py-3.5">
                           Status
                         </th>
-                        <th className="text-left font-medium px-5 py-4">
+                        <th className="text-left font-semibold px-5 py-3.5">
                           Payment
                         </th>
-                        <th className="text-right font-medium px-5 py-4">
+                        <th className="text-right font-semibold px-5 py-3.5">
                           Action
                         </th>
                       </tr>
@@ -326,54 +364,60 @@ const Page = () => {
                     <tbody>
                       {loading ? (
                         <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-12 text-center text-gray-500"
-                          >
-                            Loading orders...
+                          <td colSpan={6} className="px-4 py-16 text-center">
+                            <div className="flex flex-col items-center gap-2 text-gray-400">
+                              <Loader2 size={22} className="animate-spin text-[#0B1F3A]" />
+                              <span className="text-sm text-gray-500">
+                                Loading orders...
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       ) : error ? (
                         <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-12 text-center text-red-500"
-                          >
-                            {String(error)}
+                          <td colSpan={6} className="px-4 py-16 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                              <AlertCircle size={22} className="text-red-400" />
+                              <span className="text-sm text-red-500">
+                                {String(error)}
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       ) : filteredOrders.length === 0 ? (
                         <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-12 text-center text-gray-500"
-                          >
-                            No orders found.
+                          <td colSpan={6} className="px-4 py-16 text-center">
+                            <div className="flex flex-col items-center gap-2 text-gray-400">
+                              <Inbox size={26} className="text-gray-300" />
+                              <span className="text-sm text-gray-500">
+                                No orders found.
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       ) : (
-                        filteredOrders.map((order) => (
+                        paginatedOrders.map((order) => (
                           <tr
                             key={order.id}
-                            className="border-b hover:bg-gray-50 transition-colors"
+                            className="border-b border-[#F0F1F3] last:border-b-0 hover:bg-[#FAFBFC] transition-colors"
                           >
                             <td className="px-5 py-4">
-                              <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-sm border border-[#E5E5E5] bg-gray-50 flex items-center justify-center">
+                              <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 shrink-0 rounded-sm border border-[#E8E9ED] bg-[#F8FAFC] flex items-center justify-center">
                                   <Package
-                                    size={20}
+                                    size={18}
                                     className="text-[#0B1F3A]"
                                   />
                                 </div>
 
                                 <div className="min-w-0">
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-[11px] text-gray-400 uppercase tracking-wide">
                                     Order ID
                                   </p>
 
                                   <p className="font-semibold text-[#0B1F3A] truncate">
                                     #
-                                    {String(order.id).slice(0, 8).toUpperCase()}
+                                    {String(order.id).slice(0, 40).toUpperCase()}
                                   </p>
 
                                   <p className="text-xs text-gray-500 truncate">
@@ -384,11 +428,11 @@ const Page = () => {
                               </div>
                             </td>
 
-                            <td className="px-5 py-4 text-gray-600">
+                            <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
                               {formatDate(order.created_at)}
                             </td>
 
-                            <td className="px-5 py-4 font-semibold text-[#0B1F3A]">
+                            <td className="px-5 py-4 font-semibold text-[#0B1F3A] whitespace-nowrap">
                               ₹
                               {Number(order.total_amount || 0).toLocaleString(
                                 "en-IN",
@@ -396,18 +440,19 @@ const Page = () => {
                             </td>
 
                             <td className="px-5 py-4">
-                              <Badge className={getStatusClass(order.status)}>
+                              <Badge
+                                className={`rounded-sm font-medium px-2.5 py-1 capitalize ${getStatusClass(order.status)}`}
+                              >
                                 {order.status || "pending"}
                               </Badge>
                             </td>
 
-                            <td className="px-5 py-4 text-gray-600">
+                            <td className="px-5 py-4 text-gray-600 whitespace-nowrap">
                               {order.payment_method
                                 ? order.payment_method.toUpperCase() === "COD"
                                   ? "Cash on Delivery"
                                   : "Online Payment"
                                 : "Online Payment"}
-                                
                             </td>
 
                             <td className="px-5 py-4">
@@ -415,16 +460,9 @@ const Page = () => {
                                 <Button
                                   variant="outline"
                                   onClick={() => setSelectedOrder(order)}
-                                  className="h-9 rounded-sm border-[#E5E5E5] hover:bg-[#0B1F3A] hover:text-white transition-all duration-200"
+                                  className="h-9 rounded-sm border-[#E5E5E5] text-[#0B1F3A] font-medium hover:bg-[#0B1F3A] hover:text-white hover:border-[#0B1F3A] transition-all duration-200"
                                 >
                                   View Details
-                                </Button>
-
-                                <Button
-                                  variant="outline"
-                                  className="rounded-sm border-[#E5E5E5] h-9 w-9 p-0"
-                                >
-                                  <Download size={16} />
                                 </Button>
                               </div>
                             </td>
@@ -435,15 +473,45 @@ const Page = () => {
                   </table>
                 </div>
 
-                <div className="px-5 py-4 border-t text-xs text-gray-500 flex items-center justify-between bg-white">
-                  <span>Showing {filteredOrders.length} orders</span>
+                {/* Pagination */}
+                <div className="px-5 py-4 border-t border-[#E8E9ED] text-xs text-gray-500 flex items-center justify-between bg-white">
+                  <span>
+                    Showing{" "}
+                    <span className="font-semibold text-[#0B1F3A]">
+                      {filteredOrders.length === 0 ? 0 : (safePage - 1) * ORDERS_PER_PAGE + 1}
+                      –
+                      {Math.min(safePage * ORDERS_PER_PAGE, filteredOrders.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-[#0B1F3A]">
+                      {filteredOrders.length}
+                    </span>{" "}
+                    orders
+                  </span>
 
-                  <Button
-                    variant="outline"
-                    className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0"
-                  >
-                    1
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      onClick={goToPrevPage}
+                      disabled={safePage === 1}
+                      className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0 text-[#0B1F3A] hover:bg-[#0B1F3A] hover:text-white transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#0B1F3A]"
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+
+                    <span className="min-w-[70px] text-center text-xs font-medium text-[#0B1F3A]">
+                      Page {safePage} of {totalPages}
+                    </span>
+
+                    <Button
+                      variant="outline"
+                      onClick={goToNextPage}
+                      disabled={safePage === totalPages}
+                      className="rounded-sm border-[#E5E5E5] h-8 w-8 p-0 text-[#0B1F3A] hover:bg-[#0B1F3A] hover:text-white transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#0B1F3A]"
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

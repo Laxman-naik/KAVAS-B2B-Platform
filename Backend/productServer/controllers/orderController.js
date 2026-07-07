@@ -532,10 +532,65 @@ exports.getVendorOrders = async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT *
-      FROM orders
-      WHERE supplier_org_id = $1
-      ORDER BY created_at DESC
+      SELECT
+        o.*,
+
+        u.full_name AS buyer_name,
+        u.email AS buyer_email,
+        u.phone AS buyer_phone,
+
+        u.full_name AS shipping_name,
+        a.phone AS shipping_phone,
+
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code AS pincode,
+
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'item_id', oi.id,
+              'product_id', oi.product_id,
+              'product_name', p.name,
+              'quantity', oi.quantity,
+              'price', oi.price,
+              'organization_name', oi.organization_name
+            )
+          ) FILTER (WHERE oi.id IS NOT NULL),
+          '[]'
+        ) AS items,
+
+        COUNT(oi.id) AS item_count
+
+      FROM orders o
+      LEFT JOIN users u 
+        ON u.id = o.user_id
+      LEFT JOIN addresses a 
+        ON a.id = o.shipping_address_id
+      LEFT JOIN order_items oi 
+        ON oi.order_id = o.id
+      LEFT JOIN products p 
+        ON p.id = oi.product_id
+
+      WHERE o.supplier_org_id = $1
+
+      GROUP BY 
+        o.id,
+        u.full_name,
+        u.email,
+        u.phone,
+        a.phone,
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code
+
+      ORDER BY o.created_at DESC
       `,
       [organizationId]
     );
@@ -546,6 +601,84 @@ exports.getVendorOrders = async (req, res) => {
   } catch (err) {
     console.error("GET VENDOR ORDERS ERROR:", err);
     return res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getInvoice = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const orderRes = await pool.query(
+      `
+      SELECT
+        o.*,
+
+        u.full_name AS buyer_name,
+        u.email AS buyer_email,
+
+        org.name AS vendor_name,
+
+        a.address_line1,
+        a.address_line2,
+        a.city,
+        a.state,
+        a.country,
+        a.postal_code,
+        a.phone
+
+      FROM orders o
+
+      LEFT JOIN users u
+        ON u.id = o.user_id
+
+      LEFT JOIN organizations org
+        ON org.id = o.supplier_org_id
+
+      LEFT JOIN addresses a
+        ON a.id = o.shipping_address_id
+
+      WHERE o.id = $1
+      `,
+      [orderId]
+    );
+
+    if (!orderRes.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const itemsRes = await pool.query(
+      `
+      SELECT
+        oi.*,
+        p.name,
+        p.sku,
+        p.unit
+
+      FROM order_items oi
+
+      LEFT JOIN products p
+        ON p.id = oi.product_id
+
+      WHERE oi.order_id = $1
+      `,
+      [orderId]
+    );
+
+    return res.json({
+      success: true,
+      invoice: {
+        order: orderRes.rows[0],
+        items: itemsRes.rows,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
       message: err.message,
     });
   }

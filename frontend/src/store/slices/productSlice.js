@@ -320,6 +320,9 @@ const productSlice = createSlice({
         state.vendorProducts = state.vendorProducts.map((p) =>
           p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
         );
+        state.inventory = state.inventory.map((p) =>
+          p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p
+        );
 
         state.products = state.products.map((p) =>
           p.id === updatedProduct?.id ? { ...p, ...updatedProduct } : p

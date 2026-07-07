@@ -14,10 +14,12 @@ import {
   Truck,
   CheckCircle2,
   XCircle,
-  PackageCheck,
 } from "lucide-react";
 
-import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+import {
+  fetchVendorOrders,
+  updateOrderStatus,
+} from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
@@ -28,6 +30,14 @@ export default function OrdersManagementBody() {
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [shipmentOpen, setShipmentOpen] = useState(false);
+  const [shipmentOrder, setShipmentOrder] = useState(null);
+
+  const [courier, setCourier] = useState("");
+  const [awb, setAwb] = useState("");
+  const [estimatedDelivery, setEstimatedDelivery] = useState("");
+
+  const [shipmentLoading, setShipmentLoading] = useState(false);
 
   const pageSize = 8;
 
@@ -35,57 +45,62 @@ export default function OrdersManagementBody() {
     dispatch(fetchVendorOrders());
   }, [dispatch]);
 
-  const getStatus = (order) => {
-    const raw = String(
-      order?.status ||
-      order?.order_status ||
-      order?.delivery_status ||
-      "pending"
-    )
-      .toLowerCase()
-      .trim();
+  const cleanValue = (value, fallback = "pending") => {
+    if (value === null || value === undefined || value === "") return fallback;
 
-    if (raw === "confirmed" || raw === "accepted") return "processing";
-    if (raw === "out for delivery" || raw === "out-for-delivery") {
-      return "out_for_delivery";
+    if (typeof value === "object") {
+      return String(
+        value.status ||
+        value.delivery_status ||
+        value.payment_status ||
+        value.name ||
+        value.label ||
+        fallback
+      )
+        .toLowerCase()
+        .trim();
     }
 
-    return raw;
+    return String(value).toLowerCase().trim();
   };
 
+  const getStatus = (order) =>
+    cleanValue(
+      order?.status || order?.delivery_status || order?.order_status,
+      "pending"
+    );
+
+  const getPaymentStatus = (order) =>
+    cleanValue(order?.payment_status || order?.payment, "pending");
+
   const statusLabel = (status) => {
-    if (!status) return "Pending";
-
-    const value = String(status).toLowerCase().trim();
-
-    if (value === "out_for_delivery") return "Out For Delivery";
-
-    return value.charAt(0).toUpperCase() + value.slice(1);
+    const value = cleanValue(status, "pending");
+    return value
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   const stats = useMemo(() => {
     const total = orders.length;
-
     const pending = orders.filter((o) => getStatus(o) === "pending").length;
     const processing = orders.filter(
       (o) => getStatus(o) === "processing"
     ).length;
     const shipped = orders.filter((o) => getStatus(o) === "shipped").length;
-    const outForDelivery = orders.filter(
-      (o) => getStatus(o) === "out_for_delivery"
-    ).length;
     const delivered = orders.filter((o) => getStatus(o) === "delivered").length;
-    const cancelled = orders.filter((o) => getStatus(o) === "cancelled").length;
+    const cancelled = orders.filter(
+      (o) => getStatus(o) === "cancelled" || getStatus(o) === "canceled"
+    ).length;
 
     return {
       total,
       pending,
       processing,
       shipped,
-      outForDelivery,
       delivered,
       cancelled,
-      needAttention: pending + processing + shipped + outForDelivery,
+      needAttention: pending + processing,
     };
   }, [orders]);
 
@@ -94,7 +109,7 @@ export default function OrdersManagementBody() {
 
     return orders.filter((o) => {
       const orderStatus = getStatus(o);
-      const paymentValue = o.payment_status || o.payment || "pending";
+      const paymentValue = getPaymentStatus(o);
 
       const matchSearch =
         !q ||
@@ -107,7 +122,7 @@ export default function OrdersManagementBody() {
 
       const matchPayment =
         paymentFilter === "All Payments" ||
-        String(paymentValue).toLowerCase() === paymentFilter.toLowerCase();
+        paymentValue === paymentFilter.toLowerCase();
 
       return matchSearch && matchStatus && matchPayment;
     });
@@ -130,7 +145,7 @@ export default function OrdersManagementBody() {
   }, [safePage, totalFiltered]);
 
   const statusStyle = (status) => {
-    const value = String(status || "").toLowerCase();
+    const value = cleanValue(status, "pending");
 
     switch (value) {
       case "pending":
@@ -139,25 +154,70 @@ export default function OrdersManagementBody() {
         return "bg-blue-50 text-blue-700 border-blue-200";
       case "shipped":
         return "bg-purple-50 text-purple-700 border-purple-200";
-      case "out_for_delivery":
-        return "bg-orange-50 text-orange-700 border-orange-200";
       case "delivered":
         return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
+      case "canceled":
         return "bg-red-50 text-red-700 border-red-200";
+      case "cod":
+        return "bg-gray-50 text-gray-700 border-gray-200";
+      case "confirmed":
+        return "bg-blue-50 text-blue-700 border-blue-200";
       default:
         return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const paymentStyle = (payment) => {
-    const value = String(payment || "pending").toLowerCase();
+    const value = cleanValue(payment, "pending");
 
     if (value === "paid") return "bg-green-50 text-green-700 border-green-200";
-    if (value === "refunded")
-      return "bg-gray-50 text-gray-700 border-gray-200";
+    if (value === "refunded") return "bg-gray-50 text-gray-700 border-gray-200";
+    if (value === "cod") return "bg-blue-50 text-blue-700 border-blue-200";
 
     return "bg-yellow-50 text-yellow-700 border-yellow-200";
+  };
+
+  const handleShipmentSubmit = async () => {
+    if (!shipmentOrder) return;
+
+    if (!courier.trim()) {
+      alert("Courier Name is required");
+      return;
+    }
+
+    if (!awb.trim()) {
+      alert("Tracking Number is required");
+      return;
+    }
+
+    try {
+      setShipmentLoading(true);
+
+      await dispatch(
+        updateOrderStatus({
+          orderId: shipmentOrder.id,
+          status: "shipped",
+          courier,
+          awb,
+          estimated_delivery: estimatedDelivery,
+        })
+      );
+
+      await dispatch(fetchVendorOrders());
+
+      setShipmentOpen(false);
+      setShipmentOrder(null);
+
+      setCourier("");
+      setAwb("");
+      setEstimatedDelivery("");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update shipment");
+    } finally {
+      setShipmentLoading(false);
+    }
   };
 
   const tabs = useMemo(
@@ -171,12 +231,6 @@ export default function OrdersManagementBody() {
         count: stats.processing,
       },
       { key: "shipped", label: "Shipped", icon: Truck, count: stats.shipped },
-      {
-        key: "out_for_delivery",
-        label: "Out For Delivery",
-        icon: PackageCheck,
-        count: stats.outForDelivery,
-      },
       {
         key: "delivered",
         label: "Delivered",
@@ -213,16 +267,16 @@ export default function OrdersManagementBody() {
       className: "bg-purple-50 text-purple-700",
     },
     {
-      title: "Out For Delivery",
-      value: stats.outForDelivery,
-      icon: PackageCheck,
-      className: "bg-orange-50 text-orange-700",
+      title: "Delivered",
+      value: stats.delivered,
+      icon: CheckCircle2,
+      className: "bg-green-50 text-green-700",
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-375">
         <div className="flex flex-col gap-4 border border-[#E5E5E5] bg-white p-5 shadow-sm rounded-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-[#0B1F3A]">
@@ -316,11 +370,13 @@ export default function OrdersManagementBody() {
               }}
               className="h-11 w-full border border-[#E5E5E5] bg-[#FAFAFA] px-3 text-sm font-semibold text-[#0B1F3A] outline-none rounded-sm lg:w-48"
             >
-              {["All Payments", "paid", "pending", "refunded"].map((x) => (
-                <option key={x} value={x}>
-                  {x === "All Payments" ? x : statusLabel(x)}
-                </option>
-              ))}
+              {["All Payments", "paid", "pending", "refunded", "cod"].map(
+                (x) => (
+                  <option key={x} value={x}>
+                    {x === "All Payments" ? x : statusLabel(x)}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -339,16 +395,16 @@ export default function OrdersManagementBody() {
                       setPage(1);
                     }}
                     className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${active
-                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
-                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                      : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
                       }`}
                   >
                     {Icon ? <Icon size={16} /> : <span className="w-4" />}
                     {t.label}
                     <span
                       className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${active
-                          ? "bg-white/15 text-white"
-                          : "bg-gray-100 text-gray-600"
+                        ? "bg-white/15 text-white"
+                        : "bg-gray-100 text-gray-600"
                         }`}
                     >
                       {t.count}
@@ -387,28 +443,25 @@ export default function OrdersManagementBody() {
             <tbody>
               {pagedOrders.map((o) => {
                 const currentStatus = getStatus(o);
-                const paymentValue = o.payment_status || o.payment || "pending";
+                const paymentValue = getPaymentStatus(o);
 
-                const actionMap = {
-                  pending: {
-                    label: "Mark Processing",
-                    next: "processing",
-                  },
-                  processing: {
-                    label: "Mark Shipped",
-                    next: "shipped",
-                  },
-                  shipped: {
-                    label: "Out For Delivery",
-                    next: "out_for_delivery",
-                  },
-                  out_for_delivery: {
-                    label: "Mark Delivered",
-                    next: "delivered",
-                  },
-                };
+                const actionLabel =
+                  currentStatus === "pending"
+                    ? "Mark Processing"
+                    : currentStatus === "processing"
+                      ? "Mark Shipped"
+                      : currentStatus === "shipped"
+                        ? "Mark Delivered"
+                        : null;
 
-                const action = actionMap[currentStatus];
+                const actionNext =
+                  currentStatus === "pending"
+                    ? "processing"
+                    : currentStatus === "processing"
+                      ? "shipped"
+                      : currentStatus === "shipped"
+                        ? "delivered"
+                        : null;
 
                 return (
                   <tr
@@ -424,13 +477,15 @@ export default function OrdersManagementBody() {
                         {o.buyer_name || "Unknown Buyer"}
                       </p>
                       <p className="text-xs font-medium text-gray-500">
-                        {o.buyer_email || "-"}
+                        {o.city || o.state
+                          ? `${o.city || ""}, ${o.state || ""}`
+                          : o.buyer_email || "-"}
                       </p>
                     </td>
 
                     <td className="p-4">
                       <p className="font-extrabold text-[#0B1F3A]">
-                        {o.item_count || 0} Items
+                        {Number(o.item_count) || o.items?.length || 0} Products
                       </p>
 
                       <div className="mt-1 space-y-1">
@@ -501,39 +556,26 @@ export default function OrdersManagementBody() {
                           <Eye size={16} className="text-gray-600" />
                         </button>
 
-                        {action ? (
+                        {actionLabel && actionNext ? (
                           <button
                             type="button"
-                            onClick={async () => {
-                              try {
-                                const payload =
-                                  action.next === "shipped"
-                                    ? {
-                                      orderId: o.id,
-                                      status: action.next,
-                                      awb: prompt("Enter AWB Number"),
-                                      courier: prompt("Enter Courier Name"),
-                                      estimated_delivery: prompt("Enter Estimated Delivery Date YYYY-MM-DD"),
-                                    }
-                                    : {
-                                      orderId: o.id,
-                                      status: action.next,
-                                    };
-
-                                await dispatch(updateOrderStatus(payload)).unwrap();
-
-                                dispatch(fetchVendorOrders());
-                              } catch (err) {
-                                alert(
-                                  typeof err === "string"
-                                    ? err
-                                    : err?.message || err?.error || "Status update failed"
-                                );
+                            onClick={() => {
+                              if (actionNext === "shipped") {
+                                setShipmentOrder(o);
+                                setShipmentOpen(true);
+                                return;
                               }
+
+                              dispatch(
+                                updateOrderStatus({
+                                  orderId: o.id,
+                                  status: actionNext,
+                                })
+                              ).then(() => dispatch(fetchVendorOrders()));
                             }}
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
                           >
-                            {action.label}
+                            {actionLabel}
                           </button>
                         ) : (
                           <div className="h-10" />
@@ -563,7 +605,7 @@ export default function OrdersManagementBody() {
         <div className="mt-5 space-y-3 md:hidden">
           {pagedOrders.map((o) => {
             const currentStatus = getStatus(o);
-            const paymentValue = o.payment_status || o.payment || "pending";
+            const paymentValue = getPaymentStatus(o);
 
             return (
               <div
@@ -607,7 +649,7 @@ export default function OrdersManagementBody() {
                 <button
                   type="button"
                   onClick={() => setSelectedOrder(o)}
-                  className="mt-3 inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
+                  className="inline-flex h-10 w-10 items-center justify-center border border-[#E5E5E5] bg-white transition hover:bg-[#FFF8EC] rounded-sm"
                 >
                   <Eye size={16} className="text-gray-600" />
                 </button>
@@ -625,8 +667,8 @@ export default function OrdersManagementBody() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
               className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage <= 1
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-[#FFF8EC]"
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-[#FFF8EC]"
                 }`}
             >
               <ChevronLeft size={16} />
@@ -644,8 +686,8 @@ export default function OrdersManagementBody() {
                     type="button"
                     onClick={() => setPage(p)}
                     className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${active
-                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
-                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                      : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
                       }`}
                   >
                     {p}
@@ -658,8 +700,8 @@ export default function OrdersManagementBody() {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
               className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage >= totalPages
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-[#FFF8EC]"
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-[#FFF8EC]"
                 }`}
             >
               <ChevronRight size={16} />
@@ -710,7 +752,7 @@ export default function OrdersManagementBody() {
                 </p>
                 <p className="text-sm text-gray-500">
                   {selectedOrder.city || ""}, {selectedOrder.state || ""} -{" "}
-                  {selectedOrder.pincode || ""}
+                  {selectedOrder.pincode || selectedOrder.postal_code || ""}
                 </p>
               </div>
             </div>
@@ -761,6 +803,91 @@ export default function OrdersManagementBody() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {shipmentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-sm bg-white shadow-xl">
+
+            <div className="border-b p-5">
+              <h2 className="text-2xl font-extrabold text-[#0B1F3A]">
+                Shipment Details
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Fill shipment details before marking this order as shipped.
+              </p>
+            </div>
+
+            <div className="space-y-5 p-5">
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Courier Partner
+                </label>
+
+                <input
+                  value={courier}
+                  onChange={(e) => setCourier(e.target.value)}
+                  placeholder="Blue Dart"
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Tracking Number (AWB)
+                </label>
+
+                <input
+                  value={awb}
+                  onChange={(e) => setAwb(e.target.value)}
+                  placeholder="BD123456789IN"
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Estimated Delivery
+                </label>
+
+                <input
+                  type="date"
+                  value={estimatedDelivery}
+                  onChange={(e) => setEstimatedDelivery(e.target.value)}
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 border-t p-5">
+
+              <button
+                onClick={() => {
+                  setShipmentOpen(false);
+                  setShipmentOrder(null);
+                  setCourier("");
+                  setAwb("");
+                  setEstimatedDelivery("");
+                }}
+                className="rounded-sm border border-[#E5E5E5] px-5 py-2 font-bold"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleShipmentSubmit}
+                disabled={shipmentLoading}
+                className="rounded-sm bg-[#0B1F3A] px-5 py-2 font-bold text-white hover:bg-[#15345d]"
+              >
+                {shipmentLoading ? "Saving..." : "Save Shipment"}
+              </button>
+
+            </div>
+
           </div>
         </div>
       )}

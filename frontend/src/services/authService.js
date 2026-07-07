@@ -1,4 +1,4 @@
-import {authapi, saveAuthData, clearAuthData,} from "../lib/axios";
+import { authapi, saveAuthData, clearAuthData, } from "../lib/axios";
 
 /* ================= REGISTER ================= */
 
@@ -52,8 +52,8 @@ export const loginUser = async (data) => {
 
   });
 
-    console.log("LOGIN RESPONSE:", res.data);
-  console.log("LOCAL ROLE:", localStorage.getItem("role"));
+  console.log(JSON.stringify(res, null, 2));
+   console.log("LOCAL ROLE:", localStorage.getItem("role"));
   console.log(
     "ACCESS TOKEN:",
     localStorage.getItem(`${role}_accessToken`)

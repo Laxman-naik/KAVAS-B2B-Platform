@@ -45,26 +45,34 @@ const authMiddleware = (req, res, next) => {
     console.log("AUTH MIDDLEWARE - authHeader:", authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log("AUTH MIDDLEWARE - No token provided");
       return res.status(401).json({ message: "No token provided" });
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("AUTH MIDDLEWARE - token extracted:", token ? "present" : "missing");
 
     const decoded = verifyAccessToken(token);
+
     console.log("AUTH MIDDLEWARE - decoded token:", decoded);
 
     req.user = {
+      ...decoded,
+      id: decoded.id || decoded.vendor_profile_id || decoded.vendor_id,
+      vendor_profile_id: decoded.vendor_profile_id,
       vendor_id: decoded.vendor_id,
       onboarding_id: decoded.onboarding_id || null,
+      organization_id: decoded.organization_id || null,
+      role: decoded.role,
     };
 
     console.log("AUTH MIDDLEWARE - req.user set:", req.user);
+
     next();
   } catch (err) {
-    console.error("AUTH MIDDLEWARE ERROR:", err);
-    return res.status(401).json({ message: "Unauthorized" });
+    console.error("AUTH MIDDLEWARE ERROR:", err.message);
+    return res.status(401).json({
+      message: "Unauthorized",
+      error: err.message,
+    });
   }
 };
 

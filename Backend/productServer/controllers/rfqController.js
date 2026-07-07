@@ -12,6 +12,8 @@ exports.createRFQ = async (req, res) => {
       vendor_org_ids = [],
     } = req.body;
 
+    console.log("RFQ REQUEST BODY:", req.body);
+
     if (!buyer_org_id || !title || !quantity) {
       return res.status(400).json({
         success: false,
@@ -67,18 +69,51 @@ exports.createRFQ = async (req, res) => {
 
 exports.getRFQs = async (req, res) => {
   try {
+    const vendorOrgId = req.headers["vendor-id"];
+
+    if (!vendorOrgId) {
+      return res.status(400).json({
+        success: false,
+        message: "vendor-id header is required",
+      });
+    }
+
     const result = await pool.query(
       `
-      SELECT 
-        r.*,
-        p.name AS product_name,
-        p.price AS product_price,
-        o.name AS buyer_organization
-      FROM rfqs r
-      LEFT JOIN products p ON p.id = r.product_id
-      LEFT JOIN organizations o ON o.id = r.buyer_org_id
+      SELECT
+          rv.id,
+          rv.rfq_id,
+          rv.vendor_org_id,
+          rv.status,
+
+          r.title,
+          r.description,
+          r.quantity,
+          r.budget,
+          r.created_at AS rfq_created_at,
+          r.product_id,
+
+          p.name AS product_name,
+          p.price AS product_price,
+
+          o.name AS buyer_organization
+
+      FROM rfq_vendors rv
+
+      INNER JOIN rfqs r
+          ON rv.rfq_id = r.id
+
+      LEFT JOIN products p
+          ON p.id = r.product_id
+
+      LEFT JOIN organizations o
+          ON o.id = r.buyer_org_id
+
+      WHERE rv.vendor_org_id = $1
+
       ORDER BY r.created_at DESC
-      `
+      `,
+      [vendorOrgId]
     );
 
     return res.json({
@@ -87,6 +122,7 @@ exports.getRFQs = async (req, res) => {
     });
   } catch (err) {
     console.error("getRFQs error:", err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
@@ -134,19 +170,74 @@ exports.getSingleRFQ = async (req, res) => {
   }
 };
 
+// exports.getBuyerRFQs = async (req, res) => {
+//   try {
+//     const { buyerOrgId } = req.params;
+
+//     const result = await pool.query(
+//       `
+//       SELECT 
+//         r.*,
+//         p.name AS product_name,
+//         p.price AS product_price
+//       FROM rfqs r
+//       LEFT JOIN products p ON p.id = r.product_id
+//       WHERE r.buyer_org_id = $1
+//       ORDER BY r.created_at DESC
+//       `,
+//       [buyerOrgId]
+//     );
+
+//     return res.json({
+//       success: true,
+//       rfqs: result.rows,
+//     });
+//   } catch (err) {
+//     console.error("getBuyerRFQs error:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: err.message,
+//     });
+//   }
+// };
 exports.getBuyerRFQs = async (req, res) => {
   try {
     const { buyerOrgId } = req.params;
 
     const result = await pool.query(
       `
-      SELECT 
-        r.*,
-        p.name AS product_name,
-        p.price AS product_price
+      SELECT
+          r.id,
+          r.title,
+          r.description,
+          r.quantity,
+          r.budget,
+          r.status,
+          r.created_at,
+
+          p.name AS product_name,
+
+          COUNT(q.id) AS quotes_received,
+
+          COUNT(rv.id) AS vendors_invited
+
       FROM rfqs r
-      LEFT JOIN products p ON p.id = r.product_id
+
+      LEFT JOIN products p
+          ON p.id = r.product_id
+
+      LEFT JOIN rfq_quotes q
+          ON q.rfq_id = r.id
+
+      LEFT JOIN rfq_vendors rv
+          ON rv.rfq_id = r.id
+
       WHERE r.buyer_org_id = $1
+
+      GROUP BY
+          r.id,
+          p.name
+
       ORDER BY r.created_at DESC
       `,
       [buyerOrgId]
@@ -156,15 +247,18 @@ exports.getBuyerRFQs = async (req, res) => {
       success: true,
       rfqs: result.rows,
     });
+
   } catch (err) {
-    console.error("getBuyerRFQs error:", err);
+
+    console.error(err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
     });
+
   }
 };
-
 exports.updateRFQStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -290,26 +384,74 @@ exports.getRFQQuotes = async (req, res) => {
   try {
     const { rfqId } = req.params;
 
-    const result = await pool.query(
+    // RFQ Details
+    const rfqResult = await pool.query(
       `
-      SELECT 
+      SELECT
+        r.*,
+        o.name AS buyer_organization,
+        p.name AS product_name
+      FROM rfqs r
+      LEFT JOIN organizations o
+        ON o.id = r.buyer_org_id
+      LEFT JOIN products p
+        ON p.id = r.product_id
+      WHERE r.id = $1
+      `,
+      [rfqId]
+    );
+
+    if (!rfqResult.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "RFQ not found",
+      });
+    }
+
+    // Quotes
+    const quoteResult = await pool.query(
+      `
+      SELECT
         q.*,
         o.name AS vendor_name,
         o.business_type AS vendor_type
       FROM rfq_quotes q
-      LEFT JOIN organizations o ON o.id = q.vendor_org_id
+      LEFT JOIN organizations o
+        ON o.id = q.vendor_org_id
       WHERE q.rfq_id = $1
       ORDER BY q.total_price ASC
       `,
       [rfqId]
     );
 
+    const quotes = quoteResult.rows;
+
+    let lowestPrice = null;
+    let fastestDelivery = null;
+
+    if (quotes.length > 0) {
+      lowestPrice = Math.min(
+        ...quotes.map((q) => Number(q.total_price))
+      );
+
+      fastestDelivery = Math.min(
+        ...quotes.map((q) => Number(q.delivery_days || 0))
+      );
+    }
+
     return res.json({
       success: true,
-      quotes: result.rows,
+      rfq: rfqResult.rows[0],
+      statistics: {
+        totalQuotes: quotes.length,
+        lowestPrice,
+        fastestDelivery,
+      },
+      quotes,
     });
   } catch (err) {
     console.error("getRFQQuotes error:", err);
+
     return res.status(500).json({
       success: false,
       message: err.message,
@@ -441,8 +583,9 @@ exports.acceptQuote = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Quote accepted and order created successfully",
+      message: "Quote accepted successfully",
       order,
+      redirect: "/buyer/orders",
     });
   } catch (err) {
     await client.query("ROLLBACK");

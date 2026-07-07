@@ -69,19 +69,17 @@ exports.login = async (req, res) => {
     // const accessToken = generateAccessToken(user);
     let organization_id = null;
 
-    if (user.role === "vendor") {
-      const orgRes = await pool.query(
-        `
+    const orgRes = await pool.query(
+      `
   SELECT organization_id
-  FROM vendors
+  FROM organization_users
   WHERE user_id = $1
   LIMIT 1
   `,
-        [user.id]
-      );
+      [user.id]
+    );
 
-      organization_id = orgRes.rows[0]?.organization_id || null;
-    }
+    organization_id = orgRes.rows[0]?.organization_id || null;
 
     const accessToken = generateAccessToken({
       ...user,
@@ -129,6 +127,7 @@ exports.login = async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
+        organization_id,
       },
       role: user.role,
       accessToken,
@@ -184,6 +183,18 @@ exports.refreshTokenHandler = async (req, res) => {
 
     const user = userResult.rows[0];
 
+    const orgResult = await pool.query(
+      `
+  SELECT organization_id
+  FROM organization_users
+  WHERE user_id = $1
+  LIMIT 1
+  `,
+      [user.id]
+    );
+
+    const organization_id = orgResult.rows[0]?.organization_id || null;
+
     if (!user) {
       return res.status(403).json({ message: "User not found" });
     }
@@ -219,8 +230,19 @@ exports.getMe = async (req, res) => {
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
     const result = await pool.query(
-      "SELECT id, full_name, email, role FROM users WHERE id=$1",
-      [decoded.id]
+      `
+  SELECT
+      u.id,
+      u.full_name,
+      u.email,
+      u.role,
+      ou.organization_id
+  FROM users u
+  LEFT JOIN organization_users ou
+      ON ou.user_id = u.id
+  WHERE u.id = $1
+  `,
+      [req.user.id]
     );
 
     return res.json({ user: result.rows[0] });
