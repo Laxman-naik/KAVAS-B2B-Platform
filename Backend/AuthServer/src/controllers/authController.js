@@ -282,39 +282,62 @@ exports.forgotPassword = async (req, res) => {
     const { email } = req.body || {};
 
     if (!email) {
-      return res.status(400).json({
-        message: "Email is required",
-      });
+      return res.status(400).json({ message: "Email is required" });
     }
 
-    const result = await pool.query(
+    let account = null;
+    let accountType = null;
+
+    const userResult = await pool.query(
       "SELECT id, email FROM users WHERE email = $1",
       [email]
     );
 
-    const user = result.rows[0];
+    if (userResult.rows.length > 0) {
+      account = userResult.rows[0];
+      accountType = "buyer";
+    } else {
+      const vendorResult = await pool.query(
+        "SELECT id, email FROM vendorprofile WHERE email = $1",
+        [email]
+      );
 
-    if (!user) {
-      return res.status(404).json({
-        message: "Email not registered",
-      });
+      if (vendorResult.rows.length > 0) {
+        account = vendorResult.rows[0];
+        accountType = "vendor";
+      }
+    }
+
+    if (!account) {
+      return res.status(404).json({ message: "Email not registered" });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-
     const expiry = new Date(Date.now() + 15 * 60 * 1000);
 
-    await pool.query(
-      `
-      UPDATE users
-      SET reset_password_token = $1,
-          reset_password_expires = $2
-      WHERE id = $3
-      `,
-      [resetToken, expiry, user.id]
-    );
+    if (accountType === "buyer") {
+      await pool.query(
+        `
+        UPDATE users
+        SET reset_password_token = $1,
+            reset_password_expires = $2
+        WHERE id = $3
+        `,
+        [resetToken, expiry, account.id]
+      );
+    } else {
+      await pool.query(
+        `
+        UPDATE vendorprofile
+        SET reset_password_token = $1,
+            reset_password_expires = $2
+        WHERE id = $3
+        `,
+        [resetToken, expiry, account.id]
+      );
+    }
 
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}?type=${accountType}`;
 
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
@@ -330,33 +353,31 @@ exports.forgotPassword = async (req, res) => {
     });
 
     await transporter.verify();
-    console.log("SMTP Connected Successfully");
 
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      to: user.email,
+      to: account.email,
       subject: "KAVAS Password Reset",
       html: `
-    <h2>KAVAS Password Reset</h2>
-    <p>Click the below link to reset your password:</p>
-    <a href="${resetLink}">${resetLink}</a>
-    <p>This link expires in 15 minutes.</p>
-  `,
+        <h2>KAVAS Password Reset</h2>
+        <p>Click the below link to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link expires in 15 minutes.</p>
+      `,
     });
 
     return res.json({
       success: true,
       message: "Password reset link sent to email",
+      type: accountType,
     });
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
-
     return res.status(500).json({
       message: err.message,
       code: err.code,
       command: err.command,
     });
-
   }
 };
 
@@ -364,7 +385,7 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
-    const { password } = req.body || {};
+    const { password, type } = req.body || {};
 
     if (!token || !password) {
       return res.status(400).json({
@@ -378,18 +399,33 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `
-      SELECT id FROM users
-      WHERE reset_password_token = $1
-      AND reset_password_expires > NOW()
-      `,
-      [token]
-    );
+    const accountType = type || "buyer";
 
-    const user = result.rows[0];
+    let result;
 
-    if (!user) {
+    if (accountType === "vendor") {
+      result = await pool.query(
+        `
+        SELECT id FROM vendorprofile
+        WHERE reset_password_token = $1
+        AND reset_password_expires > NOW()
+        `,
+        [token]
+      );
+    } else {
+      result = await pool.query(
+        `
+        SELECT id FROM users
+        WHERE reset_password_token = $1
+        AND reset_password_expires > NOW()
+        `,
+        [token]
+      );
+    }
+
+    const account = result.rows[0];
+
+    if (!account) {
       return res.status(400).json({
         message: "Invalid or expired reset token",
       });
@@ -397,33 +433,45 @@ exports.resetPassword = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      `
-      UPDATE users
-      SET password_hash = $1,
-          reset_password_token = NULL,
-          reset_password_expires = NULL
-      WHERE id = $2
-      `,
-      [hashed, user.id]
-    );
+    if (accountType === "vendor") {
+      await pool.query(
+        `
+        UPDATE vendorprofile
+        SET password_hash = $1,
+            reset_password_token = NULL,
+            reset_password_expires = NULL
+        WHERE id = $2
+        `,
+        [hashed, account.id]
+      );
+    } else {
+      await pool.query(
+        `
+        UPDATE users
+        SET password_hash = $1,
+            reset_password_token = NULL,
+            reset_password_expires = NULL
+        WHERE id = $2
+        `,
+        [hashed, account.id]
+      );
 
-    await pool.query(
-      `
-      UPDATE sessions
-      SET is_revoked = true
-      WHERE user_id = $1
-      `,
-      [user.id]
-    );
+      await pool.query(
+        `
+        UPDATE sessions
+        SET is_revoked = true
+        WHERE user_id = $1
+        `,
+        [account.id]
+      );
+    }
 
     return res.json({
       success: true,
       message: "Password reset successfully",
     });
   } catch (err) {
-    console.error("FORGOT PASSWORD FULL ERROR:", err);
-
+    console.error("RESET PASSWORD ERROR:", err);
     return res.status(500).json({
       message: err.message,
     });

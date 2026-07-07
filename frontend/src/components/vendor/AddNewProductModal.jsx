@@ -1,14 +1,36 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Upload, X, Check,ShieldCheck, Package, Image, Layers, Archive, Tag, Settings, } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Upload,
+  X,
+  Check,
+  ShieldCheck,
+  Package,
+  Image,
+  Layers,
+  Archive,
+  Tag,
+  Settings,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useDispatch, useSelector } from "react-redux";
-import { getMainCategoriesThunk, getSubcategoriesByParentThunk } from "@/store/slices/categorySlice";
+import {
+  getMainCategoriesThunk,
+  getSubcategoriesByParentThunk,
+} from "@/store/slices/categorySlice";
 import { addProduct } from "@/store/slices/productSlice";
 
 const Field = ({ label, required, children, className = "" }) => (
@@ -20,12 +42,7 @@ const Field = ({ label, required, children, className = "" }) => (
     {children}
   </div>
 );
-const CheckBoxField = ({
-  label,
-  checked,
-  onChange,
-  disabled = false,
-}) => (
+const CheckBoxField = ({ label, checked, onChange, disabled = false }) => (
   <label className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 cursor-pointer hover:bg-slate-50">
     <input
       type="checkbox"
@@ -34,13 +51,12 @@ const CheckBoxField = ({
       disabled={disabled}
       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
     />
-    <span className="text-sm font-medium text-slate-700">
-      {label}
-    </span>
+    <span className="text-sm font-medium text-slate-700">{label}</span>
   </label>
 );
 
-const inputCls = "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
+const inputCls =
+  "h-9 rounded-md border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all";
 const VARIANT_TYPES = ["Color", "Size", "Unit", "Custom"];
 const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Standard", "Premium"];
 const UNIT_OPTIONS = ["pcs", "kg", "litre", "meter", "box", "set"];
@@ -54,7 +70,11 @@ const COLOR_OPTIONS = [
   { label: "Yellow", value: "Yellow", swatch: "#eab308" },
 ];
 
-const parseCsv = (value) => String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
+const parseCsv = (value) =>
+  String(value || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 const toggleCsvValue = (csv, value) => {
   const set = new Set(parseCsv(csv));
@@ -64,11 +84,13 @@ const toggleCsvValue = (csv, value) => {
 };
 
 const AddNewProductModal = ({ open, onClose, onSubmit }) => {
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedVideos, setSelectedVideos] = useState([]);
   const dispatch = useDispatch();
 
   const vendor = useSelector((state) => state.vendor?.vendor);
   const { mainCategories, subcategories, loading } = useSelector(
-    (state) => state.category
+    (state) => state.category,
   );
 
   const [form, setForm] = useState({
@@ -105,7 +127,9 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     variants: [
       { id: 1, variantName: "Color", value: "", sku: "", price: "", stock: "" },
     ],
-    bulkPricing: [{ id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },],
+    bulkPricing: [
+      { id: 1, minQty: "", maxQty: "", pricePerUnit: "", discount: "" },
+    ],
     specifications: [{ id: 1, name: "", value: "" }],
   });
 
@@ -153,7 +177,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
         form.moq.trim() &&
         form.stock.trim()
       ),
-    [form]
+    [form],
   );
 
   const close = () => typeof onClose === "function" && onClose();
@@ -196,36 +220,44 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
 
     // ================= BASIC =================
     formData.append("organizationId", organizationId);
-formData.append("name", form.name);
-formData.append("sku", form.sku);
-formData.append("description", form.description);
-formData.append("category", form.category);
-formData.append("subCategory", form.subCategory || "");
-formData.append("price", Number(form.price));
-formData.append("mrp", Number(form.mrp || 0));
-formData.append("moq", Number(form.moq));
-formData.append("stock", Number(form.stock));
-formData.append("unit", form.unit || "");
+    formData.append("name", form.name);
+    formData.append("sku", form.sku);
+    formData.append("description", form.description);
+    formData.append("category", form.category);
+    formData.append("subCategory", form.subCategory || "");
+    formData.append("price", Number(form.price));
+    formData.append("mrp", Number(form.mrp || 0));
+    formData.append("moq", Number(form.moq));
+    formData.append("stock", Number(form.stock));
+    formData.append("unit", form.unit || "");
 
-// ADD THESE HERE
-formData.append("brand", form.brand || "");
-formData.append("warranty", form.warrantyPeriod || "");
-formData.append("returnPolicy", form.returnPolicy || "");
-formData.append("returnDays", form.returnDays || 7);
+    // ADD THESE HERE
+    formData.append("brand", form.brand || "");
+    formData.append("warranty", form.warrantyPeriod || "");
+    formData.append("returnPolicy", form.returnPolicy || "");
+    formData.append("returnDays", form.returnDays || 7);
 
-formData.append("codAvailable", String(form.codAvailable));
-formData.append("isOriginal", String(form.isOriginal));
-formData.append("gstInvoiceAvailable", String(form.gstInvoiceAvailable));
-formData.append("securePaymentAvailable", String(form.securePaymentAvailable));
-formData.append("returnExchangeAvailable", String(form.returnExchangeAvailable));
-formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
+    formData.append("codAvailable", String(form.codAvailable));
+    formData.append("isOriginal", String(form.isOriginal));
+    formData.append("gstInvoiceAvailable", String(form.gstInvoiceAvailable));
+    formData.append(
+      "securePaymentAvailable",
+      String(form.securePaymentAvailable),
+    );
+    formData.append(
+      "returnExchangeAvailable",
+      String(form.returnExchangeAvailable),
+    );
+    formData.append(
+      "fastDeliveryAvailable",
+      String(form.fastDeliveryAvailable),
+    );
+
 
     // ================= SPECIFICATIONS =================
     formData.append(
       "specifications",
-      JSON.stringify(
-        form.specifications.filter(s => s.name && s.value)
-      )
+      JSON.stringify(form.specifications.filter((s) => s.name && s.value)),
     );
 
     // ================= VARIANTS (MATCH BACKEND) =================
@@ -233,16 +265,16 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
       "variants",
       JSON.stringify(
         form.variants
-          .filter(v => v.value)
-          .map(v => ({
+          .filter((v) => v.value)
+          .map((v) => ({
             variant_type: v.variantName,
             variant_value: v.value,
             sku: v.sku || null,
             price: Number(v.price || 0),
             mrp: Number(v.mrp || 0),
             stock: Number(v.stock || 0),
-          }))
-      )
+          })),
+      ),
     );
 
     // ================= BULK PRICING =================
@@ -250,21 +282,21 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
       "bulkPricing",
       JSON.stringify(
         form.bulkPricing
-          .filter(b => b.minQty && b.pricePerUnit)
-          .map(b => ({
+          .filter((b) => b.minQty && b.pricePerUnit)
+          .map((b) => ({
             minQty: Number(b.minQty),
             maxQty: Number(b.maxQty || 0),
             pricePerUnit: Number(b.pricePerUnit),
-          }))
-      )
+          })),
+      ),
     );
 
     // ================= FILES =================
-    form.images.forEach(file => {
+    form.images.forEach((file) => {
       formData.append("images", file);
     });
 
-    form.videos.forEach(file => {
+    form.videos.forEach((file) => {
       formData.append("videos", file);
     });
 
@@ -282,7 +314,6 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
       console.error("CREATE PRODUCT ERROR:", err);
     }
   };
-
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files || []);
@@ -324,7 +355,8 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
               Add New Product
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Fill in the information below to add a new product to your catalog.
+              Fill in the information below to add a new product to your
+              catalog.
             </p>
           </div>
 
@@ -689,9 +721,7 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
 
                           <button
                             type="button"
-                            onClick={() =>
-                              removeRow("specifications", row.id)
-                            }
+                            onClick={() => removeRow("specifications", row.id)}
                             className="text-red-400 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -898,7 +928,7 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                                           updateRow("variants", row.id, {
                                             value: toggleCsvValue(
                                               row.value,
-                                              c.value
+                                              c.value,
                                             ),
                                           })
                                         }
@@ -958,7 +988,7 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                                             updateRow("variants", row.id, {
                                               value: toggleCsvValue(
                                                 row.value,
-                                                s
+                                                s,
                                               ),
                                             })
                                           }
@@ -987,7 +1017,7 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                                             updateRow("variants", row.id, {
                                               value: toggleCsvValue(
                                                 row.value,
-                                                u
+                                                u,
                                               ),
                                             })
                                           }
@@ -1065,7 +1095,7 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                         {(form.images || []).length ? (
                           <img
                             src={URL.createObjectURL(
-                              (form.images || [])[form.mainImageIndex || 0]
+                              (form.images || [])[form.mainImageIndex || 0],
                             )}
                             alt="Main"
                             className="h-full w-full object-contain"
@@ -1100,7 +1130,6 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                           type="file"
                           multiple
                           accept="image/*"
-                          className="hidden"
                           onChange={handleImageUpload}
                         />
                       </label>
@@ -1145,11 +1174,11 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
 
                                 setForm((s) => {
                                   const next = (s.images || []).filter(
-                                    (_, i) => i !== idx
+                                    (_, i) => i !== idx,
                                   );
                                   const nextMain = Math.min(
                                     s.mainImageIndex || 0,
-                                    Math.max(0, next.length - 1)
+                                    Math.max(0, next.length - 1),
                                   );
 
                                   return {
@@ -1185,7 +1214,6 @@ formData.append("fastDeliveryAvailable", String(form.fastDeliveryAvailable));
                           type="file"
                           multiple
                           accept="video/*"
-                          className="hidden"
                           onChange={handleVideoUpload}
                         />
                       </label>
