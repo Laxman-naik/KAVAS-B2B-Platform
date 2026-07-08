@@ -1086,7 +1086,8 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                   </div>
 
                   <div className="px-5 py-5">
-                    <div className="relative overflow-hidden rounded-sm border border-slate-200 bg-slate-50">
+                    <div className="relative overflow-hidden 
+                    rounded-sm border border-slate-200 bg-slate-50">
                       <div className="absolute left-3 top-3 rounded-sm bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white">
                         Main Image
                       </div>

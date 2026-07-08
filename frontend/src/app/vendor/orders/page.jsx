@@ -16,15 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 
-<<<<<<< HEAD
 // import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
-=======
-import {
-  fetchVendorOrders,
-  updateOrderStatus,
-} from "@/store/slices/orderSlice";
->>>>>>> 0c477f4525ccfd9fe6403bbf70a9b55c32973098
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
