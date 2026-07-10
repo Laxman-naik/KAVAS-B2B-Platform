@@ -336,11 +336,6 @@ const Page = () => {
                   <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
                     My Profile
                   </h1>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                    <Link href="/" className="hover:underline">Home</Link>
-                    <ChevronRight size={14} />
-                    <span className="text-[#0B1F3A]">My Profile</span>
-                  </div>
                 </div>
  
                 <Button

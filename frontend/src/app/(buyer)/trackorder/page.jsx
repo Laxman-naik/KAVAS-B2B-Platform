@@ -1,22 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import {
-  Truck,
-  Package,
-  CheckCircle,
-  XCircle,
-  MapPin,
-  Search,
-  Phone,
-  Mail,
-  MessageCircle,
-  Hash,
-  ShieldCheck,
-  Headset,
-  Loader2,
-} from "lucide-react";
-
+import {Truck,Package,CheckCircle,XCircle,MapPin,Search,Phone,Mail,MessageCircle,Hash,ShieldCheck,Headset,Loader2,} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -199,59 +184,6 @@ const Page = () => {
                 Stay updated with your shipment. Enter your Order ID below to
                 check the latest status of your order.
               </p>
-
-              {/* <div className="mt-6">
-                <Card className="overflow-hidden rounded-sm border-0 shadow-[0_12px_40px_rgba(11,31,58,0.18)] bg-[#0B1F3A]">
-                  <CardContent className="p-5 sm:p-6">
-                    <form
-                      onSubmit={onTrack}
-                      className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3 md:gap-4 items-end"
-                    >
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-white">
-                          Order ID
-                        </label>
-                        <div className="relative">
-                          <Hash
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                            size={18}
-                          />
-                          <Input
-                            value={orderId}
-                            onChange={(e) => setOrderId(e.target.value)}
-                            placeholder="Enter Order ID"
-                            className="pl-10 h-12 bg-white border-0 focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
-                          />
-                        </div>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="h-12 w-full bg-[#D4AF37] text-black font-semibold flex items-center justify-center gap-2 rounded-lg shadow-md hover:opacity-95 disabled:opacity-70"
-                      >
-                        {loading ? (
-                          <Loader2 size={18} className="animate-spin" />
-                        ) : (
-                          <Search size={18} />
-                        )}
-                        {loading ? "TRACKING..." : "TRACK ORDER"}
-                      </Button>
-                    </form>
-
-                    {error && (
-                      <div className="mt-4 rounded-sm bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-700">
-                        {error}
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex items-center gap-2 text-xs text-white/70">
-                      <ShieldCheck size={16} className="text-[#D4AF37]" />
-                      <span>Your information is safe and secure</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div> */}
             </div>
           </div>
 
@@ -276,7 +208,7 @@ const Page = () => {
                     </p>
                   </div>
 
-                  <div className="rounded-sm bg-[#FFF8EC] border border-[#E5E5E5] p-4 min-w-[240px]">
+                  <div className="rounded-sm bg-[#FFF8EC] border border-[#E5E5E5] p-4 min-w-60">
                     <p className="text-xs text-gray-500">Courier</p>
                     <p className="font-bold text-[#0B1F3A]">
                       {trackingData.courier || trackingData.courier_name || "-"}

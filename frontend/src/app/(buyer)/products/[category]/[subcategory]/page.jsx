@@ -642,7 +642,7 @@ export default function SubCategoryPage() {
               Filters
               {activeFilterCount > 0 && (
                 <span
-                  className="text-[11px] px-1.5 py-[1px] rounded-full"
+                  className="text-[11px] px-1.5 py-px rounded-full"
                   style={{ backgroundColor: COLORS.accent, color: COLORS.primary }}
                 >
                   {activeFilterCount}

@@ -31,7 +31,7 @@ import { productapi } from "@/lib/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
 import { fetchFavourites } from "@/store/slices/favouritesSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Navbar = () => {
   const [mounted, setMounted] = useState(false);
@@ -55,6 +55,7 @@ const Navbar = () => {
   const profileDropdownRef = useRef(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -69,6 +70,19 @@ const Navbar = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-open login modal when ?login=true is in the URL (e.g. from welcome email)
+  useEffect(() => {
+    if (!mounted) return;
+    if (searchParams?.get("login") === "true" && !isAuthenticated) {
+      setMode("login");
+      setOpen(true);
+      // Clean up the URL without a page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("login");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [mounted, searchParams, isAuthenticated]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");

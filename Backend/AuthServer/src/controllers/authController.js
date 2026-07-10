@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const { sendWelcomeEmail } = require("../utils/emailService");
 
 /* ================= REGISTER ================= */
 exports.register = async (req, res) => {
@@ -33,7 +34,10 @@ exports.register = async (req, res) => {
       [full_name, email, hashed, phone, role || "buyer"]
     );
 
-    return res.json({ user: result.rows[0] });
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, full_name);
+
+    return res.json({ user: result.rows[0], message: "Registration successful! Welcome to KAVAS." });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

@@ -463,7 +463,7 @@ export default function ProductDetailPage({ params }) {
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="w-full h-64 sm:h-80 md:h-[420px] object-cover rounded"
+                className="w-full h-64 sm:h-80 md:h-105 object-cover rounded"
               />
             </div>
  

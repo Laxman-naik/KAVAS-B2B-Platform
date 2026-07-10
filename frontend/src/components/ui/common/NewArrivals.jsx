@@ -169,9 +169,7 @@ export default function NewArrivals() {
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-[#D4AF37] font-extrabold mt-1">
-                          10% OFF
-                        </div>
+                       
                       </div>
 
                       <button

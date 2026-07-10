@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
   Filter,
@@ -211,27 +212,40 @@ const page = () => {
       <section className="mx-auto max-w-[1500px] px-6 py-5">
        
 
-        <div className="relative overflow-hidden rounded-sm border border-[#E5E5E5] text-white bg-[#0B1F3A] px-10 py-10">
-          <div className="relative z-10 max-w-xl">
-            <p className="text-xs  font-bold uppercase tracking-[0.18em] text-[#D4AF37]">
-              Shop By Category
-            </p>
+       <div className="relative overflow-hidden rounded-sm border border-[#E5E5E5] bg-[#0B1F3A] px-6 py-3 md:px-10 lg:px-14 lg:py-7">
+  <div className="grid items-center gap-10 lg:grid-cols-2">
+    {/* Left Content */}
+    <div className="max-w-xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#D4AF37]">
+        Shop By Category
+      </p>
 
-            <h1 className="mt-3 text-5xl font-extrabold tracking-tight text-white">
-              All Categories
-            </h1>
+      <h1 className="mt-3 text-4xl font-bold leading-tight text-white md:text-5xl">
+        All Categories
+      </h1>
 
-            <p className="mt-4 max-w-lg text-base leading-7 text-white/70">
-              Explore our wide range of product categories and find the perfect
-              items for your needs.
-            </p>
-          </div>
+      <p className="mt-5 max-w-md text-base leading-7 text-white/70">
+        Explore our wide range of product categories and discover the perfect
+        products for your everyday needs.
+      </p>
+    </div>
 
-          <div className="absolute bottom-0 right-12 hidden h-56 w-[520px] rounded-t-full bg-white/70 lg:block" />
-          <div className="absolute right-24 top-16 hidden text-[120px] font-black text-[#D4AF37]/20 lg:block">
-            SHOP
-          </div>
-        </div>
+    {/* Right Image */}
+    <div className="hidden lg:flex items-center justify-end">
+      <Image
+        src="/categoriesbanner.png"
+        alt="Categories Banner"
+        width={520}
+        height={340}
+        priority
+        className="h-auto w-full max-w-[500px] object-contain transition-transform duration-500 hover:scale-105"
+      />
+    </div>
+  </div>
+
+  {/* Optional Background Glow */}
+  <div className="absolute right-0 top-1/2 h-[320px] w-[320px] -translate-y-1/2 rounded-full bg-[#D4AF37]/10 blur-3xl" />
+</div>
 
         <div className="mt-6">
           <p className="mb-3 text-base font-semibold text-[#0B1F3A]">

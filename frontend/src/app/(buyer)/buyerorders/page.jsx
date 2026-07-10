@@ -2,38 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
 import { useDispatch, useSelector } from "react-redux";
-
 import { logoutUserThunk } from "../../../store/slices/authSlice";
 import { fetchOrders } from "../../../store/slices/orderSlice";
 import { fetchProfile } from "../../../store/slices/profileSlice";
 import { fetchAddresses } from "../../../store/slices/addressSlice";
-
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import ViewOrderDetails from "@/components/buyer/ViewOrderDetails";
-
-import {
-  Package,
-  CheckCircle,
-  Hourglass,
-  Search,
-  Truck,
-  XCircle,
-  RotateCcw,
-  Download,
-  ChevronRight,
-  ChevronLeft,
-  Calendar,
-  Loader2,
-  AlertCircle,
-  Inbox,
-} from "lucide-react";
+import { Package, CheckCircle, Hourglass,Search, Truck, XCircle, RotateCcw,Download,ChevronRight, ChevronLeft,Calendar, Loader2, AlertCircle,Inbox,} from "lucide-react";
 
 const ORDERS_PER_PAGE = 8;
 
@@ -143,7 +123,6 @@ const Page = () => {
     return statusMatch && searchMatch;
   });
 
-  // Reset to page 1 whenever filters change so you don't land on an empty page
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, searchQuery, dateRange]);
@@ -190,19 +169,12 @@ const Page = () => {
           </div>
 
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-            {/* Header */}
             <div>
               <h1 className="text-2xl font-bold text-[#0B1F3A] tracking-tight">
                 My Orders
               </h1>
 
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-                <span className="hover:text-[#0B1F3A] transition-colors cursor-pointer">
-                  Home
-                </span>
-                <ChevronRight size={13} className="text-gray-300" />
-                <span className="text-[#0B1F3A] font-medium">My Orders</span>
-              </div>
+              
             </div>
 
             {/* Filters */}
@@ -270,8 +242,6 @@ const Page = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Status Stat Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
                 [
@@ -333,7 +303,6 @@ const Page = () => {
               ))}
             </div>
 
-            {/* Orders Table */}
             <Card className="rounded-sm border border-[#E8E9ED] shadow-sm overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -499,7 +468,7 @@ const Page = () => {
                       <ChevronLeft size={16} />
                     </Button>
 
-                    <span className="min-w-[70px] text-center text-xs font-medium text-[#0B1F3A]">
+                    <span className="min-w-17.5 text-center text-xs font-medium text-[#0B1F3A]">
                       Page {safePage} of {totalPages}
                     </span>
 

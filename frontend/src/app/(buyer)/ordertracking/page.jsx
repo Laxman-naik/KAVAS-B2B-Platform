@@ -193,17 +193,8 @@ const Page = () => {
           </div>
  
           <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-            {/* Page header */}
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <Link href="/" className="hover:text-[#0B1F3A] transition">
-                  Home
-                </Link>
-                <ChevronRight size={14} />
-                <span className="text-[#0B1F3A] font-medium">
-                  Track Order
-                </span>
-              </div>
+              
               <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1F3A] tracking-tight">
                 Track Order
               </h1>
@@ -212,7 +203,7 @@ const Page = () => {
               </p>
             </div>
  
-            {/* Search panel */}
+
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
               <Card className="rounded-sm border border-[#E5E5E5] shadow-sm">
                 <CardContent className="p-5">
@@ -256,7 +247,7 @@ const Page = () => {
                 </CardContent>
               </Card>
  
-              <Card className="rounded-sm border border-[#E5E5E5] bg-gradient-to-br from-[#0B1F3A] to-[#16335E] text-white">
+              <Card className="rounded-sm border border-[#E5E5E5] bg-[#0B1F3A]  text-white">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2">
                     <ShieldCheck size={16} className="text-amber-300" />

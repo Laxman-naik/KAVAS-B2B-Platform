@@ -3,16 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  User,
-  MapPin,
-  Package,
-  Truck,
-  Heart,
-  KeyRound,
-  Headset,
-} from "lucide-react";
-
+import {User,MapPin,Package,Truck,Heart,KeyRound,Headset, MessageSquareQuote, CreditCard ,} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,10 +12,12 @@ const navItems = [
   { href: "/profile", label: "My Profile", icon: User },
   { href: "/buyerorders", label: "My Orders", icon: Package },
   { href: "/ordertracking", label: "Track Order", icon: Truck },
-  { href: "/buyerquotes", label: "My RFQ'S", icon: Truck},
+  { href: "/buyerquotes", label: "My RFQ'S", icon: MessageSquareQuote},
+   { href: "/paymentmethods", label: "Payment Methods", icon:  CreditCard },
   { href: "/favourites", label: "Wishlist", icon: Heart },
   { href: "/myaddresses", label: "Addresses", icon: MapPin },
   { href: "/changepassword", label: "Change Password", icon: KeyRound },
+  
 ];
 
 export default function ProfileSidebar({ user }) {

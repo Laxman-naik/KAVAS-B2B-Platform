@@ -256,7 +256,7 @@ const Page = () => {
  
       <div className="max-w-350 mx-auto px-4 py-6">
         <div className="mb-5">
-          <p className="text-xs text-gray-600" style={{ color: COLORS.muted }}>
+          <p className="text-xs text-gray-800" style={{ color: COLORS.muted }}>
             <Link href="/" className="hover:underline">
               Home
             </Link>
@@ -271,7 +271,7 @@ const Page = () => {
           New Arrivals
         </h1>
  
-        <p className="text-gray-500 text-sm mt-1" style={{ color: COLORS.muted }}>
+        <p className="text-gray-900 text-sm mt-1" style={{ color: COLORS.muted }}>
           Discover the latest products freshly added to our collection.
         </p>
       </div>
@@ -306,7 +306,7 @@ const Page = () => {
               Filters
               {activeFilterCount > 0 && (
                 <span
-                  className="text-[11px] px-1.5 py-[1px] rounded-full"
+                  className="text-[11px] px-1.5 py-px rounded-full"
                   style={{ backgroundColor: COLORS.accent, color: COLORS.primary }}
                 >
                   {activeFilterCount}
