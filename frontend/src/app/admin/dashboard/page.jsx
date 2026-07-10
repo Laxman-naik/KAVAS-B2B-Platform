@@ -4,26 +4,40 @@ import { loadAdminThunk } from "@/store/slices/authSlice";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders } from "@/store/slices/orderSlice";
+import { fetchAdminDashboard } from "@/store/slices/adminDashboardSlice";
 
 const statusStyles = {
-  fulfilled: "bg-green-500/20 text-green-400",
   pending: "bg-yellow-500/20 text-yellow-400",
+  shipped: "bg-blue-500/20 text-blue-400",
+  delivered: "bg-green-500/20 text-green-400",
+  paid: "bg-green-500/20 text-green-400",
+  fulfilled: "bg-green-500/20 text-green-400",
   disputed: "bg-red-500/20 text-red-400",
+  closed: "bg-purple-500/20 text-purple-400",
 };
 
 export default function DashboardBody() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { isAuthenticated, loading, initialized } = useSelector((state) => state.auth);
-  const { orders = [] } = useSelector((state) => state.order);
-  const latestOrders = orders.slice(0, 10);
+  const { isAuthenticated, loading, initialized } = useSelector(
+    (state) => state.auth,
+  );
+  const {
+    recentOrders,
+    recentUsers,
+    recentVendors,
+    recentRFQs,
+    recentTransactions,
+  } = useSelector((state) => state.adminDashboard);
 
+  const { stats } = useSelector((state) => state.adminDashboard);
+  const latestOrders = recentOrders;
   useEffect(() => {
     dispatch(loadAdminThunk());
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchAdminDashboard());
   }, [dispatch]);
 
   useEffect(() => {
@@ -34,31 +48,30 @@ export default function DashboardBody() {
   return (
     <div className="space-y-6  p-15 min-h-screen text-white  bg-[#0b1220]">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-
         {[
           {
             title: "TOTAL GMV",
-            value: "₹2.4M",
+            value: `₹${Number(stats.totalRevenue || 0).toLocaleString()}`,
             change: "↑ 12.4% vs last month",
             color: "text-green-400",
             border: "border-l-4 border-orange-400",
           },
           {
             title: "ACTIVE ORDERS",
-            value: "384",
+            value: stats.totalOrders || 0,
             change: "↑ 8 new today",
             color: "text-green-400",
           },
           {
             title: "ACTIVE VENDORS",
-            value: "128",
+            value: stats.totalVendors || 0,
             change: "↓ 2 this week",
             color: "text-red-400",
             border: "border-l-4 border-green-400",
           },
           {
             title: "PENDING RFQS",
-            value: "47",
+            value: stats.pendingRFQs || 0,
             change: "↑ 5 new",
             color: "text-green-400",
             border: "border-l-4 border-orange-400",
@@ -66,14 +79,13 @@ export default function DashboardBody() {
         ].map((card, i) => (
           <div
             key={i}
-            className={`bg-[#13263C] ${card.border || "border border-gray-700"
-              } rounded-xl p-5 transition duration-300 transform hover:scale-105 hover:shadow-xl`}
+            className={`bg-[#13263C] ${
+              card.border || "border border-gray-700"
+            } rounded-xl p-5 transition duration-300 transform hover:scale-105 hover:shadow-xl`}
           >
             <p className="text-xs text-gray-400">{card.title}</p>
             <h2 className="text-2xl font-bold mt-2">{card.value}</h2>
-            <p className={`text-xs mt-1 ${card.color}`}>
-              {card.change}
-            </p>
+            <p className={`text-xs mt-1 ${card.color}`}>{card.change}</p>
           </div>
         ))}
       </div>
@@ -97,15 +109,28 @@ export default function DashboardBody() {
             </thead>
 
             <tbody>
-              {orders.length === 0 ? (
-                <tr><td colSpan="4" className="py-4 text-center">No orders found</td></tr>
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="py-4 text-center">
+                    No orders found
+                  </td>
+                </tr>
               ) : (
-                latestOrders.map((order) => (
-                  <tr key={order.id} className="border-t border-gray-700 hover:bg-[#1B2A45] transition">
+                recentOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-t border-gray-700 hover:bg-[#1B2A45] transition"
+                  >
                     <td className="py-3">#{order.id.slice(0, 6)}</td>
                     <td>{order.buyer_name || "N/A"}</td>
                     <td>₹{order.total_amount}</td>
-                    <td><span className={`text-xs px-2 py-1 rounded-full ${statusStyles[order.status] || "bg-gray-500/20"}`}>{order.status}</span></td>
+                    <td>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${statusStyles[order.status] || "bg-gray-500/20"}`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
@@ -161,7 +186,73 @@ export default function DashboardBody() {
             ))}
           </div>
         </div>
+        {/* ===== Activity Feed ===== */}
+        <div className="bg-[#13263C] border border-gray-700 rounded-xl p-5">
+          <h2 className="font-semibold mb-4">Activity Feed</h2>
 
+          <div className="space-y-4 text-sm">
+            {/* Recent Vendors */}
+            {recentVendors.map((vendor) => (
+              <div
+                key={`vendor-${vendor.id}`}
+                className="flex gap-3 items-start hover:bg-[#1B2A45] p-2 rounded-lg transition"
+              >
+                <div className="w-2 h-2 mt-2 rounded-full bg-green-500"></div>
+
+                <div>
+                  <p>
+                    Vendor <b>{vendor.full_name}</b> is{" "}
+                    <span className="text-green-400">{vendor.status}</span>
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    {new Date(vendor.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {/* Recent RFQs */}
+            {recentRFQs.map((rfq) => (
+              <div
+                key={`rfq-${rfq.id}`}
+                className="flex gap-3 items-start hover:bg-[#1B2A45] p-2 rounded-lg transition"
+              >
+                <div className="w-2 h-2 mt-2 rounded-full bg-yellow-500"></div>
+
+                <div>
+                  <p>
+                    RFQ <b>{rfq.title}</b> ({rfq.quantity}) Budget ₹{rfq.budget}
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    {new Date(rfq.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {/* Recent Transactions */}
+            {recentTransactions.map((tx) => (
+              <div
+                key={`tx-${tx.id}`}
+                className="flex gap-3 items-start hover:bg-[#1B2A45] p-2 rounded-lg transition"
+              >
+                <div className="w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
+
+                <div>
+                  <p>
+                    Payment ₹{tx.amount} ({tx.status})
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    {new Date(tx.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

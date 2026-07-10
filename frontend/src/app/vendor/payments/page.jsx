@@ -261,7 +261,29 @@ import {
   getMyVendorPayouts,
   getVendorPayoutSummary,
   clearVendorPayoutState,
-} from "@/store/slices/vendorPayoutSlice"
+} from "@/store/slices/vendorPayoutSlice";
+
+import { getVendorPaymentHistory } from "@/store/slices/vendorPaymentHistorySlice";
+
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(amount || 0));
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 export default function PaymentsPayoutsBody() {
   const dispatch = useDispatch();
@@ -270,76 +292,18 @@ export default function PaymentsPayoutsBody() {
     (state) => state.vendorPayout
   );
 
+  const {
+    loading: historyLoading,
+    error: historyError,
+    transactions,
+  } = useSelector((state) => state.vendorPaymentHistory);
+
   const [showPopup, setShowPopup] = useState(false);
 
   const [form, setForm] = useState({
     amount: "",
     remarks: "",
   });
-
-  const payoutRequests = [
-    {
-      id: "PAYOUT-2024-025",
-      amount: "₹50,000",
-      date: "20 May 2024, 10:30 AM",
-      status: "Approved & Paid",
-    },
-    {
-      id: "PAYOUT-2024-024",
-      amount: "₹45,000",
-      date: "18 May 2024, 02:15 PM",
-      status: "Approved & Paid",
-    },
-    {
-      id: "PAYOUT-2024-023",
-      amount: "₹30,000",
-      date: "15 May 2024, 11:45 AM",
-      status: "Approved",
-    },
-    {
-      id: "PAYOUT-2024-022",
-      amount: "₹25,000",
-      date: "12 May 2024, 09:20 AM",
-      status: "Pending",
-    },
-    {
-      id: "PAYOUT-2024-021",
-      amount: "₹40,000",
-      date: "10 May 2024, 04:10 PM",
-      status: "Rejected",
-    },
-  ];
-
-  const recentPayouts = [
-    {
-      id: "PAY-2024-018",
-      amount: "₹50,000",
-      date: "20 May 2024, 02:30 PM",
-      ref: "REF123456789",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-017",
-      amount: "₹45,000",
-      date: "18 May 2024, 04:15 PM",
-      ref: "REF123456788",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-016",
-      amount: "₹30,000",
-      date: "15 May 2024, 01:20 PM",
-      ref: "REF123456787",
-      status: "Paid",
-    },
-    {
-      id: "PAY-2024-015",
-      amount: "₹40,000",
-      date: "10 May 2024, 05:30 PM",
-      ref: "REF123456786",
-      status: "Paid",
-    },
-  ];
 
   const statusStyle = (status) => {
     if (status === "PAID") return "bg-green-100 text-green-700";
@@ -401,6 +365,16 @@ export default function PaymentsPayoutsBody() {
     [summary]
   );
 
+  useEffect(() => {
+    dispatch(getMyVendorPayouts());
+    dispatch(getVendorPayoutSummary());
+    dispatch(getVendorPaymentHistory());
+
+    return () => {
+      dispatch(clearVendorPayoutState());
+    };
+  }, [dispatch]);
+
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8 text-[#1A1A1A]">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -417,6 +391,7 @@ export default function PaymentsPayoutsBody() {
           onClick={() => {
             dispatch(getMyVendorPayouts());
             dispatch(getVendorPayoutSummary());
+            dispatch(getVendorPaymentHistory());
           }}
           className="border border-[#0B1F3A] text-[#0B1F3A] px-4 py-2 rounded-sm font-semibold flex items-center gap-2 w-fit"
         >
@@ -604,6 +579,60 @@ export default function PaymentsPayoutsBody() {
         </tbody>
       </Table>
 
+      <Table title="Vendor Payment History">
+        <thead>
+          <tr className="bg-gray-50 text-left text-sm">
+            <Th>Order ID</Th>
+            <Th>Amount</Th>
+            <Th>Payment Status</Th>
+            <Th>Order Status</Th>
+            <Th>Paid At</Th>
+            <Th>Order Date</Th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {historyLoading && transactions.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                Loading payment history...
+              </td>
+            </tr>
+          ) : historyError ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-red-500">
+                {historyError}
+              </td>
+            </tr>
+          ) : transactions.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                No payment history found.
+              </td>
+            </tr>
+          ) : (
+            transactions.map((item) => (
+              <tr key={item.order_id} className="border-t text-sm hover:bg-gray-50">
+                <Td>{item.order_id?.slice(0, 8)}...</Td>
+                <Td>{formatMoney(item.total_amount)}</Td>
+                <Td>
+                  <span
+                    className={`px-3 py-1 rounded-sm text-xs font-semibold ${statusStyle(
+                      item.payment_status
+                    )}`}
+                  >
+                    {item.payment_status}
+                  </span>
+                </Td>
+                <Td>{item.order_status || "-"}</Td>
+                <Td>{item.paid_at ? formatDate(item.paid_at) : "Not Paid"}</Td>
+                <Td>{formatDate(item.created_at)}</Td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </Table>
+
       <div className="flex justify-center mt-5">
         <button className="border border-green-600 text-green-700 px-6 py-3 rounded-sm font-bold flex items-center gap-2 hover:bg-green-50">
           View All Payout History <ArrowRight size={18} />
@@ -700,7 +729,7 @@ function Table({ title, children }) {
     <section className="bg-white border border-[#E5E5E5] rounded-sm p-5 shadow-sm mb-5 overflow-hidden">
       <h3 className="text-lg font-bold text-[#0B1F3A] mb-4">{title}</h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-212.5">{children}</table>
+        <table className="w-full min-w-[850px]">{children}</table>
       </div>
     </section>
   );
