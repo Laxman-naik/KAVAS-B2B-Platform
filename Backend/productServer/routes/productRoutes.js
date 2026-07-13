@@ -23,7 +23,7 @@ router.patch("/:id/flash-deal",authMiddleware,productController.updateProductFla
 
 router.delete("/:id/flash-deal",authMiddleware,productController.removeProductFromFlashDeal);
 router.get("/:productId/reviews", reviewController.getProductReviews);
-router.post("/:productId/reviews", authMiddleware, reviewController.addProductReview);
+router.post("/:productId/reviews", authMiddleware, upload.array("media", 6), reviewController.addProductReview);
 router.get("/:id", productController.getSingleProduct);
 // router.put("/:id", productController.updateProduct);
 router.put("/:id", authMiddleware, productController.updateProduct);
