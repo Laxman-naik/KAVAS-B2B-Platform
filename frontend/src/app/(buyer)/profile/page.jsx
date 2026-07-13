@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,51 +13,275 @@ import {
   Package,
   Pencil,
   User,
+  X,
+  Loader2,
 } from "lucide-react";
-
+ 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
+ 
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAddresses } from "../../../store/slices/addressSlice";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import { fetchProfile } from "../../../store/slices/profileSlice";
+import { fetchProfile, updateProfile } from "../../../store/slices/profileSlice";
 import {
   fetchOrderStats,
   fetchRecentOrders,
 } from "../../../store/slices/orderSlice";
-
+ 
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import ViewOrderDetails from "@/components/buyer/ViewOrderDetails";
-
+ 
+// ─── Edit Profile Modal ────────────────────────────────────────────────────────
+function EditProfileModal({ open, onClose }) {
+  const dispatch = useDispatch();
+ 
+  // Pull live data + update states directly from Redux
+  const { profile, updating, updateError, updateSuccess } = useSelector(
+    (state) => state.profile
+  );
+ 
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+  });
+  const [localError, setLocalError] = useState("");
+ 
+  // Pre-fill form whenever modal opens or profile changes
+  useEffect(() => {
+    if (!open) return;
+ 
+    const fullName =
+      profile?.full_name || profile?.fullName || profile?.name || "";
+    const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
+    const firstName = profile?.firstName || parts[0] || "";
+    const lastName = profile?.lastName || parts.slice(1).join(" ") || "";
+ 
+    setForm({
+      firstName,
+      lastName,
+      email: profile?.email || "",
+      phone: profile?.phone || "",
+    });
+    setLocalError("");
+  }, [open, profile]);
+ 
+  // Auto-close on success
+  useEffect(() => {
+    if (updateSuccess && open) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [updateSuccess, open, onClose]);
+ 
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setLocalError("");
+  };
+ 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+ 
+    if (!form.firstName.trim()) {
+      setLocalError("First name is required.");
+      return;
+    }
+    if (!form.email.trim()) {
+      setLocalError("Email address is required.");
+      return;
+    }
+    if (form.phone && !/^[+\d\s\-()]{7,15}$/.test(form.phone.trim())) {
+      setLocalError("Please enter a valid phone number.");
+      return;
+    }
+ 
+    dispatch(updateProfile(form));
+  };
+ 
+  if (!open) return null;
+ 
+  const errorMessage = localError || updateError;
+ 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" onClick={!updating ? onClose : undefined} />
+ 
+      {/* Modal */}
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5E5]">
+          <h2 className="text-lg font-bold text-[#0B1F3A]">Edit Profile</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={updating}
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-40"
+          >
+            <X size={18} className="text-[#0B1F3A]" />
+          </button>
+        </div>
+ 
+        {/* Avatar row */}
+        <div className="flex items-center gap-4 px-6 pt-5 pb-1">
+          <div className="h-14 w-14 rounded-full bg-[#0B1F3A] flex items-center justify-center shrink-0">
+            <User className="text-white" size={26} />
+          </div>
+          <div>
+            <p className="font-semibold text-[#0B1F3A] text-sm">
+              {form.firstName} {form.lastName}
+            </p>
+            <p className="text-xs text-gray-400">{form.email}</p>
+          </div>
+        </div>
+ 
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                placeholder="First name"
+                disabled={updating}
+                className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] disabled:opacity-60 transition"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                placeholder="Last name"
+                disabled={updating}
+                className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] disabled:opacity-60 transition"
+              />
+            </div>
+          </div>
+ 
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">
+              Email Address <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              disabled={updating}
+              className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] disabled:opacity-60 transition"
+            />
+          </div>
+ 
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">
+              Mobile Number
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="+91 XXXXX XXXXX"
+              disabled={updating}
+              className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-sm text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] disabled:opacity-60 transition"
+            />
+          </div>
+ 
+          {/* Error */}
+          {errorMessage && !updateSuccess && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              {errorMessage}
+            </p>
+          )}
+ 
+          {/* Success */}
+          {updateSuccess && (
+            <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 flex items-center gap-2">
+              <CheckCircle2 size={14} />
+              Profile updated successfully!
+            </p>
+          )}
+ 
+          {/* Actions */}
+          <div className="flex gap-3 pt-1 pb-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={updating}
+              className="flex-1 border border-[#E5E5E5] rounded-xl py-2.5 text-sm font-semibold text-[#0B1F3A] hover:bg-gray-50 transition disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updating || updateSuccess}
+              className="flex-1 bg-[#0B1F3A] text-white rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {updating ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Saving…
+                </>
+              ) : updateSuccess ? (
+                <>
+                  <CheckCircle2 size={14} />
+                  Saved!
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+ 
+// ─── Page ──────────────────────────────────────────────────────────────────────
 const Page = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-
+ 
   const { profile } = useSelector((state) => state.profile);
   const { addresses } = useSelector((state) => state.address);
   const { stats, recentOrders } = useSelector((state) => state.order);
-  
-
+ 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openDetails, setOpenDetails] = useState(false);
-
+  const [editOpen, setEditOpen] = useState(false);
+ 
   useEffect(() => {
     dispatch(fetchProfile());
     dispatch(fetchAddresses());
     dispatch(fetchOrderStats());
     dispatch(fetchRecentOrders());
   }, [dispatch]);
-
+ 
   const fullName =
     profile?.full_name || profile?.fullName || profile?.name || "";
-
+ 
   const [parsedFirstName = "", ...rest] = String(fullName)
     .trim()
     .split(/\s+/)
     .filter(Boolean);
-
+ 
   const user = {
     firstName: profile?.firstName || parsedFirstName || "",
     lastName: profile?.lastName || rest.join(" ") || "",
@@ -65,44 +289,37 @@ const Page = () => {
     phone: profile?.phone || "",
     role: profile?.role,
   };
-
+ 
   const memberSince =
     profile?.createdAt || profile?.created_at
       ? new Date(profile?.createdAt || profile?.created_at)
           .toISOString()
           .split("T")[0]
       : "-";
-
+ 
   const handleLogout = async () => {
     await dispatch(logoutUserThunk());
     router.push("/login");
   };
-
+ 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
     setOpenDetails(true);
   };
-
+ 
   const statusBadge = (status) => {
     const value = String(status || "").toLowerCase();
-
-    if (value === "delivered" || value === "paid") {
+    if (value === "delivered" || value === "paid")
       return "bg-green-100 text-green-700 hover:bg-green-100";
-    }
-
-    if (value === "shipped") {
+    if (value === "shipped")
       return "bg-blue-100 text-blue-700 hover:bg-blue-100";
-    }
-
-    if (value === "cancelled") {
+    if (value === "cancelled")
       return "bg-red-100 text-red-700 hover:bg-red-100";
-    }
-
     return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100";
   };
-
+ 
   const addressCards = Array.isArray(addresses) ? addresses.slice(0, 2) : [];
-
+ 
   return (
     <>
       <div className="bg-[#0B1F3A] min-h-screen">
@@ -111,28 +328,25 @@ const Page = () => {
             <div className="lg:sticky lg:top-24 self-start">
               <ProfileSidebar user={user} onLogout={handleLogout} />
             </div>
-
+ 
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">
                     My Profile
                   </h1>
-
-                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                    <Link href="/" className="hover:underline">
-                      Home
-                    </Link>
-                    <ChevronRight size={14} />
-                    <span className="text-[#0B1F3A]">My Profile</span>
-                  </div>
                 </div>
-
-                <Button className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto">
+ 
+                <Button
+                  className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto"
+                  onClick={() => setEditOpen(true)}
+                >
                   <Pencil size={16} className="mr-2" /> Edit Profile
                 </Button>
               </div>
-
+ 
+              {/* Profile Card — reads live from Redux, updates instantly after save */}
               <Card className="rounded-sm border border-[#E5E5E5]">
                 <CardContent className="p-5">
                   <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-6 items-center">
@@ -146,7 +360,7 @@ const Page = () => {
                         </div>
                       </div>
                     </div>
-
+ 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div>
                         <p className="text-xs text-gray-500">Full Name</p>
@@ -154,180 +368,124 @@ const Page = () => {
                           {user.firstName} {user.lastName}
                         </p>
                       </div>
-
                       <div>
                         <p className="text-xs text-gray-500">Mobile Number</p>
                         <p className="font-semibold text-[#0B1F3A]">
                           {user.phone || "-"}
                         </p>
                       </div>
-
                       <div>
                         <p className="text-xs text-gray-500">Email Address</p>
                         <p className="font-semibold text-[#0B1F3A] break-all">
                           {user.email || "-"}
                         </p>
                       </div>
-
                       <div>
                         <p className="text-xs text-gray-500">Member Since</p>
-                        <p className="font-semibold text-[#0B1F3A]">
-                          {memberSince}
-                        </p>
+                        <p className="font-semibold text-[#0B1F3A]">{memberSince}</p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
+ 
+              {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Card className="rounded-sm border border-[#E5E5E5]">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-sm bg-green-50 flex items-center justify-center">
                       <Package className="text-green-700" size={18} />
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Total Orders</p>
-                      <p className="text-lg font-bold text-[#0B1F3A]">
-                        {stats?.totalOrders || 0}
-                      </p>
-                      <Link
-                        href="/buyerorders"
-                        className="text-xs text-[#0B1F3A] hover:underline"
-                      >
+                      <p className="text-lg font-bold text-[#0B1F3A]">{stats?.totalOrders || 0}</p>
+                      <Link href="/buyerorders" className="text-xs text-[#0B1F3A] hover:underline">
                         View all orders →
                       </Link>
                     </div>
                   </CardContent>
                 </Card>
-
+ 
                 <Card className="rounded-sm border border-[#E5E5E5]">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-sm bg-yellow-50 flex items-center justify-center">
                       <ClipboardList className="text-yellow-700" size={18} />
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Pending Orders</p>
-                      <p className="text-lg font-bold text-[#0B1F3A]">
-                        {stats?.pendingOrders || 0}
-                      </p>
-                      <span className="text-xs text-[#0B1F3A]">
-                        View details →
-                      </span>
+                      <p className="text-lg font-bold text-[#0B1F3A]">{stats?.pendingOrders || 0}</p>
+                      <span className="text-xs text-[#0B1F3A]">View details →</span>
                     </div>
                   </CardContent>
                 </Card>
-
+ 
                 <Card className="rounded-sm border border-[#E5E5E5]">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-sm bg-blue-50 flex items-center justify-center">
                       <CheckCircle2 className="text-blue-700" size={18} />
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Delivered Orders</p>
-                      <p className="text-lg font-bold text-[#0B1F3A]">
-                        {stats?.deliveredOrders || 0}
-                      </p>
-                      <span className="text-xs text-[#0B1F3A]">
-                        View details →
-                      </span>
+                      <p className="text-lg font-bold text-[#0B1F3A]">{stats?.deliveredOrders || 0}</p>
+                      <span className="text-xs text-[#0B1F3A]">View details →</span>
                     </div>
                   </CardContent>
                 </Card>
-
+ 
                 <Card className="rounded-sm border border-[#E5E5E5]">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="h-10 w-10 rounded-sm bg-green-50 flex items-center justify-center">
                       <IndianRupee className="text-green-700" size={18} />
                     </div>
-
                     <div>
                       <p className="text-xs text-gray-500">Total Spent</p>
                       <p className="text-lg font-bold text-[#0B1F3A]">
                         ₹{Number(stats?.totalSpent || 0).toLocaleString()}
                       </p>
-                      <span className="text-xs text-[#0B1F3A]">
-                        View statement →
-                      </span>
+                      <span className="text-xs text-[#0B1F3A]">View statement →</span>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
+ 
+              {/* Recent Orders */}
               <Card className="rounded-sm border border-[#E5E5E5]">
                 <CardContent className="p-0">
                   <div className="px-4 py-3 border-b border-[#E5E5E5] flex items-center justify-between">
-                    <p className="font-semibold text-[#0B1F3A] text-sm">
-                      Recent Orders
-                    </p>
-                    <Link
-                      href="/buyerorders"
-                      className="text-xs text-[#D4AF37] hover:underline"
-                    >
+                    <p className="font-semibold text-[#0B1F3A] text-sm">Recent Orders</p>
+                    <Link href="/buyerorders" className="text-xs text-[#D4AF37] hover:underline">
                       View All Orders →
                     </Link>
                   </div>
-
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-gray-50 text-xs text-gray-500">
-                          <th className="text-left font-medium px-4 py-3">
-                            Order ID
-                          </th>
-                          <th className="text-left font-medium px-4 py-3">
-                            Date
-                          </th>
-                          <th className="text-left font-medium px-4 py-3">
-                            Amount
-                          </th>
-                          <th className="text-left font-medium px-4 py-3">
-                            Status
-                          </th>
-                          <th className="text-left font-medium px-4 py-3">
-                            Action
-                          </th>
+                          <th className="text-left font-medium px-4 py-3">Order ID</th>
+                          <th className="text-left font-medium px-4 py-3">Date</th>
+                          <th className="text-left font-medium px-4 py-3">Amount</th>
+                          <th className="text-left font-medium px-4 py-3">Status</th>
+                          <th className="text-left font-medium px-4 py-3">Action</th>
                         </tr>
                       </thead>
-
                       <tbody>
-                        {Array.isArray(recentOrders) &&
-                        recentOrders.length > 0 ? (
+                        {Array.isArray(recentOrders) && recentOrders.length > 0 ? (
                           recentOrders.map((o) => (
-                            <tr
-                              key={o.id || o.order_id}
-                              className="border-t"
-                            >
+                            <tr key={o.id || o.order_id} className="border-t">
                               <td className="px-4 py-4 font-semibold text-[#0B1F3A]">
-                                {o.order_number ||
-                                  o.orderId ||
-                                  o.id ||
-                                  o.order_id}
+                                {o.order_number || o.orderId || o.id || o.order_id}
                               </td>
-
                               <td className="px-4 py-4 text-gray-600">
                                 {o.date || o.createdAt || o.created_at || "-"}
                               </td>
-
                               <td className="px-4 py-4 font-semibold text-[#0B1F3A]">
-                                ₹
-                                {Number(
-                                  o.total_amount ||
-                                    o.totalAmount ||
-                                    o.amount ||
-                                    0
-                                ).toLocaleString()}
+                                ₹{Number(o.total_amount || o.totalAmount || o.amount || 0).toLocaleString()}
                               </td>
-
                               <td className="px-4 py-4">
                                 <Badge className={statusBadge(o.status)}>
                                   {o.status || "Processing"}
                                 </Badge>
                               </td>
-
                               <td className="px-4 py-4">
                                 <button
                                   type="button"
@@ -341,10 +499,7 @@ const Page = () => {
                           ))
                         ) : (
                           <tr>
-                            <td
-                              colSpan={5}
-                              className="px-4 py-6 text-center text-sm text-gray-500"
-                            >
+                            <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500">
                               No recent orders found.
                             </td>
                           </tr>
@@ -354,38 +509,28 @@ const Page = () => {
                   </div>
                 </CardContent>
               </Card>
-
+ 
+              {/* Saved Addresses */}
               <Card className="rounded-sm border border-[#E5E5E5]">
                 <CardContent className="p-0">
                   <div className="px-4 py-3 border-b border-[#E5E5E5] flex items-center justify-between">
-                    <p className="font-semibold text-[#0B1F3A] text-sm">
-                      Saved Addresses
-                    </p>
-                    <Link
-                      href="/myaddresses"
-                      className="text-xs text-[#D4AF37] hover:underline"
-                    >
+                    <p className="font-semibold text-[#0B1F3A] text-sm">Saved Addresses</p>
+                    <Link href="/myaddresses" className="text-xs text-[#D4AF37] hover:underline">
                       Manage Addresses →
                     </Link>
                   </div>
-
                   <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     {addressCards.map((a) => (
-                      <Card
-                        key={a.id}
-                        className="rounded-sm border border-[#E5E5E5]"
-                      >
+                      <Card key={a.id} className="rounded-sm border border-[#E5E5E5]">
                         <CardContent className="p-4">
                           <div className="flex items-start gap-3">
                             <div className="h-9 w-9 rounded-sm bg-gray-50 flex items-center justify-center">
                               <MapPin size={18} className="text-gray-700" />
                             </div>
-
                             <div className="min-w-0">
                               <p className="font-semibold text-[#0B1F3A] text-sm">
                                 {a?.label || "Address"}
                               </p>
-
                               <p className="text-xs text-gray-500 mt-1 line-clamp-3">
                                 {a.address_line1}
                                 {a.address_line2 ? `, ${a.address_line2}` : ""}
@@ -398,13 +543,10 @@ const Page = () => {
                         </CardContent>
                       </Card>
                     ))}
-
+ 
                     <Card className="rounded-sm border border-dashed border-[#E5E5E5]">
                       <CardContent className="p-4 h-full flex items-center justify-center">
-                        <Link
-                          href="/myaddresses"
-                          className="text-sm font-semibold text-[#0B1F3A] hover:underline"
-                        >
+                        <Link href="/myaddresses" className="text-sm font-semibold text-[#0B1F3A] hover:underline">
                           + Add New Address
                         </Link>
                       </CardContent>
@@ -416,14 +558,19 @@ const Page = () => {
           </div>
         </div>
       </div>
-
+ 
       <ViewOrderDetails
         open={openDetails}
         onClose={() => setOpenDetails(false)}
         order={selectedOrder}
       />
+ 
+      <EditProfileModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
     </>
   );
 };
-
+ 
 export default Page;

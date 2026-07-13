@@ -177,7 +177,7 @@ export default function ProductManagementBody() {
   console.log("Organization ID:", organizationId);
 
   return (
-    <div className="bg-[#FFF8EC] min-h-screen p-4 sm:p-6 lg:p-8">
+    <div className="bg-white min-h-screen p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -190,13 +190,7 @@ export default function ProductManagementBody() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="h-10 rounded-lg border border-[#E5E5E5] bg-white px-4 text-sm font-semibold text-[#0B1F3A] hover:bg-[#FFF8EC] inline-flex items-center gap-2"
-            >
-              <Download size={16} />
-              Export
-            </button>
+            
 
             <button
               type="button"
@@ -208,36 +202,6 @@ export default function ProductManagementBody() {
             </button>
           </div>
         </div>
-
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#EFFFF6] p-4">
-            <div className="text-sm font-extrabold text-green-700">
-              {summary.active}
-            </div>
-            <div className="mt-3 text-xs text-gray-600">Active Products</div>
-          </div>
-
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFF7E6] p-4">
-            <div className="text-sm font-extrabold text-yellow-700">
-              {summary.pending}
-            </div>
-            <div className="mt-3 text-xs text-gray-600">Pending Review</div>
-          </div>
-
-          <div className="rounded-2xl border border-[#E5E5E5] bg-[#FFECEC] p-4">
-            <div className="text-sm font-extrabold text-red-700">
-              {summary.rejected}
-            </div>
-            <div className="mt-3 text-xs text-gray-600">Rejected</div>
-          </div>
-
-          <div className="rounded-2xl border border-[#E5E5E5] bg-white p-4">
-            <div className="text-sm font-extrabold text-gray-700">
-              {summary.inactive}
-            </div>
-            <div className="mt-3 text-xs text-gray-600">Inactive</div>
-          </div>
-        </div> */}
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -375,7 +339,7 @@ export default function ProductManagementBody() {
           {enrichedProducts.map((product) => (
             <div
               key={product.id || product.sku}
-              className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden shadow-sm hover:shadow-md transition"
+              className="bg-white rounded-sm border border-[#E5E5E5] overflow-hidden shadow-sm hover:shadow-md transition"
             >
               <div className="relative">
                 <img

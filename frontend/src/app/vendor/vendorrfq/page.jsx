@@ -24,6 +24,48 @@ const statusStyles = {
   declined: "bg-red-100 text-red-700",
 };
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_PRODUCT_API_URL || "http://localhost:5002";
+
+const isUUID = (value) => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value || ""
+  );
+};
+
+const getVendorOrgId = () => {
+  if (typeof window === "undefined") return null;
+
+  const directOrgId =
+    localStorage.getItem("vendor_organization_id") ||
+    localStorage.getItem("organization_id") ||
+    localStorage.getItem("organizationId");
+
+  if (isUUID(directOrgId)) {
+    return directOrgId;
+  }
+
+  const token =
+    localStorage.getItem("vendor_accessToken") ||
+    localStorage.getItem("accessToken");
+
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      return (
+        payload.organization_id ||
+        payload.organizationId ||
+        payload.org_id
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  return null;
+};
+
 const VendorRFQ = () => {
   const [rfqs, setRfqs] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -33,7 +75,6 @@ const VendorRFQ = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const vendorId = "YOUR_VENDOR_ORG_ID";
 
   const [quoteForm, setQuoteForm] = useState({
     unit_price: "",
@@ -51,21 +92,30 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-      const {data} = await productapi.get("/api/rfqs",{
+      const vendorOrgId = getVendorOrgId();
+
+      console.log("Vendor:", vendorOrgId);
+
+      const { data } = await productapi.get("/api/rfqs", {
         headers: {
-          "vendor-id": vendorId,
+          "vendor-id": vendorOrgId,
         },
       });
+
       setRfqs(data.rfqs || []);
       setSelected(data.rfqs?.[0] || null);
     } catch (err) {
-      console.error("Load RFQs error:", err);
+      console.error(err);
       setRfqs([]);
       setSelected(null);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadRFQs();
+  }, []);
 
   const openQuoteModal = () => {
     if (!selected) return;
@@ -99,7 +149,7 @@ const VendorRFQ = () => {
 
       const quote = {
         rfq_id: selected.rfq_id,
-        vendor_org_id: vendorId,
+        vendor_org_id: getVendorOrgId(),
         unit_price: Number(quoteForm.unit_price),
         total_price: Number(quoteForm.total_price),
         quantity: selected.quantity,
@@ -287,9 +337,8 @@ const VendorRFQ = () => {
                   <tr
                     key={item.id}
                     onClick={() => setSelected(item)}
-                    className={`border-t cursor-pointer hover:bg-slate-50 ${
-                      selected?.id === item.id ? "bg-blue-50" : ""
-                    }`}
+                    className={`border-t cursor-pointer hover:bg-slate-50 ${selected?.id === item.id ? "bg-blue-50" : ""
+                      }`}
                   >
                     <td className="p-4 font-semibold text-slate-800">
                       {item.title || "Untitled RFQ"}
@@ -303,10 +352,9 @@ const VendorRFQ = () => {
 
                     <td>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          statusStyles[item.status] ||
+                        className={`px-3 py-1 rounded-full text-sm ${statusStyles[item.status] ||
                           "bg-slate-100 text-slate-700"
-                        }`}
+                          }`}
                       >
                         {item.status}
                       </span>

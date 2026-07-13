@@ -238,7 +238,6 @@ const productSlice = createSlice({
     cartLoading: false,
     cartSuccess: false,
 
-    success: false,
     error: null,
   },
 
