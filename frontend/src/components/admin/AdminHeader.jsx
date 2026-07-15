@@ -2,7 +2,8 @@
  import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Search, Bell, HelpCircle, User, Settings, LogOut } from "lucide-react";
+import { Search, HelpCircle, User, Settings, LogOut } from "lucide-react";
+import NotificationBell from "@/components/ui/notifications/NotificationBell";
 import { useDispatch } from "react-redux";
 import { logoutAdminThunk } from "@/store/slices/authSlice";
 
@@ -134,7 +135,7 @@ const handleLogout = async () => {
             />
           </div>
 
-          <Bell className="w-5 h-5" />
+          <NotificationBell variant="admin" />
           <HelpCircle className="w-5 h-5" />
 
           <div className="relative" ref={dropdownRef}>

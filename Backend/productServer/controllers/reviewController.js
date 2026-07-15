@@ -2,9 +2,7 @@ const pool = require("../config/db");
 const uploadToCloudinary = require("../services/uploadToCloudinary");
 const fs = require("fs");
 
-/* ─── helpers ─────────────────────────────────────────────────────────── */
 
-/** Upload a single temp file to Cloudinary and delete the temp file. */
 const uploadFileAndClean = async (file, folder, resourceType) => {
   try {
     const result = await uploadToCloudinary(file.path, folder, resourceType);
@@ -12,11 +10,11 @@ const uploadFileAndClean = async (file, folder, resourceType) => {
   } finally {
     try {
       fs.unlinkSync(file.path);
-    } catch (_) {}
+    } catch (_) { }
   }
 };
 
-/* ─── GET /api/products/:productId/reviews ───────────────────────────── */
+
 exports.getProductReviews = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -48,7 +46,7 @@ exports.getProductReviews = async (req, res) => {
   }
 };
 
-/* ─── POST /api/products/:productId/reviews ──────────────────────────── */
+
 exports.addProductReview = async (req, res) => {
   const client = await pool.connect();
 
@@ -61,7 +59,7 @@ exports.addProductReview = async (req, res) => {
       return res.status(400).json({ message: "Rating must be 1 to 5" });
     }
 
-    /* ── Upload media to Cloudinary ── */
+
     const files = req.files || [];
 
     const imageFiles = files.filter((f) =>
@@ -85,7 +83,7 @@ exports.addProductReview = async (req, res) => {
 
     await client.query("BEGIN");
 
-    /* ── Verify purchase ── */
+
     const bought = await client.query(
       `
       SELECT 1
@@ -106,7 +104,7 @@ exports.addProductReview = async (req, res) => {
       });
     }
 
-    /* ── Upsert review ── */
+
     const reviewRes = await client.query(
       `
       INSERT INTO reviews (product_id, user_id, rating, comment, image_urls, video_urls)
@@ -130,7 +128,7 @@ exports.addProductReview = async (req, res) => {
       ]
     );
 
-    /* ── Refresh product aggregates ── */
+
     await client.query(
       `
       UPDATE products

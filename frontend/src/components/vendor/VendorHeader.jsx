@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, ChevronDown, HelpCircle, Search } from "lucide-react";
+import { ChevronDown, HelpCircle, Search } from "lucide-react";
+import NotificationBell from "@/components/ui/notifications/NotificationBell";
 import { vendorNavItems } from "./vendorNavConfig";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutVendor } from "../../store/slices/vendorSlice";
@@ -71,14 +72,7 @@ const VendorHeader = ({ collapsed }) => {
             />
           </div>
 
-          <button
-            type="button"
-            className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-[#E5E5E5] bg-white hover:bg-[#FFF8EC]"
-            aria-label="Notifications"
-          >
-            <Bell size={16} className="text-gray-700" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
-          </button>
+          <NotificationBell variant="vendor" />
 
           <button
             type="button"

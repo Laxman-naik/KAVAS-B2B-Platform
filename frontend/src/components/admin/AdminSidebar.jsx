@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Home,
   BarChart2,
+  Bell,
   Users,
   ShoppingCart,
   FileText,
@@ -32,6 +33,7 @@ const menuItems = [
   { title: "Payouts", icon: FileText, path: "/admin/payouts" },
 
   { section: "SYSTEM" },
+  { title: "Notifications", icon: Bell, path: "/admin/notifications" },
   { title: "Settings", icon: Settings, path: "/admin/settings" },
   { title: "Compliance", icon: Shield, path: "/admin/compliance" },
 ];
