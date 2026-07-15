@@ -9,7 +9,8 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const vendorRoutes = require("./routes/vendorRoutes");
-const profileRoutes = require("./routes/profileRoutes")
+const profileRoutes = require("./routes/profileRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const passport = require("./config/passport");
 
 
@@ -51,6 +52,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
 app.use((req, res) => {

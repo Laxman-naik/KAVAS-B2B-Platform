@@ -18,6 +18,8 @@ import {
   logoutVendorAPI,
   getVendorProfileSelfAPI,
   changeVendorPasswordAPI,
+  getPublicVendorsAPI,
+  getVendorDetailsAPI
 } from "../../services/vendorService";
 
 /* ================= THUNKS ================= */
@@ -228,11 +230,42 @@ export const saveStoreDetails = createAsyncThunk(
   }
 );
 
+export const fetchPublicVendors = createAsyncThunk(
+  "vendor/publicList",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await getPublicVendorsAPI();
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
+export const fetchVendorDetails = createAsyncThunk(
+  "vendor/publicDetails",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await getVendorDetailsAPI(id);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data || err.message
+      );
+    }
+  }
+);
+
 /* ================= STATE ================= */
 
 const initialState = {
   loading: false,
   error: null,
+  publicVendors: [],
+  selectedVendor: null,
+
 
   accessToken:
     typeof window !== "undefined"
@@ -475,6 +508,14 @@ const vendorSlice = createSlice({
         }
       })
 
+      .addCase(fetchPublicVendors.fulfilled, (state, action) => {
+        state.publicVendors = action.payload;
+      })
+
+      .addCase(fetchVendorDetails.fulfilled, (state, action) => {
+        state.selectedVendor = action.payload;
+      })
+
       .addMatcher(
         (action) =>
           action.type.startsWith("vendor/") && action.type.endsWith("/pending"),
@@ -514,8 +555,8 @@ export const changeVendorPassword = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to change password"
+        err.message ||
+        "Failed to change password"
       );
     }
   }

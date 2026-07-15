@@ -11,6 +11,7 @@ const {
   markAllAsRead,
   deleteNotification,
   deleteAllNotifications,
+  broadcastFlashDeal,
 } = require("../controllers/notificationController");
 
 // ── Public-facing (buyer) routes — all require auth ──────────
@@ -25,7 +26,10 @@ router.delete("/delete-all",     authMiddleware, deleteAllNotifications);
 router.delete("/:id",            authMiddleware, deleteNotification);
 
 // ── Internal / admin route — create a notification ───────────
-// (In production, protect this with an admin/service-key middleware)
 router.post("/",                 authMiddleware, createNotification);
 
+// ── Flash Deals — vendor/admin broadcast to all buyers ───────
+router.post("/flash-deal",       authMiddleware, broadcastFlashDeal);
+
 module.exports = router;
+

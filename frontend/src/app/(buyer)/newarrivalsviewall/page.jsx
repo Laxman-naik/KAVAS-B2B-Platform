@@ -372,6 +372,7 @@ const Page = () => {
               {PRICE_OPTIONS.map((opt) => (
                 <label key={opt.label} className="flex items-center gap-2 text-sm mb-2 cursor-pointer">
                   <input
+
                     type="checkbox"
                     checked={filters.price.includes(opt.label)}
                     onChange={() => handleFilterChange("price", opt.label)}
@@ -379,7 +380,11 @@ const Page = () => {
                   />
                   {opt.label}
                 </label>
+
+
               ))}
+
+
             </div>
  
             {/* Rating */}

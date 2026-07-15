@@ -276,3 +276,85 @@ exports.deleteAllNotifications = async (req, res) => {
     return res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+//  POST /api/notifications/flash-deal
+//  Broadcast a Flash Deal "Offers" notification.
+//
+//  Body (JSON):
+//    title    – required  e.g. "Flash Sale: 40% off Cotton Fabrics 🔥"
+//    message  – required  e.g. "Valid for next 24 hours only..."
+//    user_id  – optional  if provided, sends only to that user
+//                         if omitted, sends to ALL buyers in the DB
+//
+//  Access:  vendor or admin token only
+// ─────────────────────────────────────────────────────────────
+exports.broadcastFlashDeal = async (req, res) => {
+  try {
+    const callerRole = req.user?.role;
+    if (!["vendor", "admin"].includes(callerRole)) {
+      return res.status(403).json({
+        message: "Only vendors or admins can broadcast flash deals",
+      });
+    }
+
+    const { title, message, user_id } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({
+        message: "title and message are required",
+      });
+    }
+
+    let insertedCount = 0;
+
+    if (user_id) {
+      // Single-user flash deal
+      await pool.query(
+        `INSERT INTO notifications (user_id, title, message, type, role)
+         VALUES ($1, $2, $3, 'Offers', 'buyer')`,
+        [user_id, title, message]
+      );
+      insertedCount = 1;
+    } else {
+      // Broadcast to ALL buyers
+      const buyersRes = await pool.query(
+        `SELECT id FROM users WHERE role = 'buyer'`
+      );
+
+      const buyers = buyersRes.rows;
+
+      if (!buyers.length) {
+        return res.status(200).json({
+          success: true,
+          message: "No buyers found to notify",
+          insertedCount: 0,
+        });
+      }
+
+      // Bulk insert using unnest for performance
+      const userIds  = buyers.map((b) => b.id);
+      const titles   = buyers.map(() => title);
+      const messages = buyers.map(() => message);
+      const types    = buyers.map(() => "Offers");
+      const roles    = buyers.map(() => "buyer");
+
+      await pool.query(
+        `INSERT INTO notifications (user_id, title, message, type, role)
+         SELECT * FROM unnest($1::uuid[], $2::text[], $3::text[], $4::text[], $5::text[])`,
+        [userIds, titles, messages, types, roles]
+      );
+
+      insertedCount = buyers.length;
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `Flash deal notification sent to ${insertedCount} buyer(s)`,
+      insertedCount,
+    });
+  } catch (err) {
+    console.error("broadcastFlashDeal error:", err.message);
+    return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+};

@@ -1,5 +1,5 @@
 "use client";
-
+import { productapi } from "@/lib/axios"
 import { useEffect, useState } from "react";
 import { productapi } from "@/lib/axios";
 import {
@@ -92,6 +92,7 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
+<<<<<<< HEAD
       const vendorOrgId = getVendorOrgId();
 
       console.log("Vendor:", vendorOrgId);
@@ -100,14 +101,18 @@ const VendorRFQ = () => {
         headers: {
           "vendor-id": vendorOrgId,
         },
+=======
+      const { data } = await productapi.get("/api/vendor/rfqs", {
+        headers: { "vendor-id": vendorId }
+>>>>>>> 154b6f145ff79e823a80a4033db5c08500b6f47a
       });
 
       setRfqs(data.rfqs || []);
       setSelected(data.rfqs?.[0] || null);
+
     } catch (err) {
       console.error(err);
       setRfqs([]);
-      setSelected(null);
     } finally {
       setLoading(false);
     }
@@ -160,15 +165,7 @@ const VendorRFQ = () => {
         notes: quoteForm.notes || null,
       };
 
-      const res = await fetch("/api/vendor/quotes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(quote),
-      });
-
-      const data = await res.json();
+      const { data } = await productapi.post("/api/vendor/quotes", quote);
 
       if (!data.success) {
         alert(data.message || "Failed to submit quote");
@@ -179,6 +176,7 @@ const VendorRFQ = () => {
 
       setShowQuoteModal(false);
       await loadRFQs();
+
     } catch (err) {
       console.error("Submit quote error:", err);
       alert("Something went wrong");
@@ -194,17 +192,10 @@ const VendorRFQ = () => {
     if (!confirmDecline) return;
 
     try {
-      const res = await fetch(`/api/vendor/rfqs/${selected.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "declined",
-        }),
-      });
-
-      const data = await res.json();
+      const { data } = await productapi.patch(
+        `/api/vendor/rfqs/${selected.id}`,
+        { status: "declined" }
+      );
 
       if (!data.success) {
         alert(data.message || "Failed to decline RFQ");
@@ -212,6 +203,7 @@ const VendorRFQ = () => {
       }
 
       await loadRFQs();
+
     } catch (err) {
       console.error("Decline RFQ error:", err);
       alert("Failed to decline RFQ");

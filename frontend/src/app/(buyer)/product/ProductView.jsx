@@ -376,7 +376,7 @@ export default function ProductView() {
                 </button>
               </div>
 
-              <div className="h-80 rounded-sm overflow-hidden lg:h-[460px]">
+              <div className="h-80 rounded-sm overflow-hidden lg:h-115">
                 {selectedMedia?.type === "video" ? (
                   <video
                     src={selectedMedia.src}
@@ -746,7 +746,7 @@ export default function ProductView() {
                 ) : (
                   <div
                     key={i}
-                    className="h-[420px] animate-pulse rounded-xl border border-gray-200 bg-gray-100"
+                    className="h-105 animate-pulse rounded-xl border border-gray-200 bg-gray-100"
                   />
                 )
               )}

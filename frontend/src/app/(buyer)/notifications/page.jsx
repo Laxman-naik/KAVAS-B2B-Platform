@@ -6,13 +6,16 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
+import {
+  fetchNotificationsThunk,
+  markAsReadThunk,
+  markAllReadThunk,
+  deleteNotificationThunk,
+  deleteAllNotificationsThunk,
+} from "@/store/slices/notificationSlice";
 import NotificationCard from "@/components/ui/notifications/NotificationCard";
 import SkeletonCard from "@/components/ui/notifications/SkeletonCard";
-import {
-  BUYER_NOTIFICATIONS,
-  BUYER_FILTER_TABS,
-  SORT_OPTIONS,
-} from "@/lib/notificationData";
+import { BUYER_FILTER_TABS, SORT_OPTIONS } from "@/lib/notificationData";
 import {
   Bell,
   Search,
@@ -21,16 +24,17 @@ import {
   ChevronRight,
   ChevronLeft,
   SortAsc,
+  Package,
+  RefreshCw,
 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────────
 const PAGE_SIZE = 6;
 
-// ── Empty State Component ──────────────────────────────────────
+// ── Empty State ────────────────────────────────────────────────
 function EmptyState({ onExplore }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      {/* Animated bell illustration */}
       <div className="relative mb-6">
         <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-[#0B1F3A]/[0.06] to-[#D4AF37]/[0.08] flex items-center justify-center shadow-inner border border-[#D4AF37]/20">
           <Bell className="h-10 w-10 text-[#D4AF37]/60" />
@@ -38,17 +42,13 @@ function EmptyState({ onExplore }) {
         <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-[#D4AF37]/15 border-2 border-white flex items-center justify-center shadow-sm">
           <span className="text-[11px] font-bold text-[#D4AF37]">0</span>
         </div>
-        {/* Decorative rings */}
         <div className="absolute inset-0 rounded-3xl border-2 border-[#D4AF37]/10 scale-110 animate-pulse" />
-        <div className="absolute inset-0 rounded-3xl border border-[#D4AF37]/05 scale-125" />
       </div>
-
       <h3 className="text-[18px] font-bold text-[#0B1F3A]">No notifications yet</h3>
       <p className="text-[14px] text-slate-500 mt-2 max-w-xs leading-relaxed">
         You&apos;re all caught up! We&apos;ll notify you when orders update, payments arrive, or
         new offers are available.
       </p>
-
       <button
         onClick={onExplore}
         className="mt-6 inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#c9a832] text-[#0B1F3A] font-semibold text-[14px] rounded-2xl px-6 py-3 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5"
@@ -161,17 +161,20 @@ function Pagination({ page, totalPages, onPage }) {
 
 // ── Main Page ──────────────────────────────────────────────────
 export default function NotificationsPage() {
-  // ── Auth ───────────────────────────────────────────────────
-  const authUser = useSelector((state) => state.auth.user);
-  const dispatch = useDispatch();
-  const router = useRouter();
+  const dispatch  = useDispatch();
+  const router    = useRouter();
+  const authUser  = useSelector((state) => state.auth.user);
+  const { items: notifications, pagination, loading, error } = useSelector(
+    (state) => state.notifications
+  );
 
+  /* ── User info ────────────────────────────────────────────── */
   const fullName = authUser?.full_name || authUser?.fullName || authUser?.name || "";
   const [firstName = "", ...rest] = String(fullName).trim().split(/\s+/).filter(Boolean);
   const user = {
     firstName: authUser?.firstName || firstName,
-    lastName: authUser?.lastName || rest.join(" "),
-    email: authUser?.email || "",
+    lastName:  authUser?.lastName  || rest.join(" "),
+    email:     authUser?.email || "",
   };
 
   const handleLogout = async () => {
@@ -179,45 +182,35 @@ export default function NotificationsPage() {
     router.push("/login");
   };
 
-  // ── Notification state ─────────────────────────────────────
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Simulate async load
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setNotifications(BUYER_NOTIFICATIONS);
-      setLoading(false);
-    }, 900);
-    return () => clearTimeout(t);
-  }, []);
-
-  // ── Filters ─────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("All");
-  const [sortOrder, setSortOrder] = useState("Latest");
-  const [searchQuery, setSearchQuery] = useState("");
+  /* ── Filters ─────────────────────────────────────────────── */
+  const [activeTab,      setActiveTab]      = useState("All");
+  const [sortOrder,      setSortOrder]      = useState("Latest");
+  const [searchQuery,    setSearchQuery]    = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [page, setPage] = useState(1);
+  const [page,           setPage]           = useState(1);
 
-  // Debounce search
+  /* Debounce search */
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(t);
   }, [searchQuery]);
 
-  // Reset to page 1 on filter change
-  useEffect(() => {
-    setPage(1);
-  }, [activeTab, sortOrder, debouncedQuery]);
+  /* Reset page on filter change */
+  useEffect(() => { setPage(1); }, [activeTab, sortOrder, debouncedQuery]);
 
-  // ── Computed counts ─────────────────────────────────────────
-  const counts = useMemo(() => {
-    return {
-      total:  notifications.length,
-      unread: notifications.filter((n) => !n.is_read).length,
-      read:   notifications.filter((n) => n.is_read).length,
-    };
-  }, [notifications]);
+  /* ── Fetch from API whenever filters change ──────────────── */
+  useEffect(() => {
+    const params = { limit: 50 }; // fetch a large batch; client-side pagination below
+    if (activeTab !== "All") params.type = activeTab;
+    dispatch(fetchNotificationsThunk(params));
+  }, [dispatch, activeTab]);
+
+  /* ── Computed counts ─────────────────────────────────────── */
+  const counts = useMemo(() => ({
+    total:  notifications.length,
+    unread: notifications.filter((n) => !n.is_read).length,
+    read:   notifications.filter((n) =>  n.is_read).length,
+  }), [notifications]);
 
   const tabCounts = useMemo(() => {
     const all = { All: notifications.length };
@@ -227,10 +220,9 @@ export default function NotificationsPage() {
     return all;
   }, [notifications]);
 
-  // ── Filtered + sorted list ──────────────────────────────────
+  /* ── Client-side filter + sort ───────────────────────────── */
   const filtered = useMemo(() => {
     let list = notifications;
-    if (activeTab !== "All") list = list.filter((n) => n.type === activeTab);
     if (debouncedQuery.trim()) {
       const q = debouncedQuery.toLowerCase();
       list = list.filter(
@@ -240,33 +232,23 @@ export default function NotificationsPage() {
           n.type.toLowerCase().includes(q)
       );
     }
-    list = [...list].sort((a, b) =>
+    return [...list].sort((a, b) =>
       sortOrder === "Latest"
         ? new Date(b.created_at) - new Date(a.created_at)
         : new Date(a.created_at) - new Date(b.created_at)
     );
-    return list;
-  }, [notifications, activeTab, debouncedQuery, sortOrder]);
+  }, [notifications, debouncedQuery, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pagedItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ── Actions ─────────────────────────────────────────────────
-  const handleMarkRead = useCallback((id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
-  }, []);
+  /* ── Actions ─────────────────────────────────────────────── */
+  const handleMarkRead    = useCallback((id) => dispatch(markAsReadThunk(id)),     [dispatch]);
+  const handleDelete      = useCallback((id) => dispatch(deleteNotificationThunk(id)), [dispatch]);
+  const handleMarkAllRead = useCallback(()   => dispatch(markAllReadThunk()),       [dispatch]);
+  const handleDeleteAll   = useCallback(()   => dispatch(deleteAllNotificationsThunk()), [dispatch]);
+  const handleRefresh     = useCallback(()   => dispatch(fetchNotificationsThunk({ limit: 50 })), [dispatch]);
 
-  const handleDelete = useCallback((id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
-
-  const handleMarkAllRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-  }, []);
-
-  // ── Search ref (for focus ring) ─────────────────────────────
   const searchRef = useRef(null);
 
   // ── Render ──────────────────────────────────────────────────
@@ -285,7 +267,6 @@ export default function NotificationsPage() {
             {/* ── Page Header ─── */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
-                {/* Breadcrumb */}
                 <nav className="flex items-center gap-1.5 text-[12px] text-slate-400 mb-2">
                   <Link href="/" className="hover:text-[#0B1F3A] transition-colors">Home</Link>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -307,61 +288,72 @@ export default function NotificationsPage() {
                 </p>
               </div>
 
-              {/* Mark all read CTA */}
-              {!loading && counts.unread > 0 && (
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {/* Refresh */}
                 <button
                   type="button"
-                  onClick={handleMarkAllRead}
-                  className="flex items-center gap-2 bg-[#0B1F3A] hover:bg-[#0d2647] text-white text-[13px] font-semibold rounded-xl px-5 py-2.5 transition-all duration-200 shadow-md hover:shadow-lg shrink-0"
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-[13px] font-semibold rounded-xl px-4 py-2.5 hover:bg-slate-50 transition-all duration-200 disabled:opacity-50"
                 >
-                  <CheckCheck className="h-4 w-4" />
-                  Mark all as read
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                  Refresh
                 </button>
-              )}
+
+                {/* Mark all read */}
+                {!loading && counts.unread > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    className="flex items-center gap-2 bg-[#0B1F3A] hover:bg-[#0d2647] text-white text-[13px] font-semibold rounded-xl px-5 py-2.5 transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                    Mark all as read
+                  </button>
+                )}
+
+                {/* Delete all */}
+                {!loading && notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteAll}
+                    className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 text-[13px] font-semibold rounded-xl px-4 py-2.5 transition-all duration-200 border border-red-100"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* ── Error banner ─── */}
+            {error && (
+              <div className="mb-6 flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-5 py-3.5 text-[13px] text-red-700">
+                <span>⚠️ {error}</span>
+                <button
+                  onClick={handleRefresh}
+                  className="ml-auto text-[12px] font-semibold underline hover:no-underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
 
             {/* ── Stats Grid ─── */}
             {!loading && (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatsCard
-                  icon={Bell}
-                  label="Total"
-                  value={counts.total}
-                  iconBg="bg-amber-50"
-                  iconColor="text-amber-600"
-                />
-                <StatsCard
-                  icon={Bell}
-                  label="Unread"
-                  value={counts.unread}
-                  iconBg="bg-blue-50"
-                  iconColor="text-blue-600"
-                />
-                <StatsCard
-                  icon={CheckCheck}
-                  label="Read"
-                  value={counts.read}
-                  iconBg="bg-emerald-50"
-                  iconColor="text-emerald-600"
-                />
-                <StatsCard
-                  icon={Trash2}
-                  label="Filtered"
-                  value={filtered.length}
-                  iconBg="bg-slate-50"
-                  iconColor="text-slate-500"
-                />
+                <StatsCard icon={Bell}       label="Total"    value={counts.total}   iconBg="bg-amber-50"   iconColor="text-amber-600" />
+                <StatsCard icon={Bell}       label="Unread"   value={counts.unread}  iconBg="bg-blue-50"    iconColor="text-blue-600" />
+                <StatsCard icon={CheckCheck} label="Read"     value={counts.read}    iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+                <StatsCard icon={Trash2}     label="Filtered" value={filtered.length} iconBg="bg-slate-50"  iconColor="text-slate-500" />
               </div>
             )}
 
             {/* ── Filter + Search Bar ─── */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
-              {/* Search row */}
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                <div
-                  ref={searchRef}
-                  className="relative flex-1"
-                >
+                <div ref={searchRef} className="relative flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
@@ -372,7 +364,6 @@ export default function NotificationsPage() {
                   />
                 </div>
 
-                {/* Sort control */}
                 <div className="relative shrink-0">
                   <SortAsc className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <select
@@ -387,7 +378,6 @@ export default function NotificationsPage() {
                 </div>
               </div>
 
-              {/* Tab filters */}
               <div className="flex flex-wrap gap-2">
                 {BUYER_FILTER_TABS.map((tab) => (
                   <FilterTab
@@ -403,14 +393,12 @@ export default function NotificationsPage() {
 
             {/* ── Notification List ─── */}
             {loading ? (
-              /* Skeleton loaders */
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <SkeletonCard key={i} />
                 ))}
               </div>
             ) : pagedItems.length === 0 ? (
-              /* Empty state — differentiate filter-empty vs truly empty */
               activeTab !== "All" ? (
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center py-16 text-center px-6">
                   <div className="h-16 w-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
@@ -420,7 +408,7 @@ export default function NotificationsPage() {
                     No <span className="text-[#D4AF37]">{activeTab}</span> notifications
                   </p>
                   <p className="text-[13px] text-slate-400 mt-1.5 max-w-xs">
-                    You have no notifications in this category yet. They'll appear here when something happens.
+                    You have no notifications in this category yet. They&apos;ll appear here when something happens.
                   </p>
                   <button
                     type="button"
@@ -436,7 +424,6 @@ export default function NotificationsPage() {
                 </div>
               )
             ) : (
-              /* Notification cards */
               <div className="space-y-3">
                 {pagedItems.map((notification) => (
                   <NotificationCard
@@ -448,16 +435,10 @@ export default function NotificationsPage() {
                   />
                 ))}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
-                  <Pagination
-                    page={page}
-                    totalPages={totalPages}
-                    onPage={setPage}
-                  />
+                  <Pagination page={page} totalPages={totalPages} onPage={setPage} />
                 )}
 
-                {/* Results summary */}
                 <p className="text-center text-[12px] text-slate-400 pt-2">
                   Showing {(page - 1) * PAGE_SIZE + 1}–
                   {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} notifications

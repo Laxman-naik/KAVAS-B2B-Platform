@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { createNotification } = require("../services/notificationHelper");
 
 exports.createOrderFromCart = async (req, res) => {
   const client = await pool.connect();
@@ -170,6 +171,19 @@ exports.createOrderFromCart = async (req, res) => {
 
     await client.query("COMMIT");
 
+    // ── Fire "Order Placed" notification for each sub-order ──
+    for (const order of createdOrders) {
+      const orderNum = String(order.id).slice(0, 8).toUpperCase();
+      const amount   = Number(order.total_amount).toLocaleString("en-IN");
+      createNotification({
+        userId:  userId,
+        title:   `Order #KAVAS-${orderNum} placed successfully! 🛒`,
+        message: `Your order worth ₹${amount} has been placed and is being processed. You\'ll receive updates as it progresses.`,
+        type:    "Orders",
+        role:    "buyer",
+      });
+    }
+
     return res.status(201).json({
       message: "Orders created successfully",
       orders: createdOrders,
@@ -278,7 +292,9 @@ exports.getOrderTracking = async (req, res) => {
       delivery_status: orderRes.rows[0].delivery_status,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("TRACKING ERROR:", error);
+
+    return res.status(500).json({
       message: error.message,
     });
   }
@@ -349,10 +365,54 @@ exports.updateOrderStatus = async (req, res) => {
 
     await client.query("COMMIT");
 
+    // ── Fire status-change notification to the buyer ──────────
+    const updatedOrder = orderRes.rows[0];
+    const orderNum     = String(updatedOrder.id).slice(0, 8).toUpperCase();
+    const buyerId      = updatedOrder.user_id;
+    const normalStatus = String(status).toLowerCase();
+
+    const STATUS_NOTIFICATION = {
+      shipped: {
+        title:   `Order #KAVAS-${orderNum} has been shipped! 🚚`,
+        message: `Great news! Your order is on its way. ${courier ? `Courier: ${courier}` : ""} ${awb ? `| Tracking: ${awb}` : ""} ${estimated_delivery ? `| Expected: ${estimated_delivery}` : ""}.`.trim(),
+        type:    "Shipping",
+      },
+      delivered: {
+        title:   `Order #KAVAS-${orderNum} delivered! ✅`,
+        message: `Your order has been delivered successfully. Please confirm receipt and share your experience with us.`,
+        type:    "Orders",
+      },
+      cancelled: {
+        title:   `Order #KAVAS-${orderNum} has been cancelled ❌`,
+        message: `Your order has been cancelled. If you did not request this, please contact our support team immediately.`,
+        type:    "Orders",
+      },
+      confirmed: {
+        title:   `Order #KAVAS-${orderNum} confirmed! 🎉`,
+        message: `Your order has been confirmed by the seller and is being prepared for dispatch.`,
+        type:    "Orders",
+      },
+      processing: {
+        title:   `Order #KAVAS-${orderNum} is being processed ⚙️`,
+        message: `Your order is currently being processed. We\'ll notify you as soon as it ships.`,
+        type:    "Orders",
+      },
+      cod: {
+        title:   `Order #KAVAS-${orderNum} placed (Cash on Delivery) 💵`,
+        message: `Your Cash on Delivery order is confirmed. Payment will be collected at the time of delivery.`,
+        type:    "Orders",
+      },
+    };
+
+    if (buyerId && STATUS_NOTIFICATION[normalStatus]) {
+      const { title, message: notifMsg, type } = STATUS_NOTIFICATION[normalStatus];
+      createNotification({ userId: buyerId, title, message: notifMsg, type, role: "buyer" });
+    }
+
     return res.json({
       success: true,
       message: "Order status updated",
-      order: orderRes.rows[0],
+      order: updatedOrder,
     });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -413,6 +473,17 @@ exports.createOrder = async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // ── Fire "Order Placed" notification ──────────────────────
+    const orderNum = String(order.id).slice(0, 8).toUpperCase();
+    const amount   = Number(order.total_amount).toLocaleString("en-IN");
+    createNotification({
+      userId:  userId,
+      title:   `Order #KAVAS-${orderNum} placed successfully! 🛒`,
+      message: `Your order worth ₹${amount} has been placed and is being processed.`,
+      type:    "Orders",
+      role:    "buyer",
+    });
 
     return res.json({
       success: true,
