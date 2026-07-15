@@ -132,9 +132,15 @@ export const fetchOrderTracking = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   "order/updateStatus",
-  async ({ orderId, status }, thunkAPI) => {
+  async ({ orderId, status, awb, courier, estimated_delivery }, thunkAPI) => {
     try {
-      const res = await updateOrderStatusAPI(orderId, status);
+      const res = await updateOrderStatusAPI(orderId, {
+        status,
+        awb,
+        courier,
+        estimated_delivery,
+      });
+
       return res;
     } catch (err) {
       return thunkAPI.rejectWithValue(normalizeError(err));

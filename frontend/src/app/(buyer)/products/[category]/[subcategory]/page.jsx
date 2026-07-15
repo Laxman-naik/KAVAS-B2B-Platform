@@ -135,7 +135,8 @@ export default function SubCategoryPage() {
   const categoryName =
     selectedSubcategory?.name ||
     categoryMeta?.name ||
-    "Category"; const subcategories = categoryMeta?.subcategories || [];
+    "Category";
+  const subcategories = categoryMeta?.subcategories || [];
 
   return (
     <div

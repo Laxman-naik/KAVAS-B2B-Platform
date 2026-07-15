@@ -1,127 +1,167 @@
-
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { logoutUserThunk } from "../../../store/slices/authSlice";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import NotificationCard from "@/components/ui/notifications/NotificationCard";
+import SkeletonCard from "@/components/ui/notifications/SkeletonCard";
+import {
+  BUYER_NOTIFICATIONS,
+  BUYER_FILTER_TABS,
+  SORT_OPTIONS,
+} from "@/lib/notificationData";
 import {
   Bell,
-  CheckCircle2,
-  ChevronRight,
-  Mail,
-  Trash2,
-  MoreVertical,
-  Filter,
+  Search,
   CheckCheck,
-  Package,
-  Tag,
-  User,
-  Shield,
-  Settings,
+  Trash2,
+  ChevronRight,
+  ChevronLeft,
+  SortAsc,
 } from "lucide-react";
 
-const seedNotifications = [
-  {
-    id: "#KAVAS1234",
-    category: "Orders",
-    title: "Your order #KAVAS1234 has been delivered",
-    description: "Your order has been delivered successfully on 17 May 2024.",
-    date: "17 May 2024",
-    time: "02:20 PM",
-    status: "Read",
-    icon: "order",
-  },
-  {
-    id: "#KAVAS1235",
-    category: "Orders",
-    title: "Your order #KAVAS1235 is out for delivery",
-    description: "Your order is out for delivery and will reach you soon.",
-    date: "17 May 2024",
-    time: "09:30 AM",
-    status: "Unread",
-    icon: "delivery",
-  },
-  {
-    id: "#OFFER-30",
-    category: "Offers",
-    title: "Special wholesale offer just for you!",
-    description: "Get up to 30% OFF on selected products. Shop now and save more.",
-    date: "16 May 2024",
-    time: "11:15 AM",
-    status: "Unread",
-    icon: "offer",
-  },
-  {
-    id: "#PAY-1232",
-    category: "Account",
-    title: "Payment received for order #KAVAS1232",
-    description: "We have received your payment for order #KAVAS1232.",
-    date: "15 May 2024",
-    time: "04:45 PM",
-    status: "Read",
-    icon: "account",
-  },
-  {
-    id: "#WELCOME",
-    category: "System",
-    title: "Welcome to KAVAS Wholesale Hub",
-    description: "Thank you for registering with us. Start exploring thousands of products.",
-    date: "14 May 2024",
-    time: "10:20 AM",
-    status: "Read",
-    icon: "system",
-  },
-  {
-    id: "#PRICE-DROP",
-    category: "Offers",
-    title: "Price drop alert!",
-    description: "The product in your wishlist is now available at a lower price.",
-    date: "13 May 2024",
-    time: "08:10 AM",
-    status: "Read",
-    icon: "offer",
-  },
-];
+// ── Constants ──────────────────────────────────────────────────
+const PAGE_SIZE = 6;
 
-const tabItems = [
-  { key: "All", label: "All" },
-  { key: "Orders", label: "Orders" },
-  { key: "Offers", label: "Offers" },
-  { key: "Account", label: "Account" },
-  { key: "System", label: "System" },
-];
+// ── Empty State Component ──────────────────────────────────────
+function EmptyState({ onExplore }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+      {/* Animated bell illustration */}
+      <div className="relative mb-6">
+        <div className="h-24 w-24 rounded-3xl bg-gradient-to-br from-[#0B1F3A]/[0.06] to-[#D4AF37]/[0.08] flex items-center justify-center shadow-inner border border-[#D4AF37]/20">
+          <Bell className="h-10 w-10 text-[#D4AF37]/60" />
+        </div>
+        <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-[#D4AF37]/15 border-2 border-white flex items-center justify-center shadow-sm">
+          <span className="text-[11px] font-bold text-[#D4AF37]">0</span>
+        </div>
+        {/* Decorative rings */}
+        <div className="absolute inset-0 rounded-3xl border-2 border-[#D4AF37]/10 scale-110 animate-pulse" />
+        <div className="absolute inset-0 rounded-3xl border border-[#D4AF37]/05 scale-125" />
+      </div>
 
-const statusOptions = ["All Status", "Unread", "Read", "Deleted"];
+      <h3 className="text-[18px] font-bold text-[#0B1F3A]">No notifications yet</h3>
+      <p className="text-[14px] text-slate-500 mt-2 max-w-xs leading-relaxed">
+        You&apos;re all caught up! We&apos;ll notify you when orders update, payments arrive, or
+        new offers are available.
+      </p>
 
-const getIconMeta = (kind) => {
-  switch (kind) {
-    case "order":
-      return { Icon: Package, bg: "bg-green-50", color: "text-green-700" };
-    case "delivery":
-      return { Icon: Package, bg: "bg-orange-50", color: "text-orange-700" };
-    case "offer":
-      return { Icon: Tag, bg: "bg-purple-50", color: "text-purple-700" };
-    case "account":
-      return { Icon: User, bg: "bg-red-50", color: "text-red-700" };
-    case "system":
-    default:
-      return { Icon: Shield, bg: "bg-blue-50", color: "text-blue-700" };
-  }
-};
+      <button
+        onClick={onExplore}
+        className="mt-6 inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#c9a832] text-[#0B1F3A] font-semibold text-[14px] rounded-2xl px-6 py-3 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+      >
+        <Package className="h-4 w-4" />
+        Explore Products
+      </button>
+    </div>
+  );
+}
 
-export default function Page() {
-  const [tab, setTab] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [items, setItems] = useState(seedNotifications);
-  const [page, setPage] = useState(1);
-  const pageSize = 6;
+// ── Stats Card ─────────────────────────────────────────────────
+function StatsCard({ icon: Icon, label, value, iconBg, iconColor }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-center gap-4">
+        <div className={`h-11 w-11 rounded-2xl ${iconBg} flex items-center justify-center shrink-0`}>
+          <Icon className={`h-5 w-5 ${iconColor}`} />
+        </div>
+        <div>
+          <p className="text-[12px] text-slate-500 font-medium">{label}</p>
+          <p className="text-[22px] font-bold text-[#0B1F3A] leading-tight">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ── Filter Tab ─────────────────────────────────────────────────
+function FilterTab({ label, count, active, onClick }) {
+  const isEmpty = count === 0;
+  return (
+    <button
+      type="button"
+      onClick={isEmpty ? undefined : onClick}
+      aria-pressed={active}
+      className={[
+        "relative flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all duration-200",
+        active
+          ? "bg-[#0B1F3A] text-white shadow-md"
+          : isEmpty
+          ? "bg-slate-50 text-slate-300 cursor-not-allowed"
+          : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-[#0B1F3A] cursor-pointer",
+      ].join(" ")}
+    >
+      {label}
+      <span
+        className={[
+          "inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full text-[10px] font-bold",
+          active
+            ? "bg-[#D4AF37] text-[#0B1F3A]"
+            : isEmpty
+            ? "bg-slate-100 text-slate-300"
+            : "bg-slate-300 text-slate-600",
+        ].join(" ")}
+      >
+        {count > 9 ? "9+" : count}
+      </span>
+    </button>
+  );
+}
+
+// ── Pagination ─────────────────────────────────────────────────
+function Pagination({ page, totalPages, onPage }) {
+  const pages = Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+    if (totalPages <= 5) return i + 1;
+    if (page <= 3) return i + 1;
+    if (page >= totalPages - 2) return totalPages - 4 + i;
+    return page - 2 + i;
+  });
+
+  return (
+    <div className="flex items-center justify-center gap-2 pt-6">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={() => onPage(page - 1)}
+        className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+
+      {pages.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onPage(p)}
+          className={[
+            "h-9 w-9 flex items-center justify-center rounded-xl text-[13px] font-semibold transition-all duration-200",
+            p === page
+              ? "bg-[#0B1F3A] text-white shadow-md"
+              : "border border-slate-200 text-slate-600 hover:bg-slate-100",
+          ].join(" ")}
+        >
+          {p}
+        </button>
+      ))}
+
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={() => onPage(page + 1)}
+        className="h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────
+export default function NotificationsPage() {
+  // ── Auth ───────────────────────────────────────────────────
   const authUser = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const router = useRouter();
@@ -139,307 +179,294 @@ export default function Page() {
     router.push("/login");
   };
 
+  // ── Notification state ─────────────────────────────────────
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate async load
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setNotifications(BUYER_NOTIFICATIONS);
+      setLoading(false);
+    }, 900);
+    return () => clearTimeout(t);
+  }, []);
+
+  // ── Filters ─────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState("All");
+  const [sortOrder, setSortOrder] = useState("Latest");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, sortOrder, debouncedQuery]);
+
+  // ── Computed counts ─────────────────────────────────────────
   const counts = useMemo(() => {
-    const total = items.length;
-    const unread = items.filter((n) => n.status === "Unread").length;
-    const read = items.filter((n) => n.status === "Read").length;
-    const deleted = items.filter((n) => n.status === "Deleted").length;
-    return { total, unread, read, deleted };
-  }, [items]);
+    return {
+      total:  notifications.length,
+      unread: notifications.filter((n) => !n.is_read).length,
+      read:   notifications.filter((n) => n.is_read).length,
+    };
+  }, [notifications]);
 
   const tabCounts = useMemo(() => {
-    const byCategory = tabItems.reduce((acc, t) => {
-      acc[t.key] = 0;
-      return acc;
-    }, {});
-
-    items.forEach((n) => {
-      byCategory.All += 1;
-      if (byCategory[n.category] !== undefined) byCategory[n.category] += 1;
+    const all = { All: notifications.length };
+    BUYER_FILTER_TABS.forEach((tab) => {
+      if (tab !== "All") all[tab] = notifications.filter((n) => n.type === tab).length;
     });
+    return all;
+  }, [notifications]);
 
-    return byCategory;
-  }, [items]);
-
+  // ── Filtered + sorted list ──────────────────────────────────
   const filtered = useMemo(() => {
-    return items.filter((n) => {
-      const tabOk = tab === "All" || n.category === tab;
-      const statusOk = statusFilter === "All Status" || n.status === statusFilter;
-      return tabOk && statusOk;
-    });
-  }, [items, statusFilter, tab]);
+    let list = notifications;
+    if (activeTab !== "All") list = list.filter((n) => n.type === activeTab);
+    if (debouncedQuery.trim()) {
+      const q = debouncedQuery.toLowerCase();
+      list = list.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.message.toLowerCase().includes(q) ||
+          n.type.toLowerCase().includes(q)
+      );
+    }
+    list = [...list].sort((a, b) =>
+      sortOrder === "Latest"
+        ? new Date(b.created_at) - new Date(a.created_at)
+        : new Date(a.created_at) - new Date(b.created_at)
+    );
+    return list;
+  }, [notifications, activeTab, debouncedQuery, sortOrder]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pagedItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pagedItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const markAllAsRead = () => {
-    setItems((prev) => prev.map((n) => (n.status === "Unread" ? { ...n, status: "Read" } : n)));
-  };
+  // ── Actions ─────────────────────────────────────────────────
+  const handleMarkRead = useCallback((id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+    );
+  }, []);
 
-  const clearAll = () => {
-    setItems([]);
-    setPage(1);
-  };
+  const handleDelete = useCallback((id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
 
+  const handleMarkAllRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  }, []);
+
+  // ── Search ref (for focus ring) ─────────────────────────────
+  const searchRef = useRef(null);
+
+  // ── Render ──────────────────────────────────────────────────
   return (
-    <div className="bg-[#0B1F3A] min-h-screen">
-      <div className="mx-auto bg-white border rounded-sm border-white/10">
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-          <div className="lg:sticky lg:top-24 self-start">
+    <div className="bg-[#F8FAFC] min-h-screen">
+      <div className="mx-auto bg-white border-b border-slate-200 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr]">
+          {/* Sidebar */}
+          <div className="lg:sticky lg:top-24 self-start bg-white border-r border-slate-100">
             <ProfileSidebar user={user} onLogout={handleLogout} />
           </div>
 
-          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          {/* Main content */}
+          <div className="bg-[#F8FAFC] p-4 sm:p-6 lg:p-8 min-h-screen">
+
+            {/* ── Page Header ─── */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A]">Notifications</h1>
-                <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                  <Link href="/" className="hover:underline">Home</Link>
-                  <ChevronRight size={14} />
-                  <span className="text-[#0B1F3A]">Notifications</span>
+                {/* Breadcrumb */}
+                <nav className="flex items-center gap-1.5 text-[12px] text-slate-400 mb-2">
+                  <Link href="/" className="hover:text-[#0B1F3A] transition-colors">Home</Link>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                  <span className="text-[#0B1F3A] font-medium">Notifications</span>
+                </nav>
+
+                <div className="flex items-center gap-3">
+                  <h1 className="text-[24px] sm:text-[28px] font-bold text-[#0B1F3A] leading-tight">
+                    Notifications
+                  </h1>
+                  {!loading && counts.unread > 0 && (
+                    <span className="inline-flex items-center justify-center h-6 min-w-6 px-2 rounded-full bg-[#D4AF37] text-[#0B1F3A] text-[11px] font-bold animate-badge-pop">
+                      {counts.unread}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[13px] text-slate-500 mt-1">
+                  Stay updated on orders, payments, shipping, and offers.
+                </p>
+              </div>
+
+              {/* Mark all read CTA */}
+              {!loading && counts.unread > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  className="flex items-center gap-2 bg-[#0B1F3A] hover:bg-[#0d2647] text-white text-[13px] font-semibold rounded-xl px-5 py-2.5 transition-all duration-200 shadow-md hover:shadow-lg shrink-0"
+                >
+                  <CheckCheck className="h-4 w-4" />
+                  Mark all as read
+                </button>
+              )}
+            </div>
+
+            {/* ── Stats Grid ─── */}
+            {!loading && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatsCard
+                  icon={Bell}
+                  label="Total"
+                  value={counts.total}
+                  iconBg="bg-amber-50"
+                  iconColor="text-amber-600"
+                />
+                <StatsCard
+                  icon={Bell}
+                  label="Unread"
+                  value={counts.unread}
+                  iconBg="bg-blue-50"
+                  iconColor="text-blue-600"
+                />
+                <StatsCard
+                  icon={CheckCheck}
+                  label="Read"
+                  value={counts.read}
+                  iconBg="bg-emerald-50"
+                  iconColor="text-emerald-600"
+                />
+                <StatsCard
+                  icon={Trash2}
+                  label="Filtered"
+                  value={filtered.length}
+                  iconBg="bg-slate-50"
+                  iconColor="text-slate-500"
+                />
+              </div>
+            )}
+
+            {/* ── Filter + Search Bar ─── */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
+              {/* Search row */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <div
+                  ref={searchRef}
+                  className="relative flex-1"
+                >
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search notifications..."
+                    className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-[#0B1F3A] placeholder:text-slate-400 outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all duration-200"
+                  />
+                </div>
+
+                {/* Sort control */}
+                <div className="relative shrink-0">
+                  <SortAsc className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="h-10 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-[#0B1F3A] outline-none focus:border-[#D4AF37] transition-all duration-200 cursor-pointer appearance-none w-full sm:w-auto"
+                  >
+                    {SORT_OPTIONS.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              <Button
-                type="button"
-                className="bg-[#0B1F3A] text-white rounded-sm hover:bg-[#0B1F3A]/95 w-full sm:w-auto"
-                onClick={markAllAsRead}
-              >
-                <CheckCheck size={16} className="mr-2" /> Mark All as Read
-              </Button>
+              {/* Tab filters */}
+              <div className="flex flex-wrap gap-2">
+                {BUYER_FILTER_TABS.map((tab) => (
+                  <FilterTab
+                    key={tab}
+                    label={tab}
+                    count={tabCounts[tab] || 0}
+                    active={activeTab === tab}
+                    onClick={() => setActiveTab(tab)}
+                  />
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Card className="rounded-sm border border-[#E5E5E5]">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-sm bg-orange-50 flex items-center justify-center">
-                    <Bell className="text-orange-700" size={18} />
+            {/* ── Notification List ─── */}
+            {loading ? (
+              /* Skeleton loaders */
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            ) : pagedItems.length === 0 ? (
+              /* Empty state — differentiate filter-empty vs truly empty */
+              activeTab !== "All" ? (
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center justify-center py-16 text-center px-6">
+                  <div className="h-16 w-16 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
+                    <Bell className="h-7 w-7 text-slate-300" />
                   </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Total Notifications</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{counts.total}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-sm border border-[#E5E5E5]">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-sm bg-blue-50 flex items-center justify-center">
-                    <Mail className="text-blue-700" size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Unread</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{counts.unread}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-sm border border-[#E5E5E5]">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-sm bg-green-50 flex items-center justify-center">
-                    <CheckCircle2 className="text-green-700" size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Read</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{counts.read}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-sm border border-[#E5E5E5]">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-sm bg-red-50 flex items-center justify-center">
-                    <Trash2 className="text-red-700" size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Deleted</p>
-                    <p className="text-lg font-bold text-[#0B1F3A]">{counts.deleted}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="rounded-sm border border-[#E5E5E5]">
-              <CardContent className="p-0">
-                <div className="border-b border-[#E5E5E5] px-4">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 py-3">
-                    <div className="flex flex-wrap gap-3">
-                      {tabItems.map((t) => {
-                        const active = tab === t.key;
-                        const count = tabCounts[t.key] ?? 0;
-                        return (
-                          <button
-                            key={t.key}
-                            type="button"
-                            onClick={() => {
-                              setTab(t.key);
-                              setPage(1);
-                            }}
-                            className={
-                              active
-                                ? "text-[#0B1F3A] font-semibold border-b-2 border-[#D4AF37] pb-2 text-sm"
-                                : "text-gray-500 hover:text-[#0B1F3A] pb-2 text-sm"
-                            }
-                          >
-                            {t.label} ({count})
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                      <div className="relative">
-                        <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            setPage(1);
-                          }}
-                          className="h-9 rounded-sm border border-[#E5E5E5] bg-white pl-8 pr-8 text-sm w-full sm:w-40"
-                        >
-                          {statusOptions.map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-sm border-[#E5E5E5] h-9"
-                        onClick={clearAll}
-                      >
-                        <Trash2 size={14} className="mr-2" /> Clear All
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="divide-y">
-                  {pagedItems.map((n) => {
-                    const { Icon, bg, color } = getIconMeta(n.icon);
-                    const dotColor = n.status === "Unread" ? "bg-blue-600" : "bg-gray-300";
-                    const badgeClass =
-                      n.status === "Unread"
-                        ? "bg-blue-100 text-blue-700"
-                        : n.status === "Read"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700";
-
-                    return (
-                      <div key={n.id} className="px-4 py-4">
-                        <div className="grid grid-cols-[12px_44px_1fr] sm:grid-cols-[12px_44px_1fr_120px_90px_90px_44px] gap-3 items-start">
-                          <div className="pt-2">
-                            <span className={`block h-2 w-2 rounded-full ${dotColor}`} />
-                          </div>
-
-                          <div className={`h-10 w-10 rounded-sm ${bg} flex items-center justify-center`}>
-                            <Icon className={color} size={18} />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[#0B1F3A] truncate">{n.title}</p>
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{n.description}</p>
-                          </div>
-
-                          <div className="hidden sm:block text-xs text-gray-600">{n.date}</div>
-                          <div className="hidden sm:block text-xs text-gray-500">{n.time}</div>
-
-                          <div className="hidden sm:flex justify-end">
-                            <Badge className={badgeClass}>{n.status}</Badge>
-                          </div>
-
-                          <div className="hidden sm:flex justify-end">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 rounded-sm"
-                              title="More"
-                            >
-                              <MoreVertical size={16} className="text-gray-500" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="sm:hidden mt-3 flex items-center justify-between">
-                          <div className="text-xs text-gray-500">
-                            {n.date} • {n.time}
-                          </div>
-                          <Badge
-                            className={
-                              n.status === "Unread"
-                                ? "bg-blue-100 text-blue-700"
-                                : n.status === "Read"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }
-                          >
-                            {n.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {pagedItems.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-gray-500">
-                      No notifications found.
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="border-t border-[#E5E5E5] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <p className="text-xs text-gray-500">
-                    Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} notifications
+                  <p className="text-[15px] font-bold text-[#0B1F3A]">
+                    No <span className="text-[#D4AF37]">{activeTab}</span> notifications
                   </p>
-
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-sm border-[#E5E5E5] h-8"
-                      disabled={page <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      Prev
-                    </Button>
-
-                    {[1, 2, 3, 4, 5].map((p) => (
-                      <Button
-                        key={p}
-                        type="button"
-                        variant={p === page ? "default" : "outline"}
-                        className={
-                          p === page
-                            ? "rounded-sm h-8 bg-[#0B1F3A] text-white hover:bg-[#0B1F3A]/95"
-                            : "rounded-sm border-[#E5E5E5] h-8"
-                        }
-                        onClick={() => setPage(Math.min(totalPages, p))}
-                      >
-                        {p}
-                      </Button>
-                    ))}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="rounded-sm border-[#E5E5E5] h-8"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    >
-                      Next
-                    </Button>
-                  </div>
+                  <p className="text-[13px] text-slate-400 mt-1.5 max-w-xs">
+                    You have no notifications in this category yet. They'll appear here when something happens.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("All")}
+                    className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#0B1F3A] bg-[#0B1F3A]/[0.06] hover:bg-[#0B1F3A]/[0.1] rounded-xl px-4 py-2 transition-all"
+                  >
+                    ← View all notifications
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <EmptyState onExplore={() => router.push("/allproducts")} />
+                </div>
+              )
+            ) : (
+              /* Notification cards */
+              <div className="space-y-3">
+                {pagedItems.map((notification) => (
+                  <NotificationCard
+                    key={notification.id}
+                    notification={notification}
+                    role="buyer"
+                    onMarkRead={handleMarkRead}
+                    onDelete={handleDelete}
+                  />
+                ))}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    onPage={setPage}
+                  />
+                )}
+
+                {/* Results summary */}
+                <p className="text-center text-[12px] text-slate-400 pt-2">
+                  Showing {(page - 1) * PAGE_SIZE + 1}–
+                  {Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} notifications
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-

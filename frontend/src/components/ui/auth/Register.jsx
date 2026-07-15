@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { BadgePercent, Boxes, Eye,Headset,Lock,Mail,PackageCheck, Phone,ShieldCheck, Tag, Truck,User,} from "lucide-react";
+import { BadgePercent, Boxes, CheckCircle, Eye,Headset,Lock,Mail,PackageCheck, Phone,ShieldCheck, Tag, Truck,User,} from "lucide-react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUserThunk } from "../../../store/slices/authSlice";
@@ -11,6 +11,7 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
   const router = useRouter();
   const [show, setShow] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const { loading, error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
@@ -57,18 +58,68 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
     const res = await dispatch(registerUserThunk(payload));
 
     if (res.meta.requestStatus === "fulfilled") {
-      alert("Registered successfully");
+      setSuccessMsg("Account created! A welcome email has been sent to you. Redirecting to login...");
       if (typeof onRegistered === "function") onRegistered();
-      if (typeof setOpen === "function") setOpen(false);
-      if (typeof setMode === "function") {
-        setMode("login");
-      } else {
-        router.push("/login");
-      }
+
+      // Redirect after 3 seconds
+      setTimeout(() => {
+        setSuccessMsg("");
+        if (typeof setOpen === "function") setOpen(false);
+        if (typeof setMode === "function") {
+          setMode("login");
+        } else {
+          router.push("/login");
+        }
+      }, 3000);
     }
   };
 
   if (isModal && !open) return null;
+
+  /* ===== SUCCESS TOAST ===== */
+  const successToast = successMsg && (
+    <div
+      style={{
+        position: "fixed",
+        top: "24px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 9999,
+        animation: "kavasSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
+      }}
+    >
+      <style>{`
+        @keyframes kavasSlideIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1);    }
+        }
+      `}</style>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+          background: "#0B1F3A",
+          border: "1.5px solid #D4AF37",
+          borderRadius: "12px",
+          padding: "14px 24px",
+          boxShadow: "0 8px 40px rgba(212,175,55,0.18), 0 2px 12px rgba(0,0,0,0.4)",
+          minWidth: "320px",
+          maxWidth: "90vw",
+        }}
+      >
+        <CheckCircle style={{ color: "#D4AF37", width: 28, height: 28, flexShrink: 0 }} />
+        <div>
+          <p style={{ color: "#D4AF37", fontWeight: 700, fontSize: "15px", margin: 0 }}>
+            🎉 Registration Successful!
+          </p>
+          <p style={{ color: "#FFF8EC", fontSize: "13px", margin: "4px 0 0", opacity: 0.85 }}>
+            {successMsg}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   const content = (
     <div className="w-full max-w-3xl mx-auto bg-[#0B1F3A] px-4 py-7 rounded-2xl border-white/10">
@@ -348,25 +399,31 @@ const Register = ({ open, setOpen, setMode, onRegistered }) => {
 
   if (isModal) {
     return (
-      <div
-        className="fixed inset-0 z-50 bg-black/50 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        onClick={() => {
-          if (typeof setOpen === "function") setOpen(false);
-        }}
-      >
-        <div className="min-h-full flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            {content}
+      <>
+        {successToast}
+        <div
+          className="fixed inset-0 z-50 bg-black/50 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onClick={() => {
+            if (typeof setOpen === "function") setOpen(false);
+          }}
+        >
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="w-full max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+              {content}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0B1F3A] px-4 py-6 flex items-center justify-center">
-      <div className="w-full max-w-5xl">{content}</div>
-    </div>
+    <>
+      {successToast}
+      <div className="min-h-screen bg-[#0B1F3A] px-4 py-6 flex items-center justify-center">
+        <div className="w-full max-w-5xl">{content}</div>
+      </div>
+    </>
   );
 };
 

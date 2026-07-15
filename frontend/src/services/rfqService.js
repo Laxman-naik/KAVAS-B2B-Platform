@@ -20,6 +20,19 @@ export const getBuyerRFQsAPI = async (buyerOrgId) => {
   return res.data;
 };
 
+export const getRFQQuotesAPI = async (rfqId) => {
+  const res = await productapi.get(`/api/rfqs/${rfqId}/quotes`);
+  return res.data;
+};
+
+export const acceptQuoteAPI = async (quoteId) => {
+  const res = await productapi.put(
+    `/api/rfqs/quotes/${quoteId}/accept`
+  );
+
+  return res.data;
+};
+
 export const updateRFQStatusAPI = async ({ id, status }) => {
   const res = await productapi.put(`/api/rfqs/${id}/status`, { status });
   return res.data;

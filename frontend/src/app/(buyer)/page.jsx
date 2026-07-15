@@ -45,10 +45,9 @@ export default function BuyerHome() {
       <NewArrivals />
       {/* <TrustedSlide /> */}
       <WhyChoose />
-     
       <AllProducts />
        
-      {/* <FeaturedSuppliers /> */}
+       {/* <FeaturedSuppliers />  */}
       </main>
     </>
   );

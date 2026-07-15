@@ -16,8 +16,10 @@ import {
   XCircle,
 } from "lucide-react";
 
-// import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
-import { fetchVendorOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+import {
+  fetchVendorOrders,
+  updateOrderStatus,
+} from "@/store/slices/orderSlice";
 
 export default function OrdersManagementBody() {
   const dispatch = useDispatch();
@@ -28,12 +30,48 @@ export default function OrdersManagementBody() {
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [shipmentOpen, setShipmentOpen] = useState(false);
+  const [shipmentOrder, setShipmentOrder] = useState(null);
+
+  const [courier, setCourier] = useState("");
+  const [awb, setAwb] = useState("");
+  const [estimatedDelivery, setEstimatedDelivery] = useState("");
+
+  const [shipmentLoading, setShipmentLoading] = useState(false);
 
   const pageSize = 8;
 
   useEffect(() => {
-  dispatch(fetchVendorOrders());
-}, [dispatch]);
+    dispatch(fetchVendorOrders());
+  }, [dispatch]);
+
+  const cleanValue = (value, fallback = "pending") => {
+    if (value === null || value === undefined || value === "") return fallback;
+
+    if (typeof value === "object") {
+      return String(
+        value.status ||
+        value.delivery_status ||
+        value.payment_status ||
+        value.name ||
+        value.label ||
+        fallback
+      )
+        .toLowerCase()
+        .trim();
+    }
+
+    return String(value).toLowerCase().trim();
+  };
+
+  const getStatus = (order) =>
+    cleanValue(
+      order?.status || order?.delivery_status || order?.order_status,
+      "pending"
+    );
+
+  const getPaymentStatus = (order) =>
+    cleanValue(order?.payment_status || order?.payment, "pending");
 
   const statusLabel = (status) => {
     const value = cleanValue(status, "pending");
@@ -140,6 +178,48 @@ export default function OrdersManagementBody() {
     return "bg-yellow-50 text-yellow-700 border-yellow-200";
   };
 
+  const handleShipmentSubmit = async () => {
+    if (!shipmentOrder) return;
+
+    if (!courier.trim()) {
+      alert("Courier Name is required");
+      return;
+    }
+
+    if (!awb.trim()) {
+      alert("Tracking Number is required");
+      return;
+    }
+
+    try {
+      setShipmentLoading(true);
+
+      await dispatch(
+        updateOrderStatus({
+          orderId: shipmentOrder.id,
+          status: "shipped",
+          courier,
+          awb,
+          estimated_delivery: estimatedDelivery,
+        })
+      );
+
+      await dispatch(fetchVendorOrders());
+
+      setShipmentOpen(false);
+      setShipmentOrder(null);
+
+      setCourier("");
+      setAwb("");
+      setEstimatedDelivery("");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update shipment");
+    } finally {
+      setShipmentLoading(false);
+    }
+  };
+
   const tabs = useMemo(
     () => [
       { key: "All", label: "All Orders", icon: null, count: stats.total },
@@ -196,7 +276,7 @@ export default function OrdersManagementBody() {
 
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-[1500px]">
+      <div className="mx-auto max-w-375">
         <div className="flex flex-col gap-4 border border-[#E5E5E5] bg-white p-5 shadow-sm rounded-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-[#0B1F3A]">
@@ -314,20 +394,18 @@ export default function OrdersManagementBody() {
                       setStatusFilter(t.key);
                       setPage(1);
                     }}
-                    className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${
-                      active
-                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
-                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    }`}
+                    className={`inline-flex h-10 items-center gap-2 border px-4 text-sm font-extrabold transition rounded-sm ${active
+                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                      : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                      }`}
                   >
                     {Icon ? <Icon size={16} /> : <span className="w-4" />}
                     {t.label}
                     <span
-                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${
-                        active
-                          ? "bg-white/15 text-white"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`ml-1 px-2 py-0.5 text-xs font-extrabold rounded-sm ${active
+                        ? "bg-white/15 text-white"
+                        : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {t.count}
                     </span>
@@ -460,9 +538,9 @@ export default function OrdersManagementBody() {
                       <p className="text-xs font-medium text-gray-500">
                         {o.created_at
                           ? new Date(o.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                           : ""}
                       </p>
                     </td>
@@ -481,14 +559,20 @@ export default function OrdersManagementBody() {
                         {actionLabel && actionNext ? (
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              if (actionNext === "shipped") {
+                                setShipmentOrder(o);
+                                setShipmentOpen(true);
+                                return;
+                              }
+
                               dispatch(
                                 updateOrderStatus({
                                   orderId: o.id,
                                   status: actionNext,
                                 })
-                              ).then(() => dispatch(fetchVendorOrders()))
-                            }
+                              ).then(() => dispatch(fetchVendorOrders()));
+                            }}
                             className="h-10 bg-[#0B1F3A] px-4 text-sm font-extrabold text-white transition hover:bg-[#102A4C] rounded-sm"
                           >
                             {actionLabel}
@@ -582,11 +666,10 @@ export default function OrdersManagementBody() {
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={safePage <= 1}
-              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
-                safePage <= 1
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-[#FFF8EC]"
-              }`}
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage <= 1
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-[#FFF8EC]"
+                }`}
             >
               <ChevronLeft size={16} />
             </button>
@@ -602,11 +685,10 @@ export default function OrdersManagementBody() {
                     key={p}
                     type="button"
                     onClick={() => setPage(p)}
-                    className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${
-                      active
-                        ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
-                        : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
-                    }`}
+                    className={`h-9 w-9 border text-sm font-extrabold rounded-sm ${active
+                      ? "border-[#0B1F3A] bg-[#0B1F3A] text-white"
+                      : "border-[#E5E5E5] bg-white text-[#0B1F3A] hover:bg-[#FFF8EC]"
+                      }`}
                   >
                     {p}
                   </button>
@@ -617,11 +699,10 @@ export default function OrdersManagementBody() {
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage >= totalPages}
-              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${
-                safePage >= totalPages
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-[#FFF8EC]"
-              }`}
+              className={`inline-flex h-9 w-9 items-center justify-center border border-[#E5E5E5] bg-white rounded-sm ${safePage >= totalPages
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-[#FFF8EC]"
+                }`}
             >
               <ChevronRight size={16} />
             </button>
@@ -722,6 +803,91 @@ export default function OrdersManagementBody() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {shipmentOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-sm bg-white shadow-xl">
+
+            <div className="border-b p-5">
+              <h2 className="text-2xl font-extrabold text-[#0B1F3A]">
+                Shipment Details
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Fill shipment details before marking this order as shipped.
+              </p>
+            </div>
+
+            <div className="space-y-5 p-5">
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Courier Partner
+                </label>
+
+                <input
+                  value={courier}
+                  onChange={(e) => setCourier(e.target.value)}
+                  placeholder="Blue Dart"
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Tracking Number (AWB)
+                </label>
+
+                <input
+                  value={awb}
+                  onChange={(e) => setAwb(e.target.value)}
+                  placeholder="BD123456789IN"
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Estimated Delivery
+                </label>
+
+                <input
+                  type="date"
+                  value={estimatedDelivery}
+                  onChange={(e) => setEstimatedDelivery(e.target.value)}
+                  className="w-full rounded-sm border border-[#E5E5E5] p-3 outline-none"
+                />
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 border-t p-5">
+
+              <button
+                onClick={() => {
+                  setShipmentOpen(false);
+                  setShipmentOrder(null);
+                  setCourier("");
+                  setAwb("");
+                  setEstimatedDelivery("");
+                }}
+                className="rounded-sm border border-[#E5E5E5] px-5 py-2 font-bold"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleShipmentSubmit}
+                disabled={shipmentLoading}
+                className="rounded-sm bg-[#0B1F3A] px-5 py-2 font-bold text-white hover:bg-[#15345d]"
+              >
+                {shipmentLoading ? "Saving..." : "Save Shipment"}
+              </button>
+
+            </div>
+
           </div>
         </div>
       )}

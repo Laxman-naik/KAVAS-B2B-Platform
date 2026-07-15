@@ -31,7 +31,8 @@ import { productapi } from "@/lib/axios";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUserThunk } from "@/store/slices/authSlice";
 import { fetchFavourites } from "@/store/slices/favouritesSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import NotificationBell from "@/components/ui/notifications/NotificationBell";
 
 const Navbar = () => {
   const [mounted, setMounted] = useState(false);
@@ -55,6 +56,7 @@ const Navbar = () => {
   const profileDropdownRef = useRef(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -69,6 +71,19 @@ const Navbar = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-open login modal when ?login=true is in the URL (e.g. from welcome email)
+  useEffect(() => {
+    if (!mounted) return;
+    if (searchParams?.get("login") === "true" && !isAuthenticated) {
+      setMode("login");
+      setOpen(true);
+      // Clean up the URL without a page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("login");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [mounted, searchParams, isAuthenticated]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -443,6 +458,9 @@ const Navbar = () => {
                     <span className="text-[11px]">Wish List</span>
                   </button>
 
+                  {/* ── Notification Bell (desktop) ── */}
+                  <NotificationBell />
+
                   <div className="relative" ref={profileDropdownRef}>
                     <button
                       type="button"
@@ -570,7 +588,7 @@ const Navbar = () => {
 
                               <button
                                 onClick={() => {
-                                  router.push("/profile");
+                                  router.push("/notifications");
                                   setDropdown(false);
                                 }}
                                 className="w-full flex items-center gap-3 px-5 py-3 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
@@ -692,7 +710,7 @@ const Navbar = () => {
 
                               <button
                                 onClick={() => {
-                                  openLoginForRedirect("/profile");
+                                  openLoginForRedirect("/notifications");
                                 }}
                                 className="w-full flex items-center gap-3 px-5 py-2.5 text-left text-[14px] text-[#1A1A1A] hover:text-[#0B1F3A] hover:bg-[#FFF8EC]"
                               >

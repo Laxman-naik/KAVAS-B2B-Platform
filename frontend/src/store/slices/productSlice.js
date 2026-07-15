@@ -10,7 +10,10 @@ import {
   getVendorProductsAPI,
   getFlashDealsAPI,
   addFlashDealToCartAPI,
-  getVendorInventoryAPI,
+  makeProductFlashDealAPI,
+  updateProductFlashDealAPI,
+  removeProductFlashDealAPI,
+  getVendorInventoryAPI
 } from "../../services/productService";
 
 /* ================= FETCH ALL PRODUCTS ================= */

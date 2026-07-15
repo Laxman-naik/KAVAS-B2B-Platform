@@ -1,5 +1,5 @@
 "use client";
-
+ 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
 import { addToCart } from "@/store/slices/cartSlice";
 import { fetchTrendingProducts } from "@/store/slices/productSlice";
 import { productapi } from "@/lib/axios";
-
+ 
 const COLORS = {
   primary: "#0B1F3A",
   accent: "#D4AF37",
@@ -25,9 +25,31 @@ const COLORS = {
   muted: "#6B7280",
   chipBg: "#F8F8F8",
 };
-
+ 
 const ITEMS_PER_PAGE = 12;
-
+ 
+// Filter option definitions live outside the component so they don't
+// get recreated on every render, and so the filtering logic and the
+// UI checkboxes always stay in sync (single source of truth).
+const MOQ_OPTIONS = [
+  { label: "Under 50 units", test: (qty) => qty < 50 },
+  { label: "50–200 units", test: (qty) => qty >= 50 && qty <= 200 },
+  { label: "200–500 units", test: (qty) => qty > 200 && qty <= 500 },
+  { label: "500+ units", test: (qty) => qty > 500 },
+];
+ 
+const PRICE_OPTIONS = [
+  { label: "Under ₹500", test: (price) => price < 500 },
+  { label: "₹500 - ₹1000", test: (price) => price >= 500 && price <= 1000 },
+  { label: "₹1000 - ₹5000", test: (price) => price > 1000 && price <= 5000 },
+  { label: "₹5000+", test: (price) => price > 5000 },
+];
+ 
+const RATING_OPTIONS = [
+  { value: "4.5", label: "★★★★★", stars: 5 },
+  { value: "4", label: "★★★★", stars: 4 },
+];
+ 
 const TrendingViewAllV1 = () => {
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortOption, setSortOption] = useState("Most relevant");
@@ -37,59 +59,52 @@ const TrendingViewAllV1 = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     minQty: [],
+    price: [],
     rating: [],
     supplier: [],
   });
-
+ 
   const dispatch = useDispatch();
-
+ 
   const favouriteItems = useSelector((state) => state.favourites.items);
   const trending = useSelector((state) => state.products.trending || []);
-
+ 
   const liked = useMemo(() => {
     return (Array.isArray(favouriteItems) ? favouriteItems : [])
       .map((item) =>
-        String(
-          item?.productId ??
-          item?.product_id ??
-          item?.id ??
-          item?._id ??
-          item
-        )
+        String(item?.productId ?? item?.product_id ?? item?.id ?? item?._id ?? item)
       )
       .filter(Boolean);
   }, [favouriteItems]);
-
+ 
   useEffect(() => {
     dispatch(fetchTrendingProducts());
     dispatch(fetchFavourites());
-
+ 
     const loadCategories = async () => {
       try {
         const res = await productapi.get("/api/categories");
-
         const rawCategories = Array.isArray(res?.data?.data)
           ? res.data.data
           : Array.isArray(res?.data)
-            ? res.data
-            : [];
-
+          ? res.data
+          : [];
         const parentCategories = rawCategories.filter((cat) => !cat.parent_id);
         setMainCategories(parentCategories);
       } catch (error) {
         console.error("Failed to load categories:", error);
       }
     };
-
+ 
     loadCategories();
   }, [dispatch]);
-
+ 
   const onToggleFavourite = async (product) => {
     const productId = product?.productId ?? product?.id ?? product?._id;
     if (!productId) return;
-
+ 
     const isLiked = liked.includes(String(productId));
-
+ 
     try {
       if (isLiked) {
         await dispatch(removeFromFavourites(productId)).unwrap();
@@ -101,11 +116,11 @@ const TrendingViewAllV1 = () => {
       alert(error || "Unable to update favourites");
     }
   };
-
+ 
   const onAddToCart = (product) => {
     const productId = product?.productId ?? product?.id ?? product?._id;
     if (!productId) return;
-
+ 
     dispatch(
       addToCart({
         productId,
@@ -114,7 +129,7 @@ const TrendingViewAllV1 = () => {
       })
     );
   };
-
+ 
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
       const exists = prev[type].includes(value);
@@ -126,10 +141,11 @@ const TrendingViewAllV1 = () => {
       };
     });
   };
-
+ 
   const clearAllFilters = () => {
     setFilters({
       minQty: [],
+      price: [],
       rating: [],
       supplier: [],
     });
@@ -137,7 +153,13 @@ const TrendingViewAllV1 = () => {
     setSortOption("Most relevant");
     setCurrentPage(1);
   };
-
+ 
+  const activeFilterCount =
+    filters.minQty.length +
+    filters.price.length +
+    filters.rating.length +
+    filters.supplier.length;
+ 
   const normalizedProducts = useMemo(() => {
     return trending.map((product) => ({
       ...product,
@@ -147,10 +169,7 @@ const TrendingViewAllV1 = () => {
       supplierType: product.supplierType || product.supplier_type || "",
       priceValue: Number(product.priceValue ?? product.price ?? 0),
       categoryName:
-        product.category_name ||
-        product.categoryName ||
-        product.category ||
-        "Uncategorized",
+        product.category_name || product.categoryName || product.category || "Uncategorized",
       categorySlug: product.category_slug || product.categorySlug || "",
       subcategorySlug:
         product.subcategory_slug ||
@@ -160,66 +179,58 @@ const TrendingViewAllV1 = () => {
       ratingValue: Number(product.rating ?? 0),
     }));
   }, [trending]);
-
+ 
   const categories = useMemo(() => {
     return [
       { name: "All Categories", slug: "All" },
-      ...mainCategories.map((cat) => ({
-        name: cat.name,
-        slug: cat.slug,
-      })),
+      ...mainCategories.map((cat) => ({ name: cat.name, slug: cat.slug })),
     ];
   }, [mainCategories]);
-
+ 
   const filteredProducts = useMemo(() => {
     return [...normalizedProducts]
       .filter((product) => {
-        if (
-          activeCategory !== "All" &&
-          product.categorySlug !== activeCategory
-        ) {
+        if (activeCategory !== "All" && product.categorySlug !== activeCategory) {
           return false;
         }
-
+ 
         if (filters.minQty.length > 0) {
           const qty = product.minOrderQty;
-
-          const matchQty = filters.minQty.some((range) => {
-            if (range === "Under 50 units") return qty < 50;
-            if (range === "50–200 units") return qty >= 50 && qty <= 200;
-            if (range === "200–500 units") return qty > 200 && qty <= 500;
-            if (range === "500+ units") return qty > 500;
-            return false;
-          });
-
+          const matchQty = MOQ_OPTIONS.some(
+            (opt) => filters.minQty.includes(opt.label) && opt.test(qty)
+          );
           if (!matchQty) return false;
         }
-
+ 
+        if (filters.price.length > 0) {
+          const price = product.priceValue;
+          const matchPrice = PRICE_OPTIONS.some(
+            (opt) => filters.price.includes(opt.label) && opt.test(price)
+          );
+          if (!matchPrice) return false;
+        }
+ 
         if (filters.rating.length > 0) {
           const matchRating = filters.rating.some(
             (r) => product.ratingValue >= parseFloat(r)
           );
           if (!matchRating) return false;
         }
-
+ 
         if (filters.supplier.length > 0) {
           const matchSupplier = filters.supplier.includes(product.supplierType);
           if (!matchSupplier) return false;
         }
-
+ 
         return true;
       })
       .sort((a, b) => {
-        if (sortOption === "Price low to high") {
-          return a.priceValue - b.priceValue;
-        }
-        if (sortOption === "Price high to low") {
-          return b.priceValue - a.priceValue;
-        }
+        if (sortOption === "Price low to high") return a.priceValue - b.priceValue;
+        if (sortOption === "Price high to low") return b.priceValue - a.priceValue;
         return 0;
       });
   }, [normalizedProducts, activeCategory, filters, sortOption]);
-
+ 
   useEffect(() => {
     if (
       activeCategory !== "All" &&
@@ -229,23 +240,20 @@ const TrendingViewAllV1 = () => {
       setActiveCategory("All");
     }
   }, [categories, activeCategory]);
-
+ 
   useEffect(() => {
     setCurrentPage(1);
   }, [activeCategory, sortOption, filters]);
-
+ 
   const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
   const safePage = Math.min(Math.max(currentPage, 1), totalPages || 1);
   const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalProducts);
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
+ 
   return (
-    <div
-      className="bg-white min-h-screen text-[#1A1A1A]"
-      style={{ backgroundColor: COLORS.white, color: COLORS.text }}
-    >
+    <div className="bg-white min-h-screen text-[#1A1A1A]" style={{ backgroundColor: COLORS.white, color: COLORS.text }}>
       <div className="max-w-350 mx-auto px-4 py-6">
         <div className="mb-5">
           <p className="text-xs text-gray-600" style={{ color: COLORS.muted }}>
@@ -253,34 +261,22 @@ const TrendingViewAllV1 = () => {
               Home
             </Link>
             <span className="mx-2">››</span>
-            <span
-              className="text-[#0B1F3A] font-medium"
-              style={{ color: COLORS.primary }}
-            >
+            <span className="text-[#0B1F3A] font-medium" style={{ color: COLORS.primary }}>
               Trending Products
             </span>
           </p>
         </div>
-
-        <h1
-          className="text-3xl font-bold mt-2 text-[#0B1F3A]"
-          style={{ color: COLORS.primary }}
-        >
+ 
+        <h1 className="text-3xl font-bold mt-2 text-[#0B1F3A]" style={{ color: COLORS.primary }}>
           Trending Products
         </h1>
-
-        <p
-          className="text-gray-500 text-sm mt-1"
-          style={{ color: COLORS.muted }}
-        >
+ 
+        <p className="text-gray-500 text-sm mt-1" style={{ color: COLORS.muted }}>
           Best-selling wholesale products across all categories
         </p>
       </div>
-
-      <div
-        className="bg-white py-5 rounded-sm"
-        style={{ backgroundColor: COLORS.white }}
-      >
+ 
+      <div className="bg-white py-5 rounded-sm" style={{ backgroundColor: COLORS.white }}>
         <div className="max-w-350 mx-auto px-4 pb-4">
           <div className="flex gap-3 overflow-x-auto no-scrollbar">
             {categories.map((cat) => (
@@ -290,16 +286,8 @@ const TrendingViewAllV1 = () => {
                 className="whitespace-nowrap px-4 py-2 rounded-lg text-sm border transition cursor-pointer"
                 style={
                   activeCategory === cat.slug
-                    ? {
-                      backgroundColor: COLORS.accent,
-                      color: COLORS.primary,
-                      borderColor: COLORS.accent,
-                    }
-                    : {
-                      backgroundColor: COLORS.white,
-                      color: COLORS.text,
-                      borderColor: COLORS.border,
-                    }
+                    ? { backgroundColor: COLORS.accent, color: COLORS.primary, borderColor: COLORS.accent }
+                    : { backgroundColor: COLORS.white, color: COLORS.text, borderColor: COLORS.border }
                 }
               >
                 {cat.name}
@@ -307,101 +295,79 @@ const TrendingViewAllV1 = () => {
             ))}
           </div>
         </div>
-
+ 
         <div className="max-w-350 mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
           <div className="md:hidden mb-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="w-full border rounded-lg py-2 text-sm font-medium cursor-pointer"
-              style={{
-                backgroundColor: COLORS.white,
-                color: COLORS.primary,
-                borderColor: COLORS.border,
-              }}
+              className="w-full border rounded-lg py-2 text-sm font-medium cursor-pointer flex items-center justify-center gap-2"
+              style={{ backgroundColor: COLORS.white, color: COLORS.primary, borderColor: COLORS.border }}
             >
-              Filters {showFilters ? "▲" : "▼"}
+              Filters
+              {activeFilterCount > 0 && (
+                <span
+                  className="text-[11px] px-1.5 py-[1px] rounded-full"
+                  style={{ backgroundColor: COLORS.accent, color: COLORS.primary }}
+                >
+                  {activeFilterCount}
+                </span>
+              )}
+              <span>{showFilters ? "▲" : "▼"}</span>
             </button>
           </div>
-
+ 
           <div
-            className={`${showFilters ? "block" : "hidden"
-              } md:block bg-white rounded-2xl border border-gray-200 p-5 h-fit sticky top-24 shadow-sm`}
+            className={`${showFilters ? "block" : "hidden"} md:block bg-white rounded-2xl border border-gray-200 p-5 h-fit sticky top-24 shadow-sm`}
           >
-
             <div className="flex justify-between items-center mb-5">
-
-              <h2 className="text-lg font-bold text-[#0B1F3A]">
-                Filters
-              </h2>
-
-
-              <button
-                onClick={clearAllFilters}
-                className="text-xs text-red-500 hover:underline"
-              >
-                Clear All
-              </button>
-
+              <h2 className="text-lg font-bold text-[#0B1F3A]">Filters</h2>
+              {activeFilterCount > 0 && (
+                <button onClick={clearAllFilters} className="text-xs text-red-500 hover:underline cursor-pointer">
+                  Clear All ({activeFilterCount})
+                </button>
+              )}
             </div>
-
-
-
-            {/* Categories */}
-
-
-
-
-
-
-            {/* MOQ */}
-
+ 
+            {/* Min. Order Qty */}
             <div className="border-b border-gray-200 pb-5 mb-5">
-
-
-              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
-                Min. Order Qty
-              </h3>
-
-
-
-              {[
-                "Under 50 units",
-                "50–200 units",
-                "200–500 units",
-                "500+ units"
-
-              ].map(item => (
-
-
-                <label
-                  key={item}
-                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
-                >
-
-
+              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">Min. Order Qty</h3>
+              {MOQ_OPTIONS.map((opt) => (
+                <label key={opt.label} className="flex items-center gap-2 text-sm mb-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.minQty.includes(opt.label)}
+                    onChange={() => handleFilterChange("minQty", opt.label)}
+                    className="accent-[#D4AF37]"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+ 
+            {/* Price Range */}
+            <div className="border-b border-gray-200 pb-5 mb-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm text-[#0B1F3A]">Price Range</h3>
+                {filters.price.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters((prev) => ({ ...prev, price: [] }))}
+                    className="text-[11px] text-gray-400 hover:text-red-500 cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+              {PRICE_OPTIONS.map((opt) => (
+                <label key={opt.label} className="flex items-center gap-2 text-sm mb-2 cursor-pointer">
                   <input
 
                     type="checkbox"
-
-                    checked={
-                      filters.minQty.includes(item)
-                    }
-
-                    onChange={() =>
-                      handleFilterChange(
-                        "minQty",
-                        item
-                      )
-                    }
-
+                    checked={filters.price.includes(opt.label)}
+                    onChange={() => handleFilterChange("price", opt.label)}
                     className="accent-[#D4AF37]"
-
                   />
-
-
-                  {item}
-
-
+                  {opt.label}
                 </label>
 
 
@@ -409,200 +375,68 @@ const TrendingViewAllV1 = () => {
 
 
             </div>
-
-
-
-
-
-
-
-            {/* Price */}
-
-
-            <div className="border-b border-gray-200 pb-5 mb-5">
-
-
-              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
-                Price Range
-              </h3>
-
-
-
-              {[
-                "Under ₹500",
-                "₹500 - ₹1000",
-                "₹1000 - ₹5000",
-                "₹5000+"
-
-              ].map(item => (
-
-
-                <label
-                  key={item}
-                  className="flex items-center gap-2 text-sm mb-2 cursor-pointer"
-                >
-
-
-                  <input
-                    type="radio"
-                    name="price"
-                    className="accent-[#D4AF37]"
-                  />
-
-
-                  {item}
-
-
-                </label>
-
-
-              ))}
-
-
-
-            </div>
-
-
-
-
-
-
-
+ 
             {/* Rating */}
-
-
             <div>
+              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">Rating</h3>
+              {RATING_OPTIONS.map((opt) => (
+                <label key={opt.value} className="flex gap-2 items-center text-sm mb-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.rating.includes(opt.value)}
+                    onChange={() => handleFilterChange("rating", opt.value)}
+                    className="accent-[#D4AF37]"
+                  />
+                  <span className="text-yellow-500">{opt.label}</span>
+                  <span>&amp; above</span>
+                </label>
 
 
-              <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">
-                Rating
-              </h3>
-
-
-
-              <label className="flex gap-2 items-center text-sm mb-2">
-
-                <input
-                  type="checkbox"
-                  checked={filters.rating.includes("4.5")}
-                  onChange={() =>
-                    handleFilterChange(
-                      "rating",
-                      "4.5"
-                    )
-                  }
-                  className="accent-[#D4AF37]"
-                />
-
-
-                <span className="text-yellow-500">
-                  ★★★★★
-                </span>
-
-                <span>
-                  & above
-                </span>
-
-              </label>
-
-
-
-              <label className="flex gap-2 items-center text-sm">
-
-
-                <input
-                  type="checkbox"
-                  checked={filters.rating.includes("4")}
-                  onChange={() =>
-                    handleFilterChange(
-                      "rating",
-                      "4"
-                    )
-                  }
-                  className="accent-[#D4AF37]"
-                />
-
-
-                <span className="text-yellow-500">
-                  ★★★★
-                </span>
-
-                <span>
-                  & above
-                </span>
-
-              </label>
+              ))}
 
 
 
             </div>
-
-
-
-
-
+ 
             <button
-
-              className="w-full mt-6 bg-[#0B1F3A] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90"
-
+              type="button"
+              onClick={() => setShowFilters(false)}
+              className="w-full mt-6 bg-[#0B1F3A] text-white py-3 rounded-xl text-sm font-semibold hover:opacity-90 cursor-pointer md:hidden"
             >
-
               APPLY FILTERS
-
             </button>
-
-
-
           </div>
-
+ 
           <main>
             <div className="mb-4 flex items-center justify-between gap-3">
               <p className="text-sm text-gray-700" style={{ color: COLORS.text }}>
-                Showing{" "}
-                <span className="font-semibold">
-                  {totalProducts === 0 ? 0 : startIndex + 1}
-                </span>
-                –
+                Showing <span className="font-semibold">{totalProducts === 0 ? 0 : startIndex + 1}</span>–
                 <span className="font-semibold">{endIndex}</span> of{" "}
                 <span className="font-semibold">{totalProducts}</span> Products
               </p>
-
+ 
               <div className="flex items-center gap-2">
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
                   className="rounded-lg border border-[#E5E5E5] bg-white px-3 py-2 text-sm"
-                  style={{
-                    borderColor: COLORS.border,
-                    backgroundColor: COLORS.white,
-                    color: COLORS.text,
-                  }}
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.white, color: COLORS.text }}
                 >
                   <option>Most relevant</option>
                   <option>Price low to high</option>
                   <option>Price high to low</option>
                 </select>
-
+ 
                 <button
-                  onClick={() =>
-                    setViewMode((m) => (m === "grid" ? "list" : "grid"))
-                  }
+                  onClick={() => setViewMode((m) => (m === "grid" ? "list" : "grid"))}
                   className="h-10 w-10 rounded-lg border border-[#E5E5E5] bg-white flex items-center justify-center cursor-pointer"
-                  style={{
-                    borderColor: COLORS.border,
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.white, color: COLORS.primary }}
                 >
-                  {viewMode === "grid" ? (
-                    <LayoutGrid size={16} />
-                  ) : (
-                    <LayoutList size={16} />
-                  )}
+                  {viewMode === "grid" ? <LayoutGrid size={16} /> : <LayoutList size={16} />}
                 </button>
               </div>
             </div>
-
+ 
             <div
               className={
                 viewMode === "grid"
@@ -612,42 +446,27 @@ const TrendingViewAllV1 = () => {
             >
               {paginatedProducts.map((product) => {
                 const isLiked = liked.includes(String(product.productId));
-
+ 
                 return (
-                  <Link
-                    key={product.productId}
-                    href={`/product/${product.productId}`}
-                  >
+                  <Link key={product.productId} href={`/product/${product.productId}`}>
                     <Card
                       className="rounded-xl border bg-white hover:shadow-sm transition overflow-hidden cursor-pointer"
-                      style={{
-                        borderColor: COLORS.border,
-                        backgroundColor: COLORS.white,
-                      }}
+                      style={{ borderColor: COLORS.border, backgroundColor: COLORS.white }}
                     >
                       <CardContent className="p-0">
-                        <div
-                          className={
-                            viewMode === "grid" ? "" : "flex gap-3 items-start"
-                          }
-                        >
+                        <div className={viewMode === "grid" ? "" : "flex gap-3 items-start"}>
                           <div
                             className={
-                              viewMode === "grid"
-                                ? "relative h-40 w-full"
-                                : "relative h-24 w-24 shrink-0 m-3"
+                              viewMode === "grid" ? "relative h-40 w-full" : "relative h-24 w-24 shrink-0 m-3"
                             }
                           >
                             <span
                               className="absolute top-1 left-1 text-[9px] px-2 py-[2px] rounded"
-                              style={{
-                                backgroundColor: COLORS.primary,
-                                color: COLORS.white,
-                              }}
+                              style={{ backgroundColor: COLORS.primary, color: COLORS.white }}
                             >
                               Trending
                             </span>
-
+ 
                             <button
                               type="button"
                               onClick={(e) => {
@@ -660,75 +479,51 @@ const TrendingViewAllV1 = () => {
                             >
                               <Heart
                                 size={14}
-                                className={
-                                  isLiked ? "text-red-500" : "text-gray-600"
-                                }
+                                className={isLiked ? "text-red-500" : "text-gray-600"}
                                 fill={isLiked ? "currentColor" : "none"}
                               />
                             </button>
-
+ 
                             <img
                               src={product.imageUrl}
                               alt={product.name}
                               className="w-full h-full object-cover rounded"
                             />
                           </div>
-
-                          <div
-                            className={
-                              viewMode === "grid" ? "p-3" : "flex-1 py-3 pr-3"
-                            }
-                          >
-                            <h3
-                              className="text-sm font-semibold line-clamp-2"
-                              style={{ color: COLORS.accent }}
-                            >
+ 
+                          <div className={viewMode === "grid" ? "p-3" : "flex-1 py-3 pr-3"}>
+                            <h3 className="text-sm font-semibold line-clamp-2" style={{ color: COLORS.accent }}>
                               {product.name}
                             </h3>
-
-                            <p
-                              className="text-sm font-bold mt-1"
-                              style={{ color: COLORS.primary }}
-                            >
+ 
+                            <p className="text-sm font-bold mt-1" style={{ color: COLORS.primary }}>
                               ₹{product.priceValue}/unit
                             </p>
-
-                            <p
-                              className="text-[11px]"
-                              style={{ color: COLORS.muted }}
-                            >
+ 
+                            <p className="text-[11px]" style={{ color: COLORS.muted }}>
                               Min. {product.minOrderQty} units
                             </p>
-
+ 
                             {product.stock ? (
-                              <p
-                                className="text-[11px] flex items-center gap-1 mt-1"
-                                style={{ color: COLORS.muted }}
-                              >
+                              <p className="text-[11px] flex items-center gap-1 mt-1" style={{ color: COLORS.muted }}>
                                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                 {product.stock}
                               </p>
                             ) : null}
-
+ 
                             <div className="mt-3">
                               <Button
-                                className={`flex items-center gap-2 rounded-md cursor-pointer ${viewMode === "grid"
-                                    ? "w-full text-sm py-2 justify-center"
-                                    : "text-xs px-3 py-1.5"
-                                  }`}
-                                style={{
-                                  backgroundColor: COLORS.accent,
-                                  color: COLORS.primary,
-                                }}
+                                className={`flex items-center gap-2 rounded-md cursor-pointer ${
+                                  viewMode === "grid" ? "w-full text-sm py-2 justify-center" : "text-xs px-3 py-1.5"
+                                }`}
+                                style={{ backgroundColor: COLORS.accent, color: COLORS.primary }}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   onAddToCart(product);
                                 }}
                               >
-                                <ShoppingCart
-                                  size={viewMode === "grid" ? 14 : 12}
-                                />
+                                <ShoppingCart size={viewMode === "grid" ? 14 : 12} />
                                 Add to cart
                               </Button>
                             </div>
@@ -740,32 +535,25 @@ const TrendingViewAllV1 = () => {
                 );
               })}
             </div>
-
+ 
             {paginatedProducts.length === 0 && (
-              <div
-                className="text-center py-12 text-gray-500"
-                style={{ color: COLORS.muted }}
-              >
+              <div className="text-center py-12 text-gray-500" style={{ color: COLORS.muted }}>
                 No products found for the selected filters.
               </div>
             )}
-
+ 
             {totalProducts > 0 && (
               <div className="flex items-center justify-center gap-2 mt-8">
                 <button
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   className="h-9 w-9 rounded-lg border bg-white cursor-pointer"
-                  style={{
-                    borderColor: COLORS.border,
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.white, color: COLORS.primary }}
                   disabled={safePage === 1}
                 >
                   ‹
                 </button>
-
+ 
                 {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
                   const pageNum = i + 1;
                   return (
@@ -776,29 +564,18 @@ const TrendingViewAllV1 = () => {
                       className="h-9 w-9 rounded-lg border text-sm cursor-pointer"
                       style={
                         safePage === pageNum
-                          ? {
-                            backgroundColor: COLORS.primary,
-                            color: COLORS.cream,
-                            borderColor: COLORS.primary,
-                          }
-                          : {
-                            backgroundColor: COLORS.white,
-                            color: COLORS.primary,
-                            borderColor: COLORS.border,
-                          }
+                          ? { backgroundColor: COLORS.primary, color: COLORS.cream, borderColor: COLORS.primary }
+                          : { backgroundColor: COLORS.white, color: COLORS.primary, borderColor: COLORS.border }
                       }
                     >
                       {pageNum}
                     </button>
                   );
                 })}
-
+ 
                 {totalPages > 5 && (
                   <>
-                    <span
-                      className="px-1 text-gray-500"
-                      style={{ color: COLORS.muted }}
-                    >
+                    <span className="px-1 text-gray-500" style={{ color: COLORS.muted }}>
                       …
                     </span>
                     <button
@@ -807,34 +584,20 @@ const TrendingViewAllV1 = () => {
                       className="h-9 w-9 rounded-lg border text-sm cursor-pointer"
                       style={
                         safePage === totalPages
-                          ? {
-                            backgroundColor: COLORS.primary,
-                            color: COLORS.cream,
-                            borderColor: COLORS.primary,
-                          }
-                          : {
-                            backgroundColor: COLORS.white,
-                            color: COLORS.primary,
-                            borderColor: COLORS.border,
-                          }
+                          ? { backgroundColor: COLORS.primary, color: COLORS.cream, borderColor: COLORS.primary }
+                          : { backgroundColor: COLORS.white, color: COLORS.primary, borderColor: COLORS.border }
                       }
                     >
                       {totalPages}
                     </button>
                   </>
                 )}
-
+ 
                 <button
                   type="button"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   className="h-9 w-9 rounded-lg border bg-white cursor-pointer"
-                  style={{
-                    borderColor: COLORS.border,
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
+                  style={{ borderColor: COLORS.border, backgroundColor: COLORS.white, color: COLORS.primary }}
                   disabled={safePage === totalPages}
                 >
                   ›
@@ -847,5 +610,5 @@ const TrendingViewAllV1 = () => {
     </div>
   );
 };
-
+ 
 export default TrendingViewAllV1;

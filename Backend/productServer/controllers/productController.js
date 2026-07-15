@@ -697,10 +697,7 @@ exports.getSingleProduct = async (req, res) => {
 
   try {
     const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ message: "Product ID is required" });
-    }
+    if (!id) return res.status(400).json({ message: "Product ID is required" });
 
     const userId = req.user?.id || null;
     const sessionId = req.headers["x-session-id"] || null;
@@ -709,16 +706,10 @@ exports.getSingleProduct = async (req, res) => {
     await client.query("BEGIN");
 
     const productResult = await client.query(
-      `
-      SELECT
-        p.*,
-        o.name AS organization_name
-      FROM products p
-      LEFT JOIN organizations o
-        ON p.organization_id = o.id
-      WHERE p.id = $1
-        AND p.is_active = true
-      `,
+      `SELECT p.*, o.name AS organization_name
+       FROM products p
+       LEFT JOIN organizations o ON p.organization_id = o.id
+       WHERE p.id = $1 AND p.is_active = true`,
       [id]
     );
 
@@ -735,116 +726,76 @@ exports.getSingleProduct = async (req, res) => {
       pricingResult,
       categoriesResult,
       reviewsResult,
+      variantsResult,
     ] = await Promise.all([
       client.query(
-        `
-        SELECT
-          id,
-          image_url,
-          media_type,
-          public_id,
-          sort_order,
-          is_primary
-        FROM product_images
-        WHERE product_id = $1
-        ORDER BY is_primary DESC, sort_order ASC
-        `,
+        `SELECT id, image_url, media_type, public_id, sort_order, is_primary
+         FROM product_images WHERE product_id = $1
+         ORDER BY is_primary DESC, sort_order ASC`,
         [id]
       ),
-
       client.query(
         `SELECT key, value FROM product_specifications WHERE product_id = $1`,
         [id]
       ),
-
       client.query(
-        `
-        SELECT min_quantity, price, label 
-        FROM product_pricing_tiers 
-        WHERE product_id = $1 
-        ORDER BY min_quantity ASC
-        `,
+        `SELECT min_quantity, price, label FROM product_pricing_tiers
+         WHERE product_id = $1 ORDER BY min_quantity ASC`,
         [id]
       ),
-
       client.query(
-        `
-        SELECT c.id, c.name, c.slug, c.parent_id
-        FROM product_categories pc
-        JOIN categories c ON pc.category_id = c.id
-        WHERE pc.product_id = $1
-        `,
+        `SELECT c.id, c.name, c.slug, c.parent_id
+         FROM product_categories pc
+         JOIN categories c ON pc.category_id = c.id
+         WHERE pc.product_id = $1`,
         [id]
       ),
-
       client.query(
-        `
-        SELECT 
-          r.id,
-          r.rating,
-          r.comment,
-          r.created_at,
-          u.full_name
-        FROM reviews r
-        LEFT JOIN users u ON u.id = r.user_id
-        WHERE r.product_id = $1
-        ORDER BY r.created_at DESC
-        `,
+        `SELECT r.id, r.rating, r.comment, r.created_at, r.image_urls, r.video_urls, u.full_name
+         FROM reviews r LEFT JOIN users u ON u.id = r.user_id
+         WHERE r.product_id = $1 ORDER BY r.created_at DESC`,
+        [id]
+      ),
+      client.query(
+        `SELECT id, sku, price, mrp, stock, is_active, variant_type,
+                variant_value, unit, variant_name, image_url
+         FROM product_variants
+         WHERE product_id = $1 AND is_active = true`,
         [id]
       ),
     ]);
 
     const existingView = await client.query(
-      `
-      SELECT 1 FROM product_events
-      WHERE product_id = $1
-        AND event_type = 'view'
-        AND (
-          (user_id IS NOT NULL AND user_id = $2)
-          OR (session_id IS NOT NULL AND session_id = $3)
-          OR (ip_address = $4)
-        )
-        AND created_at > NOW() - INTERVAL '10 minutes'
-      LIMIT 1
-      `,
+      `SELECT 1 FROM product_events
+       WHERE product_id = $1 AND event_type = 'view'
+         AND ((user_id IS NOT NULL AND user_id = $2)
+              OR (session_id IS NOT NULL AND session_id = $3)
+              OR (ip_address = $4))
+         AND created_at > NOW() - INTERVAL '10 minutes'
+       LIMIT 1`,
       [id, userId, sessionId, ipAddress]
     );
 
     if (existingView.rows.length === 0) {
       await client.query(
-        `
-        UPDATE products
-        SET views_count = views_count + 1,
-            views_last_7_days = views_last_7_days + 1
-        WHERE id = $1
-        `,
+        `UPDATE products SET views_count = views_count + 1,
+                              views_last_7_days = views_last_7_days + 1
+         WHERE id = $1`,
         [id]
       );
-
       await client.query(
-        `
-        INSERT INTO product_events 
-        (product_id, event_type, user_id, session_id, ip_address)
-        VALUES ($1, 'view', $2, $3, $4)
-        `,
+        `INSERT INTO product_events (product_id, event_type, user_id, session_id, ip_address)
+         VALUES ($1, 'view', $2, $3, $4)`,
         [id, userId, sessionId, ipAddress]
       );
     }
 
     await client.query("COMMIT");
 
-    const images = imagesResult.rows.filter(
-      (item) => item.media_type === "image"
-    );
-
-    const videos = imagesResult.rows.filter(
-      (item) => item.media_type === "video"
-    );
-
+    const images = imagesResult.rows.filter((item) => item.media_type === "image");
+    const videos = imagesResult.rows.filter((item) => item.media_type === "video");
     const image_url =
-      images.find((img) => img.is_primary)?.image_url ||
-      images[0]?.image_url ||
-      null;
+      images.find((img) => img.is_primary)?.image_url || images[0]?.image_url || null;
 
     return res.json({
       ...product,
@@ -855,6 +806,7 @@ exports.getSingleProduct = async (req, res) => {
       pricingTiers: pricingResult.rows,
       categories: categoriesResult.rows,
       reviews: reviewsResult.rows,
+      variants: variantsResult.rows,
     });
   } catch (err) {
     await client.query("ROLLBACK");

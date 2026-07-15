@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { createRFQ } from "@/store/slices/rfqSlice";
+import { productapi } from "@/lib/axios";
+import { useSelector } from "react-redux";
 import {
   Box,
   Building2,
@@ -21,7 +23,8 @@ import {
 export default function RFQPage() {
   const dispatch = useDispatch();
 
-  const buyerOrgId = "YOUR_REAL_BUYER_ORG_UUID";
+  const authUser = useSelector((state) => state.auth.user);
+  const buyerOrgId = authUser?.organization_id;
 
   const [form, setForm] = useState({
     productName: "",
@@ -39,6 +42,13 @@ export default function RFQPage() {
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+
+  const [vendors, setVendors] = useState([]);
+  const [selectedVendorIds, setSelectedVendorIds] = useState([]);
+
+  useEffect(() => {
+    loadVendors();
+  }, []);
 
   const benefits = [
     {
@@ -138,6 +148,16 @@ export default function RFQPage() {
     setErrors({});
   };
 
+  const loadVendors = async () => {
+    try {
+      const res = await productapi.get("/api/organizations/vendors");
+
+      setVendors(res.data.vendors || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -151,19 +171,22 @@ export default function RFQPage() {
         product_id: null,
         title: form.productName.trim(),
         description: `
-Company Name: ${form.companyName}
-Buyer Name: ${form.buyerName}
-Email: ${form.email}
-Phone: ${form.phone}
-Delivery Location: ${form.deliveryLocation}
-Unit: ${form.unit}
-Requirements: ${form.requirements || "N/A"}
-Attachment: ${form.file ? form.file.name : "No attachment"}
+        Company Name: ${form.companyName}
+        Buyer Name: ${form.buyerName}
+        Email: ${form.email}
+        Phone: ${form.phone}
+        Delivery Location: ${form.deliveryLocation}
+        Unit: ${form.unit}
+        Requirements: ${form.requirements || "N/A"}
+        Attachment: ${form.file ? form.file.name : "No attachment"}
         `.trim(),
         quantity: Number(form.quantity),
         budget: form.targetPrice ? Number(form.targetPrice) : null,
+        vendor_org_ids: selectedVendorIds,
       };
 
+      console.log("Submitting RFQ:", payload);
+      
       const result = await dispatch(createRFQ(payload));
 
       if (createRFQ.fulfilled.match(result)) {
@@ -178,6 +201,7 @@ Attachment: ${form.file ? form.file.name : "No attachment"}
     } finally {
       setSubmitted(false);
     }
+
   };
 
   return (
@@ -260,9 +284,8 @@ Attachment: ${form.file ? form.file.name : "No attachment"}
                 name="unit"
                 value={form.unit}
                 onChange={handleChange}
-                className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${
-                  errors.unit ? "border-red-400" : "border-[#E5E5E5]"
-                }`}
+                className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${errors.unit ? "border-red-400" : "border-[#E5E5E5]"
+                  }`}
               >
                 <option value="">Select unit</option>
                 <option value="Pieces">Pieces</option>
@@ -508,9 +531,8 @@ function InputBox({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 hover:border-[#D4AF37] focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${
-          error ? "border-red-400" : "border-[#E5E5E5]"
-        }`}
+        className={`w-full rounded-sm border px-3 py-2 outline-none transition-all duration-300 hover:border-[#D4AF37] focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/30 ${error ? "border-red-400" : "border-[#E5E5E5]"
+          }`}
       />
 
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}

@@ -19,6 +19,7 @@ const vendorPayoutRoutes = require("./routes/vendorPayoutRoutes");
 const adminPayoutRoutes = require("./routes/adminPayoutRoutes");
 const organizationRoutes = require("./routes/organizationRoutes");
 const vendorDashboardRoutes = require("./routes/vendorDashboardRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/api/vendor", vendorRFQRoutes);
 app.use("/api/vendor-payouts", vendorPayoutRoutes);
 app.use("/api/admin/payouts", adminPayoutRoutes);
 app.use("/api/vendor", vendorDashboardRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
 pool
