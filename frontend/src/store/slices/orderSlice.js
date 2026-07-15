@@ -1,14 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-  createOrderFromCartAPI,
-  createOrderAPI,
-  getUserOrdersAPI,
-  getVendorOrdersAPI,
-  getAdminOrdersAPI,
-  getOrderDetailsAPI,
-  updateOrderStatusAPI,
-  getOrderById, getOrderTrackingAPI,
-} from "@/services/orderService";
+import {createOrderFromCartAPI,createOrderAPI,getUserOrdersAPI,getVendorOrdersAPI,getAdminOrdersAPI,getOrderDetailsAPI,updateOrderStatusAPI,getOrderById, getOrderTrackingAPI,} from "@/services/orderService";
 
 const normalizeError = (err) =>
   err?.response?.data?.message || err?.message || "Something went wrong";
