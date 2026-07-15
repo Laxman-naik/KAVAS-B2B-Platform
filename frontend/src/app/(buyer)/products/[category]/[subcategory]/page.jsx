@@ -37,14 +37,14 @@ export default function SubCategoryPage() {
       try {
         setRoute({ category, subcategory });
 
-        const productsRes = await productapi.get(
-          `/api/products/category/${category}`
-        );
+        const [categoryRes, productsRes] = await Promise.all([
+          productapi.get(`/api/categories/slug/${category}`),
+          productapi.get(
+            `/api/products/category/${category}/${subcategory}`
+          ),
+        ]);
 
-        setCategoryMeta({
-          name: category.replaceAll("-", " "),
-          subcategories: [],
-        });
+        setCategoryMeta(categoryRes.data.data);
 
         const rawProducts = Array.isArray(productsRes?.data?.data)
           ? productsRes.data.data
@@ -127,8 +127,15 @@ export default function SubCategoryPage() {
 
   const categorySlug = route.category;
   const subcategorySlug = route.subcategory;
-  const categoryName = categoryMeta?.name || "Category";
-  const subcategories = categoryMeta?.subcategories || [];
+  const selectedSubcategory =
+    categoryMeta?.subcategories?.find(
+      (sub) => sub.slug === subcategorySlug
+    );
+
+  const categoryName =
+    selectedSubcategory?.name ||
+    categoryMeta?.name ||
+    "Category"; const subcategories = categoryMeta?.subcategories || [];
 
   return (
     <div
@@ -158,7 +165,7 @@ export default function SubCategoryPage() {
             borderColor: COLORS.border,
           }}
         >
-          All {categoryName}
+          All {categoryMeta?.name}
         </Link>
 
         {subcategories.map((sub) => (
