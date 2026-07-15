@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  BadgeCheck, ChevronRight, ClipboardList, FileText, Heart,
-  MessageSquareText, Minus, Plus, RefreshCcw, Share2, ShieldCheck,
+  ChevronRight, FileText, Heart,
+  Minus, Plus, RefreshCcw, Share2, ShieldCheck,
   ShoppingCart, Star, Truck, Zap,
 } from "lucide-react";
 import { fetchSingleProduct } from "@/store/slices/productSlice";
@@ -59,6 +59,22 @@ const initials = (name) => {
 
 const discount = (mrp, price) =>
   mrp > 0 && mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
+const isHexColor = (v) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(v || "").trim());
+
+const CSS_COLOR_NAMES = new Set([
+  "red", "blue", "green", "black", "white", "gray", "grey", "navy", "gold", "silver",
+  "maroon", "olive", "purple", "teal", "aqua", "lime", "yellow", "orange", "pink",
+  "brown", "beige", "tan", "coral", "crimson", "indigo", "violet", "khaki",
+  "lavender", "turquoise", "salmon", "chocolate", "orchid", "plum", "charcoal",
+]);
+
+const resolveSwatch = (value) => {
+  const v = String(value || "").trim();
+  if (isHexColor(v)) return { type: "color", css: v };
+  if (CSS_COLOR_NAMES.has(v.toLowerCase())) return { type: "color", css: v.toLowerCase() };
+  return { type: "unknown", css: null };
+};
 
 
 const normalizeMedia = (p) => {
@@ -130,18 +146,6 @@ const InfoCard = ({ title, text }) => (
   </div>
 );
 
-const SectionHeader = ({ Icon, title, linkTo, linkLabel }) => (
-  <div className="grid gap-4 sm:grid-cols-[44px_1fr]">
-    <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: C.cream }}>
-      <Icon className="h-5 w-5" style={{ color: C.primary }} />
-    </div>
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-sm font-bold" style={{ color: C.text }}>{title}</p>
-      <Link href={linkTo} className="text-xs font-semibold" style={{ color: C.primary }}>{linkLabel}</Link>
-    </div>
-  </div>
-);
-
 const LoadingSkeleton = () => (
   <div className="space-y-3 p-5">
     {[40, 72, 28, 80, 56].map((w, i) => (
@@ -166,16 +170,47 @@ const useNormalized = (p) =>
     gtin: str(p?.gtin, p?.GTIN, "-"),
     category: str(p?.category, p?.mainCategory, "Home"),
     subCategory: str(p?.subCategory, p?.sub_category, "-"),
-    rating: Number(p?.rating ?? p?.averageRating ?? 0),
-    reviewCount: Number(p?.reviewsCount ?? p?.reviewCount) || (Array.isArray(p?.reviews) ? p.reviews.length : 0),
+    rating: Number(p?.rating ?? p?.averageRating ?? p?.avg_rating ?? 0),
+    reviewCount: Number(p?.reviewsCount ?? p?.reviewCount ?? p?.total_reviews) || (Array.isArray(p?.reviews) ? p.reviews.length : 0),
     mrp: Number(p?.mrp ?? p?.compareAtPrice ?? p?.originalPrice ?? 0),
     baseUnit: Number(p?.price ?? p?.sellingPrice ?? p?.unitPrice ?? 0),
     minQty: Number(p?.minQty ?? p?.minimumOrderQty ?? p?.moq ?? 1) || 1,
     stock: str(p?.stock, p?.availability, "In Stock"),
-    sizes: (Array.isArray(p?.sizes) && p.sizes.length) ? p.sizes : ["Standard", "Premium"],
-    colors: (Array.isArray(p?.colors) && p.colors.length) ? p.colors : ["White", "Black", "Blue"],
+    sizes: (() => {
+      const variants = Array.isArray(p?.variants) ? p.variants : [];
+      const sizeRow = variants.find(
+        (v) => String(v?.variant_type || "").trim().toLowerCase() === "size"
+      );
+      if (!sizeRow?.variant_value) return [];
+      return String(sizeRow.variant_value).split(",").map((s) => s.trim()).filter(Boolean);
+    })(),
+    colors: (() => {
+      const variants = Array.isArray(p?.variants) ? p.variants : [];
+      const colorRow = variants.find(
+        (v) => String(v?.variant_type || "").trim().toLowerCase() === "color"
+      );
+      if (!colorRow?.variant_value) return [];
+      return String(colorRow.variant_value)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => ({ value: name, label: name, imageUrl: colorRow.image_url || null }));
+    })(),
     warranty: str(p?.warranty, "1 Year Manufacturer"),
-    returnPolicy: str(p?.returnPolicy, "7 Days Replacement"),
+    returnPolicy: str(p?.returnPolicy, p?.return_policy, "7 Days Replacement"),
+    isNewLaunch: (() => {
+      const created = p?.created_at ?? p?.createdAt;
+      if (!created) return false;
+      const days = (Date.now() - new Date(created).getTime()) / (1000 * 60 * 60 * 24);
+      return Number.isFinite(days) && days <= 30;
+    })(),
+    isBestSeller: Boolean(
+      p?.is_top_product ?? p?.isTopProduct ?? p?.is_featured ?? p?.isFeatured ?? (Number(p?.sales_count) > 0)
+    ),
+    gstInvoiceAvailable: Boolean(p?.gst_invoice_available ?? p?.gstInvoiceAvailable),
+    securePaymentAvailable: Boolean(p?.secure_payment_available ?? p?.securePaymentAvailable),
+    returnExchangeAvailable: Boolean(p?.return_exchange_available ?? p?.returnExchangeAvailable),
+    fastDeliveryAvailable: Boolean(p?.fast_delivery_available ?? p?.fastDeliveryAvailable),
     supplier:
       p?.supplier ??
       p?.vendor ??
@@ -185,6 +220,8 @@ const useNormalized = (p) =>
           p?.vendor_name ??
           p?.organization_name ??
           "",
+        rating: p?.supplier_rating ?? p?.organization_rating ?? null,
+        ratingCount: p?.supplier_rating_count ?? p?.organization_rating_count ?? null,
       },
     description: str(p?.shortDescription, p?.description, p?.about, "Designed for everyday use with reliable performance, bulk-friendly pricing, and support for business buying."),
     highlights: (Array.isArray(p?.highlights ?? p?.features) ? (p.highlights ?? p.features) : [])
@@ -195,27 +232,17 @@ const useNormalized = (p) =>
         return Object.entries(raw).map(([k, v]) => ({ label: k, value: String(v) })).filter(x => x.label && x.value).slice(0, 10);
       if (Array.isArray(raw))
         return raw.map(x => ({ label: str(x?.label, x?.name), value: str(x?.value, x?.val) })).filter(x => x.label && x.value).slice(0, 10);
-      return [
-        { label: "Driver Size", value: "40mm Dynamic Driver" },
-        { label: "Frequency Response", value: "20Hz – 20kHz" },
-        { label: "Connectivity", value: "Bluetooth 5.3, AUX" },
-        { label: "Battery Life", value: "Up to 30 Hours" },
-        { label: "Charging", value: "USB Type-C" },
-      ];
+      return [];
     })(),
     reviews: (() => {
       const list = Array.isArray(p?.reviews) ? p.reviews : [];
-      const mapped = list.map((r, i) => ({
-        id: r?._id ?? r?.id ?? String(i),
-        name: str(r?.name, r?.userName, r?.user?.name, "Verified Buyer"),
+      return list.map((r, i) => ({
+        id: r?.id ?? r?._id ?? String(i),
+        name: str(r?.full_name, r?.name, r?.userName, r?.user?.name, "Verified Buyer"),
         rating: Number(r?.rating ?? 0),
         comment: str(r?.comment, r?.review, r?.text),
-        timeAgo: str(r?.timeAgo, r?.date, r?.createdAt),
+        timeAgo: str(r?.timeAgo, r?.created_at, r?.date, r?.createdAt),
       })).filter(x => x.comment).slice(0, 2);
-      return mapped.length ? mapped : [
-        { id: "r1", name: "Rohit Verma", rating: 5, comment: "Excellent build quality and comfort. ANC works perfectly.", timeAgo: "2 days ago" },
-        { id: "r2", name: "Neha Sharma", rating: 4, comment: "Battery backup is amazing. Great product for office use.", timeAgo: "5 days ago" },
-      ];
     })(),
   }), [p]);
 
@@ -338,6 +365,33 @@ export default function ProductView() {
   const discountPct = discount(norm.mrp, unitPrice);
   const bulkSavings = Math.max(0, (tiers[0].price - unitPrice) * qty);
 
+  const supplierRating = norm.supplier?.rating != null ? Number(norm.supplier.rating) : null;
+  const supplierRatingCount = norm.supplier?.ratingCount != null ? Number(norm.supplier.ratingCount) : null;
+
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const onShare = async () => {
+    const shareData = {
+      title: norm.title,
+      text: `Check out ${norm.title} on KAVAS`,
+      url: typeof window !== "undefined" ? window.location.href : "",
+    };
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareData.url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+      }
+    } catch (err) {
+      // user cancelled the native share sheet, or clipboard failed — safe to ignore
+    }
+  };
+
   if (!id) return (
     <div className="min-h-screen" style={{ background: C.cream }}>
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -371,26 +425,40 @@ export default function ProductView() {
                       }`}
                   />
                 </button>
-                <button type="button" className="rounded-full border bg-white p-2 shadow-sm" style={{ borderColor: C.border }} aria-label="Share">
+                <button
+                  type="button"
+                  onClick={onShare}
+                  className="relative rounded-full border bg-white p-2 shadow-sm"
+                  style={{ borderColor: C.border }}
+                  aria-label="Share"
+                >
                   <Share2 className="h-5 w-5" style={{ color: C.primary }} />
+                  {shareCopied && (
+                    <span
+                      className="absolute right-0 top-full mt-2 whitespace-nowrap rounded-sm px-2 py-1 text-[10px] font-semibold text-white shadow-md"
+                      style={{ background: C.primary }}
+                    >
+                      Link copied!
+                    </span>
+                  )}
                 </button>
               </div>
 
-              <div className="h-80 rounded-sm overflow-hidden lg:h-115">
-                {selectedMedia?.type === "video" ? (
-                  <video
-                    src={selectedMedia.src}
-                    controls
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={selectedMedia?.src ?? "/placeholder.png"}
-                    alt={norm.title}
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
+             <div className="h-96 rounded-sm overflow-hidden lg:h-140">
+  {selectedMedia?.type === "video" ? (
+    <video
+      src={selectedMedia.src}
+      controls
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <img
+      src={selectedMedia?.src ?? "/placeholder.png"}
+      alt={norm.title}
+      className="h-full w-full object-cover"
+    />
+  )}
+</div>
 
             </div>
             <div className="relative">
@@ -454,15 +522,17 @@ export default function ProductView() {
                   {/* Badges + rating */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex gap-2">
-                      <Badge variant="soft">Best Seller</Badge>
-                      <Badge variant="solid">New Launch</Badge>
+                      {norm.isBestSeller && <Badge variant="soft">Best Seller</Badge>}
+                      {norm.isNewLaunch && <Badge variant="solid">New Launch</Badge>}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Stars rating={norm.rating} />
-                      <Link href="/customerreviews" className="text-xs font-semibold" style={{ color: C.muted }}>
-                        {(norm.rating || 0).toFixed(1)} ({norm.reviewCount})
-                      </Link>
-                    </div>
+                    {norm.reviewCount > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Stars rating={norm.rating} />
+                        <Link href="/customerreviews" className="text-xs font-semibold" style={{ color: C.muted }}>
+                          {(norm.rating || 0).toFixed(1)} ({norm.reviewCount})
+                        </Link>
+                      </div>
+                    )}
                   </div>
 
                   <h1 className="mt-3 text-2xl font-bold tracking-tight" style={{ color: C.text }}>{norm.title}</h1>
@@ -509,47 +579,70 @@ export default function ProductView() {
                   </div>
 
                   <div className="mt-5 space-y-5">
-                    <div>
-                      <p className="text-xs font-semibold" style={{ color: C.muted }}>Color</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {norm.colors.map((color) => {
-                          const active = selectedColor === color;
-                          const swatch = color === "Black" ? "#0f172a" : color === "Blue" ? C.primary : C.white;
-                          return (
-                            <button
-                              key={color}
-                              onClick={() => setSelectedColor(color)}
-                              className="relative flex items-center gap-2 rounded-sm border px-3 py-2 text-xs font-semibold"
-                              style={{ borderColor: active ? C.primary : C.border, background: active ? C.cream : C.white }}
-                            >
-                              <span className="h-4 w-4 rounded-sm border" style={{ background: swatch, borderColor: C.border }} />
-                              {color}
-                              {active && <BadgeCheck className="absolute -right-1.5 -top-1.5 h-4 w-4" style={{ fill: C.primary, color: C.white }} />}
-                            </button>
-                          );
-                        })}
+                    {norm.colors.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: C.muted }}>
+                          Color{selectedColor ? `: ${selectedColor.label}` : ""}
+                        </p>
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {norm.colors.map((color) => {
+                            const active = selectedColor?.value === color.value;
+                            const swatch = resolveSwatch(color.value);
+
+                            return (
+                              <button
+                                key={color.value}
+                                type="button"
+                                onClick={() => setSelectedColor(color)}
+                                className="relative h-9 w-9 overflow-hidden rounded-full border-2 transition"
+                                style={{
+                                  borderColor: active ? C.primary : C.border,
+                                  boxShadow: active ? "0 0 0 2px rgba(11,31,58,0.15)" : "none",
+                                  background: swatch.type === "color" ? swatch.css : C.border,
+                                }}
+                                aria-label={color.label}
+                                aria-pressed={active}
+                                title={color.label}
+                              >
+                                {swatch.type === "unknown" && color.imageUrl && (
+                                  <img src={color.imageUrl} alt={color.label} className="h-full w-full object-cover" />
+                                )}
+                                {swatch.type === "unknown" && !color.imageUrl && (
+                                  <span className="flex h-full w-full items-center justify-center text-[9px] font-bold" style={{ color: C.text }}>
+                                    {color.label.slice(0, 2).toUpperCase()}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {norm.sizes.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: C.muted }}>Size</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {norm.sizes.map((size) => {
+                            const active = selectedSize === size;
+                            return (
+                              <button
+                                key={size}
+                                onClick={() => setSelectedSize(size)}
+                                className="rounded-sm border px-4 py-2 text-xs font-semibold"
+                                style={{ borderColor: active ? C.primary : C.border, background: active ? C.cream : C.white, color: active ? C.primary : C.text }}
+                              >
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     <div>
-                      <p className="text-xs font-semibold" style={{ color: C.muted }}>Warranty</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {norm.sizes.map((size) => {
-                          const active = selectedSize === size;
-                          return (
-                            <button
-                              key={size}
-                              onClick={() => setSelectedSize(size)}
-                              className="rounded-sm border px-4 py-2 text-xs font-semibold"
-                              style={{ borderColor: active ? C.primary : C.border, background: active ? C.cream : C.white, color: active ? C.primary : C.text }}
-                            >
-                              {size}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div>
+
                       <p className="text-xs font-semibold" style={{ color: C.muted }}>Quantity (Units)</p>
                       <div className="mt-2 flex items-center gap-3">
                         <div className="flex overflow-hidden rounded-sm border" style={{ borderColor: C.border }}>
@@ -582,6 +675,10 @@ export default function ProductView() {
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-2">
+                      <InfoCard title="Warranty" text={norm.warranty} />
+                      <InfoCard title="Return Policy" text={norm.returnPolicy} />
+                    </div>
 
                     <div className="space-y-3">
                       <div className="flex gap-3">
@@ -612,13 +709,15 @@ export default function ProductView() {
                     </div>
                   </div>
 
-                  {/* Trust badges */}
-                  <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <TrustBadge Icon={FileText} label="GST Invoice" />
-                    <TrustBadge Icon={ShieldCheck} label="Secure Payments" />
-                    <TrustBadge Icon={RefreshCcw} label="Easy Returns" />
-                    <TrustBadge Icon={Truck} label="Fast Delivery" />
-                  </div>
+                 
+                  {(norm.gstInvoiceAvailable || norm.securePaymentAvailable || norm.returnExchangeAvailable || norm.fastDeliveryAvailable) && (
+                    <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {norm.gstInvoiceAvailable && <TrustBadge Icon={FileText} label="GST Invoice" />}
+                      {norm.securePaymentAvailable && <TrustBadge Icon={ShieldCheck} label="Secure Payments" />}
+                      {norm.returnExchangeAvailable && <TrustBadge Icon={RefreshCcw} label="Easy Returns" />}
+                      {norm.fastDeliveryAvailable && <TrustBadge Icon={Truck} label="Fast Delivery" />}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -628,21 +727,33 @@ export default function ProductView() {
                 <p className="text-xs" style={{ color: C.muted }}>Sold & Fulfilled by</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-sm font-bold text-white text-sm" style={{ background: C.primary }}>
+                    <div
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                      style={{ background: C.primary }}
+                    >
                       {initials(norm.supplier?.name || "Supplier")}
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">{norm.supplier?.name || "Supplier"}</p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <Stars rating={4.6} size={14} />
-                        <span className="text-xs font-semibold" style={{ color: C.muted }}>4.6 ({Math.max(1, norm.reviewCount)} ratings)</span>
-                      </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold" style={{ color: C.text }}>
+                        {norm.supplier?.name || "Supplier"}
+                      </p>
+
+                      {supplierRating != null ? (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <Stars rating={supplierRating} size={13} />
+                          <span className="text-xs font-medium" style={{ color: C.muted }}>
+                            {supplierRating.toFixed(1)}
+                            {supplierRatingCount != null ? ` (${supplierRatingCount})` : ""}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs" style={{ color: C.muted }}>
+                          No ratings yet
+                        </p>
+                      )}
                     </div>
                   </div>
-
-                  <button className="rounded-sm border px-4 py-2 text-xs font-semibold" style={{ borderColor: C.primary, color: C.primary }}>
-                    Contact Supplier
-                  </button>
 
                 </div>
               </div>
@@ -658,95 +769,93 @@ export default function ProductView() {
           <CustomerReviewsSection product={p} />
           <ShippingDeliverySection product={product} />
 
-          {/* Similar Products */}
-          <section className="mt-8 rounded-xl border border-gray-200 bg-white p-6">
-            {/* Header */}
-            <div className="mb-6 flex items-center justify-between">
+          <section className="rounded-sm border p-6" style={{ background: C.white, borderColor: C.border }}>
+            <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-lg font-bold" style={{ color: C.text }}>
                   Similar Products
                 </h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-0.5 text-xs" style={{ color: C.muted }}>
                   Products you may also like
                 </p>
               </div>
 
               <Link
                 href="/"
-                className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+                className="text-xs font-semibold"
+                style={{ color: C.primary }}
               >
                 View All →
               </Link>
             </div>
 
-            {/* Products */}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {(similar.length
                 ? similar
                 : Array.from({ length: 4 }, (_, i) => null)
               ).map((item, i) =>
                 item ? (
-                  <article
+                  <Link
                     key={item.id ?? i}
-                    className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    href={item.id ? `/product/${item.id}` : "#"}
+                    className="group overflow-hidden rounded-sm border transition-shadow hover:shadow-md"
+                    style={{ borderColor: C.border, background: C.white }}
                   >
-                    {/* Product Image */}
-                    <div className="flex h-72 items-center justify-center overflow-hidden bg-gray-50">
+                    <div className="relative h-40 overflow-hidden" style={{ background: C.cream }}>
                       <img
                         src={item.img}
                         alt={item.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      {item.off > 0 && (
+                        <div className="absolute left-2 top-2">
+                          <Badge variant="gold">{item.off}% OFF</Badge>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Product Details */}
-                    <div className="space-y-3 p-5">
-                      <div>
-                        <h3 className="line-clamp-2 text-lg font-semibold text-gray-900">
-                          {item.title}
-                        </h3>
+                    <div className="space-y-1.5 p-3">
+                      <p className="text-[11px] font-medium uppercase tracking-wide" style={{ color: C.muted }}>
+                        {item.brand}
+                      </p>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          {item.brand}
-                        </p>
-                      </div>
+                      <h3
+                        className="line-clamp-2 text-sm font-semibold leading-snug"
+                        style={{ color: C.text }}
+                      >
+                        {item.title}
+                      </h3>
 
-                      <Stars rating={item.rating} />
+                      {item.rating > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <Stars rating={item.rating} size={12} />
+                          {item.reviewCount > 0 && (
+                            <span className="text-[11px]" style={{ color: C.muted }}>
+                              ({item.reviewCount})
+                            </span>
+                          )}
+                        </div>
+                      )}
 
-                      <div className="flex items-end gap-2">
-                        <span className="text-2xl font-bold text-slate-900">
+                      <div className="flex items-baseline gap-1.5 pt-0.5">
+                        <span className="text-base font-bold" style={{ color: C.primary }}>
                           {fmt(item.price)}
                         </span>
-
-                        <span className="pb-1 text-sm text-gray-500">
+                        <span className="text-[11px]" style={{ color: C.muted }}>
                           / unit
                         </span>
                       </div>
 
-                      {item.off > 0 && (
-                        <div>
-                          <Badge variant="gold">
-                            {item.off}% OFF
-                          </Badge>
-                        </div>
-                      )}
-
-                      <p className="text-sm text-gray-500">
-                        Min. Order: {item.minQty} units
+                      <p className="text-[11px]" style={{ color: C.muted }}>
+                        MOQ: {item.minQty} units
                       </p>
-
-                      <Link
-                        href={item.id ? `/product/${item.id}` : "#"}
-                        className="flex h-11 w-full items-center justify-center rounded-lg border border-slate-900 font-medium text-slate-900 transition hover:bg-slate-900 hover:text-white"
-                      >
-                        View Product
-                      </Link>
                     </div>
-                  </article>
+                  </Link>
                 ) : (
                   <div
                     key={i}
-                    className="h-105 animate-pulse rounded-xl border border-gray-200 bg-gray-100"
+                    className="h-64 animate-pulse rounded-sm border"
+                    style={{ borderColor: C.border, background: C.cream }}
                   />
                 )
               )}

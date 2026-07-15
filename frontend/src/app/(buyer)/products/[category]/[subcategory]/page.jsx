@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
 "use client";
- 
-import React, { useEffect, useMemo, useState } from "react";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+<<<<<<< HEAD
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, LayoutGrid, LayoutList } from "lucide-react";
@@ -14,8 +18,10 @@ import {
   fetchFavourites,
 } from "@/store/slices/favouritesSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+=======
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
 import { productapi } from "@/lib/axios";
- 
+
 const COLORS = {
   primary: "#0B1F3A",
   accent: "#D4AF37",
@@ -23,73 +29,41 @@ const COLORS = {
   white: "#FFFFFF",
   text: "#1A1A1A",
   border: "#E5E5E5",
-  muted: "#6B7280",
 };
- 
-const ITEMS_PER_PAGE = 12;
- 
-const MOQ_OPTIONS = [
-  { label: "Under 50 units", test: (qty) => qty < 50 },
-  { label: "50–200 units", test: (qty) => qty >= 50 && qty <= 200 },
-  { label: "200–500 units", test: (qty) => qty > 200 && qty <= 500 },
-  { label: "500+ units", test: (qty) => qty > 500 },
-];
- 
-const PRICE_OPTIONS = [
-  { label: "Under ₹500", test: (price) => price < 500 },
-  { label: "₹500 - ₹1000", test: (price) => price >= 500 && price <= 1000 },
-  { label: "₹1000 - ₹5000", test: (price) => price > 1000 && price <= 5000 },
-  { label: "₹5000+", test: (price) => price > 5000 },
-];
- 
-const RATING_OPTIONS = [
-  { value: "4.5", label: "★★★★★" },
-  { value: "4", label: "★★★★" },
-];
- 
+
 export default function SubCategoryPage() {
   const { category, subcategory } = useParams();
- 
+
+  const [route, setRoute] = useState({ category: "", subcategory: "" });
   const [categoryMeta, setCategoryMeta] = useState(null);
-  const [rawProducts, setRawProducts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
- 
-  const [sortOption, setSortOption] = useState("Most relevant");
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [toast, setToast] = useState("");
-  const [filters, setFilters] = useState({
-    minQty: [],
-    price: [],
-    rating: [],
-  });
- 
-  const dispatch = useDispatch();
-  const favouriteItems = useSelector((state) => state.favourites.items || []);
- 
-  const showToast = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(""), 2000);
-  };
- 
-  useEffect(() => {
-    dispatch(fetchFavourites());
-  }, [dispatch]);
- 
+
+  const [sort, setSort] = useState("default");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [supplierType, setSupplierType] = useState([]);
+  const [minQty, setMinQty] = useState("");
+
   useEffect(() => {
     const load = async () => {
       if (!category || !subcategory) return;
- 
+
       setLoading(true);
- 
+
       try {
+<<<<<<< HEAD
+=======
+        setRoute({ category, subcategory });
+
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
         const [categoryRes, productsRes] = await Promise.all([
           productapi.get(`/api/categories/slug/${category}`),
           productapi.get(`/api/products/category/${category}/${subcategory}`),
         ]);
  
         setCategoryMeta(categoryRes.data.data);
+<<<<<<< HEAD
  
         const fetchedProducts = Array.isArray(productsRes?.data?.data)
           ? productsRes.data.data
@@ -98,17 +72,40 @@ export default function SubCategoryPage() {
           : [];
  
         setRawProducts(fetchedProducts);
+=======
+
+        const rawProducts = Array.isArray(productsRes?.data?.data)
+          ? productsRes.data.data
+          : Array.isArray(productsRes?.data)
+            ? productsRes.data
+            : [];
+
+        const mappedProducts = rawProducts.map((p) => ({
+          ...p,
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          price: p.price,
+          imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
+          minOrderQty: p.moq ?? p.minOrderQty ?? 0,
+          supplierType: p.supplier_type || p.supplierType || "",
+          createdAt: p.created_at || p.createdAt,
+        }));
+
+        setProducts(mappedProducts);
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
       } catch (error) {
         console.error("Failed to load subcategory page:", error);
         setCategoryMeta(null);
-        setRawProducts([]);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
- 
+
     load();
   }, [category, subcategory]);
+<<<<<<< HEAD
  
   const onToggleFavourite = (product) => {
     const productId = String(product.productId);
@@ -132,10 +129,15 @@ export default function SubCategoryPage() {
         quantity: 1,
         variantId: product?.variantId ?? product?.variant_id,
       })
+=======
+
+  const toggleSupplier = (value) => {
+    setSupplierType((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
     );
- 
-    showToast("Added to cart");
   };
+<<<<<<< HEAD
  
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
@@ -188,6 +190,14 @@ export default function SubCategoryPage() {
           return opt ? opt.test(p.minOrderQty) : true;
         })
       );
+=======
+
+  const filteredProducts = useMemo(() => {
+    let list = [...products];
+
+    if (minPrice !== "") {
+      list = list.filter((p) => Number(p.price) >= Number(minPrice));
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
     }
  
     if (filters.price.length) {
@@ -218,6 +228,7 @@ export default function SubCategoryPage() {
     }
  
     return list;
+<<<<<<< HEAD
   }, [normalizedProducts, filters, sortOption]);
  
   // Reset to page 1 whenever filters or sort change
@@ -237,10 +248,35 @@ export default function SubCategoryPage() {
   const subcategories = categoryMeta?.subcategories || [];
   const categoryName = categoryMeta?.name || "Category";
  
+=======
+  }, [products, minPrice, maxPrice, minQty, supplierType, sort]);
+
+  const resetFilters = () => {
+    setSort("default");
+    setMinPrice("");
+    setMaxPrice("");
+    setSupplierType([]);
+    setMinQty("");
+  };
+
+  const categorySlug = route.category;
+  const subcategorySlug = route.subcategory;
+  const selectedSubcategory =
+    categoryMeta?.subcategories?.find(
+      (sub) => sub.slug === subcategorySlug
+    );
+
+  const categoryName =
+    selectedSubcategory?.name ||
+    categoryMeta?.name ||
+    "Category";
+  const subcategories = categoryMeta?.subcategories || [];
+
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
   return (
     <div
-      className="bg-white min-h-screen text-[#1A1A1A]"
-      style={{ backgroundColor: COLORS.white, color: COLORS.text }}
+      className="min-h-screen"
+      style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
     >
       <div
         className="px-4 sm:px-6 py-5 sm:py-6 text-white"
@@ -373,6 +409,7 @@ export default function SubCategoryPage() {
                 />
                 {opt.label}
               </label>
+<<<<<<< HEAD
             ))}
           </div>
  
@@ -689,6 +726,86 @@ export default function SubCategoryPage() {
             </>
           )}
         </main>
+=======
+            )
+          )}
+
+          <button
+            onClick={resetFilters}
+            className="mt-4 w-full border py-2 rounded"
+            style={{ borderColor: COLORS.border, color: COLORS.primary }}
+          >
+            Reset Filters
+          </button>
+        </div>
+
+        <div className="flex-1">
+          <div className="flex justify-between mb-3 gap-3 flex-wrap items-center">
+            <p>{filteredProducts.length} products</p>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="border rounded px-3 py-2 text-sm bg-white"
+              style={{ borderColor: COLORS.border }}
+            >
+              <option value="default">Sort</option>
+              <option value="price_asc">Low → High</option>
+              <option value="price_desc">High → Low</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+
+          {loading ? (
+            <div
+              className="bg-white border rounded-lg p-6 text-center"
+              style={{ borderColor: COLORS.border }}
+            >
+              Loading...
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div
+              className="bg-white border rounded-lg p-6 text-center"
+              style={{ borderColor: COLORS.border }}
+            >
+              No top products found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {filteredProducts.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/products/${categorySlug}/${subcategorySlug}/${item.slug}`}
+                >
+                  <div
+                    className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition"
+                    style={{ borderColor: COLORS.border }}
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
+                    />
+                    <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
+                    <p
+                      className="mt-1 font-semibold"
+                      style={{ color: COLORS.accent }}
+                    >
+                      ₹{item.price}
+                    </p>
+                    <p className="text-xs mt-1 text-gray-500">
+                      Min. {item.minOrderQty} units
+                    </p>
+                    <p className="text-xs mt-1 text-gray-500">
+                      {item.supplierType}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+>>>>>>> 8391893e21eadc79797e5229f205d0687938419c
       </div>
  
       {toast && (

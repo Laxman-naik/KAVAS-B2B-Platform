@@ -92,7 +92,6 @@ const VendorRFQ = () => {
     try {
       setLoading(true);
 
-<<<<<<< HEAD
       const vendorOrgId = getVendorOrgId();
 
       console.log("Vendor:", vendorOrgId);
@@ -101,10 +100,6 @@ const VendorRFQ = () => {
         headers: {
           "vendor-id": vendorOrgId,
         },
-=======
-      const { data } = await productapi.get("/api/vendor/rfqs", {
-        headers: { "vendor-id": vendorId }
->>>>>>> 154b6f145ff79e823a80a4033db5c08500b6f47a
       });
 
       setRfqs(data.rfqs || []);

@@ -6,13 +6,12 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
-  Flag,
   Image as ImageIcon,
   MessageSquareText,
   MoreVertical,
   Play,
   Star,
-  ThumbsUp,
+  
   Truck,
   Upload,
   Video,
@@ -566,9 +565,7 @@ export default function CustomerReviewsSection({ product }) {
                       </div>
 
 
-                      <button type="button" style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 4, flexShrink: 0 }}>
-                        <MoreVertical style={{ width: 16, height: 16 }} />
-                      </button>
+                      
                     </div>
 
 
@@ -583,9 +580,6 @@ export default function CustomerReviewsSection({ product }) {
                         onOpen={setLightbox}
                       />
                     )}
-
-
-
                   </div>
                 </div>
               );
@@ -603,7 +597,7 @@ export default function CustomerReviewsSection({ product }) {
           )}
         </div>
 
-        {/* Load More / Show Less */}
+        
         {hasMore ? (
           <div className="flex justify-center border-t border-gray-100 py-4">
             <button
@@ -628,11 +622,10 @@ export default function CustomerReviewsSection({ product }) {
         ) : null}
       </section>
 
-      {/* ── Write Review Dialog ── */}
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-xl" style={{ maxHeight: "90vh", overflowY: "auto", padding: 0 }}>
 
-          {/* Header */}
+        
           <div style={{
             padding: "18px 22px 14px",
             borderBottom: `1px solid ${C.border}`,
@@ -648,7 +641,7 @@ export default function CustomerReviewsSection({ product }) {
 
           <div style={{ padding: "18px 22px 22px", display: "flex", flexDirection: "column", gap: 18 }}>
 
-            {/* Star rating */}
+           
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>
                 Your Rating <span style={{ color: "#ef4444" }}>*</span>
@@ -680,7 +673,6 @@ export default function CustomerReviewsSection({ product }) {
               </div>
             </div>
 
-            {/* Comment */}
             <div>
               <p style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 8 }}>
                 Review <span style={{ color: "#ef4444" }}>*</span>
@@ -699,7 +691,6 @@ export default function CustomerReviewsSection({ product }) {
               />
             </div>
 
-            {/* Media upload */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Add Photos &amp; Videos</p>
@@ -764,7 +755,7 @@ export default function CustomerReviewsSection({ product }) {
               )}
             </div>
 
-            {/* Buttons */}
+           
             <div style={{ display: "flex", gap: 10 }}>
               <button
                 type="button"
@@ -810,7 +801,7 @@ export default function CustomerReviewsSection({ product }) {
         </DialogContent>
       </Dialog>
 
-      {/* Lightbox */}
+      
       <Lightbox item={lightbox} onClose={() => setLightbox(null)} />
     </>
   );

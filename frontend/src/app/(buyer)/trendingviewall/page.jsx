@@ -275,7 +275,6 @@ const TrendingViewAllV1 = () => {
           Best-selling wholesale products across all categories
         </p>
       </div>
-
       <div className="bg-white py-5 rounded-sm" style={{ backgroundColor: COLORS.white }}>
         <div className="max-w-350 mx-auto px-4 pb-4">
           <div className="flex gap-3 overflow-x-auto no-scrollbar">
@@ -295,7 +294,6 @@ const TrendingViewAllV1 = () => {
             ))}
           </div>
         </div>
-
         <div className="max-w-350 mx-auto px-4 pb-10 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
           <div className="md:hidden mb-2">
             <button
@@ -375,7 +373,6 @@ const TrendingViewAllV1 = () => {
 
 
             </div>
-
             {/* Rating */}
             <div>
               <h3 className="font-semibold text-sm text-[#0B1F3A] mb-3">Rating</h3>
@@ -397,7 +394,6 @@ const TrendingViewAllV1 = () => {
 
 
             </div>
-
             <button
               type="button"
               onClick={() => setShowFilters(false)}
