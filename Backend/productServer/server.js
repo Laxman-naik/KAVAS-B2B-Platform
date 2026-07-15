@@ -22,6 +22,7 @@ const vendorDashboardRoutes = require("./routes/vendorDashboardRoutes");
 const vendorPaymentHistoryRoutes = require("./routes/vendorPaymentHistoryRoutes");
 const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const adminOrderRoutes = require("./routes/adminOrderRoutes");
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/favourites", favouritesRoutes);
 
@@ -57,6 +59,7 @@ app.use("/api/vendor", vendorDashboardRoutes);
 app.use("/api/vendor/payments", vendorPaymentHistoryRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/analytics", analyticsRoutes);
+
 
 
 pool

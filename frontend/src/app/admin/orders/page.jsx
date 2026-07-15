@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchOrders } from "@/store/slices/orderSlice";
+// import { fetchOrders } from "@/store/slices/orderSlice";
+import { fetchAdminOrders } from "@/store/slices/orderSlice";
 
 const statusStyles = {
   Fulfilled: "bg-green-500/20 text-green-400",
@@ -18,9 +19,9 @@ export default function OrdersTable() {
 
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
-    dispatch(fetchOrders());
-  }, [dispatch]);
+useEffect(() => {
+  dispatch(fetchAdminOrders());
+}, [dispatch])
 
   const filtered = orders.filter((o) => {
     const term = search.toLowerCase().trim();
