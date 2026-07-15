@@ -67,32 +67,6 @@ export default function PaymentsPayoutsBody() {
     remarks: "",
   });
 
-<<<<<<< HEAD
-=======
-  useEffect(() => {
-    dispatch(getMyVendorPayouts());
-    dispatch(getVendorPayoutSummary());
-
-    return () => {
-      dispatch(clearVendorPayoutState());
-    };
-  }, [dispatch]);
-
-  const formatMoney = (amount) => {
-    return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "-";
-
-    return new Intl.DateTimeFormat("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(date));
-  };
-
->>>>>>> f4786c1411a0e4e2e44797a1c47674cb89fa87de
   const statusStyle = (status) => {
     if (status === "PAID") return "bg-green-100 text-green-700";
     if (status === "APPROVED") return "bg-blue-100 text-blue-700";
