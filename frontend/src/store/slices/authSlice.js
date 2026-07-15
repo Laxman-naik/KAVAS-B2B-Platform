@@ -290,7 +290,7 @@ const authSlice = createSlice({
       /* LOAD USER */
       .addCase(loadUserThunk.fulfilled, (state, action) => {
         state.user = action.payload?.user || null;
-        state.role = "buyer";
+        state.role = action.payload?.user?.role || "buyer";
         state.isAuthenticated = true;
         state.initialized = true;
       })

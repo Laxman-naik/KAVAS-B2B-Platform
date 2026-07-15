@@ -10,22 +10,23 @@ const slugify = (value) => {
     .replace(/(^-|-$)+/g, "");
 };
 
+// Shared helper — parses JSON arrays or passes through existing arrays
+const safeParseArray = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 
 exports.createProduct = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const safeParseArray = (value) => {
-      if (!value) return [];
-      if (Array.isArray(value)) return value;
-
-      try {
-        const parsed = JSON.parse(value);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    };
 
     const {
       name,
@@ -239,81 +240,205 @@ exports.createProduct = async (req, res) => {
 };
 
 exports.updateProduct = async (req, res) => {
+  const client = await pool.connect();
   try {
     const { id } = req.params;
 
+    // multer already parsed multipart — body fields are in req.body
     const {
       name,
       sku,
-      slug,
-      organizationId,
-      isTopProduct,
-      parentProductId,
+      description,
+      category,
+      subCategory,
       price,
       mrp,
-      minOrderQty,
+      moq,
       stock,
       unit,
-      weight,
-      dispatchTimeDays,
-      description,
-      isActive,
-      isFeatured,
-    } = req.body;
+      brand,
+      warranty,
+      returnPolicy,
+      returnDays,
+      codAvailable,
+      isOriginal,
+      gstInvoiceAvailable,
+      securePaymentAvailable,
+      returnExchangeAvailable,
+      fastDeliveryAvailable,
+      specifications,
+      variants,
+      bulkPricing,
+    } = req.body || {};
 
-    const result = await pool.query(
+    if (!name?.trim()) {
+      return res.status(400).json({ success: false, message: "Product name required" });
+    }
+
+    await client.query("BEGIN");
+
+    // ── 1. Update core product row ────────────────────────────
+    const productResult = await client.query(
       `UPDATE products
-       SET name = $1,
-           sku = $2,
-           slug = $3,
-           organization_id = $4,
-           is_top_product = $5,
-           parent_product_id = $6,
-           price = $7,
-           mrp = $8,
-           moq = $9,
-           stock = $10,
-           unit = $11,
-           weight = $12,
-           dispatch_time_days = $13,
-           description = $14,
-           is_active = $15,
-           is_featured = $16,
-           updated_at = NOW()
-       WHERE id = $17
+       SET name                      = $1,
+           sku                       = $2,
+           description               = $3,
+           price                     = $4,
+           mrp                       = $5,
+           moq                       = $6,
+           stock                     = $7,
+           unit                      = $8,
+           brand                     = $9,
+           warranty                  = $10,
+           return_policy             = $11,
+           return_days               = $12,
+           cod_available             = $13,
+           is_original               = $14,
+           gst_invoice_available     = $15,
+           secure_payment_available  = $16,
+           return_exchange_available = $17,
+           fast_delivery_available   = $18,
+           slug                      = $19,
+           updated_at                = NOW()
+       WHERE id = $20
        RETURNING *`,
       [
         name,
-        sku,
-        slug,
-        organizationId,
-        isTopProduct ?? false,
-        parentProductId || null,
-        Number(price || 0),
-        Number(mrp || 0),
-        Number(minOrderQty || 1),
-        Number(stock || 0),
-        unit || "pcs",
-        weight || null,
-        dispatchTimeDays || null,
-        description || "",
-        isActive ?? true,
-        isFeatured ?? false,
+        sku || null,
+        description || null,
+        Number(price) || 0,
+        Number(mrp) || 0,
+        Number(moq) || 1,
+        Number(stock) || 0,
+        unit || null,
+        brand || null,
+        warranty || null,
+        returnPolicy || null,
+        Number(returnDays) || 7,
+        codAvailable === "false" ? false : true,
+        isOriginal === "false" ? false : true,
+        gstInvoiceAvailable === "false" ? false : true,
+        securePaymentAvailable === "false" ? false : true,
+        returnExchangeAvailable === "false" ? false : true,
+        fastDeliveryAvailable === "false" ? false : true,
+        slugify(name),
         id,
       ]
     );
 
-    if (!result.rows.length) {
-      return res.status(404).json({ message: "Product not found" });
+    if (!productResult.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    res.json({
+    const product = productResult.rows[0];
+
+    // ── 2. Upload NEW images (if any provided) ────────────────
+    const newImages = req.files?.images || [];
+    const newVideos = req.files?.videos || [];
+
+    if (newImages.length > 0) {
+      // Get current image count for sort_order
+      const countRes = await client.query(
+        `SELECT COUNT(*) FROM product_images WHERE product_id = $1 AND media_type = 'image'`,
+        [product.id]
+      );
+      let offset = parseInt(countRes.rows[0].count, 10);
+
+      for (let i = 0; i < newImages.length; i++) {
+        const file = newImages[i];
+        if (!file?.path) continue;
+        const uploaded = await uploadToCloudinary(file.path, "products/images");
+        await client.query(
+          `INSERT INTO product_images (product_id, image_url, media_type, public_id, sort_order, is_primary)
+           VALUES ($1,$2,'image',$3,$4,$5)`,
+          [product.id, uploaded.url, uploaded.public_id, offset + i, offset === 0 && i === 0]
+        );
+      }
+    }
+
+    if (newVideos.length > 0) {
+      for (let i = 0; i < newVideos.length; i++) {
+        const file = newVideos[i];
+        if (!file?.path) continue;
+        const uploaded = await uploadToCloudinary(file.path, "products/videos");
+        await client.query(
+          `INSERT INTO product_images (product_id, image_url, media_type, public_id, sort_order, is_primary)
+           VALUES ($1,$2,'video',$3,$4,false)`,
+          [product.id, uploaded.url, uploaded.public_id, i]
+        );
+      }
+    }
+
+    // ── 3. Replace specifications ─────────────────────────────
+    if (specifications !== undefined) {
+      await client.query(`DELETE FROM product_specifications WHERE product_id = $1`, [product.id]);
+      const specs = safeParseArray(specifications);
+      for (const s of specs) {
+        if (!s?.name || !s?.value) continue;
+        await client.query(
+          `INSERT INTO product_specifications (product_id, key, value) VALUES ($1,$2,$3)`,
+          [product.id, s.name, s.value]
+        );
+      }
+    }
+
+    // ── 4. Replace variants ───────────────────────────────────
+    if (variants !== undefined) {
+      await client.query(`DELETE FROM product_variants WHERE product_id = $1`, [product.id]);
+      const parsedVariants = safeParseArray(variants);
+      for (const v of parsedVariants) {
+        if (!v?.variant_type || !v?.variant_value) continue;
+        await client.query(
+          `INSERT INTO product_variants
+             (product_id, variant_type, variant_value, variant_name, sku, price, mrp, stock, is_active)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)`,
+          [
+            product.id,
+            v.variant_type,
+            v.variant_value,
+            `${v.variant_type} - ${v.variant_value}`,
+            v.sku || null,
+            Number(v.price) || 0,
+            Number(v.mrp) || 0,
+            Number(v.stock) || 0,
+          ]
+        );
+      }
+    }
+
+    // ── 5. Replace bulk pricing ───────────────────────────────
+    if (bulkPricing !== undefined) {
+      await client.query(`DELETE FROM product_pricing_tiers WHERE product_id = $1`, [product.id]);
+      const pricing = safeParseArray(bulkPricing);
+      for (const b of pricing) {
+        if (!b?.minQty && !b?.min_qty) continue;
+        await client.query(
+          `INSERT INTO product_pricing_tiers (product_id, min_quantity, max_quantity, price)
+           VALUES ($1,$2,$3,$4)`,
+          [
+            product.id,
+            Number(b.minQty || b.min_qty || 0),
+            Number(b.maxQty || b.max_qty || 0),
+            Number(b.pricePerUnit || b.price_per_unit || 0),
+          ]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+
+    return res.json({
       success: true,
-      product: result.rows[0],
+      message: "Product updated successfully",
+      product,
     });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("updateProduct error:", err);
-    res.status(500).json({ message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
+  } finally {
+    client.release();
   }
 };
 
@@ -322,9 +447,8 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log("organizationId:", organizationId);
     const result = await pool.query(
-      `UPDATE products SET is_active = false WHERE id = $1 RETURNING *`,
+      `DELETE FROM products WHERE id = $1 RETURNING id, name`,
       [id]
     );
 
@@ -332,7 +456,7 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json({ message: "Product deactivated" });
+    res.json({ success: true, message: "Product deleted", id: result.rows[0].id });
   } catch (err) {
     console.error("deleteProduct error:", err);
     res.status(500).json({ message: err.message });

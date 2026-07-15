@@ -31,7 +31,7 @@ import {
   getMainCategoriesThunk,
   getSubcategoriesByParentThunk,
 } from "@/store/slices/categorySlice";
-import { addProduct } from "@/store/slices/productSlice";
+import { addProduct, editProduct } from "@/store/slices/productSlice";
 
 const Field = ({ label, required, children, className = "" }) => (
   <div className={`space-y-1.5 ${className}`}>
@@ -83,7 +83,7 @@ const toggleCsvValue = (csv, value) => {
   return Array.from(set).join(", ");
 };
 
-const AddNewProductModal = ({ open, onClose, onSubmit }) => {
+const AddNewProductModal = ({ open, onClose, onSubmit, initialProduct = null }) => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [selectedVideos, setSelectedVideos] = useState([]);
   const dispatch = useDispatch();
@@ -181,6 +181,57 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
   );
 
   const close = () => typeof onClose === "function" && onClose();
+
+  const isEditMode = !!initialProduct;
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (initialProduct && open) {
+      setForm((prev) => ({
+        ...prev,
+        name:          initialProduct.name          || "",
+        sku:           initialProduct.sku           || "",
+        brand:         initialProduct.brand         || "",
+        category:      String(initialProduct.category_id || initialProduct.category || ""),
+        subCategory:   String(initialProduct.sub_category_id || initialProduct.subCategory || ""),
+        unit:          initialProduct.unit          || "",
+        description:   initialProduct.description  || "",
+        price:         String(initialProduct.price  || ""),
+        mrp:           String(initialProduct.mrp    || ""),
+        moq:           String(initialProduct.moq    || ""),
+        stock:         String(initialProduct.stock  || ""),
+        warrantyPeriod:initialProduct.warranty      || "",
+        returnPolicy:  initialProduct.return_policy || initialProduct.returnPolicy || "",
+        returnDays:    String(initialProduct.return_days || initialProduct.returnDays || "7"),
+        codAvailable:          initialProduct.cod_available            ?? true,
+        isOriginal:            initialProduct.is_original              ?? true,
+        gstInvoiceAvailable:   initialProduct.gst_invoice_available    ?? true,
+        securePaymentAvailable:initialProduct.secure_payment_available ?? true,
+        returnExchangeAvailable:initialProduct.return_exchange_available ?? true,
+        fastDeliveryAvailable: initialProduct.fast_delivery_available  ?? true,
+        specifications: (initialProduct.specifications || []).map((s, i) => ({
+          id: i + 1, name: s.name || "", value: s.value || "",
+        })),
+        variants: (initialProduct.variants || []).map((v, i) => ({
+          id: i + 1,
+          variantName: v.variant_type || "",
+          value:       v.variant_value || "",
+          sku:         v.sku || "",
+          price:       String(v.price || ""),
+          stock:       String(v.stock || ""),
+        })),
+        bulkPricing: (initialProduct.bulk_pricing || []).map((b, i) => ({
+          id: i + 1,
+          minQty:       String(b.min_qty || ""),
+          maxQty:       String(b.max_qty || ""),
+          pricePerUnit: String(b.price_per_unit || ""),
+        })),
+        // keep images empty (new files only); existing images shown separately
+        images: [],
+        videos: [],
+      }));
+    }
+  }, [initialProduct, open]);
 
   useEffect(() => {
     dispatch(getMainCategoriesThunk());
@@ -301,17 +352,32 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
     });
 
     try {
-      const result = await dispatch(addProduct(formData));
+      let result;
 
-      if (addProduct.fulfilled.match(result)) {
-        alert("Product created successfully");
-        close();
+      if (isEditMode) {
+        // EDIT mode — send PUT with FormData
+        result = await dispatch(editProduct({ id: initialProduct.id, data: formData }));
+        if (editProduct.fulfilled.match(result)) {
+          alert("Product updated successfully!");
+          typeof onSubmit === "function" && onSubmit();
+          close();
+        } else {
+          alert(result.payload?.message || "Failed to update product");
+        }
       } else {
-        console.error(result);
-        alert(result.payload?.message || "Failed to create product");
+        // ADD mode
+        result = await dispatch(addProduct(formData));
+        if (addProduct.fulfilled.match(result)) {
+          alert("Product created successfully!");
+          typeof onSubmit === "function" && onSubmit();
+          close();
+        } else {
+          console.error(result);
+          alert(result.payload?.message || "Failed to create product");
+        }
       }
     } catch (err) {
-      console.error("CREATE PRODUCT ERROR:", err);
+      console.error("PRODUCT SUBMIT ERROR:", err);
     }
   };
 
@@ -352,11 +418,12 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white px-6 py-5">
           <div className="min-w-0">
             <h2 className="text-xl font-extrabold text-slate-900">
-              Add New Product
+              {isEditMode ? "Edit Product" : "Add New Product"}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Fill in the information below to add a new product to your
-              catalog.
+              {isEditMode
+                ? "Update the product details below."
+                : "Fill in the information below to add a new product to your catalog."}
             </p>
           </div>
 
@@ -367,7 +434,7 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
               disabled={!canSubmit || loading}
               onClick={handlePublishProduct}
             >
-              {loading ? "Saving..." : "Save Product"}
+              {loading ? "Saving..." : isEditMode ? "Update Product" : "Save Product"}
             </Button>
 
             <button
@@ -1086,7 +1153,8 @@ const AddNewProductModal = ({ open, onClose, onSubmit }) => {
                   </div>
 
                   <div className="px-5 py-5">
-                    <div className="relative overflow-hidden rounded-sm border border-slate-200 bg-slate-50">
+                    <div className="relative overflow-hidden 
+                    rounded-sm border border-slate-200 bg-slate-50">
                       <div className="absolute left-3 top-3 rounded-sm bg-slate-900 px-2 py-1 text-[10px] font-semibold text-white">
                         Main Image
                       </div>

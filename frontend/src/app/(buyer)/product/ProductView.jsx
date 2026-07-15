@@ -355,7 +355,6 @@ export default function ProductView() {
         <div className="grid items-start gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="grid gap-3">
 
-            {/* Main image */}
             <div className="relative rounded-sm border" style={{ background: C.white, borderColor: C.border }}>
               <div className="absolute right-4 top-4 z-10 flex gap-2">
                 <button
@@ -377,15 +376,23 @@ export default function ProductView() {
                 </button>
               </div>
 
-              <div className="flex h-80 items-center justify-center p-4 lg:h-115" style={{ background: C.cream }}>
-                {selectedMedia?.type === "video"
-                  ? <video src={selectedMedia.src} controls className="h-full w-full object-contain" />
-                  : <img src={selectedMedia?.src ?? "/placeholder.png"} alt={norm.title} className="h-full w-full object-contain" />}
+              <div className="h-80 rounded-sm overflow-hidden lg:h-115">
+                {selectedMedia?.type === "video" ? (
+                  <video
+                    src={selectedMedia.src}
+                    controls
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={selectedMedia?.src ?? "/placeholder.png"}
+                    alt={norm.title}
+                    className="h-full w-full object-cover"
+                  />
+                )}
               </div>
 
             </div>
-
-            {/* Thumbnails */}
             <div className="relative">
               <button
                 type="button"
@@ -462,11 +469,6 @@ export default function ProductView() {
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>
                     {norm.description}
                   </p>
-                  {/* <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs" style={{ color: C.muted }}>
-                    <span>Brand: <b style={{ color: C.primary }}>{norm.brand}</b></span>
-                    <span>SKU: {norm.sku}</span>
-                    <span>GTIN: {norm.gtin}</span>
-                  </div> */}
                   <div className="mt-5 flex flex-wrap items-end gap-3">
                     <span className="text-3xl font-extrabold" style={{ color: C.primary }}>{fmt(unitPrice)}</span>
                     <span className="pb-1 text-sm" style={{ color: C.muted }}>/ unit</span>
@@ -474,7 +476,7 @@ export default function ProductView() {
                     {discountPct > 0 && <Badge variant="gold">{discountPct}% OFF</Badge>}
                   </div>
                   <p className="mt-1 text-xs" style={{ color: C.muted }}>Prices are exclusive of GST</p>
-                  <div className="mt-5 rounded-sm border p-3" style={{ background: C.cream, borderColor: C.border }}>
+                  <div className="mt-5 rounded-sm border p-3" style={{ background: C.white, borderColor: C.border }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4" style={{ color: C.gold }} />
@@ -602,9 +604,9 @@ export default function ProductView() {
                         </button>
                       </div>
                       <Link href="/rfqform">
-                      <button className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold cursor-pointer" style={{ borderColor: C.primary, color: C.primary }}>
-                        <FileText className="h-5 w-5" /> Request for Quote (RFQ)
-                      </button>
+                        <button className="flex w-full items-center justify-center gap-2 rounded-sm border px-4 py-3 text-sm font-bold cursor-pointer" style={{ borderColor: C.primary, color: C.primary }}>
+                          <FileText className="h-5 w-5" /> Request for Quote (RFQ)
+                        </button>
                       </Link>
                       <p className="text-center mt-3 text-xs" style={{ color: C.muted }}>Submit RFQ for larger quantities — our team will respond promptly.</p>
                     </div>
@@ -657,47 +659,95 @@ export default function ProductView() {
           <ShippingDeliverySection product={product} />
 
           {/* Similar Products */}
-          <section className="mt-6 rounded-sm border p-5" style={{ background: C.white, borderColor: C.border }}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">Similar Products</h2>
-              <Link href="/" className="text-sm font-semibold" style={{ color: C.primary }}>
-                View All
+          <section className="mt-8 rounded-xl border border-gray-200 bg-white p-6">
+            {/* Header */}
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Similar Products
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Products you may also like
+                </p>
+              </div>
+
+              <Link
+                href="/"
+                className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+              >
+                View All →
               </Link>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {(similar.length ? similar : Array.from({ length: 4 }, (_, i) => null)).map((item, i) =>
+            {/* Products */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {(similar.length
+                ? similar
+                : Array.from({ length: 4 }, (_, i) => null)
+              ).map((item, i) =>
                 item ? (
-                  <article key={item.id ?? i} className="overflow-hidden rounded-sm border" style={{ background: C.white, borderColor: C.border }}>
-                    <div className="flex h-48 items-center justify-center p-4" style={{ background: C.cream }}>
-                      <img src={item.img} alt={item.title} className="h-full w-full object-contain" />
+                  <article
+                    key={item.id ?? i}
+                    className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    {/* Product Image */}
+                    <div className="flex h-72 items-center justify-center overflow-hidden bg-gray-50">
+                      <img
+                        src={item.img}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
                     </div>
-                    <div className="p-4">
-                      <p className="line-clamp-2 text-sm font-bold">{item.title}</p>
-                      <p className="mt-1 text-xs" style={{ color: C.muted }}>{item.brand}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Stars rating={item.rating} />
-                        <span className="text-xs" style={{ color: C.muted }}>
-                          {(item.rating || 0).toFixed(1)} ({item.reviewCount})
+
+                    {/* Product Details */}
+                    <div className="space-y-3 p-5">
+                      <div>
+                        <h3 className="line-clamp-2 text-lg font-semibold text-gray-900">
+                          {item.title}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          {item.brand}
+                        </p>
+                      </div>
+
+                      <Stars rating={item.rating} />
+
+                      <div className="flex items-end gap-2">
+                        <span className="text-2xl font-bold text-slate-900">
+                          {fmt(item.price)}
+                        </span>
+
+                        <span className="pb-1 text-sm text-gray-500">
+                          / unit
                         </span>
                       </div>
-                      <div className="mt-3 flex items-end gap-2">
-                        <span className="text-xl font-extrabold" style={{ color: C.primary }}>{fmt(item.price)}</span>
-                        <span className="text-xs" style={{ color: C.muted }}>/ unit</span>
-                      </div>
-                      {item.off > 0 && <Badge variant="gold">{item.off}% OFF</Badge>}
-                      <p className="mt-2 text-xs" style={{ color: C.muted }}>Min. Order: {item.minQty} units</p>
+
+                      {item.off > 0 && (
+                        <div>
+                          <Badge variant="gold">
+                            {item.off}% OFF
+                          </Badge>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-gray-500">
+                        Min. Order: {item.minQty} units
+                      </p>
+
                       <Link
                         href={item.id ? `/product/${item.id}` : "#"}
-                        className="mt-4 block w-full rounded-sm border px-4 py-2 text-center text-sm font-semibold"
-                        style={{ borderColor: C.primary, color: C.primary }}
+                        className="flex h-11 w-full items-center justify-center rounded-lg border border-slate-900 font-medium text-slate-900 transition hover:bg-slate-900 hover:text-white"
                       >
                         View Product
                       </Link>
                     </div>
                   </article>
                 ) : (
-                  <div key={i} className="h-80 animate-pulse rounded-sm border" style={{ background: C.cream, borderColor: C.border }} />
+                  <div
+                    key={i}
+                    className="h-105 animate-pulse rounded-xl border border-gray-200 bg-gray-100"
+                  />
                 )
               )}
             </div>

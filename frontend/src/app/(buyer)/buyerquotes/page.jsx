@@ -1,13 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 import ProfileSidebar from "@/components/buyer/ProfileSidebar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {Dialog,DialogContent,DialogHeader,DialogTitle, DialogDescription,} from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { getBuyerRFQsAPI, getRFQQuotesAPI } from "@/services/rfqService";
-import {FileText,Clock3,CheckCircle2,XCircle, Search,Loader2,Eye,IndianRupee,CalendarDays,Inbox,ChevronLeft, ChevronRight,} from "lucide-react";
+ // TODO: adjust path/action name to match your project
+import {
+  FileText,
+  Clock3,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Loader2,
+  Eye,
+  IndianRupee,
+  CalendarDays,
+  Inbox,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 const STAT_CARDS = [
   { key: "total", label: "Total RFQs", color: "blue", icon: FileText },
@@ -29,6 +49,8 @@ const TABLE_HEADERS = [
 const PAGE_SIZE = 5;
 
 const Page = () => {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const authUser = useSelector((state) => state.auth.user);
   const buyerOrgId = authUser?.organization_id;
 
@@ -73,15 +95,12 @@ const Page = () => {
       return (
         item.title?.toLowerCase().includes(value) ||
         item.product_name?.toLowerCase().includes(value) ||
-        String(item.id)?.toLowerCase().includes(value)
+        String(item.id).toLowerCase().includes(value)
       );
     });
   }, [rfqs, search]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredRFQs.length / PAGE_SIZE)
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredRFQs.length / PAGE_SIZE));
 
   const paginatedRFQs = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
@@ -144,6 +163,11 @@ const Page = () => {
     setCurrentPage(page);
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/login");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -168,7 +192,7 @@ const Page = () => {
     <div className="min-h-screen bg-[#FAFAFA]">
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         <div className="lg:sticky lg:top-24 self-start">
-          <ProfileSidebar user={user} onLogout={handleLogout} />
+          <ProfileSidebar user={authUser} onLogout={handleLogout} />
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -176,6 +200,20 @@ const Page = () => {
             <div>
               <h1 className="text-3xl font-bold text-[#0B1F3A]">My RFQs</h1>
               <p className="text-gray-500">Track all quotation requests.</p>
+            </div>
+
+            <div className="relative w-full md:w-72">
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by title, product, or RFQ ID"
+                className="w-full rounded-sm border pl-10 pr-3 py-2 text-sm outline-none focus:border-[#E8891C] transition"
+              />
             </div>
           </div>
 
@@ -288,10 +326,11 @@ const Page = () => {
                     <button
                       key={page}
                       onClick={() => goToPage(page)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-sm text-sm font-medium border transition ${page === currentPage
+                      className={`w-9 h-9 flex items-center justify-center rounded-sm text-sm font-medium border transition ${
+                        page === currentPage
                           ? "bg-[#E8891C] border-[#E8891C] text-white"
                           : "text-gray-600 hover:bg-gray-100"
-                        }`}
+                      }`}
                     >
                       {page}
                     </button>
@@ -431,10 +470,11 @@ const Page = () => {
 
                     {selectedRFQ?.budget ? (
                       <p
-                        className={`text-xs mt-2 font-medium ${Number(quote.price) <= Number(selectedRFQ.budget)
+                        className={`text-xs mt-2 font-medium ${
+                          Number(quote.price) <= Number(selectedRFQ.budget)
                             ? "text-green-600"
                             : "text-red-500"
-                          }`}
+                        }`}
                       >
                         {Number(quote.price) <= Number(selectedRFQ.budget)
                           ? "Within your budget"

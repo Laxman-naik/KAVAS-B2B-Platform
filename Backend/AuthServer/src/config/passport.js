@@ -3,6 +3,8 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const bcrypt = require("bcryptjs");
 
 const pool = require("./db");
+const { sendWelcomeEmail } = require("../utils/emailService");
+const { createNotification } = require("../utils/notificationHelper");
 
 passport.use(
   new GoogleStrategy(
@@ -54,6 +56,18 @@ passport.use(
           );
 
           user = insert.rows[0];
+
+          // Send the same welcome/confirmation email as normal registration
+          sendWelcomeEmail(email, fullName);
+
+          // Insert a welcome notification
+          createNotification({
+            userId:  user.id,
+            title:   "Welcome to KAVAS Wholesale Hub! 🎉",
+            message: `Hi ${fullName.split(" ")[0]}, your account is ready. Start exploring thousands of wholesale products at the best prices.`,
+            type:    "System",
+            role:    user.role || "buyer",
+          });
         } else {
           await pool.query(
             `

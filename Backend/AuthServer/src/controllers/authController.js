@@ -5,6 +5,7 @@ const { generateAccessToken, generateRefreshToken } = require("../utils/token");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { sendWelcomeEmail } = require("../utils/emailService");
+const { createNotification } = require("../utils/notificationHelper");
 
 /* ================= REGISTER ================= */
 exports.register = async (req, res) => {
@@ -36,6 +37,15 @@ exports.register = async (req, res) => {
 
     // Send welcome email (non-blocking)
     sendWelcomeEmail(email, full_name);
+
+    // Insert a welcome notification so the buyer sees it in the panel
+    createNotification({
+      userId: result.rows[0].id,
+      title:  "Welcome to KAVAS Wholesale Hub! 🎉",
+      message: `Hi ${full_name.split(" ")[0]}, your account is ready. Start exploring thousands of wholesale products at the best prices.`,
+      type:   "System",
+      role:   result.rows[0].role || "buyer",
+    });
 
     return res.json({ user: result.rows[0], message: "Registration successful! Welcome to KAVAS." });
   } catch (err) {

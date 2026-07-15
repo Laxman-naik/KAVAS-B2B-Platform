@@ -17,6 +17,7 @@ import vendorRFQReducer from "@/store/slices/vendorRFQSlice";
 import vendorDashboardReducer from "./slices/vendorDashboardSlice";
 import vendorPaymentHistoryReducer from "./slices/vendorPaymentHistorySlice";
 import adminDashboardReducer from "./slices/adminDashboardSlice";
+import notificationReducer from "./slices/notificationSlice";
 
 
 export const store = configureStore({
@@ -38,5 +39,6 @@ export const store = configureStore({
     vendorDashboard: vendorDashboardReducer,
     vendorPaymentHistory: vendorPaymentHistoryReducer,
     adminDashboard: adminDashboardReducer,
+    notifications: notificationReducer,
   },
 });

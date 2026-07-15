@@ -1,339 +1,16 @@
-// "use client";
-
-// import Link from "next/link";
-// import { useEffect, useMemo, useState } from "react";
-// import { useParams } from "next/navigation";
-// import { productapi } from "@/lib/axios";
-
-// const COLORS = {
-//   primary: "#0B1F3A",
-//   accent: "#D4AF37",
-//   cream: "#FFF8EC",
-//   white: "#FFFFFF",
-//   text: "#1A1A1A",
-//   border: "#E5E5E5",
-// };
-
-// export default function CategoryPage() {
-//   const { category } = useParams();
-
-//   const [categoryMeta, setCategoryMeta] = useState(null);
-//   const [route, setRoute] = useState({ category: "" });
-//   const [products, setProducts] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   const [sort, setSort] = useState("default");
-//   const [minPrice, setMinPrice] = useState("");
-//   const [maxPrice, setMaxPrice] = useState("");
-//   const [supplierType, setSupplierType] = useState([]);
-//   const [minQty, setMinQty] = useState("");
-
-//   useEffect(() => {
-//     const load = async () => {
-//       if (!category) return;
-
-//       setLoading(true);
-
-//       try {
-//         setRoute({ category });
-
-//         const [metaRes, productsRes] = await Promise.all([
-//           productapi.get(`/api/categories/slug/${category}`),
-//           productapi.get(`/api/products/category/${category}`),
-//         ]);
-
-//         setCategoryMeta(metaRes?.data?.data || null);
-
-//         const rawProducts = Array.isArray(productsRes?.data?.data)
-//           ? productsRes.data.data
-//           : Array.isArray(productsRes?.data)
-//             ? productsRes.data
-//             : [];
-
-//         const mappedProducts = rawProducts.map((p) => ({
-//           ...p,
-//           id: p.id,
-//           slug: p.slug,
-//           name: p.name,
-//           price: p.price,
-//           imageUrl: p.image_url || p.imageUrl || "/placeholder.png",
-//           minOrderQty: p.moq ?? p.minOrderQty ?? 0,
-//           subcategorySlug:
-//             p.subcategory_slug ||
-//             p.subcategorySlug ||
-//             p.sub_category_slug ||
-//             "",
-//           supplierType: p.supplier_type || p.supplierType || "",
-//           createdAt: p.created_at || p.createdAt,
-//         }));
-
-//         setProducts(mappedProducts);
-//       } catch (error) {
-//         console.error("Failed to load category page:", error);
-//         setCategoryMeta(null);
-//         setProducts([]);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     load();
-//   }, [category]);
-
-//   const toggleSupplier = (value) => {
-//     setSupplierType((prev) =>
-//       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-//     );
-//   };
-
-//   const filteredProducts = useMemo(() => {
-//     let list = [...products];
-
-//     if (minPrice !== "") {
-//       list = list.filter((p) => Number(p.price) >= Number(minPrice));
-//     }
-
-//     if (maxPrice !== "") {
-//       list = list.filter((p) => Number(p.price) <= Number(maxPrice));
-//     }
-
-//     if (minQty !== "") {
-//       list = list.filter((p) => Number(p.minOrderQty) >= Number(minQty));
-//     }
-
-//     if (supplierType.length) {
-//       list = list.filter((p) => supplierType.includes(p.supplierType));
-//     }
-
-//     if (sort === "price_asc") {
-//       list.sort((a, b) => Number(a.price) - Number(b.price));
-//     } else if (sort === "price_desc") {
-//       list.sort((a, b) => Number(b.price) - Number(a.price));
-//     } else if (sort === "newest") {
-//       list.sort(
-//         (a, b) =>
-//           new Date(b.createdAt || 0).getTime() -
-//           new Date(a.createdAt || 0).getTime()
-//       );
-//     }
-
-//     return list;
-//   }, [products, minPrice, maxPrice, minQty, supplierType, sort]);
-
-//   const resetFilters = () => {
-//     setSort("default");
-//     setMinPrice("");
-//     setMaxPrice("");
-//     setSupplierType([]);
-//     setMinQty("");
-//   };
-
-//   const categorySlug = route.category;
-//   const categoryName = categoryMeta?.name || "Category";
-//   const subcategories = categoryMeta?.subcategories || [];
-
-//   return (
-//     <div
-//       className="min-h-screen"
-//       style={{ backgroundColor: COLORS.cream, color: COLORS.text }}
-//     >
-//       <div
-//         className="px-4 sm:px-6 py-5 sm:py-6 text-white"
-//         style={{ backgroundColor: COLORS.primary }}
-//       >
-//         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
-//           {categoryName}
-//         </h1>
-//         <p className="text-sm mt-1">{filteredProducts.length} products available</p>
-//       </div>
-
-//       <div
-//         className="px-4 sm:px-6 py-3 flex gap-3 border-b overflow-x-auto bg-white"
-//         style={{ borderColor: COLORS.border }}
-//       >
-//         <button
-//           className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border"
-//           style={{
-//             backgroundColor: COLORS.accent,
-//             color: COLORS.primary,
-//             borderColor: COLORS.accent,
-//           }}
-//         >
-//           All {categoryName}
-//         </button>
-
-//         {subcategories.map((sub) => (
-//           <Link
-//             key={sub.id || sub.slug}
-//             href={`/products/${categorySlug}/${sub.slug}`}
-//             className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap border transition"
-//             style={{
-//               backgroundColor: COLORS.white,
-//               color: COLORS.text,
-//               borderColor: COLORS.border,
-//             }}
-//           >
-//             {sub.name}
-//           </Link>
-//         ))}
-//       </div>
-
-//       <div className="flex flex-col lg:flex-row gap-4 px-4 sm:px-6 py-5">
-//         <div
-//           className="w-full lg:w-64 border rounded-lg p-4 h-fit bg-white"
-//           style={{ borderColor: COLORS.border }}
-//         >
-//           <h3 className="font-semibold mb-3" style={{ color: COLORS.primary }}>
-//             Filters
-//           </h3>
-
-//           <p className="text-sm mb-2">Price</p>
-//           <div className="space-y-2 mb-4">
-//             <input
-//               type="number"
-//               placeholder="Min Price"
-//               value={minPrice}
-//               onChange={(e) => setMinPrice(e.target.value)}
-//               className="w-full border rounded px-3 py-2 text-sm"
-//               style={{ borderColor: COLORS.border }}
-//             />
-//             <input
-//               type="number"
-//               placeholder="Max Price"
-//               value={maxPrice}
-//               onChange={(e) => setMaxPrice(e.target.value)}
-//               className="w-full border rounded px-3 py-2 text-sm"
-//               style={{ borderColor: COLORS.border }}
-//             />
-//           </div>
-
-//           <p className="text-sm mb-2">Minimum Order Qty</p>
-//           <input
-//             type="number"
-//             placeholder="e.g. 50"
-//             value={minQty}
-//             onChange={(e) => setMinQty(e.target.value)}
-//             className="w-full border rounded px-3 py-2 text-sm mb-4"
-//             style={{ borderColor: COLORS.border }}
-//           />
-
-//           <p className="text-sm mb-2">Supplier Type</p>
-//           {["Verified Supplier", "Gold Supplier", "Trusted Supplier"].map(
-//             (type) => (
-//               <label key={type} className="block text-sm mb-1">
-//                 <input
-//                   type="checkbox"
-//                   checked={supplierType.includes(type)}
-//                   onChange={() => toggleSupplier(type)}
-//                   className="mr-2"
-//                 />
-//                 {type}
-//               </label>
-//             )
-//           )}
-
-//           <button
-//             onClick={resetFilters}
-//             className="mt-4 w-full border py-2 rounded"
-//             style={{ borderColor: COLORS.border, color: COLORS.primary }}
-//           >
-//             Reset Filters
-//           </button>
-//         </div>
-
-//         <div className="flex-1">
-//           <div className="flex justify-between items-center mb-3 gap-3 flex-wrap">
-//             <p>{filteredProducts.length} products</p>
-
-//             <select
-//               value={sort}
-//               onChange={(e) => setSort(e.target.value)}
-//               className="border rounded px-3 py-2 text-sm bg-white"
-//               style={{ borderColor: COLORS.border }}
-//             >
-//               <option value="default">Sort</option>
-//               <option value="price_asc">Low → High</option>
-//               <option value="price_desc">High → Low</option>
-//               <option value="newest">Newest</option>
-//             </select>
-//           </div>
-
-//           {loading ? (
-//             <div
-//               className="border rounded-lg p-6 text-center bg-white"
-//               style={{ borderColor: COLORS.border }}
-//             >
-//               Loading...
-//             </div>
-//           ) : filteredProducts.length === 0 ? (
-//             <div
-//               className="border rounded-lg p-6 text-center bg-white"
-//               style={{ borderColor: COLORS.border }}
-//             >
-//               No products found.
-//             </div>
-//           ) : (
-//             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-//               {filteredProducts.map((item) => (
-//                 <Link
-//                   key={item.id}
-//                   href={`/products/${categorySlug}/${item.subcategorySlug}/${item.slug}`}
-//                 >
-//                   <div
-//                     className="bg-white p-3 border rounded shadow-sm hover:shadow-md transition"
-//                     style={{ borderColor: COLORS.border }}
-//                   >
-//                     <img
-//                       src={item.imageUrl}
-//                       alt={item.name}
-//                       className="h-32 sm:h-36 md:h-40 w-full object-cover rounded"
-//                     />
-//                     <h3 className="text-sm mt-2 line-clamp-2">{item.name}</h3>
-//                     <p
-//                       className="mt-1 font-semibold"
-//                       style={{ color: COLORS.accent }}
-//                     >
-//                       ₹{item.price}
-//                     </p>
-//                     <p className="text-xs mt-1 text-gray-500">
-//                       Min. {item.minOrderQty} units
-//                     </p>
-//                     <p className="text-xs mt-1 text-gray-500">
-//                       {item.supplierType}
-//                     </p>
-//                   </div>
-//                 </Link>
-//               ))}
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-
 "use client";
  
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Heart,
-  ShoppingCart,
-  LayoutGrid,
-  LayoutList,
-  CheckCircle,
-} from "lucide-react";
+import { Heart, LayoutGrid, LayoutList, CheckCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addToFavourites,
   removeFromFavourites,
   fetchFavourites,
 } from "@/store/slices/favouritesSlice";
-import { addToCart } from "@/store/slices/cartSlice";
 import { productapi } from "@/lib/axios";
  
 const COLORS = {
@@ -430,33 +107,7 @@ export default function CategoryPage() {
     load();
   }, [category]);
  
-  const onToggleFavourite = (product) => {
-    const productId = String(product.productId);
-    const isLiked = favouriteItems.map(String).includes(productId);
- 
-    if (isLiked) {
-      dispatch(removeFromFavourites(productId));
-      showToast("Removed from wishlist");
-    } else {
-      dispatch(addToFavourites(productId));
-      showToast("Added to wishlist");
-    }
-  };
- 
-  const onAddToCart = (product) => {
-    const productId = product?._id ?? product?.id ?? product?.productId;
-    if (!productId) return;
- 
-    dispatch(
-      addToCart({
-        productId: product.productId,
-        quantity: 1,
-        variantId: product?.variantId ?? product?.variant_id,
-      })
-    );
- 
-    showToast("Added to cart");
-  };
+  
  
   const handleFilterChange = (type, value) => {
     setFilters((prev) => {
@@ -656,7 +307,6 @@ export default function CategoryPage() {
               )}
             </div>
  
-            {/* Min. Order Qty */}
             <div className="border-b pb-5 mb-5" style={{ borderColor: COLORS.border }}>
               <h3 className="font-semibold text-sm mb-3" style={{ color: COLORS.primary }}>
                 Min. Order Qty
@@ -674,7 +324,6 @@ export default function CategoryPage() {
               ))}
             </div>
  
-            {/* Price Range */}
             <div className="border-b pb-5 mb-5" style={{ borderColor: COLORS.border }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-sm" style={{ color: COLORS.primary }}>
@@ -703,7 +352,6 @@ export default function CategoryPage() {
               ))}
             </div>
  
-            {/* Rating */}
             <div>
               <h3 className="font-semibold text-sm mb-3" style={{ color: COLORS.primary }}>
                 Rating
@@ -800,21 +448,7 @@ export default function CategoryPage() {
                                   viewMode === "grid" ? "relative h-40 w-full" : "relative h-24 w-24 shrink-0 m-3"
                                 }
                               >
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    onToggleFavourite(product);
-                                  }}
-                                  className="absolute top-2 right-2 bg-white rounded-full p-1 shadow cursor-pointer"
-                                  aria-label="Toggle favourite"
-                                >
-                                  <Heart
-                                    size={16}
-                                    className={isLiked ? "text-red-500" : "text-gray-600"}
-                                    fill={isLiked ? "currentColor" : "none"}
-                                  />
-                                </button>
+                               
  
                                 <img
                                   src={product.imageUrl}
@@ -828,36 +462,7 @@ export default function CategoryPage() {
                                   {product.name}
                                 </h3>
  
-                                <p className="text-sm font-bold mt-1" style={{ color: COLORS.primary }}>
-                                  ₹{product.priceValue}/unit
-                                </p>
- 
-                                <p className="text-[11px]" style={{ color: COLORS.muted }}>
-                                  Min. {product.minOrderQty} units
-                                </p>
- 
-                                {product.supplierType ? (
-                                  <p className="text-[11px]" style={{ color: COLORS.muted }}>
-                                    {product.supplierType}
-                                  </p>
-                                ) : null}
- 
-                                <div className="mt-3">
-                                  <Button
-                                    className={`flex items-center gap-2 rounded-md cursor-pointer ${
-                                      viewMode === "grid" ? "w-full text-sm py-2 justify-center" : "text-xs px-3 py-1.5"
-                                    }`}
-                                    style={{ backgroundColor: COLORS.accent, color: COLORS.primary }}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      onAddToCart(product);
-                                    }}
-                                  >
-                                    <ShoppingCart size={viewMode === "grid" ? 14 : 12} />
-                                    Add to cart
-                                  </Button>
-                                </div>
+                               
                               </div>
                             </div>
                           </CardContent>

@@ -26,7 +26,7 @@ router.get("/:productId/reviews", reviewController.getProductReviews);
 router.post("/:productId/reviews", authMiddleware, upload.array("media", 6), reviewController.addProductReview);
 router.get("/:id", productController.getSingleProduct);
 // router.put("/:id", productController.updateProduct);
-router.put("/:id", authMiddleware, productController.updateProduct);
+router.put("/:id", authMiddleware, upload.fields([{ name: "images", maxCount: 10 }, { name: "videos", maxCount: 5 }]), productController.updateProduct);
 router.delete("/:id", authMiddleware, productController.deleteProduct);
 
 module.exports = router;

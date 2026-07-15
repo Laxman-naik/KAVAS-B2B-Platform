@@ -102,57 +102,59 @@ const Categories = () => {
         <div className="relative flex items-center justify-center text-center">
           <div>
             <div className="flex items-center justify-center gap-2">
-              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+              <span className="h-px w-5 bg-[#D4AF37]/60" />
 
               <span className="text-[11px] sm:text-xs font-semibold tracking-[0.18em] text-[#0B1F3A]/60">
                 SHOP BY CATEGORY
               </span>
-
-              <span className="h-px w-5 bg-[#D4AF37]/60"></span>
+              <span className="h-px w-5 bg-[#D4AF37]/60" />
             </div>
-
             <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#0B1F3A]">
               All Categories
             </div>
           </div>
-
           <Link
             href="/viewallcategories"
-            className="absolute right-0 top-1/2 translate-y-4 text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37] transition-colors"
+            className="absolute right-0 top-1/2 translate-y-4 text-sm font-semibold text-[#0B1F3A] hover:text-[#D4AF37]"
           >
             View All Categories →
           </Link>
         </div>
+        <div className="mt-5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-3 sm:gap-4 pr-2">
+            {categories.map((cat) => (
+              <Link
+                key={cat.name}
+                href={`/products/${slugify(cat.name)}`}
+                className=" group w-35 sm:w-40 lg:w-45 shrink-0 overflow-hidden rounded-xl border border-black/10  bg-white  shadow-sm hover:shadow-xl transition-all duration-300
+                "
+              >
+                <div className=" aspect-5/4 bg-[#FFF8EC] overflow-hidden p-2">
 
-        <div className="mt-5">
-          <div className="overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex items-stretch gap-3 sm:gap-4 pr-1">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.name}
-                  href={`/products/${slugify(cat.name)}`}
-                  className="group w-35 sm:w-40 lg:w-45 shrink-0 rounded-sm border border-black/10 bg-white shadow-sm hover:shadow-md transition overflow-hidden"
-                >
-                  <div className="aspect-5/4 bg-[#FFF8EC] overflow-hidden">
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="h-full w-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                    />
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    className=" h-full w-full object-cover rounded-lg brightness-105 saturate-125 contrast-110 shadow-md group-hover:scale-105 group-hover:-rotate-1 transition-all duration-300 "
+                  />
+
+                </div>
+                <div className="p-3 text-center">
+
+                  <div className=" text-[13px] font-extrabold text-[#0B1F3A] leading-tight ">
+                    {cat.name}
                   </div>
-                  <div className="p-3 text-center">
-                    <div className="text-[13px] font-extrabold text-[#0B1F3A] leading-tight">
-                      {cat.name}
-                    </div>
-                    <div className="mt-1 text-xs font-semibold text-[#0B1F3A]/60">
-                      {cat.count}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+
+                  <div className=" mt-1 text-xs font-semibold text-[#0B1F3A]/60 ">
+                    {cat.count}
+                  </div> 
+                </div>
+              </Link>
+            ))}
+
           </div>
+
         </div>
+
       </div>
     </section>
   );
