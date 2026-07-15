@@ -784,6 +784,8 @@ exports.getSingleProduct = async (req, res) => {
           r.rating,
           r.comment,
           r.created_at,
+          r.image_urls,
+          r.video_urls,
           u.full_name
         FROM reviews r
         LEFT JOIN users u ON u.id = r.user_id

@@ -1,69 +1,3 @@
-// const nodemailer = require("nodemailer");
-
-// // const transporter = nodemailer.createTransport({
-// //   service: "gmail",
-// //   auth: {
-// //     user: "laxmannaikbhukya143@gmail.com",
-// //     pass: "rlrc qhhw snqi pyhu",
-// //   },
-// //   pool: true,
-// //   maxConnections: 1,
-// //   rateLimit: true,
-// // });
-
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     user: "laxmannaikbhukya143@gmail.com",
-//     pass: "rlrc qhhw snqi pyhu",
-//   },
-//   pool: true,
-//   maxConnections: 1,
-//   rateLimit: true,
-// });
-
-// transporter.verify((error, success) => {
-//   if (error) {
-//     console.error("SMTP NOT WORKING:", error);
-//   } else {
-//     console.log("SMTP READY");
-//   }
-// });
-
-// // Test email service on startup
-// sendEmailOtp("laxmanbhukyaa@gmail.com", "123456")
-//   .then(() => console.log("✅ TEST EMAIL SENT"))
-//   .catch((err) => console.error("❌ TEST EMAIL FAILED:", err));
-
-// const sendEmailOtp = async (email, otp) => {
-//   try {
-//     const mailOptions = {
-//       from: `"Kavas" <laxmannaikbhukya143@gmail.com>`,
-//       to: email,
-//       subject: "Kavas OTP Verification",
-//       html: `
-//         <div style="font-family: Arial; padding: 10px;">
-//           <h2>OTP Verification</h2>
-//           <p>Your OTP is:</p>
-//           <h1 style="color:#2d89ef">${otp}</h1>
-//           <p>This OTP is valid for 5 minutes.</p>
-//         </div>
-//       `,
-//     };
-
-//     const info = await transporter.sendMail(mailOptions);
-
-//     console.log("✅ Email sent:", info.messageId);
-//     return info;
-//   } catch (err) {
-//     console.error("❌ Email send failed:", err.message);
-//     throw err;
-//   }
-// };
-
-// module.exports = { sendEmailOtp };
-
-
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -122,16 +56,12 @@ const sendWelcomeEmail = async (email, full_name) => {
                       <p style="color:#FFF8EC;font-size:13px;margin:6px 0 0;letter-spacing:1px;">WHOLESALE HUB</p>
                     </td>
                   </tr>
-
-                  
                   <tr>
                     <td style="background:linear-gradient(135deg,#D4AF37 0%,#c9a227 100%);padding:32px 40px;text-align:center;">
                       <h2 style="color:#0B1F3A;font-size:24px;margin:0 0 10px;">🎉 Welcome To Kavas, ${firstName}!</h2>
                       <p style="color:#1A1A1A;font-size:14px;margin:0;">Your account has been successfully created.</p>
                     </td>
                   </tr>
-
-                  <!-- Body -->
                   <tr>
                     <td style="padding:36px 40px;background:#ffffff;">
                       <p style="color:#333;font-size:15px;line-height:1.7;margin:0 0 20px;">
@@ -165,8 +95,6 @@ const sendWelcomeEmail = async (email, full_name) => {
                       </table>
                     </td>
                   </tr>
-
-                  
                   <tr>
                     <td style="background:#0B1F3A;padding:24px 40px;text-align:center;">
                       <p style="color:#ffffff88;font-size:12px;margin:0 0 6px;">Need help? Contact us at <a href="mailto:${process.env.EMAIL_USER}" style="color:#D4AF37;text-decoration:none;">${process.env.EMAIL_USER}</a></p>
@@ -185,7 +113,7 @@ const sendWelcomeEmail = async (email, full_name) => {
 
     console.log(`Welcome email sent to ${email}`);
   } catch (err) {
-    // Non-blocking: log the error but don't fail registration
+
     console.error("Welcome email send error:", err.message);
   }
 };

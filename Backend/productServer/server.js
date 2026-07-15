@@ -21,6 +21,7 @@ const organizationRoutes = require("./routes/organizationRoutes");
 const vendorDashboardRoutes = require("./routes/vendorDashboardRoutes");
 const vendorPaymentHistoryRoutes = require("./routes/vendorPaymentHistoryRoutes");
 const adminDashboardRoutes = require("./routes/adminDashboardRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use("/api/admin/payouts", adminPayoutRoutes);
 app.use("/api/vendor", vendorDashboardRoutes);
 app.use("/api/vendor/payments", vendorPaymentHistoryRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 
 pool
