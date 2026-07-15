@@ -129,7 +129,7 @@ const Categories = () => {
                 className=" group w-35 sm:w-40 lg:w-45 shrink-0 overflow-hidden rounded-xl border border-black/10  bg-white  shadow-sm hover:shadow-xl transition-all duration-300
                 "
               >
-                <div className=" aspect-5/4 bg-[#FFF8EC] overflow-hidden p-2">
+                <div className=" aspect-5/4 bg-white overflow-hidden p-2">
 
                   <img
                     src={cat.image}
