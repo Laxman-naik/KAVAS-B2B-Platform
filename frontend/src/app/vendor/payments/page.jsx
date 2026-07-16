@@ -20,7 +20,29 @@ import {
   getMyVendorPayouts,
   getVendorPayoutSummary,
   clearVendorPayoutState,
-} from "@/store/slices/vendorPayoutSlice"
+} from "@/store/slices/vendorPayoutSlice";
+
+import { getVendorPaymentHistory } from "@/store/slices/vendorPaymentHistorySlice";
+
+const formatMoney = (amount) => {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(amount || 0));
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 import WithdrawFundsPopup from "../withdrawfundspopup/page";
 import Link from "next/link";
@@ -32,35 +54,18 @@ export default function PaymentsPayoutsBody() {
     (state) => state.vendorPayout
   );
 
+  const {
+    loading: historyLoading,
+    error: historyError,
+    transactions,
+  } = useSelector((state) => state.vendorPaymentHistory);
+
   const [showPopup, setShowPopup] = useState(false);
 
   const [form, setForm] = useState({
     amount: "",
     remarks: "",
   });
-
-  useEffect(() => {
-    dispatch(getMyVendorPayouts());
-    dispatch(getVendorPayoutSummary());
-
-    return () => {
-      dispatch(clearVendorPayoutState());
-    };
-  }, [dispatch]);
-
-  const formatMoney = (amount) => {
-    return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "-";
-
-    return new Intl.DateTimeFormat("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(date));
-  };
 
   const statusStyle = (status) => {
     if (status === "PAID") return "bg-green-100 text-green-700";
@@ -146,6 +151,16 @@ export default function PaymentsPayoutsBody() {
     );
   };
 
+  useEffect(() => {
+    dispatch(getMyVendorPayouts());
+    dispatch(getVendorPayoutSummary());
+    dispatch(getVendorPaymentHistory());
+
+    return () => {
+      dispatch(clearVendorPayoutState());
+    };
+  }, [dispatch]);
+
   return (
     <div className="min-h-screen bg-[#FFF8EC] p-4 sm:p-6 lg:p-8 text-[#1A1A1A]">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -162,6 +177,7 @@ export default function PaymentsPayoutsBody() {
           onClick={() => {
             dispatch(getMyVendorPayouts());
             dispatch(getVendorPayoutSummary());
+            dispatch(getVendorPaymentHistory());
           }}
           className="border border-[#0B1F3A] text-[#0B1F3A] px-4 py-2 rounded-sm font-semibold flex items-center gap-2 w-fit"
         >
@@ -376,6 +392,60 @@ export default function PaymentsPayoutsBody() {
         </tbody>
       </Table>
 
+      <Table title="Vendor Payment History">
+        <thead>
+          <tr className="bg-gray-50 text-left text-sm">
+            <Th>Order ID</Th>
+            <Th>Amount</Th>
+            <Th>Payment Status</Th>
+            <Th>Order Status</Th>
+            <Th>Paid At</Th>
+            <Th>Order Date</Th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {historyLoading && transactions.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                Loading payment history...
+              </td>
+            </tr>
+          ) : historyError ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-red-500">
+                {historyError}
+              </td>
+            </tr>
+          ) : transactions.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                No payment history found.
+              </td>
+            </tr>
+          ) : (
+            transactions.map((item) => (
+              <tr key={item.order_id} className="border-t text-sm hover:bg-gray-50">
+                <Td>{item.order_id?.slice(0, 8)}...</Td>
+                <Td>{formatMoney(item.total_amount)}</Td>
+                <Td>
+                  <span
+                    className={`px-3 py-1 rounded-sm text-xs font-semibold ${statusStyle(
+                      item.payment_status
+                    )}`}
+                  >
+                    {item.payment_status}
+                  </span>
+                </Td>
+                <Td>{item.order_status || "-"}</Td>
+                <Td>{item.paid_at ? formatDate(item.paid_at) : "Not Paid"}</Td>
+                <Td>{formatDate(item.created_at)}</Td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </Table>
+
       <div className="flex justify-center mt-5">
         <button className="border border-green-600 text-green-700 px-6 py-3 rounded-sm font-bold flex items-center gap-2 hover:bg-green-50">
           View All Payout History <ArrowRight size={18} />
@@ -481,7 +551,7 @@ function Table({ title, children }) {
     <section className="bg-white border border-[#E5E5E5] rounded-sm p-5 shadow-sm mb-5 overflow-hidden">
       <h3 className="text-lg font-bold text-[#0B1F3A] mb-4">{title}</h3>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-212.5">{children}</table>
+        <table className="w-full min-w-[850px]">{children}</table>
       </div>
     </section>
   );

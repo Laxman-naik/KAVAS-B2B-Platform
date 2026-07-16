@@ -1,59 +1,88 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getAnalytics } from "@/services/analyticsService";
 
-const stats = [
-  {
-    title: "CONVERSION RATE",
-    value: "18.3%",
-    change: "+1.2%",
-    positive: true,
-  },
-  {
-    title: "AVG ORDER VALUE",
-    value: "₹6,250",
-    change: "+₹320",
-    positive: true,
-  },
-  {
-    title: "QUOTE ACCEPT",
-    value: "62%",
-    change: "-3%",
-    positive: false,
-  },
-  {
-    title: "REPEAT BUYERS",
-    value: "74%",
-    change: "+5%",
-    positive: true,
-  },
-];
+// const stats = [
+//   {
+//     title: "CONVERSION RATE",
+//     value: "18.3%",
+//     change: "+1.2%",
+//     positive: true,
+//   },
+//   {
+//     title: "AVG ORDER VALUE",
+//     value: "₹6,250",
+//     change: "+₹320",
+//     positive: true,
+//   },
+//   {
+//     title: "QUOTE ACCEPT",
+//     value: "62%",
+//     change: "-3%",
+//     positive: false,
+//   },
+//   {
+//     title: "REPEAT BUYERS",
+//     value: "74%",
+//     change: "+5%",
+//     positive: true,
+//   },
+// ];
 
-const revenueData = [
-  { name: "Electronics", value: "₹8.2L", percent: 85 },
-  { name: "Machinery", value: "₹6.5L", percent: 65 },
-  { name: "Chemicals", value: "₹4.8L", percent: 48 },
-  { name: "Raw Materials", value: "₹3.2L", percent: 32 },
-  { name: "Textiles", value: "₹1.3L", percent: 15 },
-];
+// const revenueData = [
+//   { name: "Electronics", value: "₹8.2L", percent: 85 },
+//   { name: "Machinery", value: "₹6.5L", percent: 65 },
+//   { name: "Chemicals", value: "₹4.8L", percent: 48 },
+//   { name: "Raw Materials", value: "₹3.2L", percent: 32 },
+//   { name: "Textiles", value: "₹1.3L", percent: 15 },
+// ];
 
-const buyers = [
-  { name: "Acme Corp", orders: 24, spend: "₹1.42L" },
-  { name: "TechSource", orders: 18, spend: "₹98K" },
-  { name: "BuildMart", orders: 15, spend: "₹76K" },
-  { name: "GlobeTraders", orders: 11, spend: "₹55K" },
-  { name: "ClearPath Co", orders: 9, spend: "₹43K" },
-];
+// const buyers = [
+//   { name: "Acme Corp", orders: 24, spend: "₹1.42L" },
+//   { name: "TechSource", orders: 18, spend: "₹98K" },
+//   { name: "BuildMart", orders: 15, spend: "₹76K" },
+//   { name: "GlobeTraders", orders: 11, spend: "₹55K" },
+//   { name: "ClearPath Co", orders: 9, spend: "₹43K" },
+// ];
 
 export default function AnalyticsPage() {
+  const [stats, setStats] = useState([]);
+  const [revenueData, setRevenueData] = useState([]);
+  const [buyers, setBuyers] = useState([]);
   const [progress, setProgress] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setProgress(revenueData.map((item) => item.percent));
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+
+  const fetchAnalytics = async () => {
+
+    try {
+
+      const data = await getAnalytics();
+
+      setStats(data.stats);
+
+      setRevenueData(data.revenue);
+
+      setBuyers(data.buyers);
+
+      setTimeout(() => {
+
+        setProgress(data.revenue.map(item => item.percent));
+
+      },300);
+
+    } catch(err){
+
+      console.log(err);
+
+    }
+
+  };
+
+  fetchAnalytics();
+
+},[])
 
   return (
     <div className="min-h-screen bg-[#0b1220] text-white p-6 space-y-6 ">
@@ -73,7 +102,7 @@ export default function AnalyticsPage() {
                 item.positive ? "text-green-400" : "text-red-400"
               }`}
             >
-              {item.positive ? "↑" : "↓"} {item.change}
+              {item.positive ? "↑" : "↓"} {item.change_value}
             </p>
           </div>
         ))}
@@ -81,9 +110,7 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-[#162544] rounded-xl p-6 border border-[#22345a] shadow-lg">
-          <h3 className="font-semibold mb-5 text-lg">
-            Revenue by category
-          </h3>
+          <h3 className="font-semibold mb-5 text-lg">Revenue by category</h3>
           {revenueData.map((item, i) => (
             <div key={i} className="mb-4">
               <div className="flex justify-between text-sm mb-1 text-gray-300">
@@ -101,9 +128,7 @@ export default function AnalyticsPage() {
           ))}
         </div>
         <div className="bg-[#162544] rounded-xl p-6 border border-[#22345a] shadow-lg">
-          <h3 className="font-semibold mb-5 text-lg">
-            Top buyers this month
-          </h3>
+          <h3 className="font-semibold mb-5 text-lg">Top buyers this month</h3>
 
           <table className="w-full text-sm">
             <thead className="text-gray-400 border-b border-[#22345a]">
@@ -120,10 +145,8 @@ export default function AnalyticsPage() {
                   key={i}
                   className="border-b border-[#22345a] hover:bg-[#1f3157] transition cursor-pointer"
                 >
-                  <td className="py-3">{b.name}</td>
-                  <td className="text-center text-gray-300">
-                    {b.orders}
-                  </td>
+                  <td className="py-3">{b.company_name}</td>
+                  <td className="text-center text-gray-300">{b.orders}</td>
                   <td className="text-right text-yellow-400 font-semibold">
                     {b.spend}
                   </td>

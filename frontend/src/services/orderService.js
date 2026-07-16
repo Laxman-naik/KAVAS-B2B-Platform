@@ -39,3 +39,8 @@ export const getOrderById = async (orderId) => {
   const res = await productapi.get(`/api/orders/by-id/${orderId}`);
   return res.data;
 };
+
+export const getAdminOrdersAPI = async () => {
+  const res = await productapi.get("/api/admin/orders");
+  return res.data;
+};
